@@ -101,7 +101,6 @@ function setRoute(route) {
   const nextHash = `#${safeRoute}`;
   if (window.location.hash !== nextHash) window.history.pushState({}, "", nextHash);
   render();
-  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 function addHotspot(canvas, screen, hotspot, extraClass = "") {
@@ -216,6 +215,7 @@ function render() {
   } else {
     renderFlow(route);
   }
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 }
 
 FLOW_MENU.forEach(([label, route]) => {
