@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Services Central</title>
+    <link rel="stylesheet" href="styles.css?v=20260803-help-modal" />
+  </head>
+  <body>
+    <main id="app" aria-live="polite"></main>
+
+    <template id="sign-in-template">
+      <section class="screen screen--signin" aria-label="Services Central sign in">
+        <div class="prototype-canvas prototype-canvas--signin">
+          <img
+            class="prototype-image"
+            src="assets/sign-in.png"
+            alt=""
+            width="1440"
+            height="1090"
+            draggable="false"
+          />
+
+          <form class="signin-form" data-signin-form>
+            <label class="sr-only" for="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="email"
+              autocomplete="username"
+              placeholder="name.lastname@email.com"
+              aria-label="Username"
+            />
+            <button type="submit">Next</button>
+          </form>
+
+          <button class="signin-help hotspot" type="button" data-help>
+            <span class="sr-only">Having trouble signing in?</span>
+          </button>
+        </div>
+      </section>
+    </template>
+
+    <template id="dashboard-template">
+      <section class="screen screen--dashboard" aria-label="Services Central Dashboard">
+        <div class="dashboard-toolbar">
+          <button type="button" data-back-to-signin>Back to sign in</button>
+          <span>Services Central prototype</span>
+          <button type="button" data-open-flows>All flows</button>
+        </div>
+
+        <div class="prototype-canvas prototype-canvas--dashboard">
+          <img
+            class="prototype-image"
+            src="assets/dashboard.png"
+            alt="Services Central Dashboard showing access requests, service shortcuts, support tickets, and favorite instruments"
+            width="1440"
+            height="2537"
+            draggable="false"
+          />
+
+          <nav class="dashboard-hotspots" aria-label="Prototype interactions">
+            <button class="hotspot nav-hotspot nav-dashboard" data-route="dashboard" aria-label="Dashboard"></button>
+            <button class="hotspot nav-hotspot nav-instruments" data-route="my-instruments" aria-label="My instruments"></button>
+            <button class="hotspot nav-hotspot nav-add" data-route="add-instruments" aria-label="Add instruments"></button>
+            <button class="hotspot nav-hotspot nav-installation" data-route="installations" aria-label="Installations"></button>
+            <button class="hotspot nav-hotspot nav-support" data-route="support-history" aria-label="Support history"></button>
+            <button class="hotspot nav-hotspot nav-contacts" data-route="service-plan-contacts" aria-label="Service plan contacts"></button>
+            <button class="hotspot nav-hotspot nav-consumables" data-route="consumables" aria-label="Consumables"></button>
+            <button class="hotspot nav-hotspot nav-settings" data-route="notifications" aria-label="Settings"></button>
+            <button class="hotspot nav-hotspot nav-notifications" data-open-services-help aria-label="Get help"></button>
+          </nav>
+
+          <button class="hotspot start-request" data-route="request-support" aria-label="Start a request"></button>
+          <button class="hotspot go-pending" data-route="approval-email" aria-label="Go to pending access requests"></button>
+          <button class="hotspot dashboard-search" data-route="my-instruments" aria-label="Search instruments, groups and tickets"></button>
+          <button class="hotspot tile tile-consumables" data-route="consumables" aria-label="Order consumables"></button>
+          <button class="hotspot tile tile-education" data-route="education" aria-label="Browse education"></button>
+          <button class="hotspot tile tile-plan" data-route="service-plan-approval" aria-label="Request service plan"></button>
+          <button class="hotspot tile tile-maintenance" data-route="request-support" aria-label="Request maintenance or support"></button>
+          <button class="hotspot ticket-history" data-route="support-history" aria-label="View support request history"></button>
+          <button class="hotspot view-instruments" data-route="my-instruments" aria-label="View all my instruments"></button>
+        </div>
+      </section>
+    </template>
+
+    <template id="flow-template">
+      <section class="screen screen--flow" aria-label="Prototype flow screen">
+        <div class="flow-toolbar">
+          <button type="button" data-go-back>Back</button>
+          <strong data-flow-title></strong>
+          <div class="flow-toolbar__actions">
+            <button type="button" data-route="dashboard">Dashboard</button>
+            <button type="button" data-open-flows>All flows</button>
+          </div>
+        </div>
+        <div class="flow-stage">
+          <div class="flow-canvas" data-flow-canvas>
+            <img class="flow-image" data-flow-image alt="" draggable="false" />
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <dialog id="help-dialog" class="help-dialog">
+      <button class="dialog-close" type="button" data-close-dialog aria-label="Close">×</button>
+      <h2>Having trouble signing in?</h2>
+      <p>Use your Thermo Fisher Scientific account email address. For additional help, contact Services Central Support.</p>
+      <button class="secondary-button" type="button" data-close-dialog>Close</button>
+    </dialog>
+
+    <dialog id="flows-dialog" class="flows-dialog">
+      <button class="dialog-close" type="button" data-close-flows aria-label="Close flows">×</button>
+      <h2>Prototype flows</h2>
+      <p>Open a workflow or regional starting point.</p>
+      <div class="flows-grid" data-flows-grid></div>
+    </dialog>
+
+    <dialog id="services-help-dialog" class="services-help-dialog" aria-label="Get help with Services Central">
+      <div class="services-help-canvas">
+        <img
+          src="assets/flows/get-help-modal.png"
+          alt="Get help with Services Central: Contact us, Online help, and Tours"
+          width="953"
+          height="499"
+          draggable="false"
+        />
+        <button class="hotspot services-help-close" type="button" data-close-services-help aria-label="Close get help"></button>
+        <button class="hotspot services-help-email" type="button" aria-label="Email Services Central support"></button>
+        <a
+          class="hotspot services-help-guide"
+          href="https://apps.thermofisher.com/apps/csc/assets/services-central-help/GUID-55B094A3-8F4D-4DB6-9260-6D7B2F4301B2.html"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Read help guide"
+        ></a>
+        <button class="hotspot services-help-tours" type="button" aria-label="See tours"></button>
+      </div>
+    </dialog>
+
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <script src="app.js?v=20260803-help-modal"></script>
+  </body>
+</html>
