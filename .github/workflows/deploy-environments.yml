@@ -1,0 +1,57 @@
+name: Deploy Test and Prod
+
+on:
+  push:
+    branches:
+      - main
+      - test
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish both environments
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out Prod
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod
+
+      - name: Check out Test
+        uses: actions/checkout@v4
+        with:
+          ref: test
+          path: test
+
+      - name: Assemble the Pages site
+        run: |
+          mkdir -p _site/test
+          rsync -a --exclude='.git' --exclude='.github' prod/ _site/
+          rsync -a --exclude='.git' --exclude='.github' test/ _site/test/
+          touch _site/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the combined site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
