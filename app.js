@@ -10,6 +10,7 @@ const ROUTES = {
   "my-instruments": { title: "My instruments", src: "assets/flows/my-instruments.png", width: 1440, height: 1460, kind: "app" },
   "add-instruments": { title: "Add instruments", src: "assets/flows/add-instruments.png", width: 1440, height: 1460, kind: "app" },
   installations: { title: "Installations", src: "assets/flows/installations.png", width: 1440, height: 2900, kind: "app" },
+  "installations-expanded": { title: "Installations — order 9012611245", src: "assets/flows/installations-expanded.png", width: 1440, height: 2900, kind: "app" },
   "support-history": { title: "Support request history", src: "assets/flows/support-history.png", width: 1440, height: 1460, kind: "app" },
   "service-plan-contacts": { title: "Service plan contacts", src: "assets/flows/service-plan-contacts.png", width: 1440, height: 1800, kind: "app" },
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
@@ -48,6 +49,7 @@ const FLOW_MENU = [
   ["My instruments", "my-instruments"],
   ["Add instruments", "add-instruments"],
   ["Installations", "installations"],
+  ["Installations — order 9012611245 expanded", "installations-expanded"],
   ["Support history", "support-history"],
   ["Service plan contacts", "service-plan-contacts"],
   ["Request support", "request-support"],
@@ -136,6 +138,8 @@ function addScreenSpecificHotspots(canvas, route, screen) {
   const extras = {
     "my-instruments": [{ label: "Open instrument", route: "instrument-access", x: 88, y: 408, w: 1320, h: 120 }],
     "add-instruments": [{ label: "Continue adding instruments", route: "instrument-access", x: 810, y: 1052, w: 150, h: 48 }],
+    installations: [{ label: "Expand order 9012611245", route: "installations-expanded", x: 88, y: 270, w: 1320, h: 72 }],
+    "installations-expanded": [{ label: "Collapse order 9012611245", route: "installations", x: 88, y: 270, w: 1320, h: 72 }],
     "support-history": [{ label: "Open support ticket", route: "ticket-detail", x: 88, y: 455, w: 1320, h: 72 }],
     "request-support": [
       { label: "Open a support ticket", route: "ticket-status-email", x: 730, y: 348, w: 210, h: 50 },
