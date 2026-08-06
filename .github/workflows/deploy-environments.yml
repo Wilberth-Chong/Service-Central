@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
-      - test
+  workflow_run:
+    workflows:
+      - Test branch changed
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -19,6 +23,7 @@ concurrency:
 jobs:
   deploy:
     name: Publish both environments
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
