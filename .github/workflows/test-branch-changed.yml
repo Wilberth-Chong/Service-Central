@@ -1,0 +1,17 @@
+name: Test branch changed
+
+on:
+  push:
+    branches:
+      - test
+
+permissions:
+  contents: read
+
+jobs:
+  signal:
+    name: Request Test deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark Test as ready to publish
+        run: echo "The Test branch is ready for the Pages deployment workflow."
