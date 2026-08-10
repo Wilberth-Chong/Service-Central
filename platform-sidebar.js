@@ -9,8 +9,7 @@
     consumables: "assets/icons/commerce/cart/Size=24px, Style=Mono.svg",
     notifications: "assets/icons/navigation/bell settings/size=24px, style=mono.svg",
     help: "assets/icons/notifications/question/size=24px, style=mono.svg",
-    collapse:
-      "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Crect%20x='5'%20y='4'%20width='14'%20height='16'%20rx='1'%20fill='none'%20stroke='black'%20stroke-width='2'/%3E%3Cpath%20d='M9%204v16'%20fill='none'%20stroke='black'%20stroke-width='2'/%3E%3C/svg%3E",
+    collapse: "assets/icons/general/expanded panel/size=24px, style=mono.svg",
   });
 
   const PLATFORM_SIDEBAR_ITEMS = Object.freeze([

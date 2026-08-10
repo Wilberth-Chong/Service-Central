@@ -699,7 +699,9 @@ button {
 .screen--spc .platform-sidebar {
   position: absolute;
   top: 66px;
-  bottom: 0;
+  bottom: auto;
+  height: min(calc(1800px - 66px), calc((100vh - 48px) / var(--spc-scale, 1) - 66px));
+  overflow: hidden;
 }
 
 .platform-sidebar__item {
