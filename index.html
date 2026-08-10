@@ -87,55 +87,274 @@
 
     <template id="dashboard-native-template">
       <section class="screen screen--dashboard" aria-label="Services Central Dashboard">
+        <div class="flow-toolbar"><button type="button" data-back-to-signin>Back</button><strong>Services Central Dashboard</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell db-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <aside class="mi-nav" aria-label="Services Central navigation">
+            <button class="is-current" type="button" data-route="dashboard" aria-current="page" aria-label="Dashboard"><img src="assets/icons/navigation/dashboard/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="my-instruments" aria-label="Instruments"><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="add-instruments" aria-label="Add instruments"><img src="assets/icons/science/add instrument/size=24px, style=mono.svg" alt="" /></button><button type="button" data-route="installations" aria-label="Installations"><img src="assets/icons/general/scheduled service/size=24px, style=mono.svg" alt="" /></button><button type="button" data-route="support-history" aria-label="Support history"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></button><button type="button" data-route="service-plan-contacts" aria-label="Service plan contacts"><img src="assets/icons/users/vcard/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="consumables" aria-label="Consumables"><img src="assets/icons/commerce/cart/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="notifications" aria-label="Settings"><img src="assets/icons/navigation/settings/size=24px, style=mono.svg" alt="" /></button><button type="button" data-open-services-help aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button><button class="mi-nav__collapse" type="button" aria-label="Expand navigation"><span aria-hidden="true"></span></button>
+          </aside>
+          <main class="mi-main db-main">
+            <section class="mi-titlebar db-titlebar"><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
+            <section class="ai-banner db-banner" aria-label="Instrument access request notification"><button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__content"><div class="ai-banner__art"><img src="assets/instruments/add-instruments-suggestion.svg" alt="" /><span>New</span></div><div class="ai-banner__copy"><h2>3 instrument(s) access requests awaiting your approval</h2><p>Review the instrument(s) and approve or deny.</p></div><button class="ai-small-button db-banner__button" type="button" data-route="approval-email">Go to pending</button></div><button class="ai-banner__arrow" type="button" data-db-banner-next aria-label="Next notification"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__dots" aria-label="Notification 1 of 3"><span class="is-active"></span><span></span><span></span></div></section>
+            <section class="db-top" aria-label="Dashboard quick actions">
+              <label class="db-search"><span class="sr-only">Search for instruments, groups and tickets</span><input data-dashboard-search type="search" placeholder="Search for instruments, groups and tickets" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
+              <div class="db-shortcuts"><button type="button" data-route="consumables"><img src="assets/dashboard/shortcut-consumables.svg" alt="" /><strong>Order<br />consumables</strong></button><button type="button" data-route="education"><img src="assets/dashboard/shortcut-education.svg" alt="" /><strong>Browse<br />education</strong></button><button type="button" data-route="service-plan-approval"><img src="assets/dashboard/shortcut-plan.svg" alt="" /><strong>Request<br />service plan</strong></button><button type="button" data-route="request-support"><img src="assets/dashboard/shortcut-support.svg" alt="" /><strong>Request maintenance<br />or support</strong></button></div>
+              <article class="db-promo"><button class="db-promo__arrow" type="button" aria-label="Previous promotion"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><div class="db-promo__copy"><h2>Save 35% on your next <strong>reversed phase column</strong></h2><p><b>Save now on your next C18, phenyl or other reversed phase column.</b></p><small>Promo expires 29 Mar 2024. Applicable for online orders on analytical columns.</small><label><input type="checkbox" /> Don't show this again</label></div><div class="db-promo__code"><b>Promo code: <a href="#consumables">XXX35</a> <img src="assets/icons/actions/link/Size=16px, Style=Mono.svg" alt="" /></b><p>Promo code must be applied<br />at checkout</p></div><button class="mi-button db-promo__order" type="button" data-route="consumables">Order consumables</button><button class="db-promo__arrow" type="button" aria-label="Next promotion"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><button class="db-promo__close" type="button" aria-label="Dismiss promotion">×</button></article>
+            </section>
+            <section class="db-section db-tickets" aria-labelledby="db-ticket-title"><header class="db-section__header"><h2 id="db-ticket-title">Support request tickets</h2><button type="button" data-route="support-history">Support request history</button></header><div class="db-section__rule"></div>
+              <div class="db-tabs" role="tablist"><button class="is-active" type="button" role="tab" aria-selected="true" data-ticket-state="active">Active tickets</button><button type="button" role="tab" aria-selected="false" data-ticket-state="closed">Recently closed tickets <em>2</em></button><button type="button" role="tab" aria-selected="false" data-ticket-state="visits">Upcoming on-site visits <em>3</em></button></div>
+              <div class="db-ticketbar"><h3 data-ticket-count>16 active tickets</h3><label>Filter by: <select aria-label="Filter tickets"><option>All status</option></select></label></div>
+              <div class="db-table-wrap"><table class="db-table"><colgroup><col class="db-col-status" /><col class="db-col-ticket" /><col class="db-col-created" /><col class="db-col-subject" /><col class="db-col-serial" /><col class="db-col-model" /></colgroup><thead><tr><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Serial no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Model no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>
+                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#ticket-detail">19602494</a></td><td>20 Jul 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/vanquish-detector.png" alt="" /><a href="#my-instruments">1009996</a></td><td>VQF0000DET</td></tr>
+                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#ticket-detail">12670950</a></td><td>18 Jul 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/vanquish-column.png" alt="" /><a href="#my-instruments">1009999</a></td><td>VQH0000VEN</td></tr>
+                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#ticket-detail">12861716</a></td><td>25 May 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /><a href="#my-instruments">1009998</a></td><td>VQF00SAMPL</td></tr>
+                <tr><td><span class="db-row-icon"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></span><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">15429289</a></td><td>7 May 2024</td><td>Repair 0000123459 instrument parts</td><td><img src="assets/instruments/vanquish-pump.png" alt="" /><a href="#my-instruments">1009997</a></td><td>VQF000PUMP</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">15907622</a></td><td>30 Apr 2024</td><td>Repair 0000123459 instrument parts</td><td><img src="assets/instruments/tsq.png" alt="" /><a href="#my-instruments">TSQ-Z-12345</a></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">14440778</a></td><td>24 Apr 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/tsq.png" alt="" /><a href="#my-instruments">TSQ-Z-12346</a></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">16144558</a></td><td>12 Apr 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/tsq.png" alt="" /><a href="#my-instruments">TSQ-Z-12347</a></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">17595437</a></td><td>11 Mar 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/tsq.png" alt="" /><a href="#my-instruments">TSQ-Z-12348</a></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">12211704</a></td><td>10 Mar 2024</td><td>Need support for unknown instrument error</td><td><img src="assets/instruments/q-exactive.png" alt="" /><a href="#my-instruments">SN98355W</a></td><td>QEXAC00001</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">11800931</a></td><td>6 Jan 2024</td><td>Need calibration</td><td><img src="assets/instruments/q-exactive.png" alt="" /><a href="#my-instruments">SN98356W</a></td><td>QEXAC00001</td></tr>
+              </tbody></table></div><nav class="db-pagination" aria-label="Ticket pages"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button></nav>
+            </section>
+            <section class="db-section db-favorites" aria-labelledby="db-favorites-title"><header class="db-section__header"><h2 id="db-favorites-title">My favorite instruments</h2><button type="button" data-route="my-instruments">View all my instruments</button></header><div class="db-section__rule"></div><div class="db-cards">
+              <article class="db-card db-card--group"><header><span>LC/MS</span><button type="button" aria-label="Favorite group"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button><img src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="" /><a href="#groups">Alpine</a></header><dl><dt>Components</dt><dd>total components</dd><dt>Groups</dt><dd><a href="#groups">Department of Medical...</a> <b>+3</b></dd><dt>Tickets</dt><dd><a href="#support-history">16 total support tickets</a></dd></dl><footer><button type="button" aria-label="Expand group"><img src="assets/icons/tools/enlarge/size=16px, style=mono.svg" alt="" /></button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
+              <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#my-instruments">TSQ-Z-12346</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button></header><dl><dt>Nickname</dt><dd>TSQ-0</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>LC</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
+              <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#my-instruments">TSQ-Z-12347</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button></header><dl><dt>Nickname</dt><dd>TSQ-1</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Cold Chromatograph</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
+              <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#my-instruments">TSQ-Z-12348</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button></header><dl><dt>Nickname</dt><dd>TSQ-2</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Mass Spec Life Science</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
+            </div></section>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="my-instruments-native-template">
+      <section class="screen screen--my-instruments" aria-label="My instruments">
         <div class="flow-toolbar">
-          <button type="button" data-back-to-signin>Back</button>
-          <strong>Services Central Dashboard</strong>
+          <button type="button" data-go-back>Back</button>
+          <strong data-flow-title>My instruments</strong>
           <div class="flow-toolbar__actions">
             <button type="button" data-route="dashboard">Dashboard</button>
             <button type="button" data-open-flows>All flows</button>
           </div>
         </div>
-        <div class="native-dashboard">
-        <header class="native-dashboard__header komodo-platform-header">
-          <button class="native-dashboard__menu" type="button" aria-label="Open menu"><span></span><span></span><span></span></button>
-          <div class="native-dashboard__brand"><strong>ThermoFisher</strong><small>SCIENTIFIC</small></div>
-          <span class="native-dashboard__platform">Connect Platform</span>
-          <b>Services Central</b>
-          <div class="native-dashboard__header-actions"><button class="native-dashboard__bell" type="button" aria-label="Notifications">2</button><button class="native-dashboard__profile" type="button" aria-label="Profile"></button></div>
-        </header>
-        <aside class="native-dashboard__nav komodo-platform-navigation" aria-label="Dashboard navigation">
-          <button class="is-current" data-route="dashboard" aria-current="page" aria-label="Dashboard"><span class="nav-glyph nav-glyph--dashboard"></span></button>
-          <button data-route="my-instruments" aria-label="My instruments"><span class="nav-glyph nav-glyph--instrument"></span></button>
-          <button data-route="add-instruments" aria-label="Add instruments"><span class="nav-glyph nav-glyph--add"></span></button>
-          <button data-route="installations" aria-label="Installations"><span class="nav-glyph nav-glyph--box"></span></button>
-          <button data-route="support-history" aria-label="Support history"><span class="nav-glyph nav-glyph--tools"></span></button>
-          <button data-route="service-plan-contacts" aria-label="Service plan contacts"><span class="nav-glyph nav-glyph--contacts"></span></button>
-          <button data-route="consumables" aria-label="Consumables"><span class="nav-glyph nav-glyph--cart"></span></button>
-          <button data-route="notifications" aria-label="Settings"><span class="nav-glyph nav-glyph--settings"></span></button>
-          <button data-open-services-help aria-label="Get help"><span class="nav-glyph nav-glyph--help">?</span></button>
-        </aside>
-        <main class="native-dashboard__main">
-          <div class="native-dashboard__titlebar komodo-page-header"><h1>Services Central Dashboard</h1><button class="native-dashboard__request komodo-button komodo-button--primary" data-route="request-support">Start a request</button></div>
-          <section class="native-dashboard__notice komodo-banner" aria-label="Instrument access request notification"><button class="notice-arrow" type="button" aria-label="Previous notice">‹</button><div class="notice-icon" aria-hidden="true"><i></i><i></i><b>+</b></div><div><strong>3 instrument(s) access requests awaiting your approval</strong><p>Review the instrument(s) and approve or deny.</p></div><button class="native-dashboard__pending komodo-button komodo-button--outline" data-route="approval-email">Go to pending</button><button class="notice-arrow" type="button" aria-label="Next notice">›</button><div class="notice-dots" aria-hidden="true"><i></i><i></i><i></i></div></section>
-          <label class="native-dashboard__search komodo-search-filters"><span class="sr-only">Search for instruments, groups and tickets</span><input data-dashboard-search type="search" placeholder="Search for instruments, groups and tickets" /><b aria-hidden="true"></b></label>
-          <section class="native-dashboard__shortcuts" aria-label="Quick actions"><button data-route="consumables"><span class="quick-icon quick-icon--cart"></span><strong>Order<br>consumables</strong></button><button data-route="education"><span class="quick-icon quick-icon--education"></span><strong>Browse<br>education</strong></button><button data-route="service-plan-approval"><span class="quick-icon quick-icon--plan"></span><strong>Request<br>service plan</strong></button><button data-route="request-support"><span class="quick-icon quick-icon--tools"></span><strong>Request<br>maintenance<br>or support</strong></button></section>
-          <section class="native-dashboard__promo"><button class="promo-arrow" type="button" aria-label="Previous promotion">‹</button><div><h2>Save 35% on your next <strong>reversed phase column</strong></h2><p><b>Save now on your next C18, phenyl or other reversed phase column.</b></p><small>Promo expires 29 Mar 2024. Applicable for online orders on analytical columns.</small><label><input type="checkbox"> Don't show this again</label></div><div class="promo-code"><b>Promo code: <a href="#consumables">XXX35</a></b><p>Promo code must be applied<br>at checkout</p></div><button class="native-dashboard__order" data-route="consumables">Order consumables</button><button class="promo-arrow" type="button" aria-label="Next promotion">›</button></section>
-          <section class="native-dashboard__tickets"><div class="native-dashboard__section-title"><h2>Support request tickets</h2><button data-route="support-history">Support request history</button></div><div class="native-dashboard__divider"></div><div class="native-dashboard__tabs komodo-tabs" role="tablist"><button class="is-active" role="tab" aria-selected="true" data-ticket-state="active">Active tickets</button><button role="tab" aria-selected="false" data-ticket-state="closed">Recently closed tickets <em>2</em></button><button role="tab" aria-selected="false" data-ticket-state="visits">Upcoming on-site visits <em>3</em></button></div><div class="native-dashboard__ticket-bar"><h3 data-ticket-count>16 active tickets</h3><label>Filter by: <select aria-label="Filter tickets"><option>All status</option></select></label></div><div class="native-dashboard__table-wrap"><table class="komodo-data-table"><thead><tr><th>Status</th><th>Ticket no.</th><th>Created</th><th>Subject</th><th>Serial no.</th><th>Model no.</th></tr></thead><tbody>
-            <tr><td><span class="ticket-status ticket-status--open">Open</span></td><td><a href="#ticket-detail">19602494</a></td><td>20 Jul 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb"></span><a href="#my-instruments">1009996</a></td><td>VQF0000DET</td></tr>
-            <tr><td><span class="ticket-status ticket-status--open">Open</span></td><td><a href="#ticket-detail">12670950</a></td><td>18 Jul 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb instrument-thumb--tall"></span><a href="#my-instruments">1009999</a></td><td>VQH0000VEN</td></tr>
-            <tr><td><span class="ticket-status ticket-status--open">Open</span></td><td><a href="#ticket-detail">12861716</a></td><td>25 May 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb instrument-thumb--wide"></span><a href="#my-instruments">1009998</a></td><td>VQF00SAMPL</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">15429289</a></td><td>7 May 2024</td><td>Repair 0000123459 instrument parts</td><td><span class="instrument-thumb instrument-thumb--wide"></span><a href="#my-instruments">1009997</a></td><td>VQF000PUMP</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">15907622</a></td><td>30 Apr 2024</td><td>Repair 0000123459 instrument parts</td><td><span class="instrument-thumb"></span><a href="#my-instruments">TSQ-Z-12345</a></td><td>MSTSQQUANTISPLUS</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">14440778</a></td><td>24 Apr 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb"></span><a href="#my-instruments">TSQ-Z-12346</a></td><td>MSTSQQUANTISPLUS</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">16144558</a></td><td>12 Apr 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb"></span><a href="#my-instruments">TSQ-Z-12347</a></td><td>MSTSQQUANTISPLUS</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">17595437</a></td><td>11 Mar 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb"></span><a href="#my-instruments">TSQ-Z-12348</a></td><td>MSTSQQUANTISPLUS</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">12211704</a></td><td>10 Mar 2024</td><td>Need support for unknown instrument error</td><td><span class="instrument-thumb"></span><a href="#my-instruments">SN98355W</a></td><td>QEXAC00001</td></tr>
-            <tr><td><span class="ticket-status ticket-status--progress">In progress</span></td><td><a href="#ticket-detail">11800931</a></td><td>6 Jan 2024</td><td>Need calibration</td><td><span class="instrument-thumb"></span><a href="#my-instruments">SN98356W</a></td><td>QEXAC00001</td></tr>
-          </tbody></table></div><div class="native-dashboard__pagination"><button disabled>‹</button><button class="is-current">1</button><button>2</button><button>›</button></div></section>
-          <section class="native-dashboard__favourites"><div class="native-dashboard__section-title"><h2>My favorite instruments</h2><button data-route="my-instruments">View all my instruments</button></div><div class="native-dashboard__divider"></div><div class="instrument-cards"><article class="instrument-card instrument-card--summary"><span class="instrument-card__tag">LC/MS</span><h3>Alpine</h3><dl><dt>Components</dt><dd>total components</dd><dt>Groups</dt><dd>Department of Medical...</dd><dt>Tickets</dt><dd>16 total support tickets</dd></dl><footer>⌁ <button aria-label="More options">•••</button></footer></article><article class="instrument-card"><div class="instrument-card__machine"></div><p>Serial no.</p><h3>TSQ-Z-12346</h3><small>Triple Quadrupole LC-MS</small><dl><dt>Nickname</dt><dd>TSQ-0</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>LC</dd><dt>Groups</dt><dd>—</dd></dl><span class="coverage">Under contract</span><footer><button data-route="request-support">⌁&nbsp; Request support</button><button aria-label="More options">•••</button></footer></article><article class="instrument-card"><div class="instrument-card__machine"></div><p>Serial no.</p><h3>TSQ-Z-12347</h3><small>Triple Quadrupole LC-MS</small><dl><dt>Nickname</dt><dd>TSQ-1</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Cold Chromatograph</dd><dt>Groups</dt><dd>—</dd></dl><span class="coverage">Under contract</span><footer><button data-route="request-support">⌁&nbsp; Request support</button><button aria-label="More options">•••</button></footer></article><article class="instrument-card"><div class="instrument-card__machine"></div><p>Serial no.</p><h3>TSQ-Z-12348</h3><small>Triple Quadrupole LC-MS</small><dl><dt>Nickname</dt><dd>TSQ-2</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Mass Spec Life Science</dd><dt>Groups</dt><dd>—</dd></dl><span class="coverage">Under contract</span><footer><button data-route="request-support">⌁&nbsp; Request support</button><button aria-label="More options">•••</button></footer></article></div></section>
-        </main>
-        <footer class="native-dashboard__footer">© 2025 - Thermo Fisher Scientific <a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        <div class="mi-stage">
+          <div class="mi-shell">
+            <header class="mi-header">
+              <div class="mi-header__left">
+                <button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button>
+                <img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" />
+                <span class="mi-header__label">Connect Platform</span>
+                <strong class="mi-header__product">Services Central</strong>
+              </div>
+              <div class="mi-header__right">
+                <button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button>
+                <button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button>
+              </div>
+            </header>
+
+            <aside class="mi-nav" aria-label="Services Central navigation">
+              <button type="button" data-route="dashboard" aria-label="Dashboard"><img src="assets/icons/navigation/dashboard/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button class="is-current" type="button" data-route="my-instruments" aria-current="page" aria-label="Instruments"><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button type="button" data-route="add-instruments" aria-label="Add instruments"><img src="assets/icons/science/add instrument/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-route="installations" aria-label="Installations"><img src="assets/icons/general/scheduled service/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-route="support-history" aria-label="Support history"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-route="service-plan-contacts" aria-label="Service plan contacts"><img src="assets/icons/users/vcard/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button type="button" data-route="consumables" aria-label="Consumables"><img src="assets/icons/commerce/cart/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button type="button" data-route="notifications" aria-label="Settings"><img src="assets/icons/navigation/settings/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-open-services-help aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button>
+              <button class="mi-nav__collapse" type="button" aria-label="Expand navigation"><span aria-hidden="true"></span></button>
+            </aside>
+
+            <main class="mi-main">
+              <section class="mi-titlebar">
+                <h1>Instruments</h1>
+                <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
+              </section>
+              <nav class="mi-tabs" aria-label="Instrument sections" role="tablist">
+                <button class="is-active" type="button" role="tab" aria-selected="true">My Instruments</button>
+                <button type="button" role="tab" aria-selected="false">Users</button>
+                <button type="button" role="tab" aria-selected="false">Groups</button>
+                <button type="button" role="tab" aria-selected="false">Favorites</button>
+                <button type="button" role="tab" aria-selected="false">Pending <span>14</span></button>
+                <button type="button" role="tab" aria-selected="false">Suggestions <span>52</span></button>
+              </nav>
+
+              <section class="mi-content" aria-labelledby="mi-table-title">
+                <div class="mi-toolbar">
+                  <h2 id="mi-table-title">Instruments <span data-mi-count>15</span></h2>
+                  <div class="mi-toolbar__actions">
+                    <button class="mi-button" type="button" data-mi-toast="Column preferences opened">Edit columns</button>
+                    <button class="mi-button" type="button" data-route="add-instruments">Add instrument</button>
+                    <span class="mi-create"><button class="mi-button" type="button" data-mi-toast="Create menu opened">Create</button><button class="mi-info" type="button" aria-label="About creating instruments"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button></span>
+                    <button class="mi-button" type="button" data-mi-toast="Select instruments to share">Share</button>
+                    <button class="mi-button" type="button" data-mi-toast="Access management opened">Access Management</button>
+                  </div>
+                  <label class="mi-search"><span class="sr-only">Search instruments</span><input type="search" data-mi-search placeholder="Search by instrument serial number, nickname, or group name" /><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" /></label>
+                  <div class="mi-toolbar__view">
+                    <button class="mi-coverage-button" type="button" data-mi-toast="Coverage alerts filtered"><img src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="" />Coverage alert</button>
+                    <div class="mi-view-toggle" aria-label="Instrument view">
+                      <button type="button" aria-label="Grid view"><img src="assets/icons/navigation/grid view/size=24px, style=mono.svg" alt="" /></button>
+                      <button class="is-selected" type="button" aria-label="List view"><img src="assets/icons/text/list bulleted/size=24px, style=mono.svg" alt="" /></button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mi-table-scroll">
+                  <table class="mi-table">
+                    <colgroup><col class="mi-col-check" /><col class="mi-col-favorite" /><col class="mi-col-asset" /><col class="mi-col-lock" /><col class="mi-col-serial" /><col class="mi-col-nickname" /><col class="mi-col-users" /><col class="mi-col-groups" /><col class="mi-col-model" /><col class="mi-col-coverage" /><col class="mi-col-end" /><col class="mi-col-actions" /></colgroup>
+                    <thead><tr>
+                      <th><input type="checkbox" data-mi-select-all aria-label="Select all instruments" /></th>
+                      <th colspan="3">Favorite <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
+                      <th>Serial number <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
+                      <th>Nickname <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
+                      <th>Users <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
+                      <th><button class="mi-header-select" type="button">Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                      <th><button class="mi-header-select" type="button">Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                      <th><button class="mi-header-select" type="button">Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                      <th>Coverage end <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
+                      <th>Actions</th>
+                    </tr></thead>
+                    <tbody data-mi-rows></tbody>
+                  </table>
+                </div>
+              </section>
+            </main>
+            <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          </div>
         </div>
+      </section>
+    </template>
+
+    <template id="add-instruments-native-template">
+      <section class="screen screen--add-instruments" aria-label="Add instruments to get support">
+        <div class="flow-toolbar">
+          <button type="button" data-go-back>Back</button>
+          <strong data-flow-title>Add instruments</strong>
+          <div class="flow-toolbar__actions">
+            <button type="button" data-route="dashboard">Dashboard</button>
+            <button type="button" data-open-flows>All flows</button>
+          </div>
+        </div>
+        <div class="mi-stage">
+          <div class="mi-shell ai-shell">
+            <header class="mi-header">
+              <div class="mi-header__left">
+                <button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button>
+                <img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" />
+                <span class="mi-header__label">Connect Platform</span>
+                <strong class="mi-header__product">Services Central</strong>
+              </div>
+              <div class="mi-header__right">
+                <button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button>
+                <button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button>
+              </div>
+            </header>
+
+            <aside class="mi-nav" aria-label="Services Central navigation">
+              <button type="button" data-route="dashboard" aria-label="Dashboard"><img src="assets/icons/navigation/dashboard/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button type="button" data-route="my-instruments" aria-label="Instruments"><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button class="is-current" type="button" data-route="add-instruments" aria-current="page" aria-label="Add instruments"><img src="assets/icons/science/add instrument/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-route="installations" aria-label="Installations"><img src="assets/icons/general/scheduled service/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-route="support-history" aria-label="Support history"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-route="service-plan-contacts" aria-label="Service plan contacts"><img src="assets/icons/users/vcard/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button type="button" data-route="consumables" aria-label="Consumables"><img src="assets/icons/commerce/cart/Size=24px, Style=Mono.svg" alt="" /></button>
+              <button type="button" data-route="notifications" aria-label="Settings"><img src="assets/icons/navigation/settings/size=24px, style=mono.svg" alt="" /></button>
+              <button type="button" data-open-services-help aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button>
+              <button class="mi-nav__collapse" type="button" aria-label="Expand navigation"><span aria-hidden="true"></span></button>
+            </aside>
+
+            <main class="mi-main ai-main">
+              <section class="mi-titlebar ai-titlebar"><h1>Add instruments to get support</h1></section>
+              <section class="ai-banner" aria-label="Instrument suggestions">
+                <button class="ai-banner__arrow" type="button" data-ai-banner-prev aria-label="Previous suggestion"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button>
+                <div class="ai-banner__content">
+                  <div class="ai-banner__art"><img src="assets/instruments/add-instruments-suggestion.svg" alt="" /><span>New</span></div>
+                  <div class="ai-banner__copy"><h2>We found 24 instrument(s) associated with your email address</h2><p>Review and add the suggested instruments to your account.</p></div>
+                  <button class="ai-small-button" type="button" data-route="my-instruments">Go to suggestions</button>
+                </div>
+                <button class="ai-banner__arrow" type="button" data-ai-banner-next aria-label="Next suggestion"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button>
+                <div class="ai-banner__dots" aria-label="Suggestion 1 of 3"><span class="is-active"></span><span></span><span></span></div>
+              </section>
+
+              <section class="ai-form" aria-labelledby="ai-instructions">
+                <ol class="ai-stepper" aria-label="Add instrument progress">
+                  <li class="is-current" aria-current="step"><span>1</span><strong>Input</strong></li>
+                  <li><span>2</span><strong>Review</strong></li>
+                  <li><span>3</span><strong>Summary</strong></li>
+                </ol>
+                <div class="ai-columns">
+                  <div class="ai-form__left">
+                    <p class="ai-instructions" id="ai-instructions">Add instruments to your account to attain instant access for submitting and tracking support request, service contract status, and other various support-related content.</p>
+                    <div class="ai-entry-tabs" role="tablist" aria-label="Instrument entry method">
+                      <button class="is-active" type="button" role="tab" aria-selected="true" data-ai-mode="manual"><img src="assets/icons/data/table/Size=24px, Style=Mono.svg" alt="" /><span><strong>Manual entry</strong><small>Enter instruments 1 at a time</small></span></button>
+                      <button type="button" role="tab" aria-selected="false" data-ai-mode="bulk"><img src="assets/icons/actions/upload/Size=24px, Style=Mono.svg" alt="" /><span><strong>Bulk upload</strong><small>Upload up to 50 instruments at a time</small></span></button>
+                    </div>
+                    <div class="ai-manual-panel" data-ai-panel="manual">
+                      <div class="ai-field-headings"><div><strong>Serial number<span aria-hidden="true">*</span></strong><small>(Required)</small></div><div><strong><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />Nickname</strong><small>Alternate instrument identifier (optional). Visible to instrument users.</small></div></div>
+                      <div class="ai-entry-rows" data-ai-rows></div>
+                      <p class="ai-entry-hint">Press the “enter” key from any field in the bottom row to add another row below.</p>
+                      <div class="ai-form-actions"><button class="mi-button" type="button" data-ai-add-rows>Add 5 more rows</button><div><button class="mi-button" type="button" data-ai-clear>Clear all</button><button class="mi-button ai-continue" type="button" data-ai-continue disabled>Continue</button></div></div>
+                    </div>
+                    <div class="ai-bulk-panel" data-ai-panel="bulk" hidden>
+                      <label class="ai-dropzone"><img src="assets/icons/actions/upload/Size=32px, Style=Mono.svg" alt="" /><strong>Upload an instrument list</strong><span>Choose a CSV or XLSX file containing up to 50 instruments.</span><input type="file" accept=".csv,.xlsx" data-ai-file /></label>
+                      <div class="ai-form-actions"><button class="mi-button" type="button" data-ai-template>Download template</button><div><button class="mi-button ai-continue" type="button" data-ai-bulk-continue disabled>Continue</button></div></div>
+                    </div>
+                  </div>
+                  <aside class="ai-support-card">
+                    <img class="ai-support-card__info" src="assets/icons/notifications/info/size=24px, style=bold.svg" alt="" />
+                    <div><h2>Find out if your instrument<br />is supported</h2><p>Services Central currently supports <button type="button" data-ai-supported>specific instrument families</button> installed on <strong>01 January 2010</strong> or later in the United States, Canada, Europe* and South Korea.</p><p>Any instruments uploaded that are not supported will not be recognized by Services Central at this time.</p><button class="ai-supported-link" type="button" data-ai-supported><img src="assets/icons/science/instrument/Size=16px, Style=Mono.svg" alt="" />Supported instruments</button><small>*United Kingdom, Ireland, Norway, Finland, Sweden, Denmark, Iceland, Belgium, Netherlands, Luxembourg, Germany, Austria, Switzerland, France, Italy, Spain</small></div>
+                  </aside>
+                </div>
+              </section>
+            </main>
+            <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+
+            <dialog class="ai-supported-dialog" data-ai-supported-dialog aria-labelledby="supported-dialog-title"><button type="button" data-ai-supported-close aria-label="Close supported instruments"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button><h2 id="supported-dialog-title">Supported instruments</h2><p>Services Central supports eligible Thermo Fisher Scientific instrument families installed in supported regions on or after 01 January 2010.</p><button class="mi-button" type="button" data-ai-supported-close>Close</button></dialog>
+          </div>
+        </div>
+      </section>
+    </template>
+
+    <template id="installations-native-template">
+      <section class="screen screen--installations" aria-label="Installations">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Installations</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell ins-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main ins-main">
+            <section class="mi-titlebar ins-titlebar"><h1>Installations</h1><div class="ins-title-actions"><button class="ins-faq" type="button" data-ins-action="FAQs"><img src="assets/icons/notifications/question/size=16px, style=bold.svg" alt="" />FAQs</button><i></i><button class="mi-button ins-add-user" type="button" data-ins-action="Add user to order">Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-order">Installation support</button></div></section>
+            <section class="ins-content">
+              <header class="ins-intro"><h2>Order(s) <span>4</span></h2><p>Monitor the progress of your installation(s).</p></header>
+              <div class="ins-orders">
+                <article class="ins-order ins-order--primary" data-ins-order>
+                  <header class="ins-order-head">
+                    <button class="ins-order-toggle" type="button" data-ins-toggle aria-expanded="false" aria-controls="installation-order-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 9012611245</span></button>
+                    <span class="ins-badge ins-badge--danger"><img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" />Action(s) required</span><span class="ins-badge ins-badge--new">New</span>
+                    <button class="mi-button ins-activity" type="button" data-ins-action="Activity log">Activity log</button>
+                  </header>
+                  <div class="ins-expanded-summary" data-ins-expanded hidden>
+                    <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Order date</strong><span>26 Jun 2025</span></div></div>
+                    <div class="ins-summary-box ins-summary-box--users"><img src="assets/icons/users/profile/size=16px, style=bold.svg" alt="" /><div><strong>Order user(s)</strong><span>alexander.constantine@company...</span></div><em>+4</em></div>
+                  </div>
+                  <div class="ins-action-heading" data-ins-expanded hidden><h3>Action(s) required 3</h3><p>Checklist alerts will remain active until submitted through this page.</p></div>
+                  <div class="ins-action-cards" id="installation-order-details">
+                    <article class="ins-action-card"><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 1</span><img class="ins-checklist-icon" src="assets/icons/installation/CRD/Size=32px, Style=Mono.svg" alt="" /></div><h3>Enter your preferred delivery dates</h3><p>To avoid delays, please enter your preferred delivery dates. Your order cannot proceed until this is complete.</p><button class="mi-button ins-small-button" type="button" data-ins-action="Enter dates">Enter dates</button><small>Not ready? <button type="button" data-ins-action="Let us know">Let us know</button></small></article>
+                    <article class="ins-action-card"><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 2</span><img class="ins-checklist-icon" src="assets/icons/installation/del checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your delivery checklist</h3><p>Submitting your checklist helps us coordinate a hassle-free delivery.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-ins-action="Upload delivery checklist">Upload</button><button class="mi-button ins-small-button ins-download" type="button" data-ins-action="Download delivery template">Download template</button></div></article>
+                    <article class="ins-action-card"><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/installation/preinstall checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your pre-install checklist(s)<br />(5 of 5 remaining)</h3><p>Your completed checklist(s) help us verify site readiness and avoid delaying your installation.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-ins-action="Upload pre-install checklist">Upload</button><button class="mi-button ins-small-button ins-download" type="button" data-ins-action="Download pre-install template">Download template <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div></article>
+                  </div>
+                  <div class="ins-items" data-ins-expanded hidden>
+                    <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-ins-items></tbody></table>
+                    <button class="ins-additional" type="button" data-ins-action="Additional items"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
+                  </div>
+                </article>
+                <article class="ins-order ins-order--secondary"><button class="ins-order-toggle" type="button" aria-expanded="false"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 7659430547</span></button><span class="ins-badge ins-badge--success"><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span></article>
+              </div>
+            </section>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
       </section>
     </template>
 
@@ -501,6 +720,7 @@
     </dialog>
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <script src="platform-sidebar.js?v=20260809-sidebar-default-collapsed"></script>
     <script src="app.js?v=20260809-sidebar-default-collapsed"></script>
   </body>
 </html>

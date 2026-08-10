@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="83.625" height="68.6" viewBox="0 0 83.625 68.6" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group">
+<g id="Vector">
+<path d="M68.8 31.35V48.15C68.8 52.65 66.3 56.65 62.4 58.75L50.1 65.25C46.6 67.05 42.4 67.05 38.9 65.25L26.6 58.75C22.7 56.65 20.2 52.55 20.2 48.15V31.35" fill="#F1F9FF"/>
+<path d="M68.8 31.35V48.15C68.8 52.65 66.3 56.65 62.4 58.75L50.1 65.25C46.6 67.05 42.4 67.05 38.9 65.25L26.6 58.75C22.7 56.65 20.2 52.55 20.2 48.15V31.35" stroke="#005DAA" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round"/>
+</g>
+<g id="Vector_2">
+<path d="M68.8 29.25V44.45L46.4 56.25C45.2 56.85 43.8 56.85 42.7 56.25L20.3 44.45V29.25" fill="#90D1FF"/>
+<path d="M68.8 29.25V44.45L46.4 56.25C45.2 56.85 43.8 56.85 42.7 56.25L20.3 44.45V29.25" stroke="#005DAA" stroke-width="4" stroke-miterlimit="10"/>
+</g>
+<path id="Vector_3" d="M44 42.05L7.8 23.05C7.1 22.65 7.1 21.65 7.8 21.25L44 2.15C44.3 1.95 44.6 1.95 44.9 2.15L81.1 21.25C81.8 21.65 81.8 22.65 81.1 23.05L45 42.05C44.7 42.25 44.3 42.25 44 42.05Z" fill="#F1F9FF" stroke="#005DAA" stroke-width="4" stroke-miterlimit="10"/>
+<path id="Vector_4" d="M44.5 22.15H8.3C7.7 22.15 7.3 22.55 7.3 23.15V47.75" stroke="#005DAA" stroke-width="4" stroke-miterlimit="10"/>
+<path id="Vector_5" d="M2 60.45H12.6V53.05C12.6 50.15 10.2 47.75 7.3 47.75C4.4 47.75 2 50.15 2 53.05V60.45Z" fill="#90D1FF" stroke="#005DAA" stroke-width="4" stroke-miterlimit="10" stroke-linecap="round"/>
+<path id="Vector_6" d="M44.5 24.15C46.433 24.15 48 23.2546 48 22.15C48 21.0454 46.433 20.15 44.5 20.15C42.567 20.15 41 21.0454 41 22.15C41 23.2546 42.567 24.15 44.5 24.15Z" fill="#005DAA"/>
+</g>
+</svg>
