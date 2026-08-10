@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260809-sidebar-default-collapsed" />
+    <link rel="stylesheet" href="styles.css?v=20260810-sidebar-active-color" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -172,11 +172,11 @@
             <div class="spc-shell">
               <header class="spc-topbar">
             <div class="spc-topbar__left">
-              <button class="spc-icon-button spc-menu-button" type="button" aria-label="Open menu">
+              <span class="spc-menu-button" aria-hidden="true">
                 <span></span>
                 <span></span>
                 <span></span>
-              </button>
+              </span>
               <div class="spc-brand" aria-label="Thermo Fisher Scientific">
                 <strong>ThermoFisher</strong>
                 <span>SCIENTIFIC</span>
@@ -193,48 +193,7 @@
             </div>
           </header>
 
-              <aside class="spc-sidebar is-collapsed" data-spc-sidebar aria-label="Services Central navigation">
-                <button class="spc-nav-icon spc-nav-icon--dashboard" type="button" data-route="dashboard" aria-label="Services Central dashboard">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Services Central dashboard</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--instruments" type="button" data-route="my-instruments" aria-label="Instruments">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Instruments</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--add" type="button" data-route="add-instruments" aria-label="Add instruments">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Add instruments</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--installations" type="button" data-route="installations" aria-label="Installations">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Installations</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--tools" type="button" data-route="support-history" aria-label="Support history">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Support history</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--contacts is-active" type="button" data-route="service-plan-contacts" aria-label="Service plan contacts">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Service plan contacts</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--cart" type="button" data-route="consumables" aria-label="Consumables">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Consumables</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--settings" type="button" data-route="notifications" aria-label="Services Central notifications">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Services Central notifications</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--help" type="button" data-open-services-help aria-label="Services Central help">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Services Central help</span>
-                </button>
-                <button class="spc-nav-icon spc-nav-icon--collapse" type="button" data-spc-sidebar-toggle aria-expanded="false" aria-label="Expand navigation">
-                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
-                  <span class="spc-nav-icon__label">Collapse</span>
-                </button>
-              </aside>
+              <div data-platform-sidebar-mount></div>
 
               <main class="spc-main">
             <div class="spc-title-band">
@@ -501,6 +460,7 @@
     </dialog>
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-    <script src="app.js?v=20260809-sidebar-default-collapsed"></script>
+    <script src="platform-sidebar.js?v=20260810-platform-sidebar"></script>
+    <script src="app.js?v=20260810-platform-sidebar"></script>
   </body>
 </html>

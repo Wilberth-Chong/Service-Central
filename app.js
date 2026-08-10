@@ -242,17 +242,17 @@ function observeEditSpcCanvas() {
   spcResizeObserver.observe(canvas);
 }
 
+function mountPlatformSidebar(activeRoute) {
+  window.PlatformSidebar?.mount(app.querySelector("[data-platform-sidebar-mount]"), {
+    activeRoute,
+    collapsed: true,
+  });
+}
+
 function wireEditSpc() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  window.PlatformSidebar?.wire(app);
   wireRouteControls();
-  const sidebar = app.querySelector("[data-spc-sidebar]");
-  const sidebarToggle = app.querySelector("[data-spc-sidebar-toggle]");
-  sidebarToggle.addEventListener("click", () => {
-    const shouldCollapse = !sidebar.classList.contains("is-collapsed");
-    sidebar.classList.toggle("is-collapsed", shouldCollapse);
-    sidebarToggle.setAttribute("aria-expanded", String(!shouldCollapse));
-    sidebarToggle.setAttribute("aria-label", shouldCollapse ? "Expand navigation" : "Collapse navigation");
-  });
   app.querySelectorAll("[data-spc-filter]").forEach((button) => {
     button.addEventListener("click", () => {
       app.querySelectorAll("[data-spc-filter]").forEach((filter) => filter.classList.remove("is-selected"));
@@ -267,6 +267,7 @@ function wireEditSpc() {
 function renderEditSpc() {
   const template = document.querySelector("#edit-spc-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("edit-spc");
   wireEditSpc();
   observeEditSpcCanvas();
   document.title = "Edit service plan contact — Services Central";
