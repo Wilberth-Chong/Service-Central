@@ -200,9 +200,9 @@ function wireDashboard() {
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
-  app.querySelectorAll(".native-dashboard__tabs [role='tab']").forEach((tab) => {
+  app.querySelectorAll(".db-tabs [role='tab']").forEach((tab) => {
     tab.addEventListener("click", () => {
-      app.querySelectorAll(".native-dashboard__tabs [role='tab']").forEach((candidate) => {
+      app.querySelectorAll(".db-tabs [role='tab']").forEach((candidate) => {
         const selected = candidate === tab;
         candidate.classList.toggle("is-active", selected);
         candidate.setAttribute("aria-selected", String(selected));
@@ -216,6 +216,14 @@ function wireDashboard() {
       if (ticketCount) ticketCount.textContent = ticketCounts[tab.dataset.ticketState] || ticketCounts.active;
     });
   });
+  let bannerIndex = 0;
+  const updateBanner = () => {
+    app.querySelectorAll(".db-banner .ai-banner__dots span").forEach((dot, index) => dot.classList.toggle("is-active", index === bannerIndex));
+    app.querySelector(".db-banner .ai-banner__dots")?.setAttribute("aria-label", `Notification ${bannerIndex + 1} of 3`);
+  };
+  app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 2) % 3; updateBanner(); });
+  app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBanner(); });
+  app.querySelector(".db-promo__close")?.addEventListener("click", (event) => event.currentTarget.closest(".db-promo")?.remove());
   wireRouteControls();
 }
 
@@ -273,6 +281,235 @@ function renderEditSpc() {
   document.title = "Edit service plan contact — Services Central";
 }
 
+const MY_INSTRUMENTS = [
+  { image: "vanquish-detector.png", serial: "1009996", nickname: "Detector-2B", users: "3", group: "—", model: "VQF0000DET", coverage: "Under contract", end: "24 Dec 2025", locked: true },
+  { image: "vanquish-column.png", serial: "1009999", nickname: "Column-2B", users: "3", group: "—", model: "VQH0000VEN", coverage: "Coverage expired", end: "24 Dec 2022", locked: true },
+  { image: "vanquish-sampler.png", serial: "1009998", nickname: "Sampler-2B", users: "3", group: "—", model: "VQF00SAMPL", coverage: "Coverage expired", end: "24 Dec 2022", locked: true },
+  { image: "vanquish-pump.png", serial: "1009997", nickname: "Pump-2B", users: "3", group: "—", model: "VQF000PUMP", coverage: "Coverage expired", end: "29 Dec 2022", locked: true },
+  { image: "tsq.png", serial: "TSQ-Z-12346", nickname: "TSQ-0", users: "3", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Expiring soon", end: "29 Mar 2024", locked: true },
+  { image: "tsq.png", serial: "TSQ-Z-12347", nickname: "TSQ-1", users: "4", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Coverage expired", end: "29 Mar 2023" },
+  { image: "tsq.png", serial: "TSQ-Z-12348", nickname: "TSQ-2", users: "5", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2025" },
+  { image: "tsq.png", serial: "TSQ-Z-12349", nickname: "TSQ-3", users: "2", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Expiring soon", end: "29 Mar 2024" },
+  { image: "q-exactive.png", serial: "SN98355W", nickname: "QEXACTIVE_30", users: "4", group: "—", model: "QEXAC00001", coverage: "Under contract", end: "28 Apr 2025" },
+  { image: "q-exactive.png", serial: "SN98356W", nickname: "QEXACTIVE_31", users: "2", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
+  { image: "q-exactive.png", serial: "SN98358W", nickname: "QEXACTIVE_32", users: "4", group: "Department of Medical Affairs", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
+  { image: "q-exactive.png", serial: "SN98359W", nickname: "QEXACTIVE_33", users: "2", group: "Department of Medical Affairs", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
+  { image: "q-exactive.png", serial: "SN98360W", nickname: "—", users: "3", group: "—", model: "QEXAC00001", coverage: "Under contract", end: "28 Apr 2025", locked: true },
+  { image: "q-exactive.png", serial: "SN98361W", nickname: "—", users: "3", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
+  { image: "q-exactive.png", serial: "SN98362W", nickname: "—", users: "3", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
+];
+
+function instrumentRowMarkup(instrument) {
+  const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
+  return `<tr data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+    <td><input type="checkbox" data-mi-checkbox aria-label="Select ${instrument.serial}" /></td>
+    <td><button class="mi-favorite" type="button" aria-label="Add ${instrument.serial} to favorites" aria-pressed="false"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button></td>
+    <td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td>
+    <td>${instrument.locked ? '<img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" />' : ""}</td>
+    <td><button class="mi-link" type="button" data-route="instrument-access">${instrument.serial}</button></td>
+    <td><span class="mi-ellipsis">${instrument.nickname}</span></td>
+    <td><button class="mi-link mi-link--center" type="button" data-mi-toast="Users opened">${instrument.users}</button></td>
+    <td>${instrument.group === "—" ? '<span class="mi-ellipsis">—</span>' : `<button class="mi-link mi-ellipsis" type="button" data-mi-toast="Group opened">${instrument.group}</button>`}</td>
+    <td><span class="mi-ellipsis">${instrument.model}</span></td>
+    <td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td>
+    <td>${instrument.end}</td>
+    <td><button class="mi-more" type="button" data-mi-toast="Instrument actions opened" aria-label="Actions for ${instrument.serial}"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></td>
+  </tr>`;
+}
+
+function wireMyInstruments() {
+  const rowsContainer = app.querySelector("[data-mi-rows]");
+  rowsContainer.innerHTML = MY_INSTRUMENTS.map(instrumentRowMarkup).join("");
+  const updateCount = () => {
+    const visible = [...app.querySelectorAll("[data-mi-row]")].filter((row) => !row.hidden).length;
+    app.querySelector("[data-mi-count]").textContent = String(visible);
+  };
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelector("[data-mi-search]").addEventListener("input", (event) => {
+    const query = event.currentTarget.value.trim().toLowerCase();
+    app.querySelectorAll("[data-mi-row]").forEach((row) => {
+      row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query);
+    });
+    updateCount();
+  });
+  app.querySelector("[data-mi-select-all]").addEventListener("change", (event) => {
+    app.querySelectorAll("[data-mi-checkbox]").forEach((checkbox) => { checkbox.checked = event.currentTarget.checked; });
+  });
+  app.querySelectorAll(".mi-favorite").forEach((button) => {
+    button.addEventListener("click", () => {
+      const pressed = button.getAttribute("aria-pressed") !== "true";
+      button.setAttribute("aria-pressed", String(pressed));
+    });
+  });
+  app.querySelectorAll(".mi-tabs [role='tab']").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      app.querySelectorAll(".mi-tabs [role='tab']").forEach((candidate) => {
+        const selected = candidate === tab;
+        candidate.classList.toggle("is-active", selected);
+        candidate.setAttribute("aria-selected", String(selected));
+      });
+      if (!tab.textContent.trim().startsWith("My Instruments")) showToast(`${tab.textContent.trim()} selected`);
+    });
+  });
+  app.querySelectorAll(".mi-view-toggle button").forEach((button) => {
+    button.addEventListener("click", () => {
+      app.querySelectorAll(".mi-view-toggle button").forEach((candidate) => candidate.classList.toggle("is-selected", candidate === button));
+      showToast(`${button.getAttribute("aria-label")} selected`);
+    });
+  });
+  app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  wireRouteControls();
+}
+
+function renderMyInstruments() {
+  const template = document.querySelector("#my-instruments-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  wireMyInstruments();
+  document.title = "My instruments — Services Central";
+}
+
+function addInstrumentEntryRows(count = 1) {
+  const container = app.querySelector("[data-ai-rows]");
+  const startIndex = container.children.length;
+  const fragment = document.createDocumentFragment();
+  for (let offset = 0; offset < count; offset += 1) {
+    const rowNumber = startIndex + offset + 1;
+    const row = document.createElement("div");
+    row.className = "ai-entry-row";
+    row.innerHTML = `<label><span class="sr-only">Serial number ${rowNumber}</span><input type="text" data-ai-serial autocomplete="off" /></label><label><span class="sr-only">Nickname ${rowNumber}</span><input type="text" data-ai-nickname placeholder="Example Asset ID or Instrument name" autocomplete="off" /></label><button type="button" data-ai-remove aria-label="Remove instrument row ${rowNumber}"><img src="assets/icons/actions/bin/size=24px, style=mono.svg" alt="" /></button>`;
+    fragment.append(row);
+  }
+  container.append(fragment);
+}
+
+function updateAddInstrumentsContinueState() {
+  const hasSerial = [...app.querySelectorAll("[data-ai-serial]")].some((input) => input.value.trim() !== "");
+  const continueButton = app.querySelector("[data-ai-continue]");
+  continueButton.disabled = !hasSerial;
+}
+
+function wireAddInstruments() {
+  addInstrumentEntryRows(5);
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("my-instruments"));
+  const rows = app.querySelector("[data-ai-rows]");
+  rows.addEventListener("input", updateAddInstrumentsContinueState);
+  rows.addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-ai-remove]");
+    if (!removeButton) return;
+    removeButton.closest(".ai-entry-row").remove();
+    if (!rows.children.length) addInstrumentEntryRows(1);
+    updateAddInstrumentsContinueState();
+  });
+  rows.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    const currentRow = event.target.closest(".ai-entry-row");
+    if (currentRow !== rows.lastElementChild) return;
+    event.preventDefault();
+    addInstrumentEntryRows(1);
+    rows.lastElementChild.querySelector("input").focus();
+  });
+  app.querySelector("[data-ai-add-rows]").addEventListener("click", () => addInstrumentEntryRows(5));
+  app.querySelector("[data-ai-clear]").addEventListener("click", () => {
+    app.querySelectorAll("[data-ai-rows] input").forEach((input) => { input.value = ""; });
+    updateAddInstrumentsContinueState();
+  });
+  app.querySelector("[data-ai-continue]").addEventListener("click", () => setRoute("instrument-access"));
+
+  app.querySelectorAll("[data-ai-mode]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const mode = tab.dataset.aiMode;
+      app.querySelectorAll("[data-ai-mode]").forEach((candidate) => {
+        const selected = candidate === tab;
+        candidate.classList.toggle("is-active", selected);
+        candidate.setAttribute("aria-selected", String(selected));
+      });
+      app.querySelectorAll("[data-ai-panel]").forEach((panel) => { panel.hidden = panel.dataset.aiPanel !== mode; });
+    });
+  });
+  app.querySelector("[data-ai-file]").addEventListener("change", (event) => {
+    app.querySelector("[data-ai-bulk-continue]").disabled = !event.currentTarget.files.length;
+  });
+  app.querySelector("[data-ai-bulk-continue]").addEventListener("click", () => showToast("Instrument file ready for review"));
+  app.querySelector("[data-ai-template]").addEventListener("click", () => showToast("Instrument upload template downloaded"));
+
+  let bannerIndex = 0;
+  const updateBannerDots = () => {
+    app.querySelectorAll(".ai-banner__dots span").forEach((dot, index) => dot.classList.toggle("is-active", index === bannerIndex));
+    app.querySelector(".ai-banner__dots").setAttribute("aria-label", `Suggestion ${bannerIndex + 1} of 3`);
+  };
+  app.querySelector("[data-ai-banner-prev]").addEventListener("click", () => { bannerIndex = (bannerIndex + 2) % 3; updateBannerDots(); });
+  app.querySelector("[data-ai-banner-next]").addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBannerDots(); });
+
+  const supportedDialog = app.querySelector("[data-ai-supported-dialog]");
+  app.querySelectorAll("[data-ai-supported]").forEach((button) => button.addEventListener("click", () => supportedDialog.showModal()));
+  app.querySelectorAll("[data-ai-supported-close]").forEach((button) => button.addEventListener("click", () => supportedDialog.close()));
+  supportedDialog.addEventListener("click", (event) => { if (event.target === supportedDialog) supportedDialog.close(); });
+  wireRouteControls();
+}
+
+function renderAddInstruments() {
+  const template = document.querySelector("#add-instruments-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  wireAddInstruments();
+  document.title = "Add instruments — Services Central";
+}
+
+const INSTALLATION_ITEMS = [
+  ["10", "1", "vanquish-pump.png", "VN-P10-A-01", "Vanquish binary pump N"],
+  ["10", "1", "vanquish-pump.png", "VN-P10-A-01", "Vanquish binary pump N"],
+  ["11", "1", "vanquish-sampler.png", "6252.1940", "Vanquish split sampler NT"],
+  ["11", "1", "vanquish-sampler.png", "6252.1940", "Vanquish split sampler NT"],
+  ["13", "1", "vanquish-column.png", "VN-C10-A-01", "Vanquish column compartment N"],
+  ["13", "1", "vanquish-column.png", "VN-C10-A-01", "Vanquish column compartment N"],
+  ["14", "1", "tsq.png", "BRE725660", "Astral"],
+  ["17", "1", "vanquish-detector.png", "VC-D50-A-01", "Vanquish fluorescence detector"],
+  ["17", "1", "vanquish-detector.png", "VC-D50-A-01", "Vanquish fluorescence detector"],
+  ["18", "1", "tsq.png", "BRE725660", "Astral"],
+];
+
+function setInstallationExpanded(expanded) {
+  const order = app.querySelector("[data-ins-order]");
+  const toggle = app.querySelector("[data-ins-toggle]");
+  if (!order || !toggle) return;
+  order.classList.toggle("is-expanded", expanded);
+  toggle.setAttribute("aria-expanded", String(expanded));
+  app.querySelectorAll("[data-ins-expanded]").forEach((element) => { element.hidden = !expanded; });
+  const route = expanded ? "installations-expanded" : "installations";
+  window.history.replaceState({}, "", `#${route}`);
+  document.title = expanded ? "Installations — order 9012611245 — Services Central" : "Installations — Services Central";
+}
+
+function wireInstallations(expanded = false) {
+  const tbody = app.querySelector("[data-ins-items]");
+  INSTALLATION_ITEMS.forEach(([item, qty, image, catalog, name]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td title="${name}">${name}</td><td><span class="ins-awaiting">Awaiting action(s)</span></td><td>—</td><td>—</td><td><button class="ins-view" type="button" data-ins-action="View ${catalog}">View</button></td>`;
+    tbody.append(row);
+  });
+  setInstallationExpanded(expanded);
+  app.querySelector("[data-ins-toggle]").addEventListener("click", (event) => setInstallationExpanded(event.currentTarget.getAttribute("aria-expanded") !== "true"));
+  app.querySelector(".ins-order--secondary .ins-order-toggle").addEventListener("click", () => showToast("Order 7659430547 is in progress"));
+  app.querySelectorAll("[data-ins-action]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.insAction} selected`)));
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  wireRouteControls();
+}
+
+function renderInstallations(expanded = false) {
+  const template = document.querySelector("#installations-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  if (window.PlatformSidebar) {
+    window.PlatformSidebar.mount(
+      document.querySelector("[data-platform-sidebar-mount]"),
+      {
+        activeRoute: "installations",
+        collapsed: true,
+      },
+    );
+    window.PlatformSidebar.wire(document);
+  }
+  wireInstallations(expanded);
+}
+
 function renderFlow(route) {
   const screen = ROUTES[route];
   const template = document.querySelector("#flow-template");
@@ -311,6 +548,12 @@ function render() {
     wireDashboard();
   } else if (route === "edit-spc") {
     renderEditSpc();
+  } else if (route === "my-instruments") {
+    renderMyInstruments();
+  } else if (route === "add-instruments") {
+    renderAddInstruments();
+  } else if (route === "installations" || route === "installations-expanded") {
+    renderInstallations(route === "installations-expanded");
   } else {
     renderFlow(route);
   }
