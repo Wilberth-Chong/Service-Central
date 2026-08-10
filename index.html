@@ -86,7 +86,16 @@
     </template>
 
     <template id="dashboard-native-template">
-      <section class="native-dashboard" aria-label="Services Central Dashboard">
+      <section class="screen screen--dashboard" aria-label="Services Central Dashboard">
+        <div class="flow-toolbar">
+          <button type="button" data-back-to-signin>Back</button>
+          <strong>Services Central Dashboard</strong>
+          <div class="flow-toolbar__actions">
+            <button type="button" data-route="dashboard">Dashboard</button>
+            <button type="button" data-open-flows>All flows</button>
+          </div>
+        </div>
+        <div class="native-dashboard">
         <header class="native-dashboard__header komodo-platform-header">
           <button class="native-dashboard__menu" type="button" aria-label="Open menu"><span></span><span></span><span></span></button>
           <div class="native-dashboard__brand"><strong>ThermoFisher</strong><small>SCIENTIFIC</small></div>
@@ -126,6 +135,7 @@
           <section class="native-dashboard__favourites"><div class="native-dashboard__section-title"><h2>My favorite instruments</h2><button data-route="my-instruments">View all my instruments</button></div><div class="native-dashboard__divider"></div><div class="instrument-cards"><article class="instrument-card instrument-card--summary"><span class="instrument-card__tag">LC/MS</span><h3>Alpine</h3><dl><dt>Components</dt><dd>total components</dd><dt>Groups</dt><dd>Department of Medical...</dd><dt>Tickets</dt><dd>16 total support tickets</dd></dl><footer>⌁ <button aria-label="More options">•••</button></footer></article><article class="instrument-card"><div class="instrument-card__machine"></div><p>Serial no.</p><h3>TSQ-Z-12346</h3><small>Triple Quadrupole LC-MS</small><dl><dt>Nickname</dt><dd>TSQ-0</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>LC</dd><dt>Groups</dt><dd>—</dd></dl><span class="coverage">Under contract</span><footer><button data-route="request-support">⌁&nbsp; Request support</button><button aria-label="More options">•••</button></footer></article><article class="instrument-card"><div class="instrument-card__machine"></div><p>Serial no.</p><h3>TSQ-Z-12347</h3><small>Triple Quadrupole LC-MS</small><dl><dt>Nickname</dt><dd>TSQ-1</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Cold Chromatograph</dd><dt>Groups</dt><dd>—</dd></dl><span class="coverage">Under contract</span><footer><button data-route="request-support">⌁&nbsp; Request support</button><button aria-label="More options">•••</button></footer></article><article class="instrument-card"><div class="instrument-card__machine"></div><p>Serial no.</p><h3>TSQ-Z-12348</h3><small>Triple Quadrupole LC-MS</small><dl><dt>Nickname</dt><dd>TSQ-2</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Mass Spec Life Science</dd><dt>Groups</dt><dd>—</dd></dl><span class="coverage">Under contract</span><footer><button data-route="request-support">⌁&nbsp; Request support</button><button aria-label="More options">•••</button></footer></article></div></section>
         </main>
         <footer class="native-dashboard__footer">© 2025 - Thermo Fisher Scientific <a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div>
       </section>
     </template>
 

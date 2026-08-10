@@ -33,7 +33,7 @@ button {
   min-height: 100vh;
 }
 
-.native-dashboard { --blue:#0077c8; --ink:#28282d; --muted:#5c5e65; --line:#d7d9dc; --pale:#edf8ff; min-width:1080px; min-height:100vh; color:var(--ink); background:#fff; font-size:14px; line-height:1.25; }
+.native-dashboard { position:relative; --blue:#0077c8; --ink:#28282d; --muted:#5c5e65; --line:#d7d9dc; --pale:#edf8ff; min-width:1080px; min-height:100vh; color:var(--ink); background:#fff; font-size:14px; line-height:1.25; }
 .native-dashboard button { border:0; color:inherit; background:transparent; cursor:pointer; }
 .native-dashboard button:focus-visible,.native-dashboard input:focus-visible,.native-dashboard select:focus-visible { outline:2px solid #0077c8; outline-offset:2px; }
 .native-dashboard a { color:#0585dc; font-weight:600; text-decoration:none; }
