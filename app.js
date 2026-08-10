@@ -6,6 +6,12 @@ const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
 let toastTimer;
 
+const CUSTOM_ROUTES = {
+  "edit-spc": "Edit service plan contact",
+};
+
+let spcResizeObserver;
+
 const ROUTES = {
   "my-instruments": { title: "My instruments", src: "assets/flows/my-instruments.png", width: 1440, height: 1460, kind: "app" },
   "add-instruments": { title: "Add instruments", src: "assets/flows/add-instruments.png", width: 1440, height: 1460, kind: "app" },
@@ -52,6 +58,7 @@ const FLOW_MENU = [
   ["Installations — order 9012611245 expanded", "installations-expanded"],
   ["Support history", "support-history"],
   ["Service plan contacts", "service-plan-contacts"],
+  ["Edit service plan contact", "edit-spc"],
   ["Request support", "request-support"],
   ["Notification settings", "notifications"],
   ["Consumables", "consumables"],
@@ -94,12 +101,12 @@ function showToast(message) {
 
 function routeFromHash() {
   const route = window.location.hash.replace(/^#\/?/, "");
-  if (route === "dashboard" || route === "signin" || ROUTES[route]) return route;
+  if (route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route]) return route;
   return "signin";
 }
 
 function setRoute(route) {
-  const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] ? route : "signin";
+  const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] ? route : "signin";
   const nextHash = `#${safeRoute}`;
   if (window.location.hash !== nextHash) window.history.pushState({}, "", nextHash);
   render();
@@ -141,6 +148,11 @@ function addScreenSpecificHotspots(canvas, route, screen) {
     installations: [{ label: "Expand order 9012611245", route: "installations-expanded", x: 88, y: 270, w: 1320, h: 72 }],
     "installations-expanded": [{ label: "Collapse order 9012611245", route: "installations", x: 88, y: 270, w: 1320, h: 72 }],
     "support-history": [{ label: "Open support ticket", route: "ticket-detail", x: 88, y: 455, w: 1320, h: 72 }],
+    "service-plan-contacts": [
+      { label: "Edit service plan contact", route: "edit-spc", x: 1168, y: 95, w: 210, h: 40 },
+      { label: "Edit contact for selected instruments", route: "edit-spc", x: 1110, y: 725, w: 116, h: 32 },
+      { label: "Edit contact for instruments with no service plan", route: "edit-spc", x: 1110, y: 765, w: 116, h: 32 },
+    ],
     "request-support": [
       { label: "Open a support ticket", route: "ticket-status-email", x: 730, y: 348, w: 210, h: 50 },
       { label: "Request preventive maintenance", route: "pm-cycle", x: 730, y: 483, w: 210, h: 50 },
@@ -181,6 +193,59 @@ function wireDashboard() {
   wireRouteControls();
 }
 
+function disconnectEditSpcCanvas() {
+  if (spcResizeObserver) {
+    spcResizeObserver.disconnect();
+    spcResizeObserver = undefined;
+  }
+}
+
+function syncEditSpcCanvas() {
+  const canvas = app.querySelector(".flow-canvas--spc");
+  const shell = app.querySelector(".spc-shell");
+  if (!canvas || !shell) return;
+  shell.style.setProperty("--spc-scale", canvas.clientWidth / 1440);
+}
+
+function observeEditSpcCanvas() {
+  disconnectEditSpcCanvas();
+  const canvas = app.querySelector(".flow-canvas--spc");
+  if (!canvas) return;
+  syncEditSpcCanvas();
+  spcResizeObserver = new ResizeObserver(syncEditSpcCanvas);
+  spcResizeObserver.observe(canvas);
+}
+
+function wireEditSpc() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  wireRouteControls();
+  const sidebar = app.querySelector("[data-spc-sidebar]");
+  const sidebarToggle = app.querySelector("[data-spc-sidebar-toggle]");
+  sidebarToggle.addEventListener("click", () => {
+    const shouldCollapse = !sidebar.classList.contains("is-collapsed");
+    sidebar.classList.toggle("is-collapsed", shouldCollapse);
+    sidebarToggle.setAttribute("aria-expanded", String(!shouldCollapse));
+    sidebarToggle.setAttribute("aria-label", shouldCollapse ? "Expand navigation" : "Collapse navigation");
+  });
+  app.querySelectorAll("[data-spc-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      app.querySelectorAll("[data-spc-filter]").forEach((filter) => filter.classList.remove("is-selected"));
+      button.classList.add("is-selected");
+    });
+  });
+  app.querySelector("[data-spc-continue]").addEventListener("click", () => {
+    showToast("Continue to contact details");
+  });
+}
+
+function renderEditSpc() {
+  const template = document.querySelector("#edit-spc-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  wireEditSpc();
+  observeEditSpcCanvas();
+  document.title = "Edit service plan contact — Services Central";
+}
+
 function renderFlow(route) {
   const screen = ROUTES[route];
   const template = document.querySelector("#flow-template");
@@ -205,6 +270,7 @@ function renderFlow(route) {
 }
 
 function render() {
+  disconnectEditSpcCanvas();
   const route = routeFromHash();
   if (route === "signin") {
     const template = document.querySelector("#sign-in-template");
@@ -216,6 +282,8 @@ function render() {
     app.replaceChildren(template.content.cloneNode(true));
     document.title = "Services Central Dashboard";
     wireDashboard();
+  } else if (route === "edit-spc") {
+    renderEditSpc();
   } else {
     renderFlow(route);
   }
