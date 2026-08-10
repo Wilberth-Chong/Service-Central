@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260810-spc-main-viewport-scroll" />
+    <link rel="stylesheet" href="styles.css?v=20260810-reusable-services-help" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -314,6 +314,139 @@
             <dialog class="ai-supported-dialog" data-ai-supported-dialog aria-labelledby="supported-dialog-title"><button type="button" data-ai-supported-close aria-label="Close supported instruments"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button><h2 id="supported-dialog-title">Supported instruments</h2><p>Services Central supports eligible Thermo Fisher Scientific instrument families installed in supported regions on or after 01 January 2010.</p><button class="mi-button" type="button" data-ai-supported-close>Close</button></dialog>
           </div>
         </div>
+      </section>
+    </template>
+
+    <template id="support-history-native-template">
+      <section class="screen screen--support-history" aria-label="Support request history">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Support request history</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell sh-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main sh-main">
+            <section class="mi-titlebar sh-titlebar"><h1>Support request history</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
+            <section class="sh-content" aria-labelledby="sh-ticket-heading">
+              <div class="sh-top">
+                <h2 id="sh-ticket-heading">Support request tickets <span data-sh-count>100</span></h2>
+                <label class="sh-search"><strong>Search</strong><span><input type="search" data-sh-search placeholder="Search by serial number, nickname, ticket number, or subject" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></span></label>
+                <div class="sh-date"><strong>Date range</strong><button type="button" data-sh-date aria-haspopup="dialog"><span>Select a date range</span><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /></button></div>
+                <button class="mi-button sh-edit-columns" type="button" data-sh-edit-columns>Edit columns</button>
+              </div>
+              <div class="sh-table-wrap"><table class="sh-table"><colgroup><col class="sh-col-icon" /><col class="sh-col-status" /><col class="sh-col-ticket" /><col class="sh-col-type" /><col class="sh-col-subject" /><col class="sh-col-serial" /><col class="sh-col-model" /><col class="sh-col-nickname" /><col class="sh-col-groups" /><col class="sh-col-contact" /><col class="sh-col-created" /><col class="sh-col-closed" /></colgroup><thead><tr>
+                <th aria-label="Ticket indicator"></th>
+                <th><label class="sh-header-select"><span class="sr-only">Filter by status</span><select data-sh-status><option value="all">Status</option><option value="Open">Open</option><option value="In progress">In progress</option><option value="Closed">Closed</option></select></label></th>
+                <th><button type="button" data-sh-sort="ticket">Ticket no.<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Ticket type">Ticket t...<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><button type="button" data-sh-sort="subject">Subject<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+                <th><button type="button" data-sh-sort="serial">Serial no.<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Model">Model<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><button type="button" data-sh-sort="nickname">Nickname<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Groups">Groups<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Contact">Contact<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><button type="button" data-sh-sort="created">Created<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+                <th><button type="button" data-sh-sort="closed">Closed<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+              </tr></thead><tbody data-sh-rows></tbody></table></div>
+            </section>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="service-plan-contacts-native-template">
+      <section class="screen screen--service-plan-contacts" aria-label="Service plan contacts">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Service plan contacts</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell splan-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main splan-main">
+            <section class="splan-top">
+              <div class="splan-heading"><div><h1>Service plan contacts</h1><p>Tell us who to contact for any service plan notifications or to renew your plan.</p></div><button class="mi-button mi-button--primary splan-primary" type="button" data-route="edit-spc">Edit service plan contact</button></div>
+              <div class="splan-contact-grid">
+                <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-splan-action="Molly Hartman">Molly Hartman</button><span>molly_hartman@companyname.com</span></div></div><p>Service plan contact for 10 instruments</p><footer><button type="button" data-route="edit-spc"><img src="assets/icons/actions/edit alt/Size=16px, Style=Mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Molly Hartman menu" aria-label="More options for Molly Hartman"><img src="assets/icons/actions/more horizontal/size=24px, style=mono.svg" alt="" /></button></footer></article>
+                <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-splan-action="Sebastien Martin">Sebastien Martin</button><span>sebastien_martin@companyname.com</span></div></div><p>Service plan contact for 5 instruments</p><footer><button type="button" data-route="edit-spc"><img src="assets/icons/actions/edit alt/Size=16px, Style=Mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Sebastien Martin menu" aria-label="More options for Sebastien Martin"><img src="assets/icons/actions/more horizontal/size=24px, style=mono.svg" alt="" /></button></footer></article>
+              </div>
+            </section>
+            <section class="splan-content">
+              <section class="splan-group is-collapsed" data-splan-group>
+                <button class="splan-group__toggle" type="button" data-splan-toggle aria-expanded="false"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>15 out of 29 instruments with a service plan contact</strong><small>Select instrument(s), then click the red <b>Edit service plan contact</b> button to update.</small></span></button>
+              </section>
+              <section class="splan-group is-expanded" data-splan-group>
+                <button class="splan-group__toggle" type="button" data-splan-toggle aria-expanded="true"><img src="assets/icons/directions/chevron down/size=24px, style=mono.svg" alt="" /><span><strong>14 out of 29 instruments without a service plan contact</strong><small>Select instrument(s), then click the red <b>Edit service plan contact</b> button to update.</small></span></button>
+                <div class="splan-group__body" data-splan-body>
+                  <button class="splan-select-all" type="button" data-splan-select-all>Select all 14 instruments</button>
+                  <table class="splan-table"><colgroup><col class="splan-col-check" /><col class="splan-col-chevron" /><col class="splan-col-coverage" /><col class="splan-col-kind" /><col class="splan-col-image" /><col class="splan-col-serial" /><col class="splan-col-nickname" /><col class="splan-col-action" /></colgroup><thead><tr><th></th><th></th><th>Coverage</th><th></th><th></th><th>Serial number</th><th>Nickname</th><th>Action</th></tr></thead><tbody>
+                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select Essential Service Plan" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Essential Service Plan - 0040111111</strong></td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select instruments with no service plan" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Instruments with no service plan</strong></td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--system"><td><input type="checkbox" aria-label="Select System" data-splan-check /></td><td></td><td>—</td><td><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /><img src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="" /></td><td></td><td><button type="button" data-splan-action="System">System</button></td><td>Apline</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-splan-action="1009996">1009996</button></td><td>Detector-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-splan-action="1009999">1009999</button></td><td>Column-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-splan-action="1009998">1009998</button></td><td>Sampler-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-splan-action="1009997">1009997</button></td><td>Pump-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child splan-row--last"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-splan-action="TSQ-Z-12346">TSQ-Z-12346</button></td><td>TSQ-0</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr><td><input type="checkbox" aria-label="Select TSQ-Z-12347" data-splan-check /></td><td></td><td><span class="splan-status splan-status--bad">Coverage expired</span></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-splan-action="TSQ-Z-12347">TSQ-Z-12347</button></td><td>TSQ-1</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                  </tbody></table>
+                </div>
+              </section>
+            </section>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="notifications-native-template">
+      <section class="screen screen--notification-settings" aria-label="Notification settings">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Notification settings</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="ns-shell">
+          <header class="ns-header"><div class="ns-header__left"><button type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="ns-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span>Connect Platform</span><strong>Notification Settings</strong></div><div class="ns-header__right"><button type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /></button><button class="ns-profile" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /><em>2</em></button><button type="button" aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <main class="ns-main">
+            <section class="ns-titlebar"><h1>Notification settings</h1></section>
+            <div class="ns-global"><div><strong>Email Notifications</strong><span data-ns-global-copy>All email notifications turned on.</span></div><button class="ns-switch" type="button" role="switch" aria-checked="true" data-ns-global aria-label="All email notifications"><span></span></button></div>
+            <nav class="ns-tabs is-services" role="tablist" aria-label="Notification settings sections"><button id="ns-connected-tab" type="button" role="tab" data-ns-tab="connected" aria-controls="ns-connected-panel" aria-selected="false">Connected Instruments</button><button id="ns-services-tab" class="is-active" type="button" role="tab" data-ns-tab="services" aria-controls="ns-services-panel" aria-selected="true">Services Central</button><button type="button" role="tab" data-ns-tab="edge" aria-selected="false">Edge Management</button></nav>
+            <section id="ns-connected-panel" class="ns-connected" role="tabpanel" aria-labelledby="ns-connected-tab" data-ns-panel="connected" hidden><img src="assets/notifications/connected-instruments.png" alt="Connected instrument notification settings for Freezer, Incubator, Refrigerator, Sensors, and ULT" /><div class="ns-connected-hotspots" aria-label="Connected instrument controls"><button type="button" data-ns-connected="Freezer" aria-label="Freezer notification settings"></button><button type="button" data-ns-connected="Incubator" aria-label="Incubator notification settings"></button><button type="button" data-ns-connected="Refrigerator" aria-label="Refrigerator notification settings"></button><button type="button" data-ns-connected="Sensors" aria-label="Sensors notification settings"></button><button type="button" data-ns-connected="ULT" aria-label="ULT notification settings"></button><button type="button" data-ns-connected="Web delivery" aria-label="Toggle web notifications"></button><button type="button" data-ns-connected="Email delivery" aria-label="Toggle email notifications"></button><button type="button" data-ns-connected="Mobile delivery" aria-label="Toggle mobile notifications"></button><button type="button" data-ns-connected="Alarms" aria-label="Toggle alarm notifications"></button></div></section>
+            <section id="ns-services-panel" class="ns-services" role="tabpanel" aria-labelledby="ns-services-tab" data-ns-panel="services"><div class="ns-services__top"><h2>Services Central notifications</h2><p>Manage Services Central notifications you receive by email. Service ticket contacts will receive certain emails<br />from our service team instead of from Service Central.</p><div class="ns-master-row"><img src="assets/icons/features/email/Size=24px, Style=Mono.svg" alt="" /><span>All Services Central email notifications</span><button class="ns-switch" type="button" role="switch" aria-checked="true" data-ns-master aria-label="All Services Central email notifications"><span></span></button></div></div><section class="ns-individual"><h3>Individual Services Central email notifications</h3><div data-ns-list></div></section></section>
+          </main>
+          <footer class="ns-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="consumables-native-template">
+      <section class="screen screen--consumables" aria-label="Consumables">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Consumables</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell cons-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main cons-main">
+            <section class="mi-titlebar cons-titlebar"><h1>Consumables</h1></section>
+            <section class="cons-quick-order"><div class="cons-spot cons-spot--cart"><img src="assets/consumables/cart.svg" alt="" /></div><div><h2>Already know the consumables you need?</h2><p>Just order your product by entering the catalog number.</p></div><button class="mi-button" type="button" data-cons-action="Quick order">Quick order</button></section>
+            <div class="cons-body">
+              <section class="cons-columns"><header class="cons-section-heading"><h2>LC/GC columns and more</h2><p>Use our selection guides to pick the right LC/GC consumables.</p></header>
+                <article class="cons-promo"><div><h3>Save 35% on your next reversed phase column</h3><strong>Save now on your next C18, phenyl or other reversed phase column.</strong><small>Promo expires 29 Mar 2024. Applicable for online orders on analytical columns.</small></div><aside><b>Promo code: <button type="button" data-cons-action="Promo code XXX35">XXX35 <img src="assets/icons/actions/link/Size=16px, Style=Mono.svg" alt="" /></button></b><span>Promo code must be applied<br />at checkout</span></aside></article>
+                <div class="cons-guide-grid">
+                  <article class="cons-guide-card"><div class="cons-spot cons-spot--lc"><img src="assets/consumables/lc-columns-1.svg" alt="" /><img src="assets/consumables/lc-columns-2.svg" alt="" /><img src="assets/consumables/lc-columns-3.svg" alt="" /><img src="assets/consumables/lc-columns-4.svg" alt="" /><img src="assets/consumables/lc-columns-5.svg" alt="" /></div><div><h3>LC columns</h3><p>Finding the correct LC column can be a challenge. This guide will take you directly to the right product for you.</p></div><button class="mi-button" type="button" data-cons-action="LC columns guide">Go to guide</button></article>
+                  <article class="cons-guide-card"><div class="cons-spot cons-spot--prep"><img src="assets/consumables/sample-prep-1.svg" alt="" /><img src="assets/consumables/sample-prep-2.svg" alt="" /></div><div><h3>Sample preparation</h3><p>Discover the right sample preparation technique and find a general starting method.</p></div><button class="mi-button" type="button" data-cons-action="Sample preparation guide">Go to guide</button></article>
+                  <article class="cons-guide-card"><div class="cons-spot cons-spot--gc"><img src="assets/consumables/gc-columns.svg" alt="" /></div><div><h3>GC columns</h3><p>Find the correct GC column as well as GC accessories. This guide will take you to the right solution for you.</p></div><button class="mi-button" type="button" data-cons-action="GC columns guide">Go to guide</button></article>
+                  <article class="cons-guide-card"><div class="cons-spot cons-spot--vials"><img src="assets/consumables/vials-1.svg" alt="" /><img src="assets/consumables/vials-2.svg" alt="" /><img src="assets/consumables/vials-3.svg" alt="" /><img src="assets/consumables/vials-4.svg" alt="" /></div><div><h3>Sample handling</h3><p>Find the perfect sample handling solution for your application in only a few clicks.</p></div><button class="mi-button" type="button" data-cons-action="Sample handling guide">Go to guide</button></article>
+                  <article class="cons-help"><div class="cons-spot cons-spot--support"><img src="assets/consumables/support-1.svg" alt="" /><img src="assets/consumables/support-2.svg" alt="" /><img src="assets/consumables/support-3.svg" alt="" /><img src="assets/consumables/support-4.svg" alt="" /></div><div><h3>Get help with Chromatography Consumables</h3><p>The consumables support team is here to help you with your consumables order or consumables support questions. Use the buttons below to submit a new consumable support request or view an open request.</p><div><button class="mi-button" type="button" data-route="request-support">Submit a request</button><button class="mi-button cons-secondary" type="button" data-route="support-history">View open request</button></div></div></article>
+                </div>
+              </section>
+              <section class="cons-chemicals"><header><img src="assets/consumables/chemicals-banner.png" alt="" /><div><h2>Chemicals</h2><p>Deliver the results you need, with our broad range of chemicals. Find the right chemical,<br />at the right grade/quality for your applications. Supporting your chemical needs: from<br />bench to production.</p></div></header>
+                <div class="cons-chemical-content"><article class="cons-chemical-promo"><div><h3>Maintain your lab running smoothly. Save 25% on <strong>organic<br />synthesis chemicals</strong></h3><b>Keep your stock on silica gel and deuterated solvents for smooth purification and characterization.</b><small>Promo expires 31 Jul 2024. Select one or more products and enter the code when placing your order. <button type="button" data-cons-action="Terms and conditions">See terms and conditions.</button></small></div><aside><b>Promo code: <button type="button" data-cons-action="Promo code P5378666">P5378666 <img src="assets/icons/actions/link/Size=16px, Style=Mono.svg" alt="" /></button></b><span>Discount until 31 Jul 2024 or<br />while supplies last.</span></aside></article>
+                  <div class="cons-chemical-grid">
+                    <article><h3>Chromatography and mass spectrometry</h3><p>A comprehensive range of solvents, reagents, buffers, and kits for all your GC, LC, UHPLC, IC and MS needs. Find the right chemical grade to support your chromatography and mass spectrometry analyses.</p></article>
+                    <article><h3>Analytical grade</h3><p>Our ACS grade solvents are manufactured under specific quality control parameters set by The Committee on Analytical Reagents. These solvents are popular in research laboratories, in academic and industrial settings.</p></article>
+                    <article><h3>Life science</h3><p>Life Science chemicals include reagents and biochemicals used to support academic and biotechnical research. These chemicals are used for many life science research areas, including genomic and proteomic analysis, cell culture, molecular biology, and imaging.</p></article>
+                    <article><h3>Molecular biology</h3><p>Molecular biology grade chemicals are ideal to use for the purification and concentration of biomolecules, such as nucleic acid and proteins. These solutions are specifically tested for DNase, RNase and Protease to verify the absence of hydrolytic enzymes.</p></article>
+                    <article><h3>Technical grade</h3><p>Use as a cost-effective solution for general laboratory processes, such as glassware cleaning. Suitable for educational applications, and not recommended for food, drug, or medicinal use.</p></article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
       </section>
     </template>
 
@@ -656,30 +789,42 @@
       <div class="flows-grid" data-flows-grid></div>
     </dialog>
 
-    <dialog id="services-help-dialog" class="services-help-dialog" aria-label="Get help with Services Central">
-      <div class="services-help-canvas">
-        <img
-          src="assets/flows/get-help-modal.png"
-          alt="Get help with Services Central: Contact us, Online help, and Tours"
-          width="953"
-          height="499"
-          draggable="false"
-        />
-        <button class="hotspot services-help-close" type="button" data-close-services-help aria-label="Close get help"></button>
-        <button class="hotspot services-help-email" type="button" aria-label="Email Services Central support"></button>
-        <a
-          class="hotspot services-help-guide"
-          href="https://apps.thermofisher.com/apps/csc/assets/services-central-help/GUID-55B094A3-8F4D-4DB6-9260-6D7B2F4301B2.html"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Read help guide"
-        ></a>
-        <button class="hotspot services-help-tours" type="button" aria-label="See tours"></button>
+    <dialog id="services-help-dialog" class="services-help-dialog" aria-labelledby="services-help-title">
+      <div class="services-help-modal__surface">
+        <header class="services-help-modal__header">
+          <h2 id="services-help-title">Get help with Services Central</h2>
+          <button class="services-help-modal__close" type="button" data-close-services-help aria-label="Close get help">
+            <img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" />
+          </button>
+        </header>
+        <div class="services-help-modal__cards">
+          <article class="services-help-card">
+            <img class="services-help-card__icon" src="assets/icons/features/email/Size=32px, Style=Mono.svg" alt="" />
+            <div class="services-help-card__content">
+              <div><h3>Contact us</h3><p>If you have any trouble using the Services Central platform, feel free to contact us for general assistance.</p></div>
+              <button class="services-help-card__action" type="button" data-services-help-action="email">Email us</button>
+            </div>
+          </article>
+          <article class="services-help-card">
+            <img class="services-help-card__icon" src="assets/icons/features/resources/size=32px, style=mono.svg" alt="" />
+            <div class="services-help-card__content">
+              <div><h3>Online help</h3><p>If you are looking for instructions on how to use the Services Central platform, read our online help.</p></div>
+              <a class="services-help-card__action" href="https://apps.thermofisher.com/apps/csc/assets/services-central-help/GUID-55B094A3-8F4D-4DB6-9260-6D7B2F4301B2.html" target="_blank" rel="noreferrer">Read help guide</a>
+            </div>
+          </article>
+          <article class="services-help-card">
+            <img class="services-help-card__icon" src="assets/icons/actions/search/size=32px, style=mono.svg" alt="" />
+            <div class="services-help-card__content">
+              <div><h3>Tours</h3><p>Explore our guided tours and tutorials to easily learn about key features and workflows.</p></div>
+              <button class="services-help-card__action" type="button" data-services-help-action="tours">See tours</button>
+            </div>
+          </article>
+        </div>
       </div>
     </dialog>
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <script src="platform-sidebar.js?v=20260809-sidebar-default-collapsed"></script>
-    <script src="app.js?v=20260809-sidebar-default-collapsed"></script>
+    <script src="app.js?v=20260810-reusable-services-help-v2"></script>
   </body>
 </html>
