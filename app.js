@@ -20,6 +20,7 @@ const ROUTES = {
   "support-history": { title: "Support request history", src: "assets/flows/support-history.png", width: 1440, height: 1460, kind: "app" },
   "service-plan-contacts": { title: "Service plan contacts", src: "assets/flows/service-plan-contacts.png", width: 1440, height: 1800, kind: "app" },
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
+  "instrument-support-selection": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
   education: { title: "Browse education", src: "assets/flows/education.png", width: 1440, height: 1460, kind: "external" },
@@ -143,9 +144,12 @@ function addScreenSpecificHotspots(canvas, route, screen) {
   if (screen.cta) addHotspot(canvas, screen, screen.cta, "flow-cta");
 
   const extras = {
-    "my-instruments": [{ label: "Open instrument", route: "instrument-access", x: 88, y: 408, w: 1320, h: 120 }],
+    "my-instruments": [
+      { label: "Start a request", route: "request-support", x: 1229, y: 94, w: 178, h: 29 },
+      { label: "Open instrument", route: "instrument-access", x: 88, y: 408, w: 1320, h: 120 },
+    ],
     "add-instruments": [{ label: "Continue adding instruments", route: "instrument-access", x: 810, y: 1052, w: 150, h: 48 }],
-    installations: [{ label: "Expand order 9012611245", route: "installations-expanded", x: 88, y: 270, w: 1320, h: 72 }],
+    "installations": [{ label: "Expand order 9012611245", route: "installations-expanded", x: 88, y: 270, w: 1320, h: 72 }],
     "installations-expanded": [{ label: "Collapse order 9012611245", route: "installations", x: 88, y: 270, w: 1320, h: 72 }],
     "support-history": [{ label: "Open support ticket", route: "ticket-detail", x: 88, y: 455, w: 1320, h: 72 }],
     "service-plan-contacts": [
@@ -154,12 +158,15 @@ function addScreenSpecificHotspots(canvas, route, screen) {
       { label: "Edit contact for instruments with no service plan", route: "edit-spc", x: 1110, y: 765, w: 116, h: 32 },
     ],
     "request-support": [
-      { label: "Open a support ticket", route: "ticket-status-email", x: 730, y: 348, w: 210, h: 50 },
+      { label: "Open a support ticket", route: "instrument-support-selection", x: 730, y: 348, w: 210, h: 50 },
       { label: "Request preventive maintenance", route: "pm-cycle", x: 730, y: 483, w: 210, h: 50 },
       { label: "Request a service plan", route: "service-plan-approval", x: 730, y: 618, w: 210, h: 50 },
       { label: "Installation support", route: "installation-order", x: 730, y: 888, w: 210, h: 50 },
     ],
-    "instrument-access": [{ label: "View PM cycle", route: "pm-cycle", x: 56, y: 534, w: 1384, h: 128 }],
+    "instrument-access": [
+      { label: "Start a request", route: "request-support", x: 1122, y: 97, w: 166, h: 27 },
+      { label: "View PM cycle", route: "pm-cycle", x: 56, y: 534, w: 1384, h: 128 },
+    ],
     multiuse: [{ label: "Open first instrument", route: "instrument-access", x: 88, y: 520, w: 304, h: 390 }],
     "ticket-detail": [{ label: "View quote", route: "installation-order", x: 980, y: 575, w: 110, h: 42 }],
     education: [{ label: "Return to dashboard", route: "dashboard", x: 0, y: 0, w: 1440, h: 1460 }],
@@ -189,7 +196,26 @@ function wireSignIn() {
 }
 
 function wireDashboard() {
-  app.querySelector("[data-back-to-signin]").addEventListener("click", () => setRoute("signin"));
+  app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
+  app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") setRoute("my-instruments");
+  });
+  app.querySelectorAll(".native-dashboard__tabs [role='tab']").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      app.querySelectorAll(".native-dashboard__tabs [role='tab']").forEach((candidate) => {
+        const selected = candidate === tab;
+        candidate.classList.toggle("is-active", selected);
+        candidate.setAttribute("aria-selected", String(selected));
+      });
+      const ticketCounts = {
+        active: "16 active tickets",
+        closed: "2 recently closed tickets",
+        visits: "3 upcoming on-site visits",
+      };
+      const ticketCount = app.querySelector("[data-ticket-count]");
+      if (ticketCount) ticketCount.textContent = ticketCounts[tab.dataset.ticketState] || ticketCounts.active;
+    });
+  });
   wireRouteControls();
 }
 
@@ -278,7 +304,7 @@ function render() {
     document.title = "Services Central Sign In";
     wireSignIn();
   } else if (route === "dashboard") {
-    const template = document.querySelector("#dashboard-template");
+    const template = document.querySelector("#dashboard-native-template");
     app.replaceChildren(template.content.cloneNode(true));
     document.title = "Services Central Dashboard";
     wireDashboard();
