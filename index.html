@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260803-top-alignment" />
+    <link rel="stylesheet" href="styles.css?v=20260809-sidebar-default-collapsed" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -103,6 +103,313 @@
       </section>
     </template>
 
+    <template id="edit-spc-template">
+      <section class="screen screen--spc" aria-label="Edit service plan contact">
+        <div class="flow-toolbar">
+          <button type="button" data-go-back>Back</button>
+          <strong data-flow-title>Edit service plan contact</strong>
+          <div class="flow-toolbar__actions">
+            <button type="button" data-route="dashboard">Dashboard</button>
+            <button type="button" data-open-flows>All flows</button>
+          </div>
+        </div>
+        <div class="flow-stage">
+          <div class="flow-canvas flow-canvas--spc">
+            <div class="spc-shell">
+              <header class="spc-topbar">
+            <div class="spc-topbar__left">
+              <button class="spc-icon-button spc-menu-button" type="button" aria-label="Open menu">
+                <span></span>
+                <span></span>
+                <span></span>
+              </button>
+              <div class="spc-brand" aria-label="Thermo Fisher Scientific">
+                <strong>ThermoFisher</strong>
+                <span>SCIENTIFIC</span>
+              </div>
+              <span class="spc-divider"></span>
+              <span class="spc-platform">Connect Platform</span>
+              <span class="spc-divider"></span>
+              <strong class="spc-product">Services Central</strong>
+            </div>
+            <div class="spc-topbar__right">
+              <button class="spc-icon-button spc-top-icon spc-bell" type="button" aria-label="Notifications"></button>
+              <button class="spc-icon-button spc-top-icon spc-user" type="button" aria-label="User profile"></button>
+              <button class="spc-icon-button spc-top-icon spc-help" type="button" data-open-services-help aria-label="Get help"></button>
+            </div>
+          </header>
+
+              <aside class="spc-sidebar is-collapsed" data-spc-sidebar aria-label="Services Central navigation">
+                <button class="spc-nav-icon spc-nav-icon--dashboard" type="button" data-route="dashboard" aria-label="Services Central dashboard">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Services Central dashboard</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--instruments" type="button" data-route="my-instruments" aria-label="Instruments">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Instruments</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--add" type="button" data-route="add-instruments" aria-label="Add instruments">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Add instruments</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--installations" type="button" data-route="installations" aria-label="Installations">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Installations</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--tools" type="button" data-route="support-history" aria-label="Support history">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Support history</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--contacts is-active" type="button" data-route="service-plan-contacts" aria-label="Service plan contacts">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Service plan contacts</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--cart" type="button" data-route="consumables" aria-label="Consumables">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Consumables</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--settings" type="button" data-route="notifications" aria-label="Services Central notifications">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Services Central notifications</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--help" type="button" data-open-services-help aria-label="Services Central help">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Services Central help</span>
+                </button>
+                <button class="spc-nav-icon spc-nav-icon--collapse" type="button" data-spc-sidebar-toggle aria-expanded="false" aria-label="Expand navigation">
+                  <span class="spc-nav-icon__glyph" aria-hidden="true"></span>
+                  <span class="spc-nav-icon__label">Collapse</span>
+                </button>
+              </aside>
+
+              <main class="spc-main">
+            <div class="spc-title-band">
+              <h1>Edit service plan contact</h1>
+            </div>
+
+            <section class="spc-stepper" aria-label="Edit service plan contact progress">
+              <div class="spc-step is-current">
+                <span class="spc-step__number">1</span>
+                <strong>Select instruments</strong>
+              </div>
+              <div class="spc-step">
+                <span class="spc-step__number">2</span>
+                <span>Edit service plan contact</span>
+              </div>
+              <div class="spc-step">
+                <span class="spc-step__number">3</span>
+                <span>Review and confirm</span>
+              </div>
+            </section>
+
+            <section class="spc-card" aria-labelledby="select-instruments-title">
+              <div class="spc-card__intro">
+                <div>
+                  <h2 id="select-instruments-title">Select Instrument(s)</h2>
+                  <p>
+                    Select the instruments that you want to assign a new contact. If an instrument is access controlled by another user,
+                    it will not display here. Continue to add contact details.
+                  </p>
+                </div>
+
+                <div class="spc-segmented" aria-label="Instrument contact filter">
+                  <button class="is-selected" type="button" data-spc-filter>All</button>
+                  <button type="button" data-spc-filter>With contact</button>
+                  <button type="button" data-spc-filter>Without contact</button>
+                </div>
+              </div>
+
+              <label class="spc-search">
+                <span class="sr-only">Search instruments</span>
+                <input type="search" placeholder="Search by service plan, instrument serial number and nickname" />
+                <span class="spc-search__icon" aria-hidden="true"></span>
+              </label>
+
+              <button class="spc-select-all" type="button">Select all 240 instruments</button>
+
+              <div class="spc-table-wrap">
+                <table class="spc-table">
+                  <colgroup>
+                    <col class="spc-col-check" />
+                    <col class="spc-col-arrow" />
+                    <col class="spc-col-coverage" />
+                    <col class="spc-col-kind" />
+                    <col class="spc-col-asset" />
+                    <col class="spc-col-serial" />
+                    <col class="spc-col-nickname" />
+                    <col class="spc-col-contact" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      <th>Coverage</th>
+                      <th></th>
+                      <th></th>
+                      <th>Serial number</th>
+                      <th>Nickname</th>
+                      <th>Service plan contact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="spc-row spc-row--group">
+                      <td><input type="checkbox" checked aria-label="Select Essential Service Plan - 0040111111" /></td>
+                      <td><span class="spc-chevron spc-chevron--right" aria-hidden="true"></span></td>
+                      <td colspan="5"><strong>Essential Service Plan - 0040111111</strong></td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--group">
+                      <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040222222" /></td>
+                      <td><span class="spc-chevron spc-chevron--right" aria-hidden="true"></span></td>
+                      <td colspan="5"><strong>Essential Service Plan - 0040222222</strong></td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--group">
+                      <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040333333" /></td>
+                      <td><span class="spc-chevron spc-chevron--right" aria-hidden="true"></span></td>
+                      <td colspan="5"><strong>Essential Service Plan - 0040333333</strong></td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--group">
+                      <td><input type="checkbox" aria-label="Select Instruments with no service plan" /></td>
+                      <td><span class="spc-chevron spc-chevron--down" aria-hidden="true"></span></td>
+                      <td colspan="5"><strong>Instruments with no service plan</strong></td>
+                      <td></td>
+                    </tr>
+                    <tr class="spc-row">
+                      <td><input type="checkbox" aria-label="Select Alpine system" /></td>
+                      <td></td>
+                      <td>-</td>
+                      <td><span class="spc-system-icon" aria-hidden="true"></span><span class="spc-lock" aria-hidden="true"></span></td>
+                      <td></td>
+                      <td>System</td>
+                      <td>Alpine</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--child">
+                      <td></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
+                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
+                      <td><span class="spc-thumb spc-thumb--detector" aria-hidden="true"></span></td>
+                      <td>1009996</td>
+                      <td>Detector-2B</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--child">
+                      <td></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
+                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
+                      <td><span class="spc-thumb spc-thumb--column" aria-hidden="true"></span></td>
+                      <td>1009999</td>
+                      <td>Column-2B</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--child">
+                      <td></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
+                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
+                      <td><span class="spc-thumb spc-thumb--sampler" aria-hidden="true"></span></td>
+                      <td>1009998</td>
+                      <td>Sampler-2B</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--child">
+                      <td></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
+                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
+                      <td><span class="spc-thumb spc-thumb--pump" aria-hidden="true"></span></td>
+                      <td>1009997</td>
+                      <td>Pump-2B</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row spc-row--child spc-row--last-child">
+                      <td></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
+                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
+                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
+                      <td>TSQ-Z-12346</td>
+                      <td>TSQ-0</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row">
+                      <td><input type="checkbox" aria-label="Select TSQ-1 expired coverage" /></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--bad">Coverage expired</span></td>
+                      <td></td>
+                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
+                      <td>TSQ-Z-12347</td>
+                      <td>TSQ-1</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row">
+                      <td><input type="checkbox" aria-label="Select TSQ-1 expired coverage duplicate" /></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--bad">Coveragge expired</span></td>
+                      <td></td>
+                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
+                      <td>TSQ-Z-12347</td>
+                      <td>TSQ-1</td>
+                      <td>-</td>
+                    </tr>
+                    <tr class="spc-row">
+                      <td><input type="checkbox" aria-label="Select TSQ-2 warranty expired" /></td>
+                      <td></td>
+                      <td><span class="spc-pill spc-pill--bad">Warranty expired</span></td>
+                      <td><span class="spc-lock" aria-hidden="true"></span></td>
+                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
+                      <td>TSQ-Z-12348</td>
+                      <td>TSQ-2</td>
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="spc-pagination" aria-label="Instrument results pagination">
+                <div class="spc-page-size">
+                  <span>Results per page</span>
+                  <button type="button">20<span class="spc-small-caret" aria-hidden="true"></span></button>
+                  <span>of</span>
+                  <span>267</span>
+                </div>
+                <div class="spc-pages">
+                  <button class="spc-page-arrow is-disabled" type="button" aria-label="Previous page"></button>
+                  <button class="spc-page-number is-current" type="button">1</button>
+                  <button class="spc-page-number" type="button">2</button>
+                  <button class="spc-page-number" type="button">3</button>
+                  <button class="spc-page-number" type="button">4</button>
+                  <span>...</span>
+                  <button class="spc-page-number" type="button">9</button>
+                  <button class="spc-page-arrow spc-page-arrow--next" type="button" aria-label="Next page"></button>
+                  <span>Go to:</span>
+                  <label class="sr-only" for="spc-go-to-page">Go to page</label>
+                  <input id="spc-go-to-page" type="text" value="#" aria-label="Go to page" />
+                </div>
+              </div>
+            </section>
+
+            <div class="spc-actionbar">
+              <button class="spc-button spc-button--secondary" type="button" data-route="service-plan-contacts">Cancel</button>
+              <button class="spc-button spc-button--primary" type="button" data-spc-continue>Continue</button>
+            </div>
+
+            <footer class="spc-footer">
+              <span>© 2022 - Thermo Fisher Scientific</span>
+              <a href="#">Privacy policy</a>
+              <a href="#">Terms of use</a>
+            </footer>
+              </main>
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
+
     <dialog id="help-dialog" class="help-dialog">
       <button class="dialog-close" type="button" data-close-dialog aria-label="Close">×</button>
       <h2>Having trouble signing in?</h2>
@@ -140,6 +447,6 @@
     </dialog>
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-    <script src="app.js?v=20260803-top-alignment"></script>
+    <script src="app.js?v=20260809-sidebar-default-collapsed"></script>
   </body>
 </html>
