@@ -100,6 +100,30 @@ function showToast(message) {
   }, 2600);
 }
 
+function openServicesHelpModal(trigger) {
+  if (servicesHelpDialog.open) return;
+  servicesHelpDialog.dataset.openedBy = trigger?.dataset.helpSource || trigger?.getAttribute("aria-label") || "";
+  servicesHelpDialog.showModal();
+}
+
+function closeServicesHelpModal() {
+  if (servicesHelpDialog.open) servicesHelpDialog.close();
+}
+
+function wireServicesHelpTriggers(scope = document) {
+  scope.querySelectorAll("[data-open-services-help]").forEach((control) => {
+    if (control.dataset.servicesHelpWired) return;
+    control.dataset.servicesHelpWired = "true";
+    control.addEventListener("click", () => openServicesHelpModal(control));
+  });
+}
+
+window.ServicesHelpModal = Object.freeze({
+  open: openServicesHelpModal,
+  close: closeServicesHelpModal,
+  wire: wireServicesHelpTriggers,
+});
+
 function routeFromHash() {
   const route = window.location.hash.replace(/^#\/?/, "");
   if (route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route]) return route;
@@ -182,9 +206,7 @@ function wireRouteControls(scope = app) {
   scope.querySelectorAll("[data-open-flows]").forEach((control) => {
     control.addEventListener("click", () => flowsDialog.showModal());
   });
-  scope.querySelectorAll("[data-open-services-help]").forEach((control) => {
-    control.addEventListener("click", () => servicesHelpDialog.showModal());
-  });
+  window.ServicesHelpModal.wire(scope);
 }
 
 function wireSignIn() {
@@ -454,6 +476,227 @@ function renderAddInstruments() {
   document.title = "Add instruments — Services Central";
 }
 
+const SUPPORT_HISTORY_TICKETS = [
+  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", subjectIcon: true },
+  { status: "In progress", ticket: "46521863", type: "Service Request", subject: "Repair 0000123459", serial: "1009999", model: "VQH0000VEN", nickname: "Column-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "quote" },
+  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "support" },
+  { status: "In progress", ticket: "465218988", type: "Inquiry", subject: "Repair instrument", serial: "1009997", model: "VQF000PUMP", nickname: "Pump-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
+  { status: "In progress", ticket: "46927364", type: "Tech Support", subject: "Repair instrument", serial: "8044421", model: "ULT3R0PDET", nickname: "Pump-RD", group: "Biotherapeutics...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
+  { status: "In progress", ticket: "46719836", type: "Inquiry", subject: "Need support for error", serial: "8044422", model: "ULT3S0MISC", nickname: "Misc-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
+  { status: "In progress", ticket: "46075402", type: "Inquiry", subject: "Need support for error", serial: "8044423", model: "ULT3S00DET", nickname: "Detector-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
+  { status: "In progress", ticket: "46917372", type: "Inquiry", subject: "Need support for error", serial: "8044424", model: "ULT3SSA000", nickname: "Sampler-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
+  { status: "In progress", ticket: "46003524", type: "Depot Repair", subject: "Need support for error", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "", group: "", contact: "Tyler Durden", created: "12 May 2020", closed: "---" },
+  { status: "Closed", ticket: "46195527", type: "PM (Contract)", subject: "Preventive maintenance", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46939573", type: "Inquiry", subject: "Need support", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "TSQ-1", group: "Precision...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46074658", type: "Tech Support", subject: "Need support", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "TSQ-2", group: "Precision...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46884635", type: "Tech Support", subject: "Need support", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "TSQ-3", group: "Precision...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46626384", type: "Inquiry", subject: "Need support", serial: "SN98355W", model: "QEXAC00001", nickname: "", group: "", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46977462", type: "Tech Support", subject: "Need support", serial: "SN98356W", model: "QEXAC00001", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46118377", type: "PM (Contract)", subject: "Need support", serial: "SN98357W", model: "QEXAC00001", nickname: "Q-EXACTIVE...", group: "Department...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46000283", type: "PM (Contract)", subject: "Need support", serial: "SN98358W", model: "QEXAC00001", nickname: "Q-EXACTIVE...", group: "Department...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46993746", type: "Inquiry", subject: "Need support", serial: "SN98359W", model: "QEXAC00001", nickname: "Q-EXACTIVE...", group: "Department...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46296730", type: "Inquiry", subject: "Need support", serial: "SN98360W", model: "QEXAC00001", nickname: "", group: "", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+  { status: "Closed", ticket: "46434295", type: "Installation", subject: "Need support", serial: "SN98361W", model: "QEXAC00001", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
+];
+
+function supportHistoryRowMarkup(ticket) {
+  const statusClass = ticket.status === "Open" ? "sh-status--open" : ticket.status === "In progress" ? "sh-status--progress" : "sh-status--closed";
+  const rowIcon = ticket.icon === "quote" ? "assets/icons/general/quote/size=24px, style=mono.svg" : ticket.icon === "support" ? "assets/icons/navigation/support/size=24px, style=mono.svg" : "";
+  const subjectIcon = ticket.subjectIcon ? '<img class="sh-inline-icon" src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="" />' : "";
+  return `<tr data-sh-row data-status="${ticket.status}" data-search="${Object.values(ticket).join(" ").toLowerCase()}">
+    <td>${rowIcon ? `<img class="sh-ticket-icon" src="${rowIcon}" alt="" />` : ""}</td>
+    <td><span class="sh-status ${statusClass}">${ticket.status}</span></td>
+    <td><button class="sh-link" type="button" data-sh-ticket>${ticket.ticket}</button></td>
+    <td title="${ticket.type}">${ticket.type}</td><td title="${ticket.subject}">${ticket.subject}${subjectIcon}</td>
+    <td><button class="sh-link" type="button" data-route="instrument-access">${ticket.serial}</button></td>
+    <td title="${ticket.model}">${ticket.model}</td><td title="${ticket.nickname}">${ticket.nickname}</td>
+    <td title="${ticket.group}">${ticket.group ? `<button class="sh-link" type="button" data-sh-group>${ticket.group}</button>` : ""}</td>
+    <td title="${ticket.contact}">${ticket.contact}</td><td>${ticket.created}</td><td>${ticket.closed}</td>
+  </tr>`;
+}
+
+function wireSupportHistory() {
+  const tbody = app.querySelector("[data-sh-rows]");
+  let tickets = [...SUPPORT_HISTORY_TICKETS];
+  const renderRows = () => { tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join(""); };
+  const filterRows = () => {
+    const query = app.querySelector("[data-sh-search]").value.trim().toLowerCase();
+    const status = app.querySelector("[data-sh-status]").value;
+    let visible = 0;
+    app.querySelectorAll("[data-sh-row]").forEach((row) => {
+      row.hidden = (query && !row.dataset.search.includes(query)) || (status !== "all" && row.dataset.status !== status);
+      if (!row.hidden) visible += 1;
+    });
+    app.querySelector("[data-sh-count]").textContent = query || status !== "all" ? String(visible) : "100";
+  };
+  renderRows();
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelector("[data-sh-search]").addEventListener("input", filterRows);
+  app.querySelector("[data-sh-status]").addEventListener("change", filterRows);
+  app.querySelectorAll("[data-sh-sort]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const key = button.dataset.shSort;
+      const descending = button.dataset.direction !== "desc";
+      button.dataset.direction = descending ? "desc" : "asc";
+      tickets.sort((a, b) => String(a[key]).localeCompare(String(b[key]), undefined, { numeric: true }) * (descending ? -1 : 1));
+      renderRows();
+      filterRows();
+    });
+  });
+  tbody.addEventListener("click", (event) => {
+    if (event.target.closest("[data-sh-ticket]")) setRoute("ticket-detail");
+    if (event.target.closest("[data-sh-group]")) showToast("Instrument group opened");
+  });
+  app.querySelector("[data-sh-date]").addEventListener("click", () => showToast("Date range selector opened"));
+  app.querySelector("[data-sh-edit-columns]").addEventListener("click", () => showToast("Column editor opened"));
+  app.querySelectorAll("[data-sh-menu]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.shMenu} filter opened`)));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderSupportHistory() {
+  const template = document.querySelector("#support-history-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("support-history");
+  wireSupportHistory();
+  document.title = "Support request history — Services Central";
+}
+
+function wireServicePlanContacts() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelectorAll("[data-splan-toggle]").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const group = toggle.closest("[data-splan-group]");
+      const expanded = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(expanded));
+      group.classList.toggle("is-expanded", expanded);
+      group.classList.toggle("is-collapsed", !expanded);
+      const icon = toggle.querySelector("img");
+      icon.src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
+    });
+  });
+  app.querySelector("[data-splan-select-all]").addEventListener("click", (event) => {
+    const checks = [...app.querySelectorAll("[data-splan-check]")];
+    const select = checks.some((check) => !check.checked);
+    checks.forEach((check) => { check.checked = select; });
+    event.currentTarget.textContent = select ? "Clear selection" : "Select all 14 instruments";
+  });
+  app.querySelectorAll("[data-splan-action]").forEach((button) => {
+    button.addEventListener("click", () => showToast(`${button.dataset.splanAction} selected`));
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderServicePlanContacts() {
+  const template = document.querySelector("#service-plan-contacts-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("service-plan-contacts");
+  wireServicePlanContacts();
+  document.title = "Service plan contacts — Services Central";
+}
+
+function wireConsumables() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelectorAll("[data-cons-action]").forEach((button) => {
+    button.addEventListener("click", () => showToast(`${button.dataset.consAction} selected`));
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderConsumables() {
+  const template = document.querySelector("#consumables-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("consumables");
+  wireConsumables();
+  document.title = "Consumables — Services Central";
+}
+
+const NOTIFICATION_SETTINGS_ROWS = [
+  ["Instruments shared with me", false],
+  ["Support ticket status", false],
+  ["Open", true],
+  ["In progress", true],
+  ["Delayed due to parts", true],
+  ["Customer testing", true],
+  ["Pending customer readiness", true],
+  ["Closed", true],
+  ["Request submitted", false],
+  ["Instrument support", true],
+  ["Preventive maintenance", true],
+  ["Service plans", true],
+  ["Compliance services - Qualification", true],
+  ["Compliance services - Calibration", true],
+  ["Quotes", false],
+  ["New quote available", true],
+  ["Quote expiring soon", true],
+  ["Access Management", false],
+  ["Instrument access approval", true],
+  ["Instrument access request(s) approved", true],
+  ["Instrument access request(s) denied", true],
+];
+
+function setNotificationTab(tab) {
+  const selected = tab === "services" ? "services" : "connected";
+  app.querySelectorAll("[data-ns-tab]").forEach((button) => {
+    const active = button.dataset.nsTab === selected;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  app.querySelector(".ns-tabs").classList.toggle("is-services", selected === "services");
+  app.querySelector("[data-ns-panel='connected']").hidden = selected !== "connected";
+  app.querySelector("[data-ns-panel='services']").hidden = selected !== "services";
+}
+
+function setNotificationSwitch(button, checked) {
+  button.setAttribute("aria-checked", String(checked));
+}
+
+function wireNotifications() {
+  const list = app.querySelector("[data-ns-list]");
+  NOTIFICATION_SETTINGS_ROWS.forEach(([label, child]) => {
+    const row = document.createElement("div");
+    row.className = `ns-setting-row${child ? " is-child" : ""}`;
+    row.innerHTML = `<span>${label}</span><button class="ns-switch" type="button" role="switch" aria-checked="true" aria-label="${label}"><span></span></button>`;
+    list.append(row);
+  });
+  app.querySelectorAll("[data-ns-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.nsTab === "edge") {
+        showToast("Edge Management notification settings selected");
+        return;
+      }
+      setNotificationTab(button.dataset.nsTab);
+    });
+  });
+  app.querySelectorAll(".ns-switch").forEach((button) => {
+    button.addEventListener("click", () => setNotificationSwitch(button, button.getAttribute("aria-checked") !== "true"));
+  });
+  app.querySelector("[data-ns-global]").addEventListener("click", (event) => {
+    const checked = event.currentTarget.getAttribute("aria-checked") === "true";
+    app.querySelector("[data-ns-global-copy]").textContent = `All email notifications turned ${checked ? "on" : "off"}.`;
+  });
+  app.querySelector("[data-ns-master]").addEventListener("click", (event) => {
+    const checked = event.currentTarget.getAttribute("aria-checked") === "true";
+    app.querySelectorAll(".ns-setting-row").forEach((row) => {
+      row.classList.toggle("is-disabled", !checked);
+      setNotificationSwitch(row.querySelector(".ns-switch"), checked);
+    });
+  });
+  app.querySelectorAll("[data-ns-connected]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.nsConnected} selected`)));
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  setNotificationTab("services");
+  wireRouteControls();
+}
+
+function renderNotifications() {
+  const template = document.querySelector("#notifications-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  wireNotifications();
+  document.title = "Notification settings — Connect Platform";
+}
+
 const INSTALLATION_ITEMS = [
   ["10", "1", "vanquish-pump.png", "VN-P10-A-01", "Vanquish binary pump N"],
   ["10", "1", "vanquish-pump.png", "VN-P10-A-01", "Vanquish binary pump N"],
@@ -554,6 +797,14 @@ function render() {
     renderAddInstruments();
   } else if (route === "installations" || route === "installations-expanded") {
     renderInstallations(route === "installations-expanded");
+  } else if (route === "support-history") {
+    renderSupportHistory();
+  } else if (route === "service-plan-contacts") {
+    renderServicePlanContacts();
+  } else if (route === "consumables") {
+    renderConsumables();
+  } else if (route === "notifications") {
+    renderNotifications();
   } else {
     renderFlow(route);
   }
@@ -576,7 +827,14 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   button.addEventListener("click", () => helpDialog.close());
 });
 document.querySelector("[data-close-flows]").addEventListener("click", () => flowsDialog.close());
-document.querySelector("[data-close-services-help]").addEventListener("click", () => servicesHelpDialog.close());
+document.querySelector("[data-close-services-help]").addEventListener("click", closeServicesHelpModal);
+servicesHelpDialog.querySelectorAll("[data-services-help-action]").forEach((control) => {
+  control.addEventListener("click", () => {
+    const action = control.dataset.servicesHelpAction;
+    servicesHelpDialog.dispatchEvent(new CustomEvent("services-help:action", { detail: { action } }));
+    showToast(action === "email" ? "Email support selected" : "Tours selected");
+  });
+});
 helpDialog.addEventListener("click", (event) => {
   if (event.target === helpDialog) helpDialog.close();
 });
@@ -584,7 +842,7 @@ flowsDialog.addEventListener("click", (event) => {
   if (event.target === flowsDialog) flowsDialog.close();
 });
 servicesHelpDialog.addEventListener("click", (event) => {
-  if (event.target === servicesHelpDialog) servicesHelpDialog.close();
+  if (event.target === servicesHelpDialog) closeServicesHelpModal();
 });
 window.addEventListener("popstate", render);
 window.addEventListener("hashchange", render);
