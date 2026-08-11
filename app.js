@@ -710,6 +710,7 @@ function wireNotifications() {
 function renderNotifications() {
   const template = document.querySelector("#notifications-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarNotifications();
   mountPlatformSidebar("notifications");
   wireNotifications();
   document.title = "Notification settings — Connect Platform";
