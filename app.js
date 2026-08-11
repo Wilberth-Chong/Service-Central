@@ -280,6 +280,10 @@ function mountPlatformSidebar(activeRoute) {
   });
 }
 
+function mountTopbarNotifications() {
+  window.TopbarNotifications?.mount(app.querySelector("[data-topbar-notifications-mount]"));
+}
+
 function wireEditSpc() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
@@ -699,6 +703,7 @@ function wireNotifications() {
 function renderNotifications() {
   const template = document.querySelector("#notifications-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarNotifications();
   mountPlatformSidebar("notifications");
   wireNotifications();
   document.title = "Notification settings — Connect Platform";

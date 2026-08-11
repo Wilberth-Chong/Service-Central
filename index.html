@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260810-across-site-sidebar" />
+    <link rel="stylesheet" href="styles.css?v=20260811-notifications-topbar-z60" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -375,7 +375,7 @@
       <section class="screen screen--notification-settings" aria-label="Notification settings">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Notification settings</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="ns-shell">
-          <header class="ns-header"><div class="ns-header__left"><button type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="ns-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span>Connect Platform</span><strong>Notification Settings</strong></div><div class="ns-header__right"><button type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /></button><button class="ns-profile" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /><em>2</em></button><button type="button" aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-topbar-notifications-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="ns-main">
             <section class="ns-titlebar"><h1>Notification settings</h1></section>
@@ -801,7 +801,8 @@
     </dialog>
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <script src="topbar-notifications.js?v=20260811-notifications-topbar"></script>
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
-    <script src="app.js?v=20260810-across-site-sidebar"></script>
+    <script src="app.js?v=20260811-notifications-topbar"></script>
   </body>
 </html>
