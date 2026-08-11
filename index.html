@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260811-topbar-sc" />
+    <link rel="stylesheet" href="styles.css?v=20260811-notifications-no-sidebar" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -353,7 +353,7 @@
       <section class="screen screen--notification-settings" aria-label="Notification settings">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Notification settings</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="ns-shell">
-          <div data-platform-sidebar-mount></div>
+          <div data-topbar-notifications-mount></div>
           <main class="ns-main">
             <section class="ns-titlebar"><h1>Notification settings</h1></section>
             <div class="ns-global"><div><strong>Email Notifications</strong><span data-ns-global-copy>All email notifications turned on.</span></div><button class="ns-switch" type="button" role="switch" aria-checked="true" data-ns-global aria-label="All email notifications"><span></span></button></div>
@@ -758,7 +758,8 @@
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <script src="topbar-sc.js?v=20260811-topbar-sc"></script>
+    <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
-    <script src="app.js?v=20260811-topbar-sc"></script>
+    <script src="app.js?v=20260811-notifications-no-sidebar"></script>
   </body>
 </html>
