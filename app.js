@@ -246,6 +246,7 @@ function wireDashboard() {
   app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 2) % 3; updateBanner(); });
   app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBanner(); });
   app.querySelector(".db-promo__close")?.addEventListener("click", (event) => event.currentTarget.closest(".db-promo")?.remove());
+  window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
 
@@ -380,12 +381,14 @@ function wireMyInstruments() {
     });
   });
   app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
 
 function renderMyInstruments() {
   const template = document.querySelector("#my-instruments-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("my-instruments");
   wireMyInstruments();
   document.title = "My instruments — Services Central";
 }
@@ -466,12 +469,14 @@ function wireAddInstruments() {
   app.querySelectorAll("[data-ai-supported]").forEach((button) => button.addEventListener("click", () => supportedDialog.showModal()));
   app.querySelectorAll("[data-ai-supported-close]").forEach((button) => button.addEventListener("click", () => supportedDialog.close()));
   supportedDialog.addEventListener("click", (event) => { if (event.target === supportedDialog) supportedDialog.close(); });
+  window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
 
 function renderAddInstruments() {
   const template = document.querySelector("#add-instruments-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("add-instruments");
   wireAddInstruments();
   document.title = "Add instruments — Services Central";
 }
@@ -687,12 +692,14 @@ function wireNotifications() {
   app.querySelectorAll("[data-ns-connected]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.nsConnected} selected`)));
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   setNotificationTab("services");
+  window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
 
 function renderNotifications() {
   const template = document.querySelector("#notifications-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("notifications");
   wireNotifications();
   document.title = "Notification settings — Connect Platform";
 }
@@ -787,6 +794,7 @@ function render() {
   } else if (route === "dashboard") {
     const template = document.querySelector("#dashboard-native-template");
     app.replaceChildren(template.content.cloneNode(true));
+    mountPlatformSidebar("dashboard");
     document.title = "Services Central Dashboard";
     wireDashboard();
   } else if (route === "edit-spc") {

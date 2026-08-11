@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260810-reusable-services-help" />
+    <link rel="stylesheet" href="styles.css?v=20260810-across-site-sidebar" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -90,9 +90,7 @@
         <div class="flow-toolbar"><button type="button" data-back-to-signin>Back</button><strong>Services Central Dashboard</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="mi-shell db-shell">
           <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
-          <aside class="mi-nav" aria-label="Services Central navigation">
-            <button class="is-current" type="button" data-route="dashboard" aria-current="page" aria-label="Dashboard"><img src="assets/icons/navigation/dashboard/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="my-instruments" aria-label="Instruments"><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="add-instruments" aria-label="Add instruments"><img src="assets/icons/science/add instrument/size=24px, style=mono.svg" alt="" /></button><button type="button" data-route="installations" aria-label="Installations"><img src="assets/icons/general/scheduled service/size=24px, style=mono.svg" alt="" /></button><button type="button" data-route="support-history" aria-label="Support history"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></button><button type="button" data-route="service-plan-contacts" aria-label="Service plan contacts"><img src="assets/icons/users/vcard/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="consumables" aria-label="Consumables"><img src="assets/icons/commerce/cart/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" data-route="notifications" aria-label="Settings"><img src="assets/icons/navigation/settings/size=24px, style=mono.svg" alt="" /></button><button type="button" data-open-services-help aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button><button class="mi-nav__collapse" type="button" aria-label="Expand navigation"><span aria-hidden="true"></span></button>
-          </aside>
+          <div data-platform-sidebar-mount></div>
           <main class="mi-main db-main">
             <section class="mi-titlebar db-titlebar"><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
             <section class="ai-banner db-banner" aria-label="Instrument access request notification"><button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__content"><div class="ai-banner__art"><img src="assets/instruments/add-instruments-suggestion.svg" alt="" /><span>New</span></div><div class="ai-banner__copy"><h2>3 instrument(s) access requests awaiting your approval</h2><p>Review the instrument(s) and approve or deny.</p></div><button class="ai-small-button db-banner__button" type="button" data-route="approval-email">Go to pending</button></div><button class="ai-banner__arrow" type="button" data-db-banner-next aria-label="Next notification"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__dots" aria-label="Notification 1 of 3"><span class="is-active"></span><span></span><span></span></div></section>
@@ -154,18 +152,7 @@
               </div>
             </header>
 
-            <aside class="mi-nav" aria-label="Services Central navigation">
-              <button type="button" data-route="dashboard" aria-label="Dashboard"><img src="assets/icons/navigation/dashboard/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button class="is-current" type="button" data-route="my-instruments" aria-current="page" aria-label="Instruments"><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button type="button" data-route="add-instruments" aria-label="Add instruments"><img src="assets/icons/science/add instrument/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-route="installations" aria-label="Installations"><img src="assets/icons/general/scheduled service/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-route="support-history" aria-label="Support history"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-route="service-plan-contacts" aria-label="Service plan contacts"><img src="assets/icons/users/vcard/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button type="button" data-route="consumables" aria-label="Consumables"><img src="assets/icons/commerce/cart/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button type="button" data-route="notifications" aria-label="Settings"><img src="assets/icons/navigation/settings/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-open-services-help aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button>
-              <button class="mi-nav__collapse" type="button" aria-label="Expand navigation"><span aria-hidden="true"></span></button>
-            </aside>
+            <div data-platform-sidebar-mount></div>
 
             <main class="mi-main">
               <section class="mi-titlebar">
@@ -252,18 +239,7 @@
               </div>
             </header>
 
-            <aside class="mi-nav" aria-label="Services Central navigation">
-              <button type="button" data-route="dashboard" aria-label="Dashboard"><img src="assets/icons/navigation/dashboard/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button type="button" data-route="my-instruments" aria-label="Instruments"><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button class="is-current" type="button" data-route="add-instruments" aria-current="page" aria-label="Add instruments"><img src="assets/icons/science/add instrument/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-route="installations" aria-label="Installations"><img src="assets/icons/general/scheduled service/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-route="support-history" aria-label="Support history"><img src="assets/icons/navigation/support/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-route="service-plan-contacts" aria-label="Service plan contacts"><img src="assets/icons/users/vcard/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button type="button" data-route="consumables" aria-label="Consumables"><img src="assets/icons/commerce/cart/Size=24px, Style=Mono.svg" alt="" /></button>
-              <button type="button" data-route="notifications" aria-label="Settings"><img src="assets/icons/navigation/settings/size=24px, style=mono.svg" alt="" /></button>
-              <button type="button" data-open-services-help aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button>
-              <button class="mi-nav__collapse" type="button" aria-label="Expand navigation"><span aria-hidden="true"></span></button>
-            </aside>
+            <div data-platform-sidebar-mount></div>
 
             <main class="mi-main ai-main">
               <section class="mi-titlebar ai-titlebar"><h1>Add instruments to get support</h1></section>
@@ -400,6 +376,7 @@
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Notification settings</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="ns-shell">
           <header class="ns-header"><div class="ns-header__left"><button type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="ns-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span>Connect Platform</span><strong>Notification Settings</strong></div><div class="ns-header__right"><button type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /></button><button class="ns-profile" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /><em>2</em></button><button type="button" aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
           <main class="ns-main">
             <section class="ns-titlebar"><h1>Notification settings</h1></section>
             <div class="ns-global"><div><strong>Email Notifications</strong><span data-ns-global-copy>All email notifications turned on.</span></div><button class="ns-switch" type="button" role="switch" aria-checked="true" data-ns-global aria-label="All email notifications"><span></span></button></div>
@@ -824,7 +801,7 @@
     </dialog>
 
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-    <script src="platform-sidebar.js?v=20260809-sidebar-default-collapsed"></script>
-    <script src="app.js?v=20260810-reusable-services-help-v2"></script>
+    <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
+    <script src="app.js?v=20260810-across-site-sidebar"></script>
   </body>
 </html>
