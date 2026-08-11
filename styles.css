@@ -323,6 +323,117 @@ button {
   outline-offset: 2px;
 }
 
+.topbar-sc {
+  position: relative;
+  z-index: 60;
+  display: flex;
+  width: 1440px;
+  height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px 16px 16px;
+  color: #1b1b1d;
+  background: var(--Global-Colors-White---White-0, #fff);
+  box-shadow: 0 6px 8px 0 rgb(0 0 0 / 10%);
+}
+
+.topbar-sc button {
+  color: inherit;
+  font: inherit;
+}
+
+.topbar-sc button:focus-visible {
+  outline: 2px solid #0071d0;
+  outline-offset: 2px;
+}
+
+.topbar-sc__left,
+.topbar-sc__right {
+  display: flex;
+  height: 32px;
+  align-items: center;
+}
+
+.topbar-sc__left {
+  min-width: 0;
+  gap: 16px;
+}
+
+.topbar-sc__right {
+  margin-left: auto;
+  gap: 24px;
+}
+
+.topbar-sc__icon-button {
+  position: relative;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.topbar-sc__icon-button img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.topbar-sc__logo {
+  display: block;
+  width: 108px;
+  height: 23px;
+  flex: 0 0 108px;
+  object-fit: contain;
+}
+
+.topbar-sc__platform,
+.topbar-sc__product {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.topbar-sc__product {
+  border-left: 1px solid #dedede;
+  padding-left: 16px;
+  font-weight: 700;
+}
+
+.topbar-sc__notifications {
+  overflow: visible;
+}
+
+.topbar-sc__badge {
+  position: absolute;
+  top: -9px;
+  right: -8px;
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 9px;
+  padding: 0 5px;
+  color: #fff;
+  background: #e71316;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.topbar-sc__action-divider {
+  width: 1px;
+  height: 40px;
+  background: #dedede;
+}
+
 .mi-header {
   position: relative;
   z-index: 4;
@@ -710,19 +821,76 @@ button {
 .ns-shell { --ns-blue: #0071d0; --ns-red: #e71316; position: relative; width: 1440px; height: 1614px; margin: 0 auto; color: #1b1b1d; background: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; }
 .ns-shell button { color: inherit; font: inherit; }
 .ns-shell button:focus-visible, .ns-shell a:focus-visible { outline: 2px solid var(--ns-blue); outline-offset: 2px; }
-.ns-header { position: absolute; z-index: 2; top: 0; right: 0; left: 0; display: flex; height: 64px; align-items: center; justify-content: space-between; padding: 0 24px 0 16px; background: #fff; box-shadow: 0 6px 8px rgb(0 0 0 / 10%); }
-.ns-header__left, .ns-header__right { display: flex; height: 100%; align-items: center; }
-.ns-header__left { gap: 16px; }
-.ns-header button { display: grid; width: 24px; height: 40px; place-items: center; border: 0; padding: 0; background: transparent; cursor: pointer; }
-.ns-header button img { width: 24px; height: 24px; }
-.ns-brand { width: 108px; height: 23px; object-fit: contain; }
-.ns-header__left > span, .ns-header__left > strong { display: flex; height: 32px; align-items: center; }
-.ns-header__left > strong { border-left: 1px solid #dedede; padding-left: 16px; font-weight: 700; }
-.ns-header__right { gap: 24px; }
-.ns-profile { position: relative; }
-.ns-profile em { position: absolute; top: 2px; right: -5px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #fff; background: var(--ns-red); font-size: 10px; font-style: normal; font-weight: 700; line-height: 1; }
-.ns-main { position: absolute; inset: 64px 0 40px 256px; transition: left 180ms ease; }
-.platform-sidebar.is-collapsed + .ns-main { left: 58px; }
+.topbar-notifications {
+  position: absolute;
+  z-index: 60;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 1440px;
+  height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: 16px 24px 16px 16px;
+  background: var(--Global-Colors-White---White-0, #fff);
+  box-shadow: 0 6px 8px 0 rgb(0 0 0 / 10%);
+}
+
+.topbar-notifications__left,
+.topbar-notifications__right {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.topbar-notifications__left {
+  gap: 16px;
+}
+
+.topbar-notifications__right {
+  gap: 24px;
+}
+
+.topbar-notifications__icon-button {
+  display: grid;
+  width: 24px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.topbar-notifications__icon-button img {
+  width: 24px;
+  height: 24px;
+}
+
+.topbar-notifications__brand {
+  width: 108px;
+  height: 23px;
+  object-fit: contain;
+}
+
+.topbar-notifications__platform,
+.topbar-notifications__title {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  color: #1b1b1d;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.topbar-notifications__title {
+  border-left: 1px solid #dedede;
+  padding-left: 16px;
+  font-weight: 700;
+}
+
+.ns-main { position: absolute; inset: 64px 0 40px; }
 .ns-titlebar { position: absolute; top: 0; right: 0; left: 0; height: 88px; padding: 22px 32px; background: #f7f7f7; }
 .ns-titlebar h1 { margin: 0; font-size: 32px; font-weight: 500; line-height: 40px; }
 .ns-global { position: absolute; top: 21px; left: 1200px; display: flex; width: 208px; align-items: center; gap: 0; }
@@ -1681,7 +1849,7 @@ button {
 .platform-sidebar {
   position: fixed;
   z-index: 50;
-  top: 66px;
+  top: 64px;
   bottom: 0;
   left: 0;
   display: flex;
@@ -1696,9 +1864,9 @@ button {
 
 .screen--spc .platform-sidebar {
   position: absolute;
-  top: 66px;
+  top: 64px;
   bottom: auto;
-  height: min(calc(1800px - 66px), calc((100vh - 48px) / var(--spc-scale, 1) - 66px));
+  height: min(calc(1800px - 64px), calc((100vh - 48px) / var(--spc-scale, 1) - 64px));
   overflow: hidden;
 }
 
@@ -1796,7 +1964,7 @@ button {
 }
 
 .screen--spc .spc-main {
-  height: min(calc(1800px - 66px), calc((100vh - 48px) / var(--spc-scale, 1) - 66px));
+  height: min(calc(1800px - 64px), calc((100vh - 48px) / var(--spc-scale, 1) - 64px));
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
