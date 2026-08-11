@@ -206,6 +206,7 @@ function wireRouteControls(scope = app) {
   scope.querySelectorAll("[data-open-flows]").forEach((control) => {
     control.addEventListener("click", () => flowsDialog.showModal());
   });
+  window.TopbarSc?.wire(scope);
   window.ServicesHelpModal.wire(scope);
 }
 
@@ -280,8 +281,8 @@ function mountPlatformSidebar(activeRoute) {
   });
 }
 
-function mountTopbarNotifications() {
-  window.TopbarNotifications?.mount(app.querySelector("[data-topbar-notifications-mount]"));
+function mountTopbarSc(options = {}) {
+  window.TopbarSc?.mount(app.querySelector("[data-topbar-sc-mount]"), options);
 }
 
 function wireEditSpc() {
@@ -302,6 +303,7 @@ function wireEditSpc() {
 function renderEditSpc() {
   const template = document.querySelector("#edit-spc-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   mountPlatformSidebar("edit-spc");
   wireEditSpc();
   observeEditSpcCanvas();
@@ -392,6 +394,7 @@ function wireMyInstruments() {
 function renderMyInstruments() {
   const template = document.querySelector("#my-instruments-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   mountPlatformSidebar("my-instruments");
   wireMyInstruments();
   document.title = "My instruments — Services Central";
@@ -480,6 +483,7 @@ function wireAddInstruments() {
 function renderAddInstruments() {
   const template = document.querySelector("#add-instruments-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   mountPlatformSidebar("add-instruments");
   wireAddInstruments();
   document.title = "Add instruments — Services Central";
@@ -566,6 +570,7 @@ function wireSupportHistory() {
 function renderSupportHistory() {
   const template = document.querySelector("#support-history-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   mountPlatformSidebar("support-history");
   wireSupportHistory();
   document.title = "Support request history — Services Central";
@@ -600,6 +605,7 @@ function wireServicePlanContacts() {
 function renderServicePlanContacts() {
   const template = document.querySelector("#service-plan-contacts-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   mountPlatformSidebar("service-plan-contacts");
   wireServicePlanContacts();
   document.title = "Service plan contacts — Services Central";
@@ -617,6 +623,7 @@ function wireConsumables() {
 function renderConsumables() {
   const template = document.querySelector("#consumables-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   mountPlatformSidebar("consumables");
   wireConsumables();
   document.title = "Consumables — Services Central";
@@ -752,6 +759,7 @@ function wireInstallations(expanded = false) {
 function renderInstallations(expanded = false) {
   const template = document.querySelector("#installations-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
   if (window.PlatformSidebar) {
     window.PlatformSidebar.mount(
       document.querySelector("[data-platform-sidebar-mount]"),
@@ -799,6 +807,7 @@ function render() {
   } else if (route === "dashboard") {
     const template = document.querySelector("#dashboard-native-template");
     app.replaceChildren(template.content.cloneNode(true));
+    mountTopbarSc();
     mountPlatformSidebar("dashboard");
     document.title = "Services Central Dashboard";
     wireDashboard();
