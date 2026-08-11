@@ -31,6 +31,11 @@ button {
 
 .screen {
   min-height: 100vh;
+  --platform-flow-toolbar-height: 48px;
+  --platform-topbar-height: 64px;
+  --platform-footer-height: 40px;
+  --platform-shell-height: calc(100dvh - var(--platform-flow-toolbar-height));
+  --platform-page-body-height: calc(var(--platform-shell-height) - var(--platform-topbar-height) - var(--platform-footer-height));
 }
 
 .native-dashboard { position:relative; --blue:#0077c8; --ink:#28282d; --muted:#5c5e65; --line:#d7d9dc; --pale:#edf8ff; min-width:1080px; min-height:100vh; color:var(--ink); background:#fff; font-size:14px; line-height:1.25; }
@@ -279,7 +284,9 @@ button {
 
 .mi-stage {
   width: 100%;
-  overflow: auto;
+  height: var(--platform-shell-height);
+  overflow-x: auto;
+  overflow-y: hidden;
   background: #ececef;
 }
 
@@ -1961,6 +1968,64 @@ button {
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+.screen--dashboard .mi-shell,
+.screen--my-instruments .mi-shell,
+.screen--add-instruments .mi-shell,
+.screen--support-history .mi-shell,
+.screen--service-plan-contacts .mi-shell,
+.screen--consumables .mi-shell,
+.screen--installations .mi-shell,
+.screen--notification-settings .ns-shell {
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen--spc .flow-stage {
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.screen--spc .flow-canvas--spc {
+  height: var(--platform-shell-height);
+  aspect-ratio: auto;
+}
+
+.screen--spc .spc-shell {
+  --platform-topbar-height: 66px;
+  --platform-shell-height: calc((100dvh - var(--platform-flow-toolbar-height)) / var(--spc-scale, 1));
+  --platform-page-body-height: min(
+    calc(1800px - var(--platform-topbar-height) - var(--platform-footer-height)),
+    calc(var(--platform-shell-height) - var(--platform-topbar-height) - var(--platform-footer-height))
+  );
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.platform-page-body {
+  height: var(--platform-page-body-height);
+  min-height: 0;
+  padding-bottom: 40px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.platform-page-body--has-actionbar {
+  padding-bottom: 0;
+}
+
+.ns-main.platform-page-body {
+  inset: var(--platform-topbar-height) 0 auto 256px;
+}
+
+.screen--spc .platform-page-body.spc-main {
+  height: var(--platform-page-body-height);
 }
 
 .spc-title-band {
