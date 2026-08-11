@@ -418,6 +418,30 @@ button {
 
 .mi-main { margin-left: 56px; }
 
+.screen--dashboard .platform-sidebar,
+.screen--my-instruments .platform-sidebar,
+.screen--add-instruments .platform-sidebar,
+.screen--support-history .platform-sidebar,
+.screen--service-plan-contacts .platform-sidebar,
+.screen--notification-settings .platform-sidebar,
+.screen--consumables .platform-sidebar,
+.screen--installations .platform-sidebar {
+  position: fixed;
+  top: 112px;
+  bottom: 0;
+  left: max(0px, calc((100vw - 1440px) / 2));
+  overflow: hidden;
+}
+
+.platform-sidebar + .mi-main {
+  margin-left: 256px;
+  transition: margin-left 180ms ease;
+}
+
+.platform-sidebar.is-collapsed + .mi-main {
+  margin-left: 58px;
+}
+
 .mi-titlebar {
   display: flex;
   height: 88px;
@@ -576,7 +600,6 @@ button {
 /* Support request history — native implementation of Figma frame 8272:202190. */
 .screen--support-history { min-height: 100vh; background: #ececef; }
 .sh-shell { min-height: 1623px; }
-.screen--support-history .platform-sidebar { position: absolute; top: 64px; bottom: 0; }
 .sh-titlebar { justify-content: space-between; }
 .sh-titlebar .mi-button--primary { width: 179px; height: 30px; padding: 0 24px; }
 .sh-content { width: 1320px; margin: 48px 32px 0; }
@@ -619,14 +642,9 @@ button {
 .sh-status--closed { color: #2b2b30; background: #e5e5e5; }
 .sh-table tr[hidden] { display: none; }
 
-@media (max-width: 900px) {
-  .screen--support-history .platform-sidebar { position: absolute; }
-}
-
 /* Service plan contacts — native implementation of Figma frame 14999:274445. */
 .screen--service-plan-contacts { min-height: 100vh; background: #ececef; }
 .splan-shell { min-height: 1800px; }
-.screen--service-plan-contacts .platform-sidebar { position: absolute; top: 64px; bottom: 0; }
 .splan-main { min-height: 1696px; }
 .splan-top { height: 357px; padding: 32px; background: #f7f7f7; }
 .splan-heading { display: flex; width: 1320px; align-items: flex-start; justify-content: space-between; }
@@ -696,7 +714,8 @@ button {
 .ns-header__right { gap: 24px; }
 .ns-profile { position: relative; }
 .ns-profile em { position: absolute; top: 2px; right: -5px; display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; color: #fff; background: var(--ns-red); font-size: 10px; font-style: normal; font-weight: 700; line-height: 1; }
-.ns-main { position: absolute; inset: 64px 0 40px; }
+.ns-main { position: absolute; inset: 64px 0 40px 256px; transition: left 180ms ease; }
+.platform-sidebar.is-collapsed + .ns-main { left: 58px; }
 .ns-titlebar { position: absolute; top: 0; right: 0; left: 0; height: 88px; padding: 22px 32px; background: #f7f7f7; }
 .ns-titlebar h1 { margin: 0; font-size: 32px; font-weight: 500; line-height: 40px; }
 .ns-global { position: absolute; top: 21px; left: 1200px; display: flex; width: 208px; align-items: center; gap: 0; }
@@ -743,7 +762,6 @@ button {
 /* Consumables — native implementation of Figma frame 5843:144528 (1440 × 2440). */
 .screen--consumables { min-height: 100vh; background: #ececef; }
 .cons-shell { min-height: 2440px; }
-.screen--consumables .platform-sidebar { position: absolute; top: 64px; bottom: 0; }
 .cons-main { position: relative; height: 2336px; overflow: hidden; }
 .cons-titlebar { position: absolute; top: 0; right: 0; left: 0; }
 .cons-quick-order { position: absolute; top: 112px; left: 32px; display: flex; width: 1320px; height: 128px; align-items: center; gap: 24px; border: 1px solid #ccc; border-radius: 3px; padding: 16px 24px; background: #f1f9ff; }
