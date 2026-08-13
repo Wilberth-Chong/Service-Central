@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260812-sidebar-collapse-no-margin" />
+    <link rel="stylesheet" href="styles.css?v=20260812-footer" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -89,9 +89,9 @@
       <section class="screen screen--dashboard" aria-label="Services Central Dashboard">
         <div class="flow-toolbar"><button type="button" data-back-to-signin>Back</button><strong>Services Central Dashboard</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="mi-shell db-shell">
-          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
-          <main class="mi-main db-main">
+          <main class="platform-page-body mi-main db-main">
             <section class="mi-titlebar db-titlebar"><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
             <section class="ai-banner db-banner" aria-label="Instrument access request notification"><button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__content"><div class="ai-banner__art"><img src="assets/instruments/add-instruments-suggestion.svg" alt="" /><span>New</span></div><div class="ai-banner__copy"><h2>3 instrument(s) access requests awaiting your approval</h2><p>Review the instrument(s) and approve or deny.</p></div><button class="ai-small-button db-banner__button" type="button" data-route="approval-email">Go to pending</button></div><button class="ai-banner__arrow" type="button" data-db-banner-next aria-label="Next notification"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__dots" aria-label="Notification 1 of 3"><span class="is-active"></span><span></span><span></span></div></section>
             <section class="db-top" aria-label="Dashboard quick actions">
@@ -122,7 +122,7 @@
               <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#my-instruments">TSQ-Z-12348</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button></header><dl><dt>Nickname</dt><dd>TSQ-2</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Mass Spec Life Science</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
             </div></section>
           </main>
-          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          <div data-footer-mount></div>
         </div></div>
       </section>
     </template>
@@ -139,22 +139,11 @@
         </div>
         <div class="mi-stage">
           <div class="mi-shell">
-            <header class="mi-header">
-              <div class="mi-header__left">
-                <button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button>
-                <img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" />
-                <span class="mi-header__label">Connect Platform</span>
-                <strong class="mi-header__product">Services Central</strong>
-              </div>
-              <div class="mi-header__right">
-                <button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button>
-                <button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button>
-              </div>
-            </header>
+            <div data-topbar-sc-mount></div>
 
             <div data-platform-sidebar-mount></div>
 
-            <main class="mi-main">
+            <main class="platform-page-body mi-main">
               <section class="mi-titlebar">
                 <h1>Instruments</h1>
                 <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
@@ -208,7 +197,7 @@
                 </div>
               </section>
             </main>
-            <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+            <div data-footer-mount></div>
           </div>
         </div>
       </section>
@@ -226,22 +215,11 @@
         </div>
         <div class="mi-stage">
           <div class="mi-shell ai-shell">
-            <header class="mi-header">
-              <div class="mi-header__left">
-                <button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button>
-                <img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" />
-                <span class="mi-header__label">Connect Platform</span>
-                <strong class="mi-header__product">Services Central</strong>
-              </div>
-              <div class="mi-header__right">
-                <button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button>
-                <button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button>
-              </div>
-            </header>
+            <div data-topbar-sc-mount></div>
 
             <div data-platform-sidebar-mount></div>
 
-            <main class="mi-main ai-main">
+            <main class="platform-page-body mi-main ai-main">
               <section class="mi-titlebar ai-titlebar"><h1>Add instruments to get support</h1></section>
               <section class="ai-banner" aria-label="Instrument suggestions">
                 <button class="ai-banner__arrow" type="button" data-ai-banner-prev aria-label="Previous suggestion"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button>
@@ -285,7 +263,7 @@
                 </div>
               </section>
             </main>
-            <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+            <div data-footer-mount></div>
 
             <dialog class="ai-supported-dialog" data-ai-supported-dialog aria-labelledby="supported-dialog-title"><button type="button" data-ai-supported-close aria-label="Close supported instruments"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button><h2 id="supported-dialog-title">Supported instruments</h2><p>Services Central supports eligible Thermo Fisher Scientific instrument families installed in supported regions on or after 01 January 2010.</p><button class="mi-button" type="button" data-ai-supported-close>Close</button></dialog>
           </div>
@@ -297,9 +275,9 @@
       <section class="screen screen--support-history" aria-label="Support request history">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Support request history</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="mi-shell sh-shell">
-          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
-          <main class="mi-main sh-main">
+          <main class="platform-page-body mi-main sh-main">
             <section class="mi-titlebar sh-titlebar"><h1>Support request history</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
             <section class="sh-content" aria-labelledby="sh-ticket-heading">
               <div class="sh-top">
@@ -324,7 +302,7 @@
               </tr></thead><tbody data-sh-rows></tbody></table></div>
             </section>
           </main>
-          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          <div data-footer-mount></div>
         </div></div>
       </section>
     </template>
@@ -333,9 +311,9 @@
       <section class="screen screen--service-plan-contacts" aria-label="Service plan contacts">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Service plan contacts</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="mi-shell splan-shell">
-          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
-          <main class="mi-main splan-main">
+          <main class="platform-page-body mi-main splan-main">
             <section class="splan-top">
               <div class="splan-heading"><div><h1>Service plan contacts</h1><p>Tell us who to contact for any service plan notifications or to renew your plan.</p></div><button class="mi-button mi-button--primary splan-primary" type="button" data-route="edit-spc">Edit service plan contact</button></div>
               <div class="splan-contact-grid">
@@ -366,7 +344,7 @@
               </section>
             </section>
           </main>
-          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          <div data-footer-mount></div>
         </div></div>
       </section>
     </template>
@@ -375,8 +353,7 @@
       <section class="screen screen--notification-settings" aria-label="Notification settings">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Notification settings</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="ns-shell">
-          <header class="ns-header"><div class="ns-header__left"><button type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="ns-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span>Connect Platform</span><strong>Notification Settings</strong></div><div class="ns-header__right"><button type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /></button><button class="ns-profile" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /><em>2</em></button><button type="button" aria-label="Help"><img src="assets/icons/notifications/question/size=24px, style=mono.svg" alt="" /></button></div></header>
-          <div data-platform-sidebar-mount></div>
+          <div data-topbar-notifications-mount></div>
           <main class="ns-main">
             <section class="ns-titlebar"><h1>Notification settings</h1></section>
             <div class="ns-global"><div><strong>Email Notifications</strong><span data-ns-global-copy>All email notifications turned on.</span></div><button class="ns-switch" type="button" role="switch" aria-checked="true" data-ns-global aria-label="All email notifications"><span></span></button></div>
@@ -384,7 +361,7 @@
             <section id="ns-connected-panel" class="ns-connected" role="tabpanel" aria-labelledby="ns-connected-tab" data-ns-panel="connected" hidden><img src="assets/notifications/connected-instruments.png" alt="Connected instrument notification settings for Freezer, Incubator, Refrigerator, Sensors, and ULT" /><div class="ns-connected-hotspots" aria-label="Connected instrument controls"><button type="button" data-ns-connected="Freezer" aria-label="Freezer notification settings"></button><button type="button" data-ns-connected="Incubator" aria-label="Incubator notification settings"></button><button type="button" data-ns-connected="Refrigerator" aria-label="Refrigerator notification settings"></button><button type="button" data-ns-connected="Sensors" aria-label="Sensors notification settings"></button><button type="button" data-ns-connected="ULT" aria-label="ULT notification settings"></button><button type="button" data-ns-connected="Web delivery" aria-label="Toggle web notifications"></button><button type="button" data-ns-connected="Email delivery" aria-label="Toggle email notifications"></button><button type="button" data-ns-connected="Mobile delivery" aria-label="Toggle mobile notifications"></button><button type="button" data-ns-connected="Alarms" aria-label="Toggle alarm notifications"></button></div></section>
             <section id="ns-services-panel" class="ns-services" role="tabpanel" aria-labelledby="ns-services-tab" data-ns-panel="services"><div class="ns-services__top"><h2>Services Central notifications</h2><p>Manage Services Central notifications you receive by email. Service ticket contacts will receive certain emails<br />from our service team instead of from Service Central.</p><div class="ns-master-row"><img src="assets/icons/features/email/Size=24px, Style=Mono.svg" alt="" /><span>All Services Central email notifications</span><button class="ns-switch" type="button" role="switch" aria-checked="true" data-ns-master aria-label="All Services Central email notifications"><span></span></button></div></div><section class="ns-individual"><h3>Individual Services Central email notifications</h3><div data-ns-list></div></section></section>
           </main>
-          <footer class="ns-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          <div data-footer-mount></div>
         </div></div>
       </section>
     </template>
@@ -393,9 +370,9 @@
       <section class="screen screen--consumables" aria-label="Consumables">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Consumables</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="mi-shell cons-shell">
-          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
-          <main class="mi-main cons-main">
+          <main class="platform-page-body mi-main cons-main">
             <section class="mi-titlebar cons-titlebar"><h1>Consumables</h1></section>
             <section class="cons-quick-order"><div class="cons-spot cons-spot--cart"><img src="assets/consumables/cart.svg" alt="" /></div><div><h2>Already know the consumables you need?</h2><p>Just order your product by entering the catalog number.</p></div><button class="mi-button" type="button" data-cons-action="Quick order">Quick order</button></section>
             <div class="cons-body">
@@ -422,7 +399,7 @@
               </section>
             </div>
           </main>
-          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          <div data-footer-mount></div>
         </div></div>
       </section>
     </template>
@@ -431,10 +408,10 @@
       <section class="screen screen--installations" aria-label="Installations">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Installations</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
         <div class="mi-stage"><div class="mi-shell ins-shell">
-          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
-          <main class="mi-main ins-main">
-            <section class="mi-titlebar ins-titlebar"><h1>Installations</h1><div class="ins-title-actions"><button class="ins-faq" type="button" data-ins-action="FAQs"><img src="assets/icons/notifications/question/size=16px, style=bold.svg" alt="" />FAQs</button><i></i><button class="mi-button ins-add-user" type="button" data-ins-action="Add user to order">Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-order">Installation support</button></div></section>
+          <main class="platform-page-body mi-main ins-main">
+            <section class="mi-titlebar ins-titlebar"><h1>Installations</h1><div class="ins-title-actions"><button class="ins-faq" type="button" data-route="installation-faqs"><img src="assets/icons/notifications/question/size=16px, style=bold.svg" alt="" />FAQs</button><i></i><button class="mi-button ins-add-user" type="button" data-open-add-user>Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-support">Installation support</button></div></section>
             <section class="ins-content">
               <header class="ins-intro"><h2>Order(s) <span>4</span></h2><p>Monitor the progress of your installation(s).</p></header>
               <div class="ins-orders">
@@ -456,14 +433,138 @@
                   </div>
                   <div class="ins-items" data-ins-expanded hidden>
                     <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-ins-items></tbody></table>
-                    <button class="ins-additional" type="button" data-ins-action="Additional items"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
+                    <button class="ins-additional" type="button" data-ins-additional-toggle aria-expanded="false" aria-controls="installation-additional-items"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
+                    <div class="ins-additional-items" id="installation-additional-items" data-ins-additional-panel hidden>
+                      <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><tbody data-ins-additional-items></tbody></table>
+                    </div>
                   </div>
                 </article>
                 <article class="ins-order ins-order--secondary"><button class="ins-order-toggle" type="button" aria-expanded="false"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 7659430547</span></button><span class="ins-badge ins-badge--success"><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span></article>
               </div>
             </section>
           </main>
-          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+          <div data-footer-mount></div>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="installation-faqs-template">
+      <section class="screen screen--installation-faqs" aria-label="Installation frequently asked questions">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Installation FAQs</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell ifaq-shell">
+          <div data-topbar-sc-mount></div>
+          <div data-platform-sidebar-mount></div>
+          <main class="platform-page-body mi-main ifaq-main">
+            <section class="ifaq-titlebar">
+              <div class="ifaq-heading"><button type="button" data-route="installations"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />Installations</button><h1>Frequently asked questions</h1></div>
+              <div class="ifaq-title-actions"><button class="mi-button ifaq-add-user" type="button" data-open-add-user>Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-support">Installation support</button></div>
+            </section>
+            <div class="ifaq-content">
+              <section class="ifaq-intro"><h2>Getting started with your installation in Services Central</h2><p>Services Central is essential for completing your installation. It replaces the previous installation process, and your installation will not proceed until all required steps are completed.</p></section>
+              <section class="ifaq-visual"><h3>Actions required from you</h3><img src="assets/installations/actions-required.png" alt="Four installation steps: log in and review your order, add a team member to the order, enter preferred delivery dates, and complete and upload installation documentation" /></section>
+              <section class="ifaq-section"><h3>FAQs</h3><div class="ifaq-accordions">
+                <details><summary>Who should use Services Central for managing installations?</summary><p>Your Installation Coordinator: This is the person at your organization that has the authority and responsibility for providing information to move your installation forward. If you have been contacted for this order but the order is not relevant to you, please use the “Installation Support” button to let us know.</p></details>
+                <details><summary>What if I have questions or get stuck?</summary><p>If you need assistance at any point, simply click the “Installation Support” button on this page to get support from our team.</p></details>
+                <details><summary>Can more than one person log in to Services Central for managing installations?</summary><p>Yes. Other members of your organization can create their own accounts to gain visibility to the installation process and receive status updates. Click “Add user to order” to add them now.</p></details>
+                <details><summary>What are the benefits of managing installation through Services Central?</summary><p>Full transparency into the installation process<br />Easy completion and tracking of installation documentation<br />Email notifications and automated reminders<br />Faster, more efficient communication with our team</p></details>
+                <details><summary>Why is the installation process now online?</summary><p>We heard directly from customers: they wanted real-time updates, better visibility to each stage of the process, and a clearer understanding of what’s required. We listened—and this portal was built to deliver just that.</p></details>
+                <details><summary>Should I use Services Central after my installation is complete?</summary><p>Yes. Once your instrument is installed, you can use Services Central to request service, review your service history, monitor warranty and contract status, and much more—for your recently installed and other supported instruments.</p></details>
+              </div></section>
+              <section class="ifaq-visual ifaq-take-charge"><h3>Take charge of your instruments</h3><img src="assets/installations/take-charge.png" alt="Installation visibility and manage instruments after installation" /></section>
+            </div>
+          </main>
+          <div data-footer-mount></div>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="installation-support-template">
+      <section class="screen screen--installation-support" aria-label="Installation support">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Installation support</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell isup-shell">
+          <div data-topbar-sc-mount></div>
+          <div data-platform-sidebar-mount></div>
+          <main class="platform-page-body platform-page-body--has-actionbar mi-main isup-main">
+            <section class="mi-titlebar isup-titlebar"><h1>Installation support</h1></section>
+            <ol class="isup-steps" aria-label="Request progress">
+              <li class="is-current" aria-current="step" data-isup-step-indicator="1"><span>1</span><strong>Add request details</strong></li>
+              <li data-isup-step-indicator="2"><span>2</span><strong>Confirm contact information</strong></li>
+              <li data-isup-step-indicator="3"><span>3</span><strong>Review and submit</strong></li>
+            </ol>
+            <form class="isup-form" data-installation-support-form>
+              <div data-isup-step-panel="1">
+                <header><h2>Installation support request details</h2><p>Please tell us what help you need from the installation team.</p></header>
+                <div class="isup-fields">
+                  <div class="isup-field isup-field--order"><span>Select order(s)<sup>*</sup></span><button class="isup-order-select" type="button" value="" aria-haspopup="listbox" aria-expanded="false" aria-controls="isup-order-menu" data-isup-order data-isup-required><span data-isup-order-value>Please select order(s)</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button>
+                    <div class="isup-order-menu" id="isup-order-menu" role="listbox" aria-label="Installation orders" aria-multiselectable="true" data-isup-order-menu hidden>
+                      <div class="isup-order-menu__items">
+                        <label><input type="checkbox" value="1234567890" data-isup-order-option /><span>Order no. 1234567890</span></label>
+                        <label><input type="checkbox" value="2345678901" data-isup-order-option /><span>Order no. 2345678901</span></label>
+                        <label><input type="checkbox" value="3456789012" data-isup-order-option /><span>Order no. 3456789012</span></label>
+                        <label><input type="checkbox" value="4567890123" data-isup-order-option /><span>Order no. 4567890123</span></label>
+                        <label><input type="checkbox" value="5678901234" data-isup-order-option /><span>Order no. 5678901234</span></label>
+                        <i aria-hidden="true"></i>
+                      </div>
+                      <label class="isup-order-menu__missing"><input type="radio" name="installation-order" value="missing" data-isup-order-missing /><span>I don’t see my installation order</span></label>
+                    </div>
+                  </div>
+                  <div class="isup-field isup-field--topic"><span>Installation topic<sup>*</sup></span><button class="isup-topic-select" type="button" value="" aria-haspopup="listbox" aria-expanded="false" aria-controls="isup-topic-menu" data-isup-topic data-isup-required><span data-isup-topic-value>Please select</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button>
+                    <div class="isup-topic-menu" id="isup-topic-menu" role="listbox" aria-label="Installation topic" data-isup-topic-menu hidden>
+                      <button type="button" role="option" data-isup-topic-option="Delivery dates">Delivery dates</button>
+                      <button type="button" role="option" data-isup-topic-option="Delivery checklist">Delivery checklist</button>
+                      <button type="button" role="option" data-isup-topic-option="Pre-install checklist">Pre-install checklist</button>
+                      <button type="button" role="option" data-isup-topic-option="Install scheduling">Install scheduling</button>
+                      <button type="button" role="option" data-isup-topic-option="Other">Other</button>
+                    </div>
+                  </div>
+                  <label class="isup-field isup-field--details"><span>Additional details<sup>*</sup><small data-isup-count>0 / 500</small></span><textarea maxlength="500" required placeholder="Provide more details about your request." data-isup-required data-isup-details></textarea></label>
+                </div>
+              </div>
+              <div class="isup-contact" data-isup-step-panel="2" hidden>
+                <header><h2>Contact information</h2><p>This contact will be the primary recipient of communications regarding this request.</p></header>
+                <div class="isup-contact-fields">
+                  <div class="isup-contact-name-row">
+                    <label class="isup-contact-field"><span>First name<sup>*</sup></span><input type="text" value="Molly" required autocomplete="given-name" data-isup-contact-required data-isup-contact-field="firstName" /></label>
+                    <label class="isup-contact-field"><span>Last name<sup>*</sup></span><input type="text" value="Hartman" required autocomplete="family-name" data-isup-contact-required data-isup-contact-field="lastName" /></label>
+                  </div>
+                  <label class="isup-contact-field"><span>Phone number<sup>*</sup></span><input type="tel" value="123-456-7890" required autocomplete="tel" data-isup-contact-required data-isup-contact-field="phone" /></label>
+                  <label class="isup-contact-field isup-contact-field--email"><span>Email<sup>*</sup></span><input type="email" value="molly.hartman@thermofisher.com" required autocomplete="email" data-isup-contact-required data-isup-contact-field="email" /></label>
+                </div>
+              </div>
+              <div class="isup-review" data-isup-step-panel="3" hidden>
+                <header class="isup-review__intro"><h2>Review and submit</h2><p>Review the request details and use the back button if any edits are needed. Click the submit button to complete the process.</p></header>
+                <section class="isup-review-card isup-review-card--request" aria-labelledby="isup-review-request-heading">
+                  <h3 id="isup-review-request-heading">Request details</h3>
+                  <div class="isup-review-request-grid">
+                    <div class="isup-review-value isup-review-value--orders"><strong>Order no.</strong><div data-isup-review-orders></div></div>
+                    <div class="isup-review-value"><strong>Installation topic</strong><span data-isup-review-topic></span></div>
+                    <div class="isup-review-value isup-review-value--details"><strong>Additional details</strong><span data-isup-review-details></span></div>
+                  </div>
+                </section>
+                <section class="isup-review-card isup-review-card--contact" aria-labelledby="isup-review-contact-heading">
+                  <h3 id="isup-review-contact-heading">Contact information</h3>
+                  <div class="isup-review-contact-grid">
+                    <div class="isup-review-value"><strong>Name</strong><span data-isup-review-name></span></div>
+                    <div class="isup-review-value"><strong>Phone number</strong><span data-isup-review-phone></span></div>
+                    <div class="isup-review-value isup-review-value--email"><strong>Email</strong><span data-isup-review-email></span></div>
+                  </div>
+                </section>
+              </div>
+            </form>
+            <section class="isup-submitted" data-isup-submitted hidden>
+              <div class="isup-submitted-notice" role="status" data-isup-submitted-notice>
+                <span class="isup-submitted-notice__icon" aria-hidden="true"></span>
+                <p><strong>Request submitted:</strong> A representative will respond to your request as soon as possible.</p>
+                <button type="button" aria-label="Close confirmation" data-isup-close-notice><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+              </div>
+              <div class="isup-submitted-summary">
+                <h2>Summary</h2>
+                <div class="isup-submitted-cards" data-isup-submitted-cards></div>
+              </div>
+            </section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <div data-footer-mount></div>
         </div></div>
       </section>
     </template>
@@ -499,32 +600,11 @@
         <div class="flow-stage">
           <div class="flow-canvas flow-canvas--spc">
             <div class="spc-shell">
-              <header class="spc-topbar">
-            <div class="spc-topbar__left">
-              <span class="spc-menu-button" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
-              <div class="spc-brand" aria-label="Thermo Fisher Scientific">
-                <strong>ThermoFisher</strong>
-                <span>SCIENTIFIC</span>
-              </div>
-              <span class="spc-divider"></span>
-              <span class="spc-platform">Connect Platform</span>
-              <span class="spc-divider"></span>
-              <strong class="spc-product">Services Central</strong>
-            </div>
-            <div class="spc-topbar__right">
-              <button class="spc-icon-button spc-top-icon spc-bell" type="button" aria-label="Notifications"></button>
-              <button class="spc-icon-button spc-top-icon spc-user" type="button" aria-label="User profile"></button>
-              <button class="spc-icon-button spc-top-icon spc-help" type="button" data-open-services-help aria-label="Get help"></button>
-            </div>
-          </header>
+              <div data-topbar-sc-mount></div>
 
               <div data-platform-sidebar-mount></div>
 
-              <main class="spc-main">
+              <main class="platform-page-body platform-page-body--has-actionbar spc-main">
             <div class="spc-title-band">
               <h1>Edit service plan contact</h1>
             </div>
@@ -740,12 +820,8 @@
               <button class="spc-button spc-button--primary" type="button" data-spc-continue>Continue</button>
             </div>
 
-            <footer class="spc-footer">
-              <span>© 2022 - Thermo Fisher Scientific</span>
-              <a href="#">Privacy policy</a>
-              <a href="#">Terms of use</a>
-            </footer>
               </main>
+              <div data-footer-mount></div>
             </div>
           </div>
         </div>
@@ -764,6 +840,58 @@
       <h2>Prototype flows</h2>
       <p>Open a workflow or regional starting point.</p>
       <div class="flows-grid" data-flows-grid></div>
+    </dialog>
+
+    <dialog id="installation-pending-dialog" class="installation-pending-dialog" aria-labelledby="installation-pending-title" aria-describedby="installation-pending-description">
+      <div class="installation-pending-modal">
+        <section class="installation-pending-modal__top">
+          <header class="installation-pending-modal__title">
+            <div><h2 id="installation-pending-title">Action(s) pending</h2><button type="button" data-installation-pending-close aria-label="Close pending actions"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></div>
+            <p id="installation-pending-description">You have important pending actions to ensure your delivery and installation stay on track.</p>
+          </header>
+          <div class="installation-pending-modal__actions">
+            <div class="installation-pending-modal__row"><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span></div>
+            <button class="installation-pending-modal__row" type="button" data-installation-pending-instruments><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>3456789</strong>. Review your instruments in <b>My instruments</b> tab.</span></button>
+          </div>
+        </section>
+        <footer class="installation-pending-modal__footer"><button class="installation-pending-modal__button installation-pending-modal__button--secondary" type="button" data-installation-pending-close>Cancel</button><button class="installation-pending-modal__button installation-pending-modal__button--primary" type="button" data-installation-pending-continue>Go to installation page</button></footer>
+      </div>
+    </dialog>
+
+    <dialog id="add-user-order-dialog" class="add-user-order-dialog" aria-labelledby="add-user-order-title" aria-describedby="add-user-order-description">
+      <form class="add-user-order-modal" method="dialog" data-add-user-form tabindex="-1">
+        <header class="add-user-order-modal__header">
+          <div><h2 id="add-user-order-title">Add user to order</h2><button type="button" data-add-user-close aria-label="Close add user to order"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></div>
+          <p id="add-user-order-description">Select and share your installation order(s) with other users.</p>
+        </header>
+        <div class="add-user-order-modal__content">
+          <div class="add-user-order-modal__email"><label for="add-user-order-email">Recipient emails<sup>*</sup></label><input id="add-user-order-email" type="text" role="combobox" aria-expanded="false" aria-controls="add-user-recipient-dropdown" autocomplete="off" data-add-user-email aria-describedby="add-user-order-email-help" />
+            <div id="add-user-recipient-dropdown" class="add-user-recipient-dropdown" data-add-user-recipient-dropdown hidden>
+              <div class="add-user-recipient-dropdown__query"><span data-add-user-query>sebastien.martin@company.com</span><button type="button" data-add-user-email-close aria-label="Clear recipient email"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></div>
+              <div class="add-user-recipient-dropdown__list" role="group" aria-label="Recipient suggestions">
+                <label><input type="checkbox" value="james.jefferson@company.com" data-add-user-recipient /><span>james.jefferson@company.com</span></label>
+                <label><input type="checkbox" value="jack.ramirez@company.com" data-add-user-recipient /><span>jack.ramirez@company.com</span></label>
+                <label><input type="checkbox" value="jeff.roberts@company.com" data-add-user-recipient /><span>jeff.roberts@company.com</span></label>
+                <label><input type="checkbox" value="jira.black@company.com" data-add-user-recipient /><span>jira.black@company.com</span></label>
+                <label><input type="checkbox" value="sebastien.martin@company.com" data-add-user-recipient /><span>sebastien.martin@company.com</span></label>
+                <label><input type="checkbox" value="julia.rogers@company.com" data-add-user-recipient /><span>julia.rogers@company.com</span></label>
+                <i aria-hidden="true"></i>
+              </div>
+              <footer><span data-add-user-selection-count>0 of 6 selections</span><button type="button" data-add-user-clear-recipients>Clear all</button></footer>
+            </div>
+          </div>
+          <p id="add-user-order-email-help" class="add-user-order-modal__help">If adding more than one email, separate with commas. Sharing outside your organization is not allowed.</p>
+          <fieldset class="add-user-order-modal__orders"><legend>Select installation order <sup>*</sup></legend>
+            <div class="add-user-order-table-wrap"><table><colgroup><col class="add-user-order-col-check" /><col /><col /><col class="add-user-order-col-users" /></colgroup><thead><tr><th></th><th>Order # <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Order date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Users <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>
+              <tr><td><input type="checkbox" value="9012611245" aria-label="Select order 9012611245" /></td><td>9012611245</td><td>10 Mar 2025</td><td><button type="button" data-add-user-users="3">3</button></td></tr>
+              <tr><td><input type="checkbox" value="1901126245" aria-label="Select order 1901126245" /></td><td>1901126245</td><td>23 Apr 2025</td><td><button type="button" data-add-user-users="4">4</button></td></tr>
+              <tr><td><input type="checkbox" value="7659430547" aria-label="Select order 7659430547" /></td><td>7659430547</td><td>10 Apr 2025</td><td><button type="button" data-add-user-users="2">2</button></td></tr>
+              <tr><td><input type="checkbox" value="323146241" aria-label="Select order 323146241" /></td><td>323146241</td><td>02 Feb 2025</td><td><button type="button" data-add-user-users="5">5</button></td></tr>
+            </tbody></table><span class="add-user-order-table__scrollbar" aria-hidden="true"></span></div>
+          </fieldset>
+        </div>
+        <footer class="add-user-order-modal__footer"><button type="button" class="add-user-order-modal__cancel" data-add-user-close>Cancel</button><button type="submit" class="add-user-order-modal__confirm" data-add-user-confirm disabled>Confirm</button></footer>
+      </form>
     </dialog>
 
     <dialog id="services-help-dialog" class="services-help-dialog" aria-labelledby="services-help-title">
@@ -800,8 +928,20 @@
       </div>
     </dialog>
 
-    <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+      <div class="toast__content">
+        <span class="toast__icon" data-toast-icon aria-hidden="true"><img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /></span>
+        <p class="toast__message"><strong data-toast-title></strong><span data-toast-message></span></p>
+      </div>
+      <button class="toast__close" type="button" data-toast-close aria-label="Close notification">
+        <img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" />
+      </button>
+    </div>
+    <script src="topbar-sc.js?v=20260811-topbar-sc"></script>
+    <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
-    <script src="app.js?v=20260810-across-site-sidebar"></script>
+    <script src="platform-action-bar.js?v=20260811-platform-action-bar"></script>
+    <script src="footer.js?v=20260812-footer"></script>
+    <script src="app.js?v=20260812-footer-spc"></script>
   </body>
 </html>
