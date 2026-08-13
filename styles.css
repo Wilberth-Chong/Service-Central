@@ -297,6 +297,7 @@ button {
   --mi-ink: #1b1b1d;
   --mi-secondary: #54545c;
   --mi-line: #e5e5e5;
+  --footer-left: 58px;
   position: relative;
   width: 1440px;
   min-height: 2000px;
@@ -697,13 +698,14 @@ button {
 .mi-status--soon { color: #8a3d00; background: #ffe8d2; }
 .mi-more { display: grid; width: 32px; height: 40px; place-items: center; }
 
-.mi-footer {
+.footer {
   position: absolute;
   right: 0;
   bottom: 0;
-  left: 56px;
+  left: var(--footer-left, 0);
   display: flex;
-  height: 40px;
+  width: calc(100% - var(--footer-left, 0px));
+  height: var(--platform-footer-height, 40px);
   align-items: center;
   gap: 12px;
   border-top: 1px solid #dcdcdc;
@@ -714,8 +716,13 @@ button {
   font-weight: 500;
 }
 
-.mi-footer i { width: 1px; height: 24px; background: #dcdcdc; }
-.mi-footer a { color: var(--mi-blue); font-weight: 400; text-decoration: none; }
+.footer__divider { width: 1px; height: 24px; background: #dcdcdc; }
+.footer a { color: #0071d0; font-weight: 400; text-decoration: none; }
+
+.platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer {
+  left: 256px;
+  width: calc(100% - 256px);
+}
 
 /* Support request history — native implementation of Figma frame 8272:202190. */
 .screen--support-history { min-height: 100vh; background: #ececef; }
@@ -932,10 +939,6 @@ button {
 .ns-setting-row .ns-switch { margin-left: auto; }
 .ns-setting-row.is-disabled { color: #92929e; }
 .ns-setting-row.is-disabled .ns-switch { pointer-events: none; opacity: .55; }
-.ns-footer { position: absolute; right: 0; bottom: 0; left: 0; display: flex; height: 40px; align-items: center; gap: 12px; border-top: 1px solid #dcdcdc; padding: 0 32px; color: #2b2b30; background: #fff; font-size: 12px; font-weight: 500; }
-.ns-footer i { width: 1px; height: 24px; background: #dcdcdc; }
-.ns-footer a { color: var(--ns-blue); font-weight: 400; text-decoration: none; }
-
 /* Consumables — native implementation of Figma frame 5843:144528 (1440 × 2440). */
 .screen--consumables { min-height: 100vh; background: #ececef; }
 .cons-shell { min-height: 2440px; }
@@ -2262,6 +2265,7 @@ button.installation-pending-modal__row:hover { background: #efeff0; }
 
 .screen--spc .spc-shell {
   --platform-topbar-height: 66px;
+  --footer-left: 58px;
   --platform-shell-height: calc((100dvh - var(--platform-flow-toolbar-height)) / var(--spc-scale, 1));
   --platform-page-body-height: min(
     calc(1800px - var(--platform-topbar-height) - var(--platform-footer-height)),
@@ -2878,22 +2882,6 @@ button.installation-pending-modal__row:hover { background: #efeff0; }
   border: 1px solid #e71316;
   color: #fff;
   background: #e71316;
-}
-
-.spc-footer {
-  display: flex;
-  min-height: 40px;
-  align-items: center;
-  gap: 14px;
-  padding: 0 34px;
-  color: #111;
-  background: #fff;
-  font-size: 12px;
-}
-
-.spc-footer a {
-  color: #0071d0;
-  text-decoration: none;
 }
 
 .help-dialog {
