@@ -1010,12 +1010,33 @@ button {
 /* Installation support — native implementation of Figma frame 15019:277354 (1440 × 1440). */
 .screen--installation-support { min-height: 100vh; background: #ececef; }
 .isup-shell { min-height: 1440px; }
-.isup-main { position: relative; padding-bottom: 0; overflow: hidden; background: #fff; }
-.isup-titlebar { position: absolute; top: 0; right: 0; left: -2px; height: 56px; }
-.isup-titlebar h1 { font-size: 20px; line-height: 24px; }
-.screen--installation-support.is-submitted .isup-titlebar { height: 88px; }
-.screen--installation-support.is-submitted .isup-titlebar h1 { font-size: 32px; line-height: 40px; }
-.isup-steps { position: absolute; top: 88px; left: 30px; display: grid; width: 1320px; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
+.isup-main {
+  --isup-titlebar-flow-height: 88px;
+  position: relative;
+  padding-bottom: 0;
+  overflow: hidden;
+  background: #fff;
+}
+.isup-titlebar {
+  position: sticky;
+  z-index: 8;
+  top: 0;
+  right: 0;
+  left: -2px;
+  height: 88px;
+  transition: height 180ms cubic-bezier(.2, 0, 0, 1);
+}
+.isup-titlebar h1 {
+  font-size: 32px;
+  line-height: 40px;
+  transition:
+    font-size 180ms cubic-bezier(.2, 0, 0, 1),
+    line-height 180ms cubic-bezier(.2, 0, 0, 1);
+}
+.screen--installation-support.is-subheader-compact .isup-main { --isup-titlebar-flow-height: 56px; }
+.screen--installation-support.is-subheader-compact .isup-titlebar { height: 56px; }
+.screen--installation-support.is-subheader-compact .isup-titlebar h1 { font-size: 20px; line-height: 24px; }
+.isup-steps { position: absolute; top: 120px; left: 30px; display: grid; width: 1320px; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
 .isup-steps li { position: relative; display: flex; min-width: 0; height: 62px; flex-direction: column; align-items: flex-start; }
 .isup-steps li::after { position: absolute; z-index: 0; top: 17px; left: 36px; width: calc(100% - 36px); border-top: 1px solid #1b1b1d; content: ""; }
 .isup-steps li.is-current::after, .isup-steps li.is-complete::after { top: 16px; border-top: 2px solid #e71316; }
@@ -1026,7 +1047,7 @@ button {
 .isup-steps li.is-complete > span img { width: 24px; height: 24px; }
 .isup-steps strong { margin-top: 0; color: #17171e; font-size: 16px; font-weight: 400; line-height: 26px; }
 .isup-steps .is-current strong { font-weight: 700; }
-.isup-form { position: absolute; top: 198px; left: 30px; width: 1200px; height: 511px; border: 1px solid #ccc; border-radius: 3px; padding: 40px; background: #fff; }
+.isup-form { position: absolute; top: 230px; left: 30px; width: 1200px; height: 511px; border: 1px solid #ccc; border-radius: 3px; padding: 40px; background: #fff; }
 .isup-form.is-step-two { height: 445px; }
 .isup-form.is-step-three { height: auto; border: 0; padding: 0; }
 .isup-form [hidden] { display: none; }
@@ -1119,6 +1140,48 @@ button {
 .platform-actionbar .platform-actionbar__button--link { height: auto; border: 0; padding: 0; color: #0071d0; background: transparent; }
 .platform-actionbar .platform-actionbar__button--primary:disabled { border-color: #ccc; color: #81828c; background: #ccc; cursor: default; }
 .platform-actionbar__button:focus-visible { outline: 2px solid #0071d0; outline-offset: 2px; }
+
+.platform-actionbar-cancel-dialog {
+  width: min(600px, calc(100vw - 32px));
+  height: 268px;
+  max-width: none;
+  max-height: calc(100vh - 32px);
+  border: 0;
+  padding: 0;
+  overflow: visible;
+  color: #1b1b1d;
+  background: transparent;
+}
+
+.platform-actionbar-cancel-dialog::backdrop { background: rgb(0 0 0 / 48%); }
+
+.platform-actionbar-cancel-modal {
+  position: relative;
+  width: 100%;
+  height: 268px;
+  padding: 48px 48px 32px;
+  background: #fff;
+  box-shadow: 0 12px 10px rgb(0 0 0 / 15%);
+}
+
+.platform-actionbar-cancel-modal > header { display: flex; align-items: flex-start; justify-content: space-between; }
+.platform-actionbar-cancel-modal h2 { margin: 0; color: #000; font-size: 26px; font-weight: 500; line-height: 32px; }
+.platform-actionbar-cancel-modal__close { display: grid; width: 24px; height: 24px; place-items: center; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.platform-actionbar-cancel-modal__close img { width: 18px; height: 18px; }
+.platform-actionbar-cancel-modal > p { margin: 32px 0 0; color: #000; font-size: 14px; font-weight: 400; line-height: 22px; }
+.platform-actionbar-cancel-modal > footer { position: absolute; right: 32px; bottom: 32px; display: flex; gap: 16px; }
+.platform-actionbar-cancel-modal > footer button { display: inline-flex; height: 40px; align-items: center; justify-content: center; border-radius: 3px; padding: 0 24px; font-size: 14px; font-weight: 700; line-height: 22px; white-space: nowrap; cursor: pointer; }
+.platform-actionbar-cancel-modal__continue { border: 1px solid #e5e5e5; color: #54545c; background: #fff; }
+.platform-actionbar-cancel-modal__confirm { border: 1px solid #e71316; color: #fff; background: #e71316; }
+.platform-actionbar-cancel-modal__continue:hover { background: #f7f7f7; }
+.platform-actionbar-cancel-modal__confirm:hover { border-color: #c81016; background: #c81016; }
+.platform-actionbar-cancel-modal button:focus-visible { outline: 2px solid #0071d0; outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .platform-actionbar-cancel-dialog { height: auto; overflow: visible; }
+  .platform-actionbar-cancel-modal { min-height: 268px; height: auto; padding: 32px; }
+  .platform-actionbar-cancel-modal > footer { position: static; flex-wrap: wrap; justify-content: flex-end; margin-top: 40px; }
+}
 .ins-content { width: 1320px; margin: 32px 32px 0; }
 .ins-intro { height: 54px; }
 .ins-intro h2 { margin: 0; font-size: 22px; font-weight: 500; line-height: 28px; }
@@ -2910,6 +2973,27 @@ checklist-upload-note { display: block; width: 100%; }
   padding-bottom: 0;
 }
 
+/* Keep the final content on every Installations route clear of the footer. */
+.screen--installations .platform-page-body,
+.screen--installation-faqs .platform-page-body,
+.screen--installation-shell-detail .platform-page-body,
+.screen--installation-support .platform-page-body {
+  padding-bottom: 40px;
+}
+
+/* Support panels are absolutely positioned, so a measured spacer establishes
+   their scroll height above the fixed action bar. */
+.screen--installation-support .platform-page-body--has-actionbar {
+  padding-bottom: 0;
+}
+
+.isup-main::after {
+  display: block;
+  height: calc(var(--isup-scroll-content-height, 822px) - var(--isup-titlebar-flow-height));
+  content: "";
+  pointer-events: none;
+}
+
 .ns-main.platform-page-body {
   inset: var(--platform-topbar-height) 0 auto 256px;
 }
@@ -3718,5 +3802,12 @@ checklist-upload-note { display: block; width: 100%; }
   @keyframes screen-in {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isup-titlebar,
+  .isup-titlebar h1 {
+    transition: none;
   }
 }
