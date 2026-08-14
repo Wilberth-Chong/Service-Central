@@ -1527,6 +1527,189 @@ button {
   background: rgb(0 113 208 / 7%);
 }
 
+.modal {
+  --modal-width: 600px;
+  width: min(var(--modal-width), calc(100vw - 32px));
+  max-width: none;
+  max-height: 80vh;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  color: #000;
+  background: #fff;
+  box-shadow: 0 22px 90px rgb(0 0 0 / 30%);
+}
+
+.modal--sm { --modal-width: 600px; }
+.modal--md { --modal-width: 824px; }
+.modal--lg { --modal-width: 1080px; }
+
+.modal[open] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal::backdrop {
+  background: rgb(0 0 0 / 48%);
+}
+
+.modal__surface {
+  display: flex;
+  width: 100%;
+  max-height: 80vh;
+  flex-direction: column;
+  padding: 48px;
+  background: #fff;
+}
+
+.modal__surface:focus {
+  outline: none;
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.modal__heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal__title {
+  margin: 0;
+  color: #000;
+  font-family: var(--text-style-heading-h2-font-family, "Helvetica Neue"), Helvetica, Arial, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-size: var(--text-style-heading-h2-font-size, 26px);
+  font-style: normal;
+  font-weight: var(--text-style-heading-h2-font-weight, 500);
+  letter-spacing: var(--text-style-heading-h2-letter-spacing, 0);
+  line-height: var(--text-style-heading-h2-line-height, 32px);
+}
+
+.modal__description,
+.modal__body {
+  color: #000;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.modal__description {
+  margin: 0;
+}
+
+.modal__close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border: 0;
+  margin: -8px -8px 0 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal__close img {
+  width: 24px;
+  height: 24px;
+}
+
+.modal__body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.modal__footer {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.modal__button {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.modal__button--secondary {
+  border: 1px solid #e5e5e5;
+  color: #0071d0;
+  background: #fff;
+}
+
+.modal__button--primary {
+  border: 1px solid #e71316;
+  color: #fff;
+  background: #e71316;
+}
+
+.modal__button--secondary:hover {
+  border-color: #ccc;
+  background: #f7f7f7;
+}
+
+.modal__button--primary:hover {
+  border-color: #c81016;
+  background: #c81016;
+}
+
+.modal__button:disabled {
+  border-color: #ccc;
+  color: #81828c;
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.modal button:focus-visible,
+.modal a:focus-visible,
+.modal input:focus-visible,
+.modal select:focus-visible,
+.modal textarea:focus-visible {
+  outline: 2px solid #0071d0;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px), (max-height: 520px) {
+  .modal {
+    overflow: auto;
+  }
+
+  .modal__surface {
+    padding: 32px;
+  }
+
+  .modal__header {
+    margin-bottom: 24px;
+  }
+
+  .modal__footer {
+    margin-top: 32px;
+  }
+}
+
 .flows-dialog {
   width: min(860px, calc(100vw - 32px));
   max-height: min(760px, calc(100vh - 32px));
@@ -1541,43 +1724,13 @@ button {
   background: rgb(0 0 0 / 52%);
 }
 
-.installation-pending-dialog {
-  width: min(826px, calc(100vw - 32px));
-  height: 403px;
-  max-width: none;
-  max-height: calc(100vh - 32px);
-  border: 0;
-  padding: 0;
-  overflow: hidden;
-  color: #1b1b1d;
-  background: #fff;
-  box-shadow: 0 22px 90px rgb(0 0 0 / 30%);
-}
-
-.installation-pending-dialog::backdrop { background: rgb(0 0 0 / 48%); }
-
-.installation-pending-modal { display: flex; width: 100%; height: 403px; flex-direction: column; gap: 32px; padding: 48px; background: #fff; }
-.installation-pending-modal__top { display: flex; width: 730px; flex-direction: column; gap: 32px; }
-.installation-pending-modal__title { display: flex; width: 730px; flex-direction: column; gap: 16px; }
-.installation-pending-modal__title > div { display: flex; width: 729px; height: 33px; align-items: flex-start; justify-content: space-between; }
-.installation-pending-modal__title h2 { width: 684px; margin: 0; color: #222; font-size: 26px; font-weight: 500; line-height: 33px; }
-.installation-pending-modal__title button { display: grid; width: 24px; height: 24px; place-items: center; border: 0; padding: 0; background: transparent; cursor: pointer; }
-.installation-pending-modal__title button img { width: 24px; height: 24px; }
-.installation-pending-modal__title p { margin: 0; color: #1b1b1d; font-size: 16px; line-height: 26px; }
-.installation-pending-modal__actions { display: grid; width: 730px; gap: 16px; }
-.installation-pending-modal__row { display: flex; width: 730px; height: 56px; align-items: center; gap: 16px; border: 0; border-radius: 3px; padding: 16px 24px; color: #54545c; background: #f7f7f7; font-size: 14px; font-weight: 500; line-height: 22px; text-align: left; }
+.installation-pending-modal__actions { display: grid; width: 100%; gap: 16px; }
+.installation-pending-modal__row { display: flex; width: 100%; min-height: 56px; align-items: center; gap: 16px; border: 0; border-radius: 3px; padding: 16px 24px; color: #54545c; background: #f7f7f7; font-size: 14px; font-weight: 500; line-height: 22px; text-align: left; }
 button.installation-pending-modal__row { cursor: pointer; }
 button.installation-pending-modal__row:hover { background: #efeff0; }
 .installation-pending-modal__row > img { width: 24px; height: 24px; flex: 0 0 24px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
 .installation-pending-modal__row strong { font-weight: 700; }
 .installation-pending-modal__row b { color: #0071d0; font-weight: 700; }
-.installation-pending-modal__footer { display: flex; width: 730px; height: 40px; align-items: center; justify-content: flex-end; gap: 24px; }
-.installation-pending-modal__button { display: inline-flex; height: 40px; align-items: center; justify-content: center; border-radius: 3px; padding: 0 24px; font-size: 14px; font-weight: 700; line-height: 22px; cursor: pointer; }
-.installation-pending-modal__button--secondary { border: 1px solid #e5e5e5; color: #0071d0; background: #fff; }
-.installation-pending-modal__button--primary { border: 1px solid #e71316; color: #fff; background: #e71316; }
-.installation-pending-modal__button--secondary:hover { border-color: #ccc; background: #f7f7f7; }
-.installation-pending-modal__button--primary:hover { border-color: #c81016; background: #c81016; }
-.installation-pending-modal button:focus-visible { outline: 2px solid #0071d0; outline-offset: 2px; }
 
 .add-user-order-dialog { width: min(825px, calc(100vw - 32px)); height: 726px; max-width: none; max-height: calc(100vh - 32px); border: 0; padding: 0; overflow: hidden; color: #222; background: #fff; box-shadow: 0 22px 90px rgb(0 0 0 / 30%); }
 .add-user-order-dialog::backdrop { background: rgb(0 0 0 / 48%); }
@@ -1639,19 +1792,6 @@ button.installation-pending-modal__row:hover { background: #efeff0; }
   .add-user-recipient-dropdown__query, .add-user-recipient-dropdown__list, .add-user-recipient-dropdown__list label, .add-user-recipient-dropdown > footer { width: calc(100% - 2px); }
   .add-user-order-modal__header h2 { width: auto; }
   .add-user-order-table-wrap table { width: 100%; }
-}
-
-@media (max-width: 860px), (max-height: 450px) {
-  .installation-pending-dialog { height: auto; overflow: auto; }
-  .installation-pending-modal { width: 100%; height: auto; padding: 32px; }
-  .installation-pending-modal__top,
-  .installation-pending-modal__title,
-  .installation-pending-modal__title > div,
-  .installation-pending-modal__actions,
-  .installation-pending-modal__row,
-  .installation-pending-modal__footer { width: 100%; }
-  .installation-pending-modal__title h2 { width: auto; }
-  .installation-pending-modal__row { height: auto; min-height: 56px; }
 }
 
 .services-help-dialog {

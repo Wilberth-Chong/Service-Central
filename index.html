@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260811-installation-order-menu" />
+    <link rel="stylesheet" href="styles.css?v=20260814-modal-max-height" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -846,21 +846,7 @@
       <div class="flows-grid" data-flows-grid></div>
     </dialog>
 
-    <dialog id="installation-pending-dialog" class="installation-pending-dialog" aria-labelledby="installation-pending-title" aria-describedby="installation-pending-description">
-      <div class="installation-pending-modal">
-        <section class="installation-pending-modal__top">
-          <header class="installation-pending-modal__title">
-            <div><h2 id="installation-pending-title">Action(s) pending</h2><button type="button" data-installation-pending-close aria-label="Close pending actions"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></div>
-            <p id="installation-pending-description">You have important pending actions to ensure your delivery and installation stay on track.</p>
-          </header>
-          <div class="installation-pending-modal__actions">
-            <div class="installation-pending-modal__row"><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span></div>
-            <button class="installation-pending-modal__row" type="button" data-installation-pending-instruments><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>3456789</strong>. Review your instruments in <b>My instruments</b> tab.</span></button>
-          </div>
-        </section>
-        <footer class="installation-pending-modal__footer"><button class="installation-pending-modal__button installation-pending-modal__button--secondary" type="button" data-installation-pending-close>Cancel</button><button class="installation-pending-modal__button installation-pending-modal__button--primary" type="button" data-installation-pending-continue>Go to installation page</button></footer>
-      </div>
-    </dialog>
+    <div data-modal-mount="installation-pending"></div>
 
     <dialog id="add-user-order-dialog" class="add-user-order-dialog" aria-labelledby="add-user-order-title" aria-describedby="add-user-order-description">
       <form class="add-user-order-modal" method="dialog" data-add-user-form tabindex="-1">
@@ -945,6 +931,7 @@
     <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
     <script src="platform-action-bar.js?v=20260811-platform-action-bar"></script>
-    <script src="app.js?v=20260811-platform-action-bar"></script>
+    <script src="modal.js?v=20260814-modal-sizes"></script>
+    <script src="app.js?v=20260814-modal-sizes"></script>
   </body>
 </html>
