@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260812-footer" />
+    <link rel="stylesheet" href="styles.css?v=20260813-installations-footer" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -418,21 +418,25 @@
                 <article class="ins-order ins-order--primary" data-ins-order>
                   <header class="ins-order-head">
                     <button class="ins-order-toggle" type="button" data-ins-toggle aria-expanded="false" aria-controls="installation-order-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 9012611245</span></button>
-                    <span class="ins-badge ins-badge--danger"><img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" />Action(s) required</span><span class="ins-badge ins-badge--new">New</span>
-                    <button class="mi-button ins-activity" type="button" data-ins-action="Activity log">Activity log</button>
+                    <span class="ins-badge ins-badge--danger" data-ins-order-status><img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" />Action(s) required</span><span class="ins-badge ins-badge--new" data-ins-order-new>New</span>
+                    <button class="mi-button ins-activity" type="button" data-open-installation-activity>Activity log</button>
                   </header>
                   <div class="ins-expanded-summary" data-ins-expanded hidden>
                     <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Order date</strong><span>26 Jun 2025</span></div></div>
                     <div class="ins-summary-box ins-summary-box--users"><img src="assets/icons/users/profile/size=16px, style=bold.svg" alt="" /><div><strong>Order user(s)</strong><span>alexander.constantine@company...</span></div><em>+4</em></div>
                   </div>
-                  <div class="ins-action-heading" data-ins-expanded hidden><h3>Action(s) required 3</h3><p>Checklist alerts will remain active until submitted through this page.</p></div>
-                  <div class="ins-action-cards" id="installation-order-details">
-                    <article class="ins-action-card"><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 1</span><img class="ins-checklist-icon" src="assets/icons/installation/CRD/Size=32px, Style=Mono.svg" alt="" /></div><h3>Enter your preferred delivery dates</h3><p>To avoid delays, please enter your preferred delivery dates. Your order cannot proceed until this is complete.</p><button class="mi-button ins-small-button" type="button" data-ins-action="Enter dates">Enter dates</button><small>Not ready? <button type="button" data-ins-action="Let us know">Let us know</button></small></article>
-                    <article class="ins-action-card"><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 2</span><img class="ins-checklist-icon" src="assets/icons/installation/del checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your delivery checklist</h3><p>Submitting your checklist helps us coordinate a hassle-free delivery.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-ins-action="Upload delivery checklist">Upload</button><button class="mi-button ins-small-button ins-download" type="button" data-ins-action="Download delivery template">Download template</button></div></article>
-                    <article class="ins-action-card"><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/installation/preinstall checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your pre-install checklist(s)<br />(5 of 5 remaining)</h3><p>Your completed checklist(s) help us verify site readiness and avoid delaying your installation.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-ins-action="Upload pre-install checklist">Upload</button><button class="mi-button ins-small-button ins-download" type="button" data-ins-action="Download pre-install template">Download template <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div></article>
+                  <div class="ins-action-heading" data-ins-expanded hidden><h3>Action(s) required <span data-ins-action-count>3</span></h3><p>Checklist alerts will remain active until submitted through this page.</p></div>
+                  <div class="ins-action-cards" id="installation-order-details" data-ins-action-cards>
+                    <article class="ins-action-card" data-delivery-dates-card><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 1</span><img class="ins-checklist-icon" src="assets/icons/installation/CRD/Size=32px, Style=Mono.svg" alt="" /></div><h3>Enter your preferred delivery dates</h3><p>To avoid delays, please enter your preferred delivery dates. Your order cannot proceed until this is complete.</p><button class="mi-button ins-small-button" type="button" data-open-delivery-dates>Enter dates</button><small>Not ready? <button type="button" data-open-delivery-pause>Let us know</button></small></article>
+                    <article class="ins-action-card" data-delivery-checklist-card><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 2</span><img class="ins-checklist-icon" src="assets/icons/installation/del checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your delivery checklist</h3><p>Submitting your checklist helps us coordinate a hassle-free delivery.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-open-delivery-checklist-upload>Upload</button><button class="mi-button ins-small-button ins-download" type="button">Download template</button></div></article>
+                    <article class="ins-action-card" data-preinstall-checklist-card><div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/installation/preinstall checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your pre-install checklist(s)<br /><span data-preinstall-card-count>(5 of 5 remaining)</span></h3><p>Your completed checklist(s) help us verify site readiness and avoid delaying your installation.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-open-preinstall-checklist-upload>Upload</button><div class="ins-template-dropdown"><button class="mi-button ins-small-button ins-download" type="button" data-preinstall-template-toggle aria-haspopup="menu" aria-expanded="false" aria-controls="preinstall-template-menu">Download template <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="ins-template-menu" id="preinstall-template-menu" role="menu" data-preinstall-template-menu hidden><button type="button" role="menuitem">Download all</button><button type="button" role="menuitem">HPLC template long name</button><button type="button" role="menuitem">Mass spec template long name</button><button type="button" role="menuitem">Third template long name</button><button type="button" role="menuitem">Fourth template long name</button><button type="button" role="menuitem">Fifth template long name</button></div></div></div></article>
                   </div>
+                  <aside class="ins-installation-complete-notice" data-ins-installation-complete-notice hidden>
+                    <img src="assets/icons/notifications/info/size=24px, style=bold.svg" alt="" />
+                    <div><strong>Installation complete</strong><p>All applicable line items for this order have been installed.</p><button class="mi-button" type="button" data-route="my-instruments">Go to My Instruments</button></div>
+                  </aside>
                   <div class="ins-items" data-ins-expanded hidden>
-                    <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-ins-items></tbody></table>
+                    <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-open-installation-status-scenarios aria-haspopup="dialog">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-ins-items></tbody></table>
                     <button class="ins-additional" type="button" data-ins-additional-toggle aria-expanded="false" aria-controls="installation-additional-items"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
                     <div class="ins-additional-items" id="installation-additional-items" data-ins-additional-panel hidden>
                       <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><tbody data-ins-additional-items></tbody></table>
@@ -444,6 +448,60 @@
             </section>
           </main>
           <div data-footer-mount></div>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="installation-shell-detail-template">
+      <section class="screen screen--installation-shell-detail" aria-label="Installation shell details">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong data-shell-flow-title>Installation shell details</strong><div class="flow-toolbar__actions"><button type="button" data-route="installations-expanded">Installations</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell shell-detail-shell">
+          <div data-topbar-sc-mount></div>
+          <div data-platform-sidebar-mount></div>
+          <main class="platform-page-body mi-main shell-detail-main">
+            <section class="shell-detail-hero" aria-label="Shell summary">
+              <div class="shell-detail-summary">
+                <div class="shell-detail-image"><img data-shell-image src="assets/instruments/vanquish-pump.png" alt="" /></div>
+                <dl class="shell-detail-facts">
+                  <div class="shell-detail-fact shell-detail-fact--catalog"><dt>Catalog no.</dt><dd data-shell-catalog></dd></div>
+                  <div class="shell-detail-fact shell-detail-fact--name"><dt>Catalog Name</dt><dd data-shell-name></dd></div>
+                  <div class="shell-detail-fact shell-detail-fact--status"><dt>Current status</dt><dd><span class="shell-detail-status" data-shell-status></span></dd></div>
+                  <div class="shell-detail-fact shell-detail-fact--order"><dt>Order no.</dt><dd data-shell-order>9012611245</dd></div>
+                  <div class="shell-detail-fact shell-detail-fact--serial"><dt>Serial Number</dt><dd>—</dd></div>
+                  <div class="shell-detail-fact shell-detail-fact--type"><dt>Type</dt><dd data-shell-type></dd></div>
+                  <div class="shell-detail-fact shell-detail-fact--knowledge"><dt>Knowledge</dt><dd><a href="#shell-knowledge-search"><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" />Browse for manuals and troubleshooting articles</a><a href="#shell-manuals"><img src="assets/icons/media/document/size=16px, style=mono.svg" alt="" />View operating manual</a><a href="#shell-manuals"><img src="assets/icons/media/document/size=16px, style=mono.svg" alt="" />View system operating manual</a></dd></div>
+                </dl>
+              </div>
+            </section>
+            <nav class="shell-detail-tabs" aria-label="Shell details sections" role="tablist"><button class="is-active" type="button" role="tab" aria-selected="true" aria-controls="shell-knowledge-search" data-shell-tab="knowledge">Knowledge</button><button type="button" role="tab" aria-selected="false" aria-controls="shell-detail-support-panel" data-shell-tab="support">Support</button></nav>
+            <section class="shell-detail-knowledge" id="shell-knowledge-search" data-shell-knowledge-panel>
+              <div><h1>Expand your knowledge</h1><p>Search documents and topics related to your instrument or <a href="#shell-manuals">browse knowledge base</a> to<br />access more resources and articles.</p></div>
+              <label class="shell-detail-search"><span>Search</span><span><input type="search" placeholder="Search knowledge articles" /><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" /></span></label>
+            </section>
+            <section class="shell-detail-manuals" id="shell-manuals" data-shell-knowledge-panel>
+              <h2>Manuals <span>2</span></h2>
+              <div class="shell-detail-manual-grid">
+                <article class="shell-detail-manual"><img class="shell-detail-manual__product" data-shell-manual-image src="assets/instruments/vanquish-pump.png" alt="" /><a href="#shell-manuals" data-shell-manual-title>4820.8401-EN - Rev. 2.1 - Vanquish Charged Aerosol Detectors Operating Manual</a><div><button type="button" aria-label="Copy manual link"><img src="assets/icons/actions/link/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" aria-label="Copy manual"><img src="assets/icons/actions/copy/Size=24px, Style=Mono.svg" alt="" /></button></div></article>
+                <article class="shell-detail-manual"><img class="shell-detail-manual__product" src="assets/instruments/vanquish-column.png" alt="" /><a href="#shell-manuals">4820.3601-EN - Rev. 4.0 - Vanquish UHPLC System Operating Manual</a><div><button type="button" aria-label="Copy manual link"><img src="assets/icons/actions/link/Size=24px, Style=Mono.svg" alt="" /></button><button type="button" aria-label="Copy manual"><img src="assets/icons/actions/copy/Size=24px, Style=Mono.svg" alt="" /></button></div></article>
+              </div>
+            </section>
+            <section class="shell-detail-support" id="shell-detail-support-panel" data-shell-support-panel hidden>
+              <h1>Support history</h1>
+              <div class="shell-detail-support-empty" data-shell-support-empty>
+                <img src="assets/icons/general/ticket/size=32px, style=mono.svg" alt="" />
+                <h2>No installation ticket</h2>
+                <p>An installation ticket has not yet been created for this instrument, or it may be<br />included on another ticket as part of a larger system.</p>
+              </div>
+              <div class="shell-detail-support-table" data-shell-support-table hidden>
+                <table aria-label="Installation support history">
+                  <colgroup><col class="shell-ticket-col-spacer" /><col class="shell-ticket-col-status" /><col class="shell-ticket-col-number" /><col class="shell-ticket-col-type" /><col class="shell-ticket-col-created" /><col class="shell-ticket-col-closed" /><col class="shell-ticket-col-subject" /><col class="shell-ticket-col-contact" /></colgroup>
+                  <thead><tr><th></th><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Closed <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket contact <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead>
+                  <tbody><tr><td></td><td><span>Open</span></td><td><button type="button" data-route="ticket-detail">5551726344</button></td><td>Installation</td><td>18 May 2025</td><td>---</td><td title="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">Lorem ipsum dolor sit amet, consectetur adipiscing eli...</td><td>Alma Malmbe</td></tr></tbody>
+                </table>
+              </div>
+            </section>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
     </template>
@@ -894,6 +952,150 @@
       </form>
     </dialog>
 
+    <dialog id="preferred-delivery-dates-dialog" class="preferred-delivery-dates-dialog" aria-labelledby="preferred-delivery-dates-title" aria-describedby="preferred-delivery-dates-description">
+      <form class="preferred-delivery-dates-modal" data-delivery-dates-form tabindex="-1">
+        <section class="preferred-delivery-dates-modal__top">
+          <div class="preferred-delivery-dates-modal__content">
+            <header class="preferred-delivery-dates-modal__header">
+              <h2 id="preferred-delivery-dates-title">Submit your preferred delivery dates</h2>
+              <button type="button" data-close-delivery-dates aria-label="Close preferred delivery dates"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+            </header>
+            <div class="preferred-delivery-dates-modal__order">
+              <img src="assets/icons/installation/spot-installations.svg" alt="" />
+              <dl><div><dt>Order no.</dt><dd>1234567</dd></div><div><dt>Ordered date</dt><dd>10 Mar 2025</dd></div></dl>
+            </div>
+            <p id="preferred-delivery-dates-description">To better enable us to meet your desired timeline, please submit your preferred delivery dates as soon as possible.<br /><br />If you are not responsible for this, select “share installation&quot; to invite the correct person to take this action.</p>
+          </div>
+          <div class="preferred-delivery-dates-modal__dates">
+            <label><span>Preferred delivery date<sup>*</sup><span class="delivery-date-info" tabindex="0" aria-label="Preferred delivery date information" aria-describedby="preferred-delivery-date-tooltip"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /><span class="delivery-date-info__tooltip" id="preferred-delivery-date-tooltip" role="tooltip"><img src="assets/installations/delivery-date-tooltip-short.svg" alt="" /><span>Enter your preferred instrument(s) delivery date.</span></span></span></span><span class="preferred-delivery-date-field"><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><input type="text" value="05/04/25" inputmode="numeric" aria-label="Preferred delivery date" data-delivery-date-required /><button type="button" data-clear-delivery-date aria-label="Clear preferred delivery date"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label>
+            <label><span>Earliest delivery date<sup>*</sup><span class="delivery-date-info" tabindex="0" aria-label="Earliest delivery date information" aria-describedby="earliest-delivery-date-tooltip"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /><span class="delivery-date-info__tooltip delivery-date-info__tooltip--tall" id="earliest-delivery-date-tooltip" role="tooltip"><img src="assets/installations/delivery-date-tooltip-tall.svg" alt="" /><span>Enter the earliest date you are available to receive the instrument(s).</span></span></span></span><span class="preferred-delivery-date-field"><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><input type="text" placeholder="dd/mm/yy" inputmode="numeric" aria-label="Earliest delivery date" data-delivery-date-required /><button type="button" data-clear-delivery-date aria-label="Clear earliest delivery date" hidden><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label>
+            <label><span>Latest delivery date<sup>*</sup><span class="delivery-date-info" tabindex="0" aria-label="Latest delivery date information" aria-describedby="latest-delivery-date-tooltip"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /><span class="delivery-date-info__tooltip" id="latest-delivery-date-tooltip" role="tooltip"><img src="assets/installations/delivery-date-tooltip-short.svg" alt="" /><span>Enter the latest date you can receive the instrument(s).</span></span></span></span><span class="preferred-delivery-date-field"><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><input type="text" placeholder="dd/mm/yy" inputmode="numeric" aria-label="Latest delivery date" data-delivery-date-required /><button type="button" data-clear-delivery-date aria-label="Clear latest delivery date" hidden><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label>
+          </div>
+        </section>
+        <footer class="preferred-delivery-dates-modal__footer"><button type="button" class="preferred-delivery-dates-modal__secondary" data-cannot-provide-delivery-dates>Cannot provide dates yet</button><button type="submit" class="preferred-delivery-dates-modal__primary" data-submit-delivery-dates disabled>Submit dates</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="delivery-checklist-upload-dialog" class="delivery-checklist-upload-dialog" aria-labelledby="delivery-checklist-upload-title" aria-describedby="delivery-checklist-upload-description">
+      <form class="delivery-checklist-upload-modal" data-delivery-checklist-upload-form tabindex="-1">
+        <section class="delivery-checklist-upload-modal__content">
+          <header class="delivery-checklist-upload-modal__header">
+            <div><h2 id="delivery-checklist-upload-title">Upload delivery checklist</h2><p id="delivery-checklist-upload-description">Submit your completed delivery checklist.</p></div>
+            <button type="button" data-close-delivery-checklist-upload aria-label="Close upload delivery checklist"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+          </header>
+          <checklist-upload-note></checklist-upload-note>
+          <div class="delivery-checklist-upload-table" role="table" aria-label="Delivery checklist file upload">
+            <div class="delivery-checklist-upload-table__header" role="row"><strong role="columnheader">Checklist name</strong><strong role="columnheader">File upload</strong></div>
+            <div class="delivery-checklist-upload-table__row" role="row"><span role="cell">Delivery template long name</span><div role="cell">
+              <label class="delivery-checklist-uploader" data-delivery-checklist-dropzone>
+                <input type="file" aria-label="Choose a delivery checklist file" data-delivery-checklist-file />
+                <span data-delivery-checklist-empty>Drag and drop or <b>choose a file</b> to upload</span>
+                <span class="delivery-checklist-uploader__uploading" data-delivery-checklist-uploading hidden>
+                  <img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" />
+                  <span class="delivery-checklist-uploader__progress"><span data-delivery-checklist-uploading-name></span><i aria-hidden="true"><b></b></i></span>
+                  <span class="delivery-checklist-uploader__percentage">50%</span>
+                  <button type="button" data-cancel-delivery-checklist-upload aria-label="Cancel delivery checklist upload"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button>
+                </span>
+                <span class="delivery-checklist-uploader__uploaded" data-delivery-checklist-uploaded hidden><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" /><span data-delivery-checklist-file-name></span><button type="button" data-remove-delivery-checklist-file aria-label="Remove uploaded delivery checklist"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span>
+              </label>
+            </div></div>
+          </div>
+        </section>
+        <footer class="delivery-checklist-upload-modal__footer"><button type="button" class="delivery-checklist-upload-modal__cancel" data-close-delivery-checklist-upload>Cancel</button><button type="submit" class="delivery-checklist-upload-modal__submit" data-submit-delivery-checklist disabled>Submit</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="preinstall-checklist-upload-dialog" class="preinstall-checklist-upload-dialog" aria-labelledby="preinstall-checklist-upload-title" aria-describedby="preinstall-checklist-upload-description">
+      <form class="preinstall-checklist-upload-modal" data-preinstall-checklist-upload-form tabindex="-1">
+        <section class="preinstall-checklist-upload-modal__content">
+          <header class="preinstall-checklist-upload-modal__header">
+            <div><h2 id="preinstall-checklist-upload-title">Upload your pre-install checklist(s)</h2><p id="preinstall-checklist-upload-description">Submit your completed pre-install checklist(s).</p></div>
+            <button type="button" data-close-preinstall-checklist-upload aria-label="Close upload pre-install checklists"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+          </header>
+          <checklist-upload-note></checklist-upload-note>
+          <div class="preinstall-checklist-upload-table" role="table" aria-label="Pre-install checklist file uploads">
+            <div class="preinstall-checklist-upload-table__header" role="row"><strong role="columnheader">Checklist name</strong><strong role="columnheader">File upload</strong></div>
+            <div class="preinstall-checklist-upload-table__row" role="row"><span role="cell"><b>HPLC template long name</b><a href="#instruments">4 instrument(s)</a></span><div role="cell"><label class="delivery-checklist-uploader" data-preinstall-uploader><input type="file" aria-label="Choose a file for HPLC template long name" data-preinstall-file /><span data-preinstall-empty>Drag and drop or <b>choose a file</b> to upload</span><span class="delivery-checklist-uploader__uploading" data-preinstall-uploading hidden><img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span class="delivery-checklist-uploader__progress"><span data-preinstall-uploading-name></span><i aria-hidden="true"><b></b></i></span><span class="delivery-checklist-uploader__percentage">50%</span><button type="button" data-cancel-preinstall-upload aria-label="Cancel HPLC checklist upload"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span><span class="delivery-checklist-uploader__uploaded" data-preinstall-uploaded hidden><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" /><span data-preinstall-file-name></span><button type="button" data-remove-preinstall-file aria-label="Remove HPLC checklist file"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label></div></div>
+            <div class="preinstall-checklist-upload-table__row" role="row"><span role="cell"><b>Mass spec template long name</b><a href="#instruments">2 instrument(s)</a></span><div role="cell"><label class="delivery-checklist-uploader" data-preinstall-uploader><input type="file" aria-label="Choose a file for Mass spec template long name" data-preinstall-file /><span data-preinstall-empty>Drag and drop or <b>choose a file</b> to upload</span><span class="delivery-checklist-uploader__uploading" data-preinstall-uploading hidden><img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span class="delivery-checklist-uploader__progress"><span data-preinstall-uploading-name></span><i aria-hidden="true"><b></b></i></span><span class="delivery-checklist-uploader__percentage">50%</span><button type="button" data-cancel-preinstall-upload aria-label="Cancel Mass spec checklist upload"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span><span class="delivery-checklist-uploader__uploaded" data-preinstall-uploaded hidden><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" /><span data-preinstall-file-name></span><button type="button" data-remove-preinstall-file aria-label="Remove Mass spec checklist file"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label></div></div>
+            <div class="preinstall-checklist-upload-table__row" role="row"><span role="cell"><b>Third template long name</b><a href="#instruments">1 instrument(s)</a></span><div role="cell"><label class="delivery-checklist-uploader" data-preinstall-uploader><input type="file" aria-label="Choose a file for Third template long name" data-preinstall-file /><span data-preinstall-empty>Drag and drop or <b>choose a file</b> to upload</span><span class="delivery-checklist-uploader__uploading" data-preinstall-uploading hidden><img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span class="delivery-checklist-uploader__progress"><span data-preinstall-uploading-name></span><i aria-hidden="true"><b></b></i></span><span class="delivery-checklist-uploader__percentage">50%</span><button type="button" data-cancel-preinstall-upload aria-label="Cancel Third checklist upload"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span><span class="delivery-checklist-uploader__uploaded" data-preinstall-uploaded hidden><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" /><span data-preinstall-file-name></span><button type="button" data-remove-preinstall-file aria-label="Remove Third checklist file"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label></div></div>
+            <div class="preinstall-checklist-upload-table__row" role="row"><span role="cell"><b>Fourth template long name</b><a href="#instruments">2 instrument(s)</a></span><div role="cell"><label class="delivery-checklist-uploader" data-preinstall-uploader><input type="file" aria-label="Choose a file for Fourth template long name" data-preinstall-file /><span data-preinstall-empty>Drag and drop or <b>choose a file</b> to upload</span><span class="delivery-checklist-uploader__uploading" data-preinstall-uploading hidden><img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span class="delivery-checklist-uploader__progress"><span data-preinstall-uploading-name></span><i aria-hidden="true"><b></b></i></span><span class="delivery-checklist-uploader__percentage">50%</span><button type="button" data-cancel-preinstall-upload aria-label="Cancel Fourth checklist upload"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span><span class="delivery-checklist-uploader__uploaded" data-preinstall-uploaded hidden><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" /><span data-preinstall-file-name></span><button type="button" data-remove-preinstall-file aria-label="Remove Fourth checklist file"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label></div></div>
+            <div class="preinstall-checklist-upload-table__row" role="row"><span role="cell"><b>Fifth template long name</b><a href="#instruments">1 instrument(s)</a></span><div role="cell"><label class="delivery-checklist-uploader" data-preinstall-uploader><input type="file" aria-label="Choose a file for Fifth template long name" data-preinstall-file /><span data-preinstall-empty>Drag and drop or <b>choose a file</b> to upload</span><span class="delivery-checklist-uploader__uploading" data-preinstall-uploading hidden><img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span class="delivery-checklist-uploader__progress"><span data-preinstall-uploading-name></span><i aria-hidden="true"><b></b></i></span><span class="delivery-checklist-uploader__percentage">50%</span><button type="button" data-cancel-preinstall-upload aria-label="Cancel Fifth checklist upload"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span><span class="delivery-checklist-uploader__uploaded" data-preinstall-uploaded hidden><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" /><span data-preinstall-file-name></span><button type="button" data-remove-preinstall-file aria-label="Remove Fifth checklist file"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button></span></label></div></div>
+          </div>
+          <div class="preinstall-checklist-submitted">
+            <button class="preinstall-checklist-submitted-toggle" type="button" aria-expanded="false" data-preinstall-submitted-toggle><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><strong>Submitted checklist(s)</strong><span data-preinstall-submitted-count>0</span></button>
+            <div class="preinstall-checklist-submitted-table" role="table" aria-label="Submitted pre-install checklists" data-preinstall-submitted-table hidden>
+              <div class="preinstall-checklist-submitted-table__header" role="row"><strong role="columnheader">Checklist name</strong><strong role="columnheader">Status</strong><strong role="columnheader">Submitted by</strong><strong role="columnheader">Date</strong></div>
+              <div data-preinstall-submitted-rows></div>
+            </div>
+          </div>
+          <div class="preinstall-instruments-tooltip" id="preinstall-instruments-tooltip" role="tooltip" data-preinstall-instruments-tooltip hidden>
+            <button type="button" data-close-preinstall-instruments-tooltip aria-label="Close instrument list"><img src="assets/icons/actions/close/size=16px, style=mono.svg" alt="" /></button>
+            <div class="preinstall-instruments-tooltip__table" role="table" aria-label="Instruments included in this checklist">
+              <div class="preinstall-instruments-tooltip__header" role="row"><strong role="columnheader">Item</strong><strong role="columnheader">Qty</strong><strong role="columnheader">Catalog no.</strong><strong role="columnheader">Catalog name</strong></div>
+              <div data-preinstall-tooltip-rows></div>
+            </div>
+          </div>
+        </section>
+        <footer class="preinstall-checklist-upload-modal__footer"><button type="button" class="delivery-checklist-upload-modal__cancel" data-close-preinstall-checklist-upload>Cancel</button><button type="submit" class="delivery-checklist-upload-modal__submit" data-submit-preinstall-checklists disabled>Submit</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="delivery-checklist-confirmation-dialog" class="delivery-checklist-confirmation-dialog" aria-labelledby="delivery-checklist-confirmation-title" aria-describedby="delivery-checklist-confirmation-description">
+      <form class="delivery-checklist-confirmation-modal" data-delivery-checklist-confirmation-form tabindex="-1">
+        <header><h2 id="delivery-checklist-confirmation-title">Confirm submission</h2><button type="button" data-close-delivery-checklist-confirmation aria-label="Close confirm submission"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header>
+        <div id="delivery-checklist-confirmation-description"><p>Please review your document for accuracy before uploading.</p><p>If you need to make any changes after submission, please use the <strong>Installation Support</strong> button to contact our support team.</p></div>
+        <footer><button type="button" class="delivery-checklist-confirmation-modal__cancel" data-close-delivery-checklist-confirmation>Cancel</button><button type="submit" class="delivery-checklist-confirmation-modal__confirm">Confirm</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="delivery-checklist-details-dialog" class="delivery-checklist-details-dialog" aria-labelledby="delivery-checklist-details-title" aria-describedby="delivery-checklist-details-description">
+      <section class="delivery-checklist-details-modal" data-delivery-checklist-details-modal tabindex="-1">
+        <header>
+          <h2 id="delivery-checklist-details-title">Delivery checklist submitted successfully</h2>
+          <button type="button" data-close-delivery-checklist-details aria-label="Close delivery checklist details"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+        </header>
+        <p id="delivery-checklist-details-description">Your checklist has been received, and the details are shown below for your reference. If you need to make any changes, please use the <strong>Installation Support</strong> button to contact our installation team.</p>
+        <div class="delivery-checklist-details-table" role="table" aria-label="Submitted delivery checklist details">
+          <div class="delivery-checklist-details-table__header" role="row"><strong role="columnheader">Checklist name</strong><strong role="columnheader">Status</strong><strong role="columnheader">Submitted by</strong><strong role="columnheader">Date</strong></div>
+          <div class="delivery-checklist-details-table__row" role="row"><span role="cell">Delivery template long name</span><span role="cell"><span class="delivery-checklist-details-badge"><img src="assets/icons/notifications/success/size=16px, style=bold.svg" alt="" />Submitted</span></span><span role="cell">holly.hartman@company.com</span><span role="cell">01 Jul 2025</span></div>
+        </div>
+      </section>
+    </dialog>
+
+    <dialog id="delivery-dates-confirmation-dialog" class="delivery-dates-confirmation-dialog" aria-labelledby="delivery-dates-confirmation-title" aria-describedby="delivery-dates-confirmation-description">
+      <form class="delivery-dates-confirmation-modal" data-delivery-dates-confirmation-form tabindex="-1">
+        <section class="delivery-dates-confirmation-modal__top">
+          <header class="delivery-dates-confirmation-modal__header">
+            <h2 id="delivery-dates-confirmation-title">Confirm preferred dates</h2>
+            <button type="button" data-close-delivery-dates-confirmation aria-label="Close preferred dates confirmation"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+          </header>
+          <p id="delivery-dates-confirmation-description">If you need to change the dates in the future, you will need to use the request support feature.</p>
+        </section>
+        <dl class="delivery-dates-confirmation-modal__dates">
+          <div><dt>Preferred delivery date</dt><dd data-confirmation-preferred-date></dd></div>
+          <div><dt>Earliest delivery date</dt><dd data-confirmation-earliest-date></dd></div>
+          <div><dt>Latest delivery date</dt><dd data-confirmation-latest-date></dd></div>
+        </dl>
+        <footer class="delivery-dates-confirmation-modal__footer"><button type="button" class="delivery-dates-confirmation-modal__edit" data-edit-delivery-dates>Edit dates</button><button type="submit" class="delivery-dates-confirmation-modal__confirm">Confirm</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="delivery-dates-pause-dialog" class="delivery-dates-pause-dialog" aria-labelledby="delivery-dates-pause-title" aria-describedby="delivery-dates-pause-description">
+      <form class="delivery-dates-pause-modal" data-delivery-pause-form tabindex="-1">
+        <section class="delivery-dates-pause-modal__top">
+          <header class="delivery-dates-pause-modal__header"><h2 id="delivery-dates-pause-title">Cannot provide dates yet</h2><button type="button" data-close-delivery-pause aria-label="Close cannot provide dates yet"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header>
+          <div class="delivery-dates-pause-modal__order"><img src="assets/icons/installation/spot-installations.svg" alt="" /><dl><div><dt>Order no.</dt><dd>1234567</dd></div><div><dt>Ordered date</dt><dd>10 Mar 2025</dd></div></dl></div>
+        </section>
+        <section class="delivery-dates-pause-modal__content">
+          <fieldset class="delivery-dates-pause-modal__reasons"><legend>Reason you cannot provide dates<sup>*</sup></legend><div><label><input type="radio" name="delivery-pause-reason" value="Laboratory is not ready" data-delivery-pause-reason /><span>Laboratory is not ready</span></label><label><input type="radio" name="delivery-pause-reason" value="Other" data-delivery-pause-reason /><span>Other</span></label></div></fieldset>
+          <label class="delivery-dates-pause-modal__details"><span>Additional details<sup>*</sup></span><textarea placeholder="Please provide more details about the reason for your delay." data-delivery-pause-details></textarea></label>
+          <fieldset class="delivery-dates-pause-modal__duration"><legend>Pause for<sup>*</sup></legend><div><button type="button" data-delivery-pause-days="30" aria-pressed="true">30 days</button><button type="button" data-delivery-pause-days="60" aria-pressed="false">60 days</button><button type="button" data-delivery-pause-days="90" aria-pressed="false">90 days</button></div></fieldset>
+          <p id="delivery-dates-pause-description">If you pause, email reminders will be suspended until the pause period ends. You still have the option to submit dates during this period.</p>
+        </section>
+        <footer class="delivery-dates-pause-modal__footer"><button type="button" class="delivery-dates-pause-modal__cancel" data-close-delivery-pause>Cancel</button><button type="submit" class="delivery-dates-pause-modal__confirm" data-confirm-delivery-pause disabled>Confirm</button></footer>
+      </form>
+    </dialog>
+
     <dialog id="services-help-dialog" class="services-help-dialog" aria-labelledby="services-help-title">
       <div class="services-help-modal__surface">
         <header class="services-help-modal__header">
@@ -928,6 +1130,36 @@
       </div>
     </dialog>
 
+    <dialog class="installation-status-scenarios-dialog" id="installation-status-scenarios-dialog" aria-labelledby="installation-status-scenarios-title" aria-describedby="installation-status-scenarios-description">
+      <section class="installation-status-scenarios-modal">
+        <header>
+          <div><h2 id="installation-status-scenarios-title">Status change</h2><p id="installation-status-scenarios-description">Select an installation status scenario to simulate offline installation events.</p></div>
+          <button type="button" data-close-installation-status-scenarios aria-label="Close status change"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+        </header>
+        <div class="installation-status-scenarios-modal__options">
+          <button type="button" data-installation-status-scenario="in-progress"><strong>No line items scheduled</strong><span>If the order is in progress, but no scheduled dates are confirmed yet.</span></button>
+          <button type="button" data-installation-status-scenario="some-scheduled"><strong>Some line items scheduled</strong><span>Some line items change to “Install scheduled.”</span></button>
+          <button type="button" data-installation-status-scenario="some-installed"><strong>Some line items installed</strong><span>Some line items remain “Install scheduled” while others change to “Install complete.”</span></button>
+          <button type="button" data-installation-status-scenario="all-installed"><strong>All applicable line items installed</strong><span>Every applicable line item changes to “Install complete.” Non-applicable items remain unchanged.</span></button>
+        </div>
+      </section>
+    </dialog>
+
+    <dialog class="installation-activity-dialog" id="installation-activity-dialog" aria-labelledby="installation-activity-title" aria-describedby="installation-activity-description">
+      <section class="installation-activity-modal">
+        <header>
+          <div><h2 id="installation-activity-title">Order activity log</h2><p id="installation-activity-description">Activity log related to this order by users within Services Central.</p></div>
+          <button type="button" data-close-installation-activity aria-label="Close order activity log"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+        </header>
+        <table aria-label="Order activities">
+          <colgroup><col class="installation-activity-date" /><col /><col class="installation-activity-user" /></colgroup>
+          <thead><tr><th>Date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>User <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead>
+          <tbody data-installation-activity-rows></tbody>
+        </table>
+        <p class="installation-activity-modal__empty" data-installation-activity-empty>No activity has been recorded for this order.</p>
+      </section>
+    </dialog>
+
     <div class="toast" role="status" aria-live="polite" aria-atomic="true" hidden>
       <div class="toast__content">
         <span class="toast__icon" data-toast-icon aria-hidden="true"><img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /></span>
@@ -942,6 +1174,6 @@
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
     <script src="platform-action-bar.js?v=20260811-platform-action-bar"></script>
     <script src="footer.js?v=20260812-footer"></script>
-    <script src="app.js?v=20260812-footer-spc"></script>
+    <script src="app.js?v=20260813-shell-ticket-icon-state"></script>
   </body>
 </html>
