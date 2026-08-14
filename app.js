@@ -869,7 +869,7 @@ function routeFromHash() {
 function setRoute(route) {
   const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
-  if (window.location.hash !== nextHash) window.history.pushState({}, "", nextHash);
+  if (window.location.hash !== nextHash) window.history.pushState({ fromRoute: routeFromHash() }, "", nextHash);
   render();
 }
 
@@ -1924,6 +1924,21 @@ function renderInstallationSupport() {
   const stepPanels = [...app.querySelectorAll("[data-isup-step-panel]")];
   const stepIndicators = [...app.querySelectorAll("[data-isup-step-indicator]")];
   let currentStep = 1;
+  let supportSubheaderFrame = 0;
+  const updateSupportSubheader = () => {
+    if (supportSubheaderFrame) return;
+    supportSubheaderFrame = window.requestAnimationFrame(() => {
+      supportSubheaderFrame = 0;
+      screen.classList.toggle("is-subheader-compact", main.scrollTop > 0);
+    });
+  };
+  main.addEventListener("scroll", updateSupportSubheader, { passive: true });
+  const updateSupportScrollClearance = () => {
+    const activeContent = currentStep === 4 ? submitted : form;
+    const contentBottom = activeContent.offsetTop + activeContent.offsetHeight;
+    const requiredClearance = actionBar.offsetHeight + 40;
+    main.style.setProperty("--isup-scroll-content-height", `${contentBottom + requiredClearance}px`);
+  };
   const orderSelect = app.querySelector("[data-isup-order]");
   const orderValue = app.querySelector("[data-isup-order-value]");
   const orderMenu = app.querySelector("[data-isup-order-menu]");
@@ -1982,6 +1997,7 @@ function renderInstallationSupport() {
   const setStep = (step) => {
     currentStep = step;
     main.scrollTop = 0;
+    updateSupportSubheader();
     screen.classList.remove("is-submitted");
     submitted.hidden = true;
     stepper.hidden = false;
@@ -2009,11 +2025,13 @@ function renderInstallationSupport() {
     continueButton.textContent = step === 3 ? "Submit" : "Continue";
     if (step === 3) updateReview();
     updateFormState();
+    updateSupportScrollClearance();
   };
   const showSubmittedSummary = () => {
     currentStep = 4;
     recordInstallationActivity("Submitted installation support request");
     main.scrollTop = 0;
+    updateSupportSubheader();
     updateReview();
     const cloneSummaryCard = (selector, label) => {
       const clone = app.querySelector(selector).cloneNode(true);
@@ -2033,6 +2051,7 @@ function renderInstallationSupport() {
     leadingActions.hidden = true;
     continueButton.hidden = true;
     backButton.textContent = "Close";
+    updateSupportScrollClearance();
   };
   orderSelect.addEventListener("click", () => {
     setTopicMenuOpen(false);
@@ -2087,6 +2106,7 @@ function renderInstallationSupport() {
   });
   app.querySelector("[data-isup-close-notice]").addEventListener("click", () => {
     app.querySelector("[data-isup-submitted-notice]").hidden = true;
+    updateSupportScrollClearance();
   });
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("installations"));
   wireRouteControls();
