@@ -1025,6 +1025,10 @@ function mountTopbarNotifications() {
   window.TopbarNotifications?.mount(app.querySelector("[data-topbar-notifications-mount]"));
 }
 
+function mountFooter(options = {}) {
+  window.Footer?.mount(app.querySelector("[data-footer-mount]"), options);
+}
+
 function wireEditSpc() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
@@ -1045,6 +1049,7 @@ function renderEditSpc() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("edit-spc");
+  mountFooter();
   wireEditSpc();
   observeEditSpcCanvas();
   document.title = "Edit service plan contact — Services Central";
@@ -1136,6 +1141,7 @@ function renderMyInstruments() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("my-instruments");
+  mountFooter();
   wireMyInstruments();
   document.title = "My instruments — Services Central";
 }
@@ -1225,6 +1231,7 @@ function renderAddInstruments() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("add-instruments");
+  mountFooter();
   wireAddInstruments();
   document.title = "Add instruments — Services Central";
 }
@@ -1312,6 +1319,7 @@ function renderSupportHistory() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("support-history");
+  mountFooter();
   wireSupportHistory();
   document.title = "Support request history — Services Central";
 }
@@ -1347,6 +1355,7 @@ function renderServicePlanContacts() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("service-plan-contacts");
+  mountFooter();
   wireServicePlanContacts();
   document.title = "Service plan contacts — Services Central";
 }
@@ -1365,6 +1374,7 @@ function renderConsumables() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("consumables");
+  mountFooter();
   wireConsumables();
   document.title = "Consumables — Services Central";
 }
@@ -1451,6 +1461,7 @@ function renderNotifications() {
   const template = document.querySelector("#notifications-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarNotifications();
+  mountFooter();
   wireNotifications();
   document.title = "Notification settings — Connect Platform";
 }
@@ -1853,6 +1864,7 @@ function renderInstallations(expanded = false, progressExpanded = false) {
   const template = document.querySelector("#installations-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
+  mountFooter();
   if (window.PlatformSidebar) {
     window.PlatformSidebar.mount(
       document.querySelector("[data-platform-sidebar-mount]"),
@@ -1875,6 +1887,7 @@ function renderInstallationFaqs() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("installations");
+  mountFooter();
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("installations"));
   app.querySelectorAll("[data-ins-action]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.insAction} selected`)));
   wireAddUserOrderTriggers(app);
@@ -1887,6 +1900,7 @@ function renderInstallationSupport() {
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("request-support");
+  mountFooter();
   window.PlatformSidebar?.wire(app);
   const actionBar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), {
     auxiliaryLabel: "Go to request menu page",
@@ -2129,6 +2143,7 @@ function render() {
     app.replaceChildren(template.content.cloneNode(true));
     mountTopbarSc();
     mountPlatformSidebar("dashboard");
+    mountFooter();
     document.title = "Services Central Dashboard";
     wireDashboard();
   } else if (route === "edit-spc") {
