@@ -574,17 +574,20 @@ button {
 
 .mi-titlebar h1 { margin: 0; font-size: 32px; font-weight: 500; line-height: 40px; }
 
-.mi-button {
-  display: inline-flex;
+.mi-button,
+.mi-shell .mi-button {
+  display: flex;
   height: 40px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--mi-line);
+  border: 1px solid var(--Grayscale-Gray-05, #e5e5e5);
   border-radius: 3px;
   padding: 0 24px;
   color: var(--mi-blue-bright) !important;
-  background: #fff;
+  background: var(--Color-Palette-White---White-0, #fff);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
+  font-style: normal;
   font-weight: 700;
   line-height: 22px;
   white-space: nowrap;
@@ -1807,6 +1810,247 @@ button {
 .flow-cta:hover,
 .flow-hotspot:hover {
   background: rgb(0 113 208 / 7%);
+}
+
+.modal {
+  --modal-width: 600px;
+  width: min(var(--modal-width), calc(100vw - 32px));
+  max-width: none;
+  max-height: 80vh;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  color: #000;
+  background: #fff;
+  box-shadow: 0 22px 90px rgb(0 0 0 / 30%);
+}
+
+.modal--sm { --modal-width: 600px; }
+.modal--md { --modal-width: 824px; }
+.modal--lg { --modal-width: 1080px; }
+
+.modal[open] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal::backdrop {
+  background: rgb(0 0 0 / 48%);
+}
+
+.modal__surface {
+  display: flex;
+  width: 100%;
+  max-height: 80vh;
+  flex-direction: column;
+  padding: 48px;
+  background: #fff;
+}
+
+.modal__surface:focus {
+  outline: none;
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.modal__heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal__title {
+  margin: 0;
+  color: #000;
+  font-family: var(--text-style-heading-h2-font-family, "Helvetica Neue"), Helvetica, Arial, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-size: var(--text-style-heading-h2-font-size, 26px);
+  font-style: normal;
+  font-weight: var(--text-style-heading-h2-font-weight, 500);
+  letter-spacing: var(--text-style-heading-h2-letter-spacing, 0);
+  line-height: var(--text-style-heading-h2-line-height, 32px);
+}
+
+.modal__description,
+.modal__body {
+  color: #000;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.modal__description {
+  margin: 0;
+}
+
+.modal__close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border: 0;
+  margin: -8px -8px 0 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal__close img {
+  width: 24px;
+  height: 24px;
+}
+
+.modal__body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.modal__footer {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.modal__button {
+  display: inline-flex;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.modal__button--secondary {
+  border: 1px solid #e5e5e5;
+  color: #0071d0;
+  background: #fff;
+}
+
+.modal .modal__button--primary {
+  border: 1px solid #e71316;
+  color: var(--Base-Colors-White---White-0, #fff);
+  background: #e71316;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.modal__button--secondary:hover {
+  border-color: #ccc;
+  background: #f7f7f7;
+}
+
+.modal__button--primary:hover {
+  border-color: #c81016;
+  background: #c81016;
+}
+
+.modal__button:disabled {
+  border-color: #ccc;
+  color: #81828c;
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.modal button:focus-visible,
+.modal a:focus-visible,
+.modal input:focus-visible,
+.modal select:focus-visible,
+.modal textarea:focus-visible {
+  outline: 2px solid #0071d0;
+  outline-offset: 2px;
+}
+
+.consumables-support-modal .modal__surface {
+  padding: 48px;
+}
+
+.consumables-support-modal .modal__header {
+  margin-bottom: 0;
+}
+
+.consumables-support-modal .modal__description {
+  margin-top: 24px;
+}
+
+.consumables-support-modal__body {
+  display: none;
+}
+
+.consumables-support-modal__footer {
+  justify-content: space-between;
+  margin-top: 72px;
+}
+
+.consumables-support-modal__check {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #1b1b1d;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.consumables-support-modal__check input {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 1px solid #ccc;
+  margin: 0;
+  background: #fff;
+  cursor: pointer;
+}
+
+.consumables-support-modal__check input:checked {
+  border-color: #0071d0;
+  background: #0071d0 url("assets/installations/checkbox-checkmark.svg") center / 14px 12px no-repeat;
+}
+
+@media (max-width: 700px), (max-height: 520px) {
+  .modal {
+    overflow: auto;
+  }
+
+  .modal__surface {
+    padding: 32px;
+  }
+
+  .modal__header {
+    margin-bottom: 24px;
+  }
+
+  .modal__footer {
+    margin-top: 32px;
+  }
+
+  .consumables-support-modal__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .flows-dialog {

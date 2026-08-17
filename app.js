@@ -15,6 +15,7 @@ const installationStatusScenariosDialog = document.querySelector("#installation-
 const installationActivityDialog = document.querySelector("#installation-activity-dialog");
 const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
+const CONSUMABLES_SUPPORT_PORTAL_IMAGE = "assets/consumables/support-portal-login.png";
 const DEFAULT_INSTALLATION_USER_EMAIL = "holly.hartman@company.com";
 let toastTimer;
 let preferredDeliveryDatesSubmitted = false;
@@ -1360,8 +1361,59 @@ function renderServicePlanContacts() {
   document.title = "Service plan contacts — Services Central";
 }
 
-function wireConsumables() {
+function createConsumablesSupportPortalPreference() {
+  const label = document.createElement("label");
+  label.className = "consumables-support-modal__check";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.dataset.consumablesSupportPortalDontShow = "";
+
+  const text = document.createElement("span");
+  text.textContent = "Don't show this again";
+
+  label.append(checkbox, text);
+  return label;
+}
+
+function createConsumablesSupportPortalDialog() {
+  const dialog = window.PlatformModal?.mount('[data-modal-mount="launching-consumables-support-portal"]', {
+    id: "launching-consumables-support-portal",
+    title: "Launching Consumables Support Portal",
+    description: "The consumables support portal is separate from Services Central with separate login credentials. A new page will be launched where you will be required to login.",
+    size: "sm",
+    className: "consumables-support-modal",
+    bodyClassName: "consumables-support-modal__body",
+    footerClassName: "consumables-support-modal__footer",
+    closeButton: false,
+    closeOnBackdrop: false,
+    actions: [
+      {
+        label: "Got it",
+        variant: "primary",
+        action: "launch-consumables-support-portal",
+      },
+    ],
+  });
+
+  if (!dialog) return undefined;
+
+  dialog.querySelector(".modal__footer")?.prepend(createConsumablesSupportPortalPreference());
+  dialog.addEventListener("cancel", (event) => event.preventDefault());
+  dialog.addEventListener("modal:action", (event) => {
+    if (event.detail.action !== "launch-consumables-support-portal") return;
+    window.PlatformModal.close(dialog);
+    window.open(CONSUMABLES_SUPPORT_PORTAL_IMAGE, "_blank", "noopener,noreferrer");
+  });
+
+  return dialog;
+}
+
+function wireConsumables(consumablesSupportPortalDialog) {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelectorAll("[data-open-consumables-support-portal]").forEach((button) => {
+    button.addEventListener("click", () => window.PlatformModal?.open(consumablesSupportPortalDialog));
+  });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
@@ -1372,7 +1424,8 @@ function renderConsumables() {
   mountTopbarSc();
   mountPlatformSidebar("consumables");
   mountFooter();
-  wireConsumables();
+  const consumablesSupportPortalDialog = createConsumablesSupportPortalDialog();
+  wireConsumables(consumablesSupportPortalDialog);
   document.title = "Consumables — Services Central";
 }
 
