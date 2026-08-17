@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support history date-range integration harness</title>
+    <style>
+      html, body { width: 100%; height: 100%; margin: 0; }
+      iframe { width: 100%; height: calc(100% - 32px); border: 0; }
+      output { display: block; height: 32px; padding: 5px 12px; box-sizing: border-box; font: 600 14px/22px Arial, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <output id="result">RUNNING</output>
+    <iframe id="app-frame" title="Support history test page" src="../?supportHistoryDateRangeHarness=2#support-history"></iframe>
+    <script>
+      (async () => {
+        const frame = document.querySelector("#app-frame");
+        const result = document.querySelector("#result");
+        const assert = (condition, message) => { if (!condition) throw new Error(message); };
+        const waitFor = async (condition, message) => {
+          for (let attempt = 0; attempt < 80; attempt += 1) {
+            if (condition()) return;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+          throw new Error(message);
+        };
+
+        try {
+          await waitFor(() => frame.contentDocument?.querySelectorAll("[data-sh-row]").length === 20, "support-history rows render");
+          const doc = frame.contentDocument;
+          const visibleRows = () => [...doc.querySelectorAll("[data-sh-row]")].filter((row) => !row.hidden);
+          const trigger = doc.querySelector("[data-date-range-trigger]");
+          assert(trigger, "support history mounts the DateRangePicker component");
+
+          trigger.click();
+          assert(trigger.getAttribute("aria-expanded") === "true", "date trigger opens the component");
+
+          let navigationGuard = 120;
+          while (!doc.querySelector('[data-date-value="2020-10-18"]') && navigationGuard > 0) {
+            doc.querySelector("[data-date-range-prev]").click();
+            navigationGuard -= 1;
+          }
+          assert(navigationGuard > 0, "calendar can navigate to October 2020");
+
+          doc.querySelector('[data-date-value="2020-10-18"]').click();
+          doc.querySelector('[data-date-value="2020-10-18"]').click();
+          doc.querySelector("[data-date-range-apply]").click();
+          assert(visibleRows().length === 5, "single-day range includes all five Created rows");
+          assert(doc.querySelector("[data-sh-count]").textContent === "5", "single-day range updates result count");
+
+          const status = doc.querySelector("[data-sh-status-filter]");
+          const statusControl = doc.querySelector("[data-sh-status-filter-trigger]");
+          statusControl.querySelector("[data-msf-trigger]").click();
+          [...statusControl.querySelectorAll("[data-msf-option]")]
+            .find((option) => option.dataset.value === "Open")
+            .click();
+          assert(visibleRows().length === 1, "date and status filters compose");
+
+          status.querySelector("[data-msf-clear]").click();
+          const search = doc.querySelector("[data-sh-search]");
+          search.value = "Detector-2B";
+          search.dispatchEvent(new Event("input", { bubbles: true }));
+          assert(visibleRows().length === 1, "date and live-search filters compose");
+
+          search.value = "";
+          search.dispatchEvent(new Event("input", { bubbles: true }));
+          trigger.click();
+          doc.querySelector("[data-date-range-clear]").click();
+          assert(visibleRows().length === 20, "clearing restores all rendered rows");
+          assert(doc.querySelector("[data-sh-count]").textContent === "100", "clearing restores the total count");
+
+          document.body.dataset.testStatus = "passed";
+          result.textContent = "PASS";
+        } catch (error) {
+          document.body.dataset.testStatus = "failed";
+          result.textContent = `FAIL: ${error.message}`;
+          throw error;
+        }
+      })();
+    </script>
+  </body>
+</html>

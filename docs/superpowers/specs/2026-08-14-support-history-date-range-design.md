@@ -28,7 +28,8 @@ Replace the support-history date control's placeholder toast with a working Komo
 ## Components and Styling
 
 - Reuse the existing date field, calendar icon asset, typography, colors, borders, focus treatment, and button conventions already present in the repository.
-- Add one page-scoped date-range popover containing the month headers, navigation buttons, weekday headings, day buttons, range highlight, and `Clear`, `Cancel`, and `Apply` actions.
+- Add a reusable `DateRangePicker` component in its own JavaScript and CSS files. The component owns the trigger, dual-month popover, pending/applied state, accessibility, dismissal behavior, and `Clear`, `Cancel`, and `Apply` actions.
+- The support-history page consumes the component's `date-range-change` event and applies its `{ start, end }` ISO date values to the Created-date table filter.
 - Keep the existing 243 × 40 trigger dimensions and surrounding support-history layout unchanged.
 - The popover remains within the viewport at narrower widths and does not affect document flow.
 

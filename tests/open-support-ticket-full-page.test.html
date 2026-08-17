@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Support Ticket full-page fidelity regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1440px; height: 900px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?openSupportTicketFullPageTest=1#open-support-ticket" title="Open Support Ticket fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => { if (!condition) throw new Error(message); };
+
+      frame.addEventListener("load", () => {
+        try {
+          const doc = frame.contentDocument;
+          const card = doc.querySelector(".iss-card");
+          const activeCircle = doc.querySelector(".iss-steps .is-current > span");
+          assert(doc.querySelector(".iss-titlebar h1").textContent.trim() === "Open a support ticket", "renders the Figma title bar");
+          assert(Math.round(card.getBoundingClientRect().width) === 1200, "uses the 1200px Figma content card");
+          assert(getComputedStyle(activeCircle).width === "32px", "uses the 32px Figma step indicator");
+          assert(doc.querySelectorAll("[data-iss-row]").length === 15, "renders the 15 instrument rows in the reference");
+          assert(doc.querySelector(".iss-pagination"), "renders reference pagination");
+          assert(getComputedStyle(doc.querySelector(".iss-actionbar")).position === "fixed", "keeps the request actions fixed");
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

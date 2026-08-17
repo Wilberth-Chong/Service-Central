@@ -5,6 +5,7 @@ const flowsDialog = document.querySelector("#flows-dialog");
 const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
 let toastTimer;
+let selectedOpenSupportTicketInstrument = null;
 
 const CUSTOM_ROUTES = {
   "edit-spc": "Edit service plan contact",
@@ -20,11 +21,21 @@ const ROUTES = {
   "support-history": { title: "Support request history", src: "assets/flows/support-history.png", width: 1440, height: 1460, kind: "app" },
   "service-plan-contacts": { title: "Service plan contacts", src: "assets/flows/service-plan-contacts.png", width: 1440, height: 1800, kind: "app" },
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
-  "instrument-support-selection": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
+  "request-pm": { title: "Request PM scheduling", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
+  "request-serviceplan": { title: "Request a service plan quote", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-qualification": { title: "Request qualification service", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-calibration": { title: "Request a calibration service", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
+  "request-installation": { title: "Installation support", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
+  "open-support-ticket": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
+  "open-support-ticket-details": { title: "Open a support ticket — add request details", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
   education: { title: "Browse education", src: "assets/flows/education.png", width: 1440, height: 1460, kind: "external" },
   "ticket-detail": { title: "Support ticket detail", src: "assets/flows/ticket-detail.png", width: 1456, height: 2069, kind: "app" },
+  "tech-support-summary": { title: "Tech support summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
+  "service-requests-summary": { title: "Service request summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
+  "pm-summary": { title: "Preventive maintenance summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
+  "closed-summary": { title: "Closed ticket summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "user-not-mapped": { title: "From sign in — user not mapped", src: "assets/flows/user-not-mapped.png", width: 1440, height: 1090, kind: "signin", cta: { x: 204, y: 452, w: 392, h: 53, route: "add-instruments", label: "Continue user-not-mapped flow" } },
   "installation-order": { title: "From installation order ready", src: "assets/flows/installation-order.png", width: 600, height: 941, kind: "email", cta: { x: 56, y: 428, w: 198, h: 42, route: "request-support", label: "View installation order" } },
   "service-plan-approval": { title: "From service plan contact approval", src: "assets/flows/service-plan-approval.png", width: 600, height: 1494, kind: "email", cta: { x: 56, y: 375, w: 184, h: 42, route: "my-instruments", label: "Review and confirm" } },
@@ -61,6 +72,11 @@ const FLOW_MENU = [
   ["Service plan contacts", "service-plan-contacts"],
   ["Edit service plan contact", "edit-spc"],
   ["Request support", "request-support"],
+  ["Request PM scheduling", "request-pm"],
+  ["Request a service plan quote", "request-serviceplan"],
+  ["Request qualification service", "request-qualification"],
+  ["Request a calibration service", "request-calibration"],
+  ["Installation support", "request-installation"],
   ["Notification settings", "notifications"],
   ["Consumables", "consumables"],
   ["Browse education", "education"],
@@ -130,7 +146,10 @@ function routeFromHash() {
   return "signin";
 }
 
-function setRoute(route) {
+let selectedSupportHistoryTicket = null;
+
+function setRoute(route, summaryTicket = null) {
+  selectedSupportHistoryTicket = summaryTicket;
   const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] ? route : "signin";
   const nextHash = `#${safeRoute}`;
   if (window.location.hash !== nextHash) window.history.pushState({}, "", nextHash);
@@ -182,8 +201,8 @@ function addScreenSpecificHotspots(canvas, route, screen) {
       { label: "Edit contact for instruments with no service plan", route: "edit-spc", x: 1110, y: 765, w: 116, h: 32 },
     ],
     "request-support": [
-      { label: "Open a support ticket", route: "instrument-support-selection", x: 730, y: 348, w: 210, h: 50 },
-      { label: "Request preventive maintenance", route: "pm-cycle", x: 730, y: 483, w: 210, h: 50 },
+      { label: "Open a support ticket", route: "open-support-ticket", x: 730, y: 348, w: 210, h: 50 },
+      { label: "Request preventive maintenance", route: "request-pm", x: 730, y: 483, w: 210, h: 50 },
       { label: "Request a service plan", route: "service-plan-approval", x: 730, y: 618, w: 210, h: 50 },
       { label: "Installation support", route: "installation-order", x: 730, y: 888, w: 210, h: 50 },
     ],
@@ -482,9 +501,9 @@ function renderAddInstruments() {
 }
 
 const SUPPORT_HISTORY_TICKETS = [
-  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", subjectIcon: true },
+  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", systemNames: ["Alpine", "Sasha"] },
   { status: "In progress", ticket: "46521863", type: "Service Request", subject: "Repair 0000123459", serial: "1009999", model: "VQH0000VEN", nickname: "Column-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "quote" },
-  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "support" },
+  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "support", systemNames: ["Alpine", "Sasha"] },
   { status: "In progress", ticket: "465218988", type: "Inquiry", subject: "Repair instrument", serial: "1009997", model: "VQF000PUMP", nickname: "Pump-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
   { status: "In progress", ticket: "46927364", type: "Tech Support", subject: "Repair instrument", serial: "8044421", model: "ULT3R0PDET", nickname: "Pump-RD", group: "Biotherapeutics...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
   { status: "In progress", ticket: "46719836", type: "Inquiry", subject: "Need support for error", serial: "8044422", model: "ULT3S0MISC", nickname: "Misc-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
@@ -504,40 +523,247 @@ const SUPPORT_HISTORY_TICKETS = [
   { status: "Closed", ticket: "46434295", type: "Installation", subject: "Need support", serial: "SN98361W", model: "QEXAC00001", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
 ];
 
+const SUPPORT_HISTORY_SUMMARY_ROUTES = {
+  "5551726344": "tech-support-summary",
+  "46521863": "service-requests-summary",
+  "46927364": "pm-summary",
+  "46195527": "closed-summary",
+};
+
+function summaryRouteForTicket(ticket) {
+  if (!ticket) return null;
+  if (ticket.status === "Closed" && ["Tech Support", "Service Request", "Depot Repair", "Inquiry", "PM (Contract)"].includes(ticket.type)) return "closed-summary";
+  if (ticket.type === "Tech Support") return "tech-support-summary";
+  if (["Service Request", "Depot Repair", "Inquiry"].includes(ticket.type)) return "service-requests-summary";
+  if (ticket.type === "PM (Contract)") return "pm-summary";
+  return null;
+}
+
+const TICKET_SUMMARIES = {
+  "tech-support-summary": { title: "Won’t turn on", ticket: "5551726344", state: "Open", subject: "Need support for unknown instrument error", type: "Tech Support", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", created: "26 April 2023", isTechSupport: true },
+  "service-requests-summary": { title: "Repair 0000123459 instrument parts", ticket: "46521863", state: "In progress", type: "Service Request", serial: "1009999", model: "VQH0000VEN", nickname: "Detector-2B", created: "Monday, 30 Apr 2023", summaryKind: "quote" },
+  "pm-summary": { title: "Preventive Maintenance - 0012345L", ticket: "46927364", state: "In progress", type: "PM (Contract)", serial: "1009998", model: "VQF00SAMPL", nickname: "Detector-2B", created: "Monday, 12 May 2023", summaryKind: "preventive" },
+  "closed-summary": { title: "Preventive Maintenance 00000", ticket: "46195527", state: "Closed", type: "PM (Contract)", serial: "SN98355W", model: "QEXAC00001", nickname: "Detector-2B", created: "Tuesday, 15 May 2019", summaryKind: "closed" },
+};
+
+const SUPPORT_HISTORY_MONTH_INDEX = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+};
+
+function parseSupportHistoryDate(value) {
+  const parts = String(value || "").trim().split(/\s+/);
+  if (parts.length !== 3) return null;
+  const [dayText, monthText, yearText] = parts;
+  const day = Number(dayText);
+  const month = SUPPORT_HISTORY_MONTH_INDEX[monthText];
+  const year = Number(yearText);
+  if (!Number.isInteger(day) || month === undefined || !Number.isInteger(year)) return null;
+  const date = new Date(year, month, day);
+  return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day ? date : null;
+}
+
+function supportHistoryDateKey(value) {
+  const date = parseSupportHistoryDate(value);
+  if (!date) return "";
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function supportHistoryDateInRange(value, start, end) {
+  if (!start || !end) return true;
+  return Boolean(value && value >= start && value <= end);
+}
+
+function supportHistorySearchText(ticket) {
+  return [ticket.serial, ticket.nickname, ticket.ticket, ticket.subject]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+const SUPPORT_HISTORY_INDICATORS = {
+  quote: {
+    src: "assets/icons/general/quote/size=24px, style=mono.svg",
+    label: "Quote status",
+    tooltip: "Quote ready",
+    modifier: "sh-ticket-tooltip--quote",
+    hook: "data-sh-quote-tip",
+  },
+  support: {
+    src: "assets/icons/general/visit scheduled/size=24px, style=mono.svg",
+    label: "Visit status",
+    tooltip: "Visit scheduled",
+    modifier: "sh-ticket-tooltip--visit",
+    hook: "data-sh-support-tip",
+  },
+};
+
+function supportHistorySystemsMarkup(ticket) {
+  if (!ticket.systemNames) return "";
+  const tooltipId = `sh-systems-tooltip-${ticket.ticket}`;
+  return `<span class="sh-system-tip" data-sh-system-tip tabindex="0" aria-label="Systems" aria-describedby="${tooltipId}">
+    <img class="sh-system-icon" src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" />
+    <span class="sh-system-tooltip" id="${tooltipId}" role="tooltip" hidden><span class="sh-system-tooltip__content">In system(s): ${ticket.systemNames.map((name) => `<span class="sh-system-name">${name}</span>`).join(", ")}</span></span>
+  </span>`;
+}
+
+function supportHistoryOverflowMarkup(ticket, field, value) {
+  const tooltipId = `sh-overflow-tooltip-${ticket.ticket}-${ticket.serial}-${field}`;
+  return `<span class="sh-overflow" data-sh-tooltip tabindex="0" aria-describedby="${tooltipId}">${value}<span class="sh-overflow-tooltip" id="${tooltipId}" role="tooltip" hidden>${value}</span></span>`;
+}
+
+function supportHistoryIndicatorMarkup(ticket) {
+  const indicator = SUPPORT_HISTORY_INDICATORS[ticket.icon];
+  if (!indicator) return "";
+  const tooltipId = `sh-${ticket.icon}-tooltip-${ticket.ticket}`;
+  return `<span class="sh-ticket-tip" data-sh-ticket-tip ${indicator.hook} tabindex="0" aria-label="${indicator.label}" aria-describedby="${tooltipId}">
+    <img class="sh-ticket-icon" src="${indicator.src}" alt="" />
+    <span class="sh-ticket-tooltip ${indicator.modifier}" id="${tooltipId}" role="tooltip" hidden>${indicator.tooltip}</span>
+  </span>`;
+}
+
 function supportHistoryRowMarkup(ticket) {
   const statusClass = ticket.status === "Open" ? "sh-status--open" : ticket.status === "In progress" ? "sh-status--progress" : "sh-status--closed";
-  const rowIcon = ticket.icon === "quote" ? "assets/icons/general/quote/size=24px, style=mono.svg" : ticket.icon === "support" ? "assets/icons/navigation/support/size=24px, style=mono.svg" : "";
-  const subjectIcon = ticket.subjectIcon ? '<img class="sh-inline-icon" src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="" />' : "";
-  return `<tr data-sh-row data-status="${ticket.status}" data-search="${Object.values(ticket).join(" ").toLowerCase()}">
-    <td>${rowIcon ? `<img class="sh-ticket-icon" src="${rowIcon}" alt="" />` : ""}</td>
+  return `<tr data-sh-row data-status="${ticket.status}" data-type="${ticket.type}" data-model="${ticket.model}" data-group="${ticket.group}" data-contact="${ticket.contact}" data-search="${supportHistorySearchText(ticket)}" data-created="${supportHistoryDateKey(ticket.created)}">
+    <td>${supportHistoryIndicatorMarkup(ticket)}</td>
     <td><span class="sh-status ${statusClass}">${ticket.status}</span></td>
-    <td><button class="sh-link" type="button" data-sh-ticket>${ticket.ticket}</button></td>
-    <td title="${ticket.type}">${ticket.type}</td><td title="${ticket.subject}">${ticket.subject}${subjectIcon}</td>
+    <td><button class="sh-link" type="button" data-sh-ticket="${ticket.ticket}" data-sh-ticket-index="${SUPPORT_HISTORY_TICKETS.indexOf(ticket)}">${ticket.ticket}</button></td>
+    <td>${supportHistoryOverflowMarkup(ticket, "type", ticket.type)}</td><td>${supportHistoryOverflowMarkup(ticket, "subject", ticket.subject)}</td><td>${supportHistorySystemsMarkup(ticket)}</td>
     <td><button class="sh-link" type="button" data-route="instrument-access">${ticket.serial}</button></td>
-    <td title="${ticket.model}">${ticket.model}</td><td title="${ticket.nickname}">${ticket.nickname}</td>
+    <td>${supportHistoryOverflowMarkup(ticket, "model", ticket.model)}</td><td>${supportHistoryOverflowMarkup(ticket, "nickname", ticket.nickname)}</td>
     <td title="${ticket.group}">${ticket.group ? `<button class="sh-link" type="button" data-sh-group>${ticket.group}</button>` : ""}</td>
-    <td title="${ticket.contact}">${ticket.contact}</td><td>${ticket.created}</td><td>${ticket.closed}</td>
+    <td>${supportHistoryOverflowMarkup(ticket, "contact", ticket.contact)}</td><td>${ticket.created}</td><td>${ticket.closed}</td>
   </tr>`;
+}
+
+function setSupportHistoryTooltip(trigger, visible) {
+  const tooltipId = trigger?.getAttribute("aria-describedby");
+  const tooltip = tooltipId ? document.getElementById(tooltipId) : null;
+  if (!tooltip) return;
+  if (visible) {
+    tooltip.hidden = false;
+    document.body.append(tooltip);
+    const triggerRect = trigger.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    tooltip.style.top = `${triggerRect.top - tooltipRect.height - 8}px`;
+    tooltip.style.left = `${triggerRect.left + triggerRect.width / 2}px`;
+    tooltip.style.bottom = "auto";
+  } else {
+    tooltip.hidden = true;
+    trigger.append(tooltip);
+    tooltip.removeAttribute("style");
+  }
+  trigger.classList.toggle("is-tooltip-visible", visible);
+  trigger.closest("td")?.classList.toggle("is-tooltip-visible", visible);
+}
+
+function canShowSupportHistoryTooltip(trigger) {
+  return !trigger.matches("[data-sh-tooltip]") || trigger.scrollWidth > trigger.clientWidth;
 }
 
 function wireSupportHistory() {
   const tbody = app.querySelector("[data-sh-rows]");
+  const datePickerRoot = app.querySelector("[data-sh-date-picker]");
+  const statusFilterRoot = app.querySelector("[data-sh-status-filter]");
+  const statusFilterTriggerRoot = app.querySelector("[data-sh-status-filter-trigger]");
+  const statusFilter = new window.MultiSelectFilter(statusFilterRoot, {
+    label: "Status",
+    allLabel: "All",
+    options: ["Open", "In progress", "Closed"],
+    controlHost: statusFilterTriggerRoot,
+  });
+  const columnFilterConfig = [
+    { key: "type", label: "Ticket type" },
+    { key: "model", label: "Model" },
+    { key: "group", label: "Groups" },
+    { key: "contact", label: "Contact" },
+  ];
+  const columnFilters = columnFilterConfig.map(({ key, label }) => {
+    const root = app.querySelector(`[data-sh-${key}-filter]`);
+    const controlHost = app.querySelector(`[data-sh-column-filter-trigger="${key}"]`);
+    const options = [...new Set(SUPPORT_HISTORY_TICKETS.map((ticket) => ticket[key]).filter(Boolean))];
+    return { key, root, filter: new window.MultiSelectFilter(root, {
+      label,
+      controlLabel: key === "type" ? "Ticket t..." : label,
+      allLabel: "All",
+      options,
+      controlHost,
+      menuStyle: "figma-column",
+    }) };
+  });
+  const allFilters = [statusFilter, ...columnFilters.map(({ filter }) => filter)];
+  const clearFiltersButton = app.querySelector("[data-sh-clear-filters]");
+  const updateClearFilters = () => {
+    clearFiltersButton.hidden = allFilters.every((filter) => filter.values.length === 0);
+  };
   let tickets = [...SUPPORT_HISTORY_TICKETS];
-  const renderRows = () => { tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join(""); };
+  let appliedStart = "";
+  let appliedEnd = "";
+  new window.DateRangePicker(datePickerRoot);
+  const renderRows = () => {
+    tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join("");
+    tbody.querySelectorAll("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]").forEach((trigger) => {
+      trigger.addEventListener("pointerenter", () => { if (canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true); });
+      trigger.addEventListener("pointerleave", () => setSupportHistoryTooltip(trigger, false));
+    });
+  };
   const filterRows = () => {
     const query = app.querySelector("[data-sh-search]").value.trim().toLowerCase();
-    const status = app.querySelector("[data-sh-status]").value;
+    const statuses = statusFilter.values;
     let visible = 0;
     app.querySelectorAll("[data-sh-row]").forEach((row) => {
-      row.hidden = (query && !row.dataset.search.includes(query)) || (status !== "all" && row.dataset.status !== status);
+      const textMatches = !query || row.dataset.search.includes(query);
+      const statusMatches = statuses.length === 0 || statuses.includes(row.dataset.status);
+      const columnMatches = columnFilters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(row.dataset[key]));
+      const dateMatches = supportHistoryDateInRange(row.dataset.created, appliedStart, appliedEnd);
+      row.hidden = !textMatches || !statusMatches || !columnMatches || !dateMatches;
       if (!row.hidden) visible += 1;
     });
-    app.querySelector("[data-sh-count]").textContent = query || status !== "all" ? String(visible) : "100";
+    app.querySelector("[data-sh-count]").textContent = query || statuses.length || (appliedStart && appliedEnd) ? String(visible) : "100";
+    updateClearFilters();
   };
   renderRows();
+  tbody.addEventListener("mouseover", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true);
+  });
+  tbody.addEventListener("mouseout", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && !trigger.contains(event.relatedTarget)) setSupportHistoryTooltip(trigger, false);
+  });
+  tbody.addEventListener("focusin", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true);
+  });
+  tbody.addEventListener("focusout", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger) setSupportHistoryTooltip(trigger, false);
+  });
+  tbody.addEventListener("keydown", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && event.key === "Escape") {
+      event.preventDefault();
+      setSupportHistoryTooltip(trigger, false);
+    }
+  });
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   app.querySelector("[data-sh-search]").addEventListener("input", filterRows);
-  app.querySelector("[data-sh-status]").addEventListener("change", filterRows);
+  statusFilterRoot.addEventListener("multiselect-filter-change", filterRows);
+  columnFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", filterRows));
+  columnFilters.forEach(({ key, root }) => root.addEventListener("multiselect-filter-sort", (event) => {
+    const direction = event.detail.direction === "desc" ? -1 : 1;
+    tickets.sort((left, right) => direction * String(left[key]).localeCompare(String(right[key])));
+    renderRows();
+    filterRows();
+  }));
+  clearFiltersButton.addEventListener("click", () => allFilters.forEach((filter) => filter.clear()));
+  datePickerRoot.addEventListener("date-range-change", (event) => {
+    appliedStart = event.detail.start;
+    appliedEnd = event.detail.end;
+    filterRows();
+  });
   app.querySelectorAll("[data-sh-sort]").forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.shSort;
@@ -549,10 +775,13 @@ function wireSupportHistory() {
     });
   });
   tbody.addEventListener("click", (event) => {
-    if (event.target.closest("[data-sh-ticket]")) setRoute("ticket-detail");
+    const ticketButton = event.target.closest("[data-sh-ticket]");
+    if (ticketButton) {
+      const historyTicket = SUPPORT_HISTORY_TICKETS[Number(ticketButton.dataset.shTicketIndex)];
+      setRoute(summaryRouteForTicket(historyTicket) || SUPPORT_HISTORY_SUMMARY_ROUTES[ticketButton.dataset.shTicket] || "ticket-detail", historyTicket || null);
+    }
     if (event.target.closest("[data-sh-group]")) showToast("Instrument group opened");
   });
-  app.querySelector("[data-sh-date]").addEventListener("click", () => showToast("Date range selector opened"));
   app.querySelector("[data-sh-edit-columns]").addEventListener("click", () => showToast("Column editor opened"));
   app.querySelectorAll("[data-sh-menu]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.shMenu} filter opened`)));
   window.PlatformSidebar?.wire(app);
@@ -565,6 +794,478 @@ function renderSupportHistory() {
   mountPlatformSidebar("support-history");
   wireSupportHistory();
   document.title = "Support request history — Services Central";
+}
+
+function renderTicketSummary(route) {
+  const baseTicket = TICKET_SUMMARIES[route];
+  const historyTicket = selectedSupportHistoryTicket && summaryRouteForTicket(selectedSupportHistoryTicket) === route ? selectedSupportHistoryTicket : null;
+  const ticket = historyTicket ? {
+    ...baseTicket,
+    title: historyTicket.subject || baseTicket.title,
+    ticket: historyTicket.ticket,
+    state: historyTicket.status,
+    type: historyTicket.type,
+    subject: historyTicket.subject || baseTicket.subject,
+    serial: historyTicket.serial || baseTicket.serial,
+    model: historyTicket.model || baseTicket.model,
+    nickname: historyTicket.nickname || baseTicket.nickname,
+    group: historyTicket.group || "---",
+    contact: historyTicket.contact || "---",
+    created: historyTicket.created || baseTicket.created,
+    closed: historyTicket.closed || "---",
+    selectedFromHistory: true,
+  } : baseTicket;
+  const isTechSupport = ticket.isTechSupport === true;
+  const usesReferenceLayout = isTechSupport || Boolean(ticket.summaryKind);
+  const titleMeta = usesReferenceLayout
+    ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`
+    : `<p>Ticket number: ${ticket.ticket} <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span></p>`;
+  const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
+  const ticketCreated = ticket.selectedFromHistory ? ticket.created : "26 April 2023";
+  const ticketClosed = ticket.state === "Closed" ? ticket.closed : "---";
+  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Model number</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl>`;
+  const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
+  const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Model number</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const quoteContent = `<article class="ts-card ts-card--standard ts-card--quote">${contactMarkup}<div class="ts-summary-split"><section>${requestMarkup}</section><section class="ts-quotes"><header><h2>Quote(s)</h2><span>Prices are subject to change</span></header><article class="ts-quote"><img src="assets/icons/general/quote/size=24px, style=mono.svg" alt="" /><div><span><b>Quote:</b> <span class="ts-quote__number">17171847</span></span><span><b>Created:</b> 11 Apr 2023</span><span><b>Total:</b> $10,285</span></div><div class="ts-quote__actions"><button class="mi-button" type="button">View quote</button><button class="mi-button" type="button">Place order</button></div></article></section></div><section class="ts-service ts-service--quote"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 30 Apr 2023</dd></div></dl></section></article>${instrumentMarkup}`;
+  const preventiveContent = `<article class="ts-card ts-card--standard ts-card--preventive">${contactMarkup}${requestMarkup}<section class="ts-service ts-service--preventive"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 12 May 2023</dd></div></dl></section></article>${instrumentMarkup}`;
+  const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
+  const closedContent = `<article class="ts-card ts-card--standard ts-card--closed">${contactMarkup}${closedRequestMarkup}<section class="ts-service ts-service--closed"><h3>Service details</h3><div class="ts-service--closed__body"><div class="ts-service--closed__details"><dl><div><dt>Arrival date</dt><dd>12 Mar 2023</dd></div><div><dt>Completion date</dt><dd>12 Mar 2023</dd></div><div><dt>Type of service</dt><dd>Preventive maintenance</dd></div></dl><dl class="ts-service-description"><div><dt>Service description</dt><dd>Cras gravida nibh enim, sit amet molestie nisi congue id. Proin rhoncus consectetur arcu, in lobortis magna. Donec purus ipsum, dignissim non maximus nec, rhoncus accumsan erat. Proin consectetur tincidunt mi eget cursus. Sed facilisis at risus imperdiet.</dd></div></dl></div><article class="ts-service-report"><div><strong>View service report</strong><p>Available here until dd mmm yyyy.<br />After this date, contact support.</p></div><button type="button" aria-label="Download service report"><img src="assets/icons/actions/download/Size=24px, Style=Mono, Color=Blue.svg" alt="" /></button></article></div></section></article>${instrumentMarkup}`;
+  const defaultContent = ticket.summaryKind === "quote" ? quoteContent : ticket.summaryKind === "preventive" ? preventiveContent : closedContent;
+  const titleDate = ticket.summaryKind === "quote" || ticket.summaryKind === "preventive" ? `<div class="ts-title-date"><span>Scheduled start date</span><time>${ticket.created}</time></div>` : ticket.summaryKind === "closed" || isTechSupport ? "" : `<time>${ticket.created}</time>`;
+  app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
+    <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div><h1>${ticket.title}${usesReferenceLayout ? ` <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>` : ""}</h1>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+  mountPlatformSidebar("support-history");
+  app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute("support-history"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${ticket.title} — Services Central`;
+}
+
+function wireRequestSupport() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelectorAll("[data-rs-toast]").forEach((button) => {
+    button.addEventListener("click", () => showToast(button.dataset.rsToast));
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestSupport() {
+  const template = document.querySelector("#request-support-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireRequestSupport();
+  document.title = "Request support — Services Central";
+}
+
+function wireInstrumentSupportSelection() {
+  const continueButton = app.querySelector("[data-iss-continue]");
+  const search = app.querySelector("[data-iss-search]");
+  const systemToggle = app.querySelector("[data-iss-system-toggle]");
+  const systemRow = app.querySelector(".iss-system");
+  const systemRows = [...app.querySelectorAll("[data-iss-row]")];
+  const collapsibleSystemRows = systemRows.slice(0, 5);
+  let systemExpanded = true;
+  systemRows.forEach((row) => {
+    row.classList.add("iss-system-child");
+    row.querySelectorAll('img[src="assets/icons/actions/return/Size=16px, Style=Mono.svg"]').forEach((icon) => {
+      icon.src = "assets/icons/actions/system-return/Size=16px, Style=Mono.svg";
+    });
+    const cells = row.cells;
+    if (!row.dataset.group) row.dataset.group = cells[5]?.textContent.trim() || "—";
+    if (!row.dataset.type) row.dataset.type = cells[6]?.textContent.trim() || "—";
+    if (!row.dataset.model) row.dataset.model = cells[7]?.textContent.trim() || "—";
+    if (!row.dataset.coverage) row.dataset.coverage = cells[8]?.textContent.trim() || "—";
+  });
+  systemRows.slice(5).forEach((row) => {
+    const image = row.cells[2]?.querySelector("img");
+    if (!image) return;
+    image.classList.add("iss-indent-instrument");
+    row.cells[1].replaceChildren(image);
+  });
+  const fullEllipsisText = new Map([
+    ["Mass Spec Lif...", "Mass Spec Life Sciences"],
+    ["MSTSQQUAN...", "MSTSQQUANTISPLUS"],
+    ["Global...", "Global group"],
+    ["Department...", "Department group"],
+  ]);
+  let tooltipCount = 0;
+  systemRows.forEach((row) => {
+    [5, 6, 7].forEach((column) => {
+      const cell = row.cells[column];
+      const value = cell?.textContent.trim();
+      if (!value?.includes("...")) return;
+      const trigger = cell.querySelector("button") || document.createElement("span");
+      if (!trigger.parentElement) {
+        trigger.textContent = value;
+        trigger.tabIndex = 0;
+        cell.replaceChildren(trigger);
+      }
+      const tooltip = document.createElement("span");
+      const tooltipId = `iss-overflow-tooltip-${++tooltipCount}`;
+      tooltip.className = "iss-overflow-tooltip";
+      tooltip.id = tooltipId;
+      tooltip.setAttribute("role", "tooltip");
+      tooltip.hidden = true;
+      tooltip.textContent = fullEllipsisText.get(value) || value;
+      trigger.classList.add("iss-overflow");
+      trigger.dataset.issOverflowTooltip = "";
+      trigger.setAttribute("aria-describedby", tooltipId);
+      trigger.append(tooltip);
+      const showTooltip = () => setSupportHistoryTooltip(trigger, true);
+      const hideTooltip = () => setSupportHistoryTooltip(trigger, false);
+      trigger.addEventListener("mouseover", showTooltip);
+      trigger.addEventListener("mouseout", hideTooltip);
+      trigger.addEventListener("focus", showTooltip);
+      trigger.addEventListener("blur", hideTooltip);
+      trigger.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          hideTooltip();
+          trigger.blur();
+        }
+      });
+    });
+  });
+  const filterConfig = [
+    ["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"],
+  ];
+  const tableFilters = filterConfig.map(([key, label]) => {
+    const host = app.querySelector(`[data-iss-filter-host="${key}"]`);
+    const options = [...new Set(systemRows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], menuStyle: "figma-column" }) };
+  });
+  const filterRows = () => {
+    const query = search.value.trim().toLowerCase();
+    let visibleSystemInstrument = false;
+    systemRows.forEach((row) => {
+      const matchesSearch = !query || row.dataset.search.includes(query);
+      const matchesFilters = tableFilters.every(({ key, filter }) => !filter.values.length || filter.values.includes(row.dataset[key]));
+      row.hidden = (!systemExpanded && collapsibleSystemRows.includes(row)) || !matchesSearch || !matchesFilters;
+      if (collapsibleSystemRows.includes(row) && !row.hidden) visibleSystemInstrument = true;
+    });
+    systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
+  };
+  systemToggle.addEventListener("click", () => {
+    systemExpanded = !systemExpanded;
+    systemToggle.setAttribute("aria-expanded", String(systemExpanded));
+    systemToggle.setAttribute("aria-label", `${systemExpanded ? "Collapse" : "Expand"} system`);
+    systemToggle.querySelector("img").style.transform = systemExpanded ? "" : "rotate(-90deg)";
+    filterRows();
+  });
+  tableFilters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", filterRows));
+  const pageSizeButton = app.querySelector("[data-iss-page-size]");
+  const pageSizeMenu = app.querySelector("[data-iss-page-size-menu]");
+  const closePageSizeMenu = () => {
+    pageSizeMenu.hidden = true;
+    pageSizeButton.setAttribute("aria-expanded", "false");
+  };
+  pageSizeButton.addEventListener("click", () => {
+    pageSizeMenu.hidden = !pageSizeMenu.hidden;
+    pageSizeButton.setAttribute("aria-expanded", String(!pageSizeMenu.hidden));
+  });
+  pageSizeMenu.querySelectorAll("[data-iss-page-size-option]").forEach((option) => option.addEventListener("click", () => {
+    const value = option.dataset.issPageSizeOption;
+    const caret = pageSizeButton.querySelector("img");
+    pageSizeButton.replaceChildren(document.createTextNode(`${value} `), caret);
+    pageSizeMenu.querySelectorAll("[data-iss-page-size-option]").forEach((item) => item.setAttribute("aria-selected", String(item === option)));
+    closePageSizeMenu();
+  }));
+  document.addEventListener("mousedown", (event) => {
+    if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu();
+  });
+  pageSizeButton.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closePageSizeMenu();
+  });
+  app.querySelectorAll("[data-iss-instrument]").forEach((input) => input.addEventListener("change", () => {
+    continueButton.disabled = !input.checked;
+  }));
+  search.addEventListener("input", filterRows);
+  continueButton.addEventListener("click", () => {
+    const selectedRow = app.querySelector("[data-iss-instrument]:checked")?.closest("tr");
+    if (selectedRow) {
+      selectedOpenSupportTicketInstrument = {
+        serial: selectedRow.cells[3].textContent.trim(),
+        nickname: selectedRow.cells[4].textContent.trim(),
+        type: selectedRow.cells[6].textContent.trim(),
+        model: selectedRow.cells[7].textContent.trim(),
+        image: selectedRow.querySelector('img[src*="assets/instruments/"]')?.getAttribute("src"),
+      };
+    }
+    setRoute("open-support-ticket-details");
+  });
+  app.querySelectorAll("[data-iss-toast], [data-iss-filter], [data-iss-instrument-link]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.issToast || "Instrument details opened")));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderOpenSupportTicket() {
+  const template = document.querySelector("#open-support-ticket-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireInstrumentSupportSelection();
+  document.title = "Open a support ticket — Services Central";
+}
+
+function wireOpenSupportTicketDetails() {
+  const fields = [...app.querySelectorAll("[data-isd-field]")];
+  const continueButton = app.querySelector("[data-isd-continue]");
+  const detailsCard = app.querySelector(".isd-card");
+  const uploadRequirements = app.querySelector(".isd-upload__requirements");
+  const filledFiles = app.querySelector(".isd-filled-files");
+  const uploadInput = app.querySelector("[data-isd-upload] input");
+  const filesRoot = app.querySelector("[data-isd-files]");
+  let uploadedFiles = [];
+  if (selectedOpenSupportTicketInstrument) {
+    const selected = selectedOpenSupportTicketInstrument;
+    app.querySelector("[data-isd-serial]").textContent = selected.serial;
+    app.querySelector("[data-isd-nickname]").textContent = selected.nickname;
+    app.querySelector("[data-isd-type]").textContent = selected.type;
+    app.querySelector("[data-isd-model]").textContent = selected.model;
+    if (selected.image) app.querySelector("[data-isd-instrument-image]").src = selected.image;
+  }
+  const updateForm = ({ updateCounts = true } = {}) => {
+    fields.forEach((field) => {
+      const count = app.querySelector(`[data-isd-count="${field.dataset.isdField}"]`);
+      if (updateCounts && count) count.textContent = `${field.value.length} / ${field.maxLength}`;
+    });
+    const isComplete = fields.every((field) => field.value.trim());
+    continueButton.disabled = !isComplete;
+    detailsCard.classList.toggle("is-filled", isComplete);
+    uploadRequirements.hidden = uploadedFiles.length > 0;
+    filledFiles.hidden = uploadedFiles.length === 0;
+  };
+  fields.forEach((field) => field.addEventListener("input", () => updateForm()));
+  const renderUploadedFiles = () => {
+    filesRoot.replaceChildren(...uploadedFiles.map((file, index) => {
+      const item = document.createElement("article");
+      item.innerHTML = `<img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span>${file.name}</span><small>${Math.max(1, Math.ceil(file.size / 1024 / 1024))}mb</small><button type="button" aria-label="Remove ${file.name}"><img src="assets/icons/actions/delete/size=16px, style=mono.svg" alt="" /></button>`;
+      item.querySelector("button").addEventListener("click", () => {
+        uploadedFiles.splice(index, 1);
+        renderUploadedFiles();
+        updateForm();
+      });
+      return item;
+    }));
+  };
+  app.querySelector("[data-isd-upload]").addEventListener("click", (event) => {
+    if (event.target !== uploadInput) uploadInput.click();
+  });
+  uploadInput.addEventListener("change", () => {
+    uploadedFiles = [...uploadInput.files].slice(0, 5);
+    renderUploadedFiles();
+    updateForm();
+  });
+  const infoTrigger = app.querySelector("[data-isd-info-tooltip]");
+  infoTrigger.addEventListener("pointerenter", () => setSupportHistoryTooltip(infoTrigger, true));
+  infoTrigger.addEventListener("pointerleave", () => setSupportHistoryTooltip(infoTrigger, false));
+  infoTrigger.addEventListener("focus", () => setSupportHistoryTooltip(infoTrigger, true));
+  infoTrigger.addEventListener("blur", () => setSupportHistoryTooltip(infoTrigger, false));
+  infoTrigger.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setSupportHistoryTooltip(infoTrigger, false);
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to confirm contact information"));
+  updateForm({ updateCounts: false });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderOpenSupportTicketDetails() {
+  const template = document.querySelector("#open-support-ticket-details-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireOpenSupportTicketDetails();
+  document.title = "Open a support ticket — add request details";
+}
+
+function wireRequestPm() {
+  const continueButton = app.querySelector("[data-pm-continue]");
+  const search = app.querySelector("[data-pm-search]");
+  const selectAll = app.querySelector("[data-pm-select-all]");
+  const system = app.querySelector("[data-pm-system]");
+  const instruments = [...app.querySelectorAll("[data-pm-instrument]")];
+
+  const updateSelection = () => {
+    const selected = instruments.filter((input) => input.checked).length;
+    system.checked = selected > 0 && selected === instruments.length;
+    system.indeterminate = selected > 0 && selected < instruments.length;
+    selectAll.checked = system.checked;
+    selectAll.indeterminate = system.indeterminate;
+    continueButton.disabled = selected === 0;
+    app.querySelector("[data-pm-selected-count]").textContent = String(selected);
+  };
+
+  const setAll = (checked) => {
+    instruments.forEach((input) => { input.checked = checked; });
+    updateSelection();
+  };
+
+  system.addEventListener("change", () => setAll(system.checked));
+  selectAll.addEventListener("change", () => setAll(selectAll.checked));
+  instruments.forEach((input) => input.addEventListener("change", updateSelection));
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-pm-row]").forEach((row) => {
+      row.hidden = Boolean(query) && !row.dataset.search.includes(query);
+    });
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to View PM status"));
+  app.querySelectorAll("[data-pm-promo], [data-pm-filter], [data-pm-instrument-link]").forEach((button) => {
+    button.addEventListener("click", () => showToast(button.dataset.pmPromo || "Instrument details opened"));
+  });
+  updateSelection();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestPm() {
+  const template = document.querySelector("#request-pm-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireRequestPm();
+  document.title = "Request PM scheduling — Services Central";
+}
+
+function wireRequestServicePlan() {
+  const continueButton = app.querySelector("[data-sp-continue]");
+  const search = app.querySelector("[data-sp-search]");
+  const selectAll = app.querySelector("[data-sp-select-all]");
+  const system = app.querySelector("[data-sp-system]");
+  const instruments = [...app.querySelectorAll("[data-sp-instrument]")];
+
+  const updateSelection = () => {
+    const selected = instruments.filter((input) => input.checked).length;
+    system.checked = selected > 0 && selected === instruments.length;
+    system.indeterminate = selected > 0 && selected < instruments.length;
+    selectAll.checked = system.checked;
+    selectAll.indeterminate = system.indeterminate;
+    continueButton.disabled = selected === 0;
+    app.querySelector("[data-sp-selected-count]").textContent = String(selected);
+  };
+
+  const setAll = (checked) => {
+    instruments.forEach((input) => { input.checked = checked; });
+    updateSelection();
+  };
+
+  system.addEventListener("change", () => setAll(system.checked));
+  selectAll.addEventListener("change", () => setAll(selectAll.checked));
+  instruments.forEach((input) => input.addEventListener("change", updateSelection));
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-sp-row]").forEach((row) => {
+      row.hidden = Boolean(query) && !row.dataset.search.includes(query);
+    });
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to Add request details"));
+  app.querySelectorAll("[data-sp-filter], [data-sp-instrument-link]").forEach((button) => {
+    button.addEventListener("click", () => showToast("Instrument details opened"));
+  });
+  updateSelection();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestServicePlan() {
+  const template = document.querySelector("#request-serviceplan-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireRequestServicePlan();
+  document.title = "Request a service plan quote — Services Central";
+}
+
+function renderRequestQualification() {
+  const template = document.querySelector("#request-serviceplan-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  const section = app.querySelector(".screen--request-serviceplan");
+  section.classList.replace("screen--request-serviceplan", "screen--request-qualification");
+  section.setAttribute("aria-label", "Request qualification service");
+  app.querySelector(".pm-titlebar h1").textContent = "Request qualification service";
+  app.querySelector(".sp-steps li:first-child strong").textContent = "Select instrument";
+  app.querySelector("#sp-description").textContent = "Request a quote for a compliance service such as Installation Qualification (IQ), Operational Qualification (OQ), Requalification (RQ), or Temperature mapping.";
+  app.querySelector(".sp-steps").setAttribute("aria-label", "Qualification service request progress");
+  app.querySelector(".pm-select-all span").textContent = "Select all 267 instruments";
+  app.querySelector(".pm-pagination strong").textContent = "267";
+  mountPlatformSidebar("request-support");
+  wireRequestServicePlan();
+  document.title = "Request qualification service — Services Central";
+}
+
+function wireRequestCalibration() {
+  const continueButton = app.querySelector("[data-cal-continue]");
+  const search = app.querySelector("[data-cal-search]");
+  const selectAll = app.querySelector("[data-cal-select-all]");
+  const instruments = [...app.querySelectorAll("[data-cal-instrument]")];
+  const updateSelection = () => {
+    const selected = instruments.filter((input) => input.checked).length;
+    selectAll.checked = selected > 0 && selected === instruments.length;
+    selectAll.indeterminate = selected > 0 && selected < instruments.length;
+    continueButton.disabled = selected === 0;
+  };
+  selectAll.addEventListener("change", () => {
+    instruments.forEach((input) => { input.checked = selectAll.checked; });
+    updateSelection();
+  });
+  instruments.forEach((input) => input.addEventListener("change", updateSelection));
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-cal-row]").forEach((row) => { row.hidden = Boolean(query) && !row.dataset.search.includes(query); });
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to Add request details"));
+  app.querySelectorAll("[data-cal-filter], [data-cal-instrument-link]").forEach((button) => button.addEventListener("click", () => showToast("Instrument details opened")));
+  updateSelection();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestCalibration() {
+  const template = document.querySelector("#request-calibration-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireRequestCalibration();
+  document.title = "Request a calibration service — Services Central";
+}
+
+function wireRequestInstallation() {
+  const service = app.querySelector("[data-installation-service]");
+  const type = app.querySelector("[data-installation-type]");
+  const details = app.querySelector("[data-installation-details]");
+  const continueButton = app.querySelector("[data-installation-continue]");
+  const orderToggle = app.querySelector("[data-installation-order-toggle]");
+  const orderMenu = app.querySelector("[data-installation-order-menu]");
+  const orderLabel = app.querySelector("[data-installation-order-label]");
+  const orderInputs = [...app.querySelectorAll("[data-installation-order]")];
+  const update = () => { continueButton.disabled = !service.value || !type.value || !details.value.trim(); };
+  type.addEventListener("change", update);
+  orderToggle.addEventListener("click", () => {
+    const expanded = orderToggle.getAttribute("aria-expanded") !== "true";
+    orderToggle.setAttribute("aria-expanded", String(expanded));
+    orderMenu.hidden = !expanded;
+  });
+  orderInputs.forEach((input) => input.addEventListener("change", () => {
+    const selected = orderInputs.filter((order) => order.checked);
+    service.value = selected.map((order) => order.value).join(",");
+    orderLabel.textContent = selected.length ? `${selected.length} order(s) selected` : "Please select order(s)";
+    update();
+  }));
+  app.querySelector("[data-installation-order-help]").addEventListener("click", () => showToast("Installation order support opened"));
+  details.addEventListener("input", () => {
+    app.querySelector("[data-installation-count]").textContent = String(details.value.length);
+    update();
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to Confirm contact information"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestInstallation() {
+  const template = document.querySelector("#request-installation-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountPlatformSidebar("request-support");
+  wireRequestInstallation();
+  document.title = "Installation support — Services Central";
 }
 
 function wireServicePlanContacts() {
@@ -807,6 +1508,24 @@ function render() {
     renderInstallations(route === "installations-expanded");
   } else if (route === "support-history") {
     renderSupportHistory();
+  } else if (TICKET_SUMMARIES[route]) {
+    renderTicketSummary(route);
+  } else if (route === "request-support") {
+    renderRequestSupport();
+  } else if (route === "request-pm") {
+    renderRequestPm();
+  } else if (route === "request-serviceplan") {
+    renderRequestServicePlan();
+  } else if (route === "request-qualification") {
+    renderRequestQualification();
+  } else if (route === "request-calibration") {
+    renderRequestCalibration();
+  } else if (route === "request-installation") {
+    renderRequestInstallation();
+  } else if (route === "open-support-ticket") {
+    renderOpenSupportTicket();
+  } else if (route === "open-support-ticket-details") {
+    renderOpenSupportTicketDetails();
   } else if (route === "service-plan-contacts") {
     renderServicePlanContacts();
   } else if (route === "consumables") {
