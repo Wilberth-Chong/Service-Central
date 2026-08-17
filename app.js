@@ -2,7 +2,7 @@ const app = document.querySelector("#app");
 const helpDialog = document.querySelector("#help-dialog");
 const servicesHelpDialog = document.querySelector("#services-help-dialog");
 const flowsDialog = document.querySelector("#flows-dialog");
-const installationPendingDialog = document.querySelector("#installation-pending-dialog");
+const installationPendingDialog = createInstallationPendingDialog();
 const addUserOrderDialog = document.querySelector("#add-user-order-dialog");
 const preferredDeliveryDatesDialog = document.querySelector("#preferred-delivery-dates-dialog");
 const deliveryChecklistUploadDialog = document.querySelector("#delivery-checklist-upload-dialog");
@@ -286,6 +286,51 @@ function showToast(message, { title = "", variant = "info", duration = 4000 } = 
 }
 
 toast.querySelector("[data-toast-close]").addEventListener("click", hideToast);
+
+function createInstallationPendingContent() {
+  const actions = document.createElement("div");
+  actions.className = "installation-pending-modal__actions";
+
+  const deliveryRow = document.createElement("div");
+  deliveryRow.className = "installation-pending-modal__row";
+  deliveryRow.innerHTML = '<img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span>';
+
+  const instrumentsRow = document.createElement("button");
+  instrumentsRow.type = "button";
+  instrumentsRow.className = "installation-pending-modal__row";
+  instrumentsRow.dataset.installationPendingInstruments = "";
+  instrumentsRow.innerHTML = '<img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>3456789</strong>. Review your instruments in <b>My instruments</b> tab.</span>';
+
+  actions.append(deliveryRow, instrumentsRow);
+  return actions;
+}
+
+function createInstallationPendingDialog() {
+  return window.Modal?.mount('[data-modal-mount="installation-pending"]', {
+    id: "installation-pending-dialog",
+    title: "Action(s) pending",
+    description: "You have important pending actions to ensure your delivery and installation stay on track.",
+    size: "md",
+    className: "installation-pending-dialog",
+    content: createInstallationPendingContent(),
+    closeLabel: "Close pending actions",
+    closeDataset: { installationPendingClose: "" },
+    actions: [
+      {
+        label: "Cancel",
+        variant: "secondary",
+        closes: true,
+        dataset: { installationPendingClose: "" },
+      },
+      {
+        label: "Go to installation page",
+        variant: "primary",
+        closes: true,
+        dataset: { installationPendingContinue: "" },
+      },
+    ],
+  });
+}
 
 function openServicesHelpModal(trigger) {
   if (servicesHelpDialog.open) return;
