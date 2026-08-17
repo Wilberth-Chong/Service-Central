@@ -1362,9 +1362,6 @@ function renderServicePlanContacts() {
 
 function wireConsumables() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
-  app.querySelectorAll("[data-cons-action]").forEach((button) => {
-    button.addEventListener("click", () => showToast(`${button.dataset.consAction} selected`));
-  });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }

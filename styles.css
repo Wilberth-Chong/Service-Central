@@ -960,7 +960,7 @@ button {
 .cons-promo aside, .cons-chemical-promo aside { width: 232px; color: #54545c; font-size: 14px; line-height: 22px; }
 .cons-promo aside b, .cons-chemical-promo aside b { display: block; color: #222; }
 .cons-promo aside span, .cons-chemical-promo aside span { display: block; margin-top: 8px; }
-.cons-promo button, .cons-chemical-promo button { border: 0; padding: 0; color: #0071d0; background: transparent; cursor: pointer; }
+.cons-promo button, .cons-chemical-promo button { border: 0; padding: 0; color: #0071d0; background: transparent; cursor: default; font: inherit; }
 .cons-promo button img, .cons-chemical-promo button img { width: 16px; height: 16px; vertical-align: -3px; }
 .cons-guide-grid { display: grid; width: 1320px; grid-template-columns: repeat(2, 644px); grid-auto-rows: 146px; gap: 32px; margin-top: 32px; }
 .cons-guide-card { display: flex; height: 146px; align-items: center; gap: 24px; border: 1px solid #ccc; padding: 16px 24px; background: #fff; }
