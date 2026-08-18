@@ -177,6 +177,7 @@ function wireWhiteGloveTooltips(scope = document) {
 }
 
 const CUSTOM_ROUTES = {
+  "contact-page": "Service plan contact detail",
   "edit-spc": "Edit service plan contact",
   "installation-faqs": "Installation frequently asked questions",
   "installations-progress": "Installations — order 7659430547",
@@ -237,6 +238,7 @@ const FLOW_MENU = [
   ["Installation support", "installation-support"],
   ["Support history", "support-history"],
   ["Service plan contacts", "service-plan-contacts"],
+  ["Service plan contact detail", "contact-page"],
   ["Edit service plan contact", "edit-spc"],
   ["Request support", "request-support"],
   ["Notification settings", "notifications"],
@@ -1098,6 +1100,111 @@ function mountFooter(options = {}) {
 }
 
 function wireEditSpc() {
+  const screen = app.querySelector(".screen--spc");
+  const main = app.querySelector(".spc-main");
+  const stepper = app.querySelector(".spc-stepper");
+  const stepElements = [...app.querySelectorAll("[data-spc-step]")];
+  const panels = [...app.querySelectorAll("[data-spc-panel]")];
+  const summaryPage = app.querySelector("[data-spc-summary]");
+  const cancelButton = app.querySelector("[data-spc-cancel]");
+  const continueButton = app.querySelector("[data-spc-continue]");
+  const backButton = app.querySelector("[data-spc-back]");
+  const closeButton = app.querySelector("[data-spc-close]");
+  const contactEmail = app.querySelector("[data-spc-contact-email]");
+  const contactConfirmationNotice = app.querySelector("[data-spc-contact-confirmation-notice]");
+  const selectedToggle = app.querySelector("[data-spc-selected-toggle]");
+  const selectedToggleLabel = app.querySelector("[data-spc-selected-label]");
+  const selectedPanel = app.querySelector("[data-spc-selected-panel]");
+  const reviewToggle = app.querySelector("[data-spc-review-toggle]");
+  const reviewToggleLabel = app.querySelector("[data-spc-review-label]");
+  const reviewPanel = app.querySelector("[data-spc-review-panel]");
+  const summaryToggle = app.querySelector("[data-spc-summary-toggle]");
+  const summaryToggleLabel = app.querySelector("[data-spc-summary-label]");
+  const summaryPanel = app.querySelector("[data-spc-summary-panel]");
+  let currentStep = 1;
+
+  const setStep = (step) => {
+    currentStep = step;
+    screen?.classList.toggle("is-step-two", step === 2);
+    screen?.classList.remove("is-spc-summary");
+    if (summaryPage) {
+      summaryPage.hidden = true;
+    }
+    if (stepper) {
+      stepper.hidden = false;
+    }
+    stepper?.setAttribute("data-spc-current-step", String(step));
+    stepElements.forEach((element) => {
+      const stepNumber = Number(element.dataset.spcStep);
+      const isCurrent = stepNumber === step;
+      const isComplete = stepNumber < step;
+      const marker = element.querySelector(".spc-step__number");
+      element.classList.toggle("is-current", isCurrent);
+      element.classList.toggle("is-complete", isComplete);
+      if (isCurrent) {
+        element.setAttribute("aria-current", "step");
+      } else {
+        element.removeAttribute("aria-current");
+      }
+      if (marker) {
+        marker.textContent = isComplete ? "" : String(stepNumber);
+      }
+    });
+    panels.forEach((panel) => {
+      panel.hidden = Number(panel.dataset.spcPanel) !== step;
+    });
+    if (backButton) {
+      backButton.hidden = step === 1;
+    }
+    if (cancelButton) {
+      cancelButton.hidden = false;
+    }
+    if (continueButton) {
+      continueButton.hidden = false;
+      continueButton.textContent = step === 3 ? "Confirm" : "Continue";
+    }
+    if (closeButton) {
+      closeButton.hidden = true;
+    }
+    main?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const showSummary = () => {
+    currentStep = 4;
+    screen?.classList.remove("is-step-two");
+    screen?.classList.add("is-spc-summary");
+    if (stepper) {
+      stepper.hidden = true;
+    }
+    panels.forEach((panel) => {
+      panel.hidden = true;
+    });
+    if (summaryPage) {
+      summaryPage.hidden = false;
+    }
+    if (cancelButton) {
+      cancelButton.hidden = true;
+    }
+    if (backButton) {
+      backButton.hidden = true;
+    }
+    if (continueButton) {
+      continueButton.hidden = true;
+    }
+    if (closeButton) {
+      closeButton.hidden = false;
+    }
+    main?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const isAssigningSomeoneElse = () => app.querySelector("[data-spc-contact-assignment][value='someone-else']")?.checked;
+
+  const updateContactConfirmationNotice = () => {
+    if (contactConfirmationNotice) {
+      contactConfirmationNotice.hidden = !isAssigningSomeoneElse();
+    }
+  };
+
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1107,9 +1214,81 @@ function wireEditSpc() {
       button.classList.add("is-selected");
     });
   });
-  app.querySelector("[data-spc-continue]").addEventListener("click", () => {
-    showToast("Continue to contact details");
+  app.querySelectorAll("[data-spc-contact-assignment]").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!contactEmail || !radio.checked) return;
+      if (radio.value === "myself") {
+        contactEmail.value = "sebastien.martin@companyname.com";
+        contactEmail.readOnly = true;
+        contactEmail.removeAttribute("placeholder");
+      } else {
+        contactEmail.value = "";
+        contactEmail.readOnly = false;
+        contactEmail.placeholder = "name@companyname.com";
+        contactEmail.focus();
+      }
+      updateContactConfirmationNotice();
+    });
   });
+  selectedToggle?.addEventListener("click", () => {
+    const expanded = selectedToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = selectedToggle.querySelector("img");
+    selectedToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=24px, style=mono.svg`;
+    }
+    if (selectedToggleLabel) {
+      selectedToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (selectedPanel) {
+      selectedPanel.hidden = !nextExpanded;
+    }
+  });
+  reviewToggle?.addEventListener("click", () => {
+    const expanded = reviewToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = reviewToggle.querySelector("img");
+    reviewToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+    }
+    if (reviewToggleLabel) {
+      reviewToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (reviewPanel) {
+      reviewPanel.hidden = !nextExpanded;
+    }
+  });
+  summaryToggle?.addEventListener("click", () => {
+    const expanded = summaryToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = summaryToggle.querySelector("img");
+    summaryToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+    }
+    if (summaryToggleLabel) {
+      summaryToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (summaryPanel) {
+      summaryPanel.hidden = !nextExpanded;
+    }
+  });
+  continueButton?.addEventListener("click", () => {
+    if (currentStep === 1) {
+      setStep(2);
+      return;
+    }
+    if (currentStep === 2) {
+      updateContactConfirmationNotice();
+      setStep(3);
+      return;
+    }
+    showSummary();
+  });
+  backButton?.addEventListener("click", () => setStep(Math.max(1, currentStep - 1)));
+  setStep(1);
 }
 
 function renderEditSpc() {
@@ -1405,11 +1584,15 @@ function wireServicePlanContacts() {
       icon.src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
     });
   });
-  app.querySelector("[data-splan-select-all]").addEventListener("click", (event) => {
-    const checks = [...app.querySelectorAll("[data-splan-check]")];
-    const select = checks.some((check) => !check.checked);
-    checks.forEach((check) => { check.checked = select; });
-    event.currentTarget.textContent = select ? "Clear selection" : "Select all 14 instruments";
+  app.querySelectorAll("[data-splan-select-all]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const group = event.currentTarget.closest("[data-splan-group]");
+      const checks = [...(group || app).querySelectorAll("[data-splan-check]")];
+      const select = checks.some((check) => !check.checked);
+      const total = event.currentTarget.dataset.splanSelectTotal || checks.length;
+      checks.forEach((check) => { check.checked = select; });
+      event.currentTarget.textContent = select ? "Clear selection" : `Select all ${total} instruments`;
+    });
   });
   app.querySelectorAll("[data-splan-action]").forEach((button) => {
     button.addEventListener("click", () => showToast(`${button.dataset.splanAction} selected`));
@@ -1426,6 +1609,22 @@ function renderServicePlanContacts() {
   mountFooter();
   wireServicePlanContacts();
   document.title = "Service plan contacts — Services Central";
+}
+
+function wireContactPage() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("service-plan-contacts"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderContactPage() {
+  const template = document.querySelector("#contact-page-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
+  mountPlatformSidebar("service-plan-contacts");
+  mountFooter();
+  wireContactPage();
+  document.title = "Sebastien Martin — Service plan contacts";
 }
 
 function createConsumablesSupportPortalPreference() {
@@ -2301,6 +2500,8 @@ function render() {
     renderSupportHistory();
   } else if (route === "service-plan-contacts") {
     renderServicePlanContacts();
+  } else if (route === "contact-page") {
+    renderContactPage();
   } else if (route === "consumables") {
     renderConsumables();
   } else if (route === "notifications") {
