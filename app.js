@@ -200,7 +200,7 @@ const ROUTES = {
   "instrument-support-selection": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
-  education: { title: "Browse education", src: "assets/flows/education.png", width: 1440, height: 1460, kind: "external" },
+  education: { title: "Browse education", src: "assets/flows/browser-education.png", width: 2878, height: 1826, kind: "external" },
   "ticket-detail": { title: "Support ticket detail", src: "assets/flows/ticket-detail.png", width: 1456, height: 2069, kind: "app" },
   "user-not-mapped": { title: "From sign in — user not mapped", src: "assets/flows/user-not-mapped.png", width: 1440, height: 1090, kind: "signin", cta: { x: 204, y: 452, w: 392, h: 53, route: "add-instruments", label: "Continue user-not-mapped flow" } },
   "installation-order": { title: "From installation order ready", src: "assets/flows/installation-order.png", width: 600, height: 941, kind: "email", cta: { x: 56, y: 428, w: 198, h: 42, route: "request-support", label: "View installation order" } },
@@ -263,7 +263,7 @@ const DASHBOARD_HOTSPOTS = [
   { label: "Search instruments, groups and tickets", route: "my-instruments", x: 84, y: 329, w: 1272, h: 52 },
   { label: "Order consumables", route: "consumables", x: 88, y: 452, w: 304, h: 128 },
   { label: "Browse education", route: "education", x: 426, y: 452, w: 304, h: 128 },
-  { label: "Request service plan", route: "service-plan-approval", x: 764, y: 452, w: 304, h: 128 },
+  { label: "Request service plan", x: 764, y: 452, w: 304, h: 128 },
   { label: "Request maintenance or support", route: "request-support", x: 1102, y: 452, w: 304, h: 128 },
   { label: "Support request history", route: "support-history", x: 365, y: 870, w: 235, h: 42 },
   { label: "View all my instruments", route: "my-instruments", x: 360, y: 1846, w: 240, h: 42 },
@@ -955,11 +955,84 @@ function wireSignIn() {
   app.querySelector("[data-help]").addEventListener("click", () => helpDialog.showModal());
 }
 
+const DASHBOARD_SORT_ICON = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
+const DASHBOARD_SYSTEM_ICON = "assets/icons/science/system/size=24px,%20style=mono.svg";
+const DASHBOARD_VISIT_ICON = "assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg";
+const DASHBOARD_DOWNLOAD_ICON = "assets/icons/actions/download/Size=16px, Style=Mono.svg";
+
+const DASHBOARD_CLOSED_TICKETS = [
+  { ticket: "446532405", closed: "30 Jan 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12346", model: "VQF0000DET", image: "tsq.png", highlighted: true, report: true, download: true },
+  { ticket: "446532404", closed: "29 Feb 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12345", model: "VQH0000VEN", image: "tsq.png", highlighted: true, report: true, download: true },
+  { ticket: "446532403", closed: "28 Mar 2019", subject: "Need support for unknown instrument error", serial: "1009997", model: "VQF00SAMPL", image: "vanquish-column.png", report: true },
+  { ticket: "446532402", closed: "27 Apr 2019", subject: "Repair 0000123459 instrument parts", serial: "1009996", model: "VQF000PUMP", image: "vanquish-pump.png", system: true },
+  { ticket: "446532401", closed: "26 May 2019", subject: "Repair 0000123459 instrument parts", serial: "1009999", model: "MSTSQQUANTISPLUS", image: "vanquish-pump.png", system: true },
+  { ticket: "446532400", closed: "25 Jun 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12347", model: "MSTSQQUANTISPLUS", image: "tsq.png", report: true },
+  { ticket: "446532399", closed: "24 Jul 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", report: true, download: true },
+  { ticket: "446532398", closed: "23 Aug 2019", subject: "Need support for unknown instrument error", serial: "SN98355W", model: "MSTSQQUANTISPLUS", image: "q-exactive.png" },
+];
+
+const DASHBOARD_ONSITE_VISITS = [
+  { scheduled: "04 Mar 2024", ticket: "441582736", type: "PM (Contract)", subject: "Repair 0000123459 instrument parts", serial: "1009998", model: "VQF000PUMP", image: "vanquish-sampler.png", system: true, highlighted: true },
+  { scheduled: "05 Mar 2024", ticket: "441582735", type: "Service Request", subject: "Repair 0000123459 instrument parts", serial: "1009997", model: "MSTSQQUANTISPLUS", image: "vanquish-pump.png", system: true, highlighted: true },
+  { scheduled: "06 Mar 2024", ticket: "441582734", type: "Service Request", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12345", model: "MSTSQQUANTISPLUS", image: "tsq.png", highlighted: true },
+  { scheduled: "07 Mar 2024", ticket: "441582733", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12347", model: "MSTSQQUANTISPLUS", image: "tsq.png" },
+  { scheduled: "08 Mar 2024", ticket: "441582732", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", system: true },
+];
+
+function dashboardTableHeader(label) {
+  return `<th>${label} ${DASHBOARD_SORT_ICON}</th>`;
+}
+
+function dashboardSerialCell(ticket) {
+  const systemIcon = ticket.system ? `<img class="db-ticket-system-icon" src="${DASHBOARD_SYSTEM_ICON}" alt="" />` : "";
+  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#instrument-access">${ticket.serial}</a></span></td>`;
+}
+
+function dashboardReportCell(ticket) {
+  if (!ticket.report && !ticket.download) return "<td></td>";
+  const report = ticket.report ? '<button class="db-report-button" type="button">View report</button>' : "";
+  const download = ticket.download ? `<button class="db-download-button" type="button" aria-label="Download report"><img src="${DASHBOARD_DOWNLOAD_ICON}" alt="" /></button>` : "";
+  return `<td><div class="db-ticket-actions">${report}${download}</div></td>`;
+}
+
+function dashboardClosedTicketRow(ticket) {
+  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#ticket-detail">${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
+}
+
+function renderDashboardClosedTicketTable() {
+  return `<table class="db-table db-table--closed"><colgroup><col class="db-col-closed-status" /><col class="db-col-closed-ticket" /><col class="db-col-closed-date" /><col class="db-col-closed-subject" /><col class="db-col-system" /><col class="db-col-closed-serial" /><col class="db-col-closed-model" /><col class="db-col-closed-actions" /></colgroup><thead><tr>${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Closed")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}<th>Actions</th></tr></thead><tbody>${DASHBOARD_CLOSED_TICKETS.map(dashboardClosedTicketRow).join("")}</tbody></table>`;
+}
+
+function dashboardVisitRow(visit) {
+  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+}
+
+function renderDashboardVisitsTable() {
+  return `<table class="db-table db-table--visits"><colgroup><col class="db-col-visit-date" /><col class="db-col-visit-status" /><col class="db-col-visit-ticket" /><col class="db-col-visit-type" /><col class="db-col-visit-subject" /><col class="db-col-system" /><col class="db-col-visit-serial" /><col class="db-col-visit-model" /></colgroup><thead><tr>${dashboardTableHeader("Scheduled date")}${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Ticket type")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}</tr></thead><tbody>${DASHBOARD_ONSITE_VISITS.map(dashboardVisitRow).join("")}</tbody></table>`;
+}
+
 function wireDashboard() {
   app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
+  const tableWrap = app.querySelector("[data-db-ticket-table]");
+  const pagination = app.querySelector("[data-db-ticket-pagination]");
+  const filter = app.querySelector("[data-db-ticket-filter]");
+  const ticketCount = app.querySelector("[data-ticket-count]");
+  const activeTableMarkup = tableWrap?.innerHTML || "";
+  const ticketTables = {
+    active: { count: "16 active tickets", markup: activeTableMarkup, showFilter: true, showPagination: true },
+    closed: { count: "8 tickets closed within the last 30 days", markup: renderDashboardClosedTicketTable() },
+    visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
+  };
+  const showTicketTable = (state) => {
+    const table = ticketTables[state] || ticketTables.active;
+    if (ticketCount) ticketCount.textContent = table.count;
+    if (tableWrap) tableWrap.innerHTML = table.markup;
+    if (filter) filter.hidden = !table.showFilter;
+    if (pagination) pagination.hidden = !table.showPagination;
+  };
   app.querySelectorAll(".db-tabs [role='tab']").forEach((tab) => {
     tab.addEventListener("click", () => {
       app.querySelectorAll(".db-tabs [role='tab']").forEach((candidate) => {
@@ -967,13 +1040,7 @@ function wireDashboard() {
         candidate.classList.toggle("is-active", selected);
         candidate.setAttribute("aria-selected", String(selected));
       });
-      const ticketCounts = {
-        active: "16 active tickets",
-        closed: "2 recently closed tickets",
-        visits: "3 upcoming on-site visits",
-      };
-      const ticketCount = app.querySelector("[data-ticket-count]");
-      if (ticketCount) ticketCount.textContent = ticketCounts[tab.dataset.ticketState] || ticketCounts.active;
+      showTicketTable(tab.dataset.ticketState);
     });
   });
   let bannerIndex = 0;
