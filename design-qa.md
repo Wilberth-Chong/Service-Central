@@ -46,3 +46,501 @@
 - Match the final approved icon assets, product thumbnails, and typographic rendering once the source assets or package are available.
 
 final result: blocked
+
+---
+
+# Request Support design QA
+
+**Comparison target**
+
+- Source visual truth: Figma node `8026:173099` in CSC CR4.0 Prototype.
+- Implementation: `http://localhost:4173/#request-support`.
+- Browser state: 1440 × 1000 desktop viewport override.
+
+**Validation**
+
+- Native app shell, six bordered request cards, compact outlined actions, pale-blue promotional rail, and fixed desktop sidebar were inspected against the reference.
+- Open a support ticket routes to `#instrument-support-selection`; Request PM scheduling routes to `#request-pm`; Installation support routes to `#installation-order`.
+- Quote controls display an in-app confirmation toast.
+- At 900px, the right rail follows the request list without document-width overflow.
+- Browser console: no errors.
+
+final result: passed
+
+---
+
+# Open support ticket — Step 2 design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8052:180425`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?node-id=8052-180425&t=jIBL8eK3P1BoX9qZ-1), inspected in the in-app browser at 100% canvas zoom.
+- Implementation: `http://localhost:4173/?openSupportTicketDetailsFinal=1#open-support-ticket-details`, rendered in the in-app browser.
+- State: desktop Step 2 with the filled Figma form state; Step 2 is current and Step 1 is complete.
+
+**Observed implementation coverage**
+
+- The page preserves the platform header, side navigation, title bar, fixed action bar, and footer used by the Step 1 ticket-selection page.
+- The current form reproduces the Figma frame's support-request title, subject, multi-line problem and environment fields, error-code field, counters, upload area, sample files, and instrument-information summary.
+- The user journey is functional: selecting instrument `1009996` in Step 1 and pressing Continue opens Step 2 and carries that serial number into the summary. Back returns to Step 1; required fields control Continue availability.
+- Browser console errors: none. Dedicated Step 2 regression and the wizard-navigation check pass.
+
+**Comparison limitation**
+
+- The browser security policy blocked creation of a combined side-by-side Figma/implementation capture. The two live visual sources were captured individually, but the required same-input normalized comparison cannot be completed with the available browser policy.
+
+**Findings**
+
+- [P2] Pixel-level comparison remains unverified because the browser policy blocks the combined comparison artifact.
+  Location: visual QA process.
+  Evidence: source and implementation were individually rendered; the combined visual comparison could not be opened.
+  Fix: provide an exported PNG of Figma node `8052:180425` or permit a local comparison artifact.
+
+final result: blocked
+
+---
+
+# Support History systems tooltip design QA
+
+**Comparison target**
+
+- Source visual truth: Figma node `6036:236187`, captured in the in-app browser.
+- Implementation: `http://localhost:4173/?figmaSystemTooltipLayered=20260814#support-history`, captured while hovering the first Systems icon.
+- Focused state: Systems tooltip; source callout specifies `193 × 54`.
+
+**Findings and resolution**
+
+- [P1 resolved] The Systems tooltip state opened but was clipped by its table cell beneath the table header. The active tooltip cell now establishes a visible, raised stacking context.
+- [P2 resolved] The tooltip was 214px wide. It now measures 193 × 54 CSS px, uses the Figma copy, preserves the blue Alpine and Sasha links, and includes the matching outlined bottom pointer.
+- Interaction verification: pointer hover and keyboard focus open the tooltip; pointer leave, blur, and Escape close it. Browser console errors: none.
+
+**Comparison limitation**
+
+- The source and implementation captures were both obtained, but the browser policy blocked opening the generated combined comparison canvas. A compliant same-input visual-comparison pass could not be completed in this environment.
+
+final result: blocked
+
+---
+
+# Support History status multiselect design QA
+
+**Comparison target**
+
+- Badge source: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Screenshot 2026-08-14 at 1.20.38 PM.png`, normalized from its 2× physical-pixel capture to CSS-pixel scale as `/tmp/status-badge-reference-normalized.png`.
+- Dropdown source: Komodo Web Apps Library Storybook, `core-components-dropdown--multi-select-open`, captured with Arizona and Arkansas selected as `/tmp/komodo-multiselect-reference.png`.
+- Implementation: `http://localhost:4173/?supportHistoryStatusMultiselect=final#support-history`, captured at 1280 CSS px and device scale factor 1 as `/tmp/support-history-status-badge-final.png` and `/tmp/support-history-status-multiselect-final.png`.
+- Same-state evidence: the normalized badge source and closed applied-filter state were emitted together; the open Komodo two-selection state and open Support History `Open` + `In progress` state were emitted together in the same comparison input.
+
+**Comparison history**
+
+- [P1 resolved] The initial applied badge used the reference's 48 physical pixels as 48 CSS pixels. Density normalization established the intended 24 CSS px height; the final badge is 24px high with a 12px radius, 14px/22px text, 8px inline padding, and the repository 16px mono close asset.
+- [P2 resolved] The initial menu applied an information-surface background to every checked row. Komodo preserves selection with its checked checkbox and uses `rgb(223, 238, 255)` only for hover/focus. The final component follows that behavior while keeping `aria-selected` and checked state persistent.
+- [P2 resolved] The initial 220px menu was wider than its 180px trigger. The final menu uses the trigger width and border-box sizing, matching Komodo's aligned control/menu edges.
+
+**Final measurements and behavior**
+
+- Trigger: 180 × 40 CSS px; menu: 180px wide; each option row: 40px high; four options in exact order: All, Open, In progress, Closed.
+- Badge: 24px high; Clear filters: 14px/22px; table header and body rows remain 45px and 41px respectively.
+- Selecting one or more statuses filters live with OR semantics; Status composes with search and created date using AND semantics. Badge removal, Clear filters, All, Escape, outside click, Tab dismissal, Arrow navigation, Enter, Space, and focus restoration all pass.
+- Reusable component contract and an alternate Region fixture pass independently of Support History.
+- Browser regressions passed: reusable component, Status integration, date range, quote tooltip, and visit tooltip.
+- Focused shell checks, JavaScript syntax checks, and `git diff --check` passed. The broader shell suite retains one unrelated pre-existing failure in `tests/fixed-page-footers.test.sh` because `.ns-footer` does not declare `position: fixed`; all other shell tests passed.
+
+final result: passed
+
+---
+
+# Support History quote tooltip design QA
+
+**Comparison target**
+
+- Source: Figma frame `6036:233278`, `Quote ready` tooltip state.
+- Implementation: `http://localhost:4173/?supportHistoryQuoteTooltip=finalqa#support-history`, captured in the in-app browser at 1280 × 720 CSS px.
+- Tooltip measurement: 110 × 54 CSS px.
+
+**Comparison history**
+
+- [P2 resolved] The first implementation had the correct tooltip geometry but the existing Support History table wrapper clipped the left half of the surface. The wrapper now exposes overflow only while the quote tooltip is visible, keeping the inactive table behavior unchanged.
+- The ready Figma canvas and final implementation were opened together in the same comparison pass at the same browser density.
+
+**Findings**
+
+- No actionable P0/P1/P2 discrepancies remain.
+- The white surface, centered 14 px `Quote ready` copy, compact neutral border, small radius, and soft elevation follow the selected Figma component.
+- Tooltip placement does not change the Support History table layout: the quote row remains 41 px high and the page remains 1280 px wide at the verification viewport.
+- The existing 24 px quote asset and Services Central typography are preserved.
+
+**Interaction verification**
+
+- Hover and keyboard focus show `Quote ready`.
+- Pointer leave, blur, and Escape hide the tooltip.
+- Support indicators and empty indicator cells do not expose the quote tooltip.
+- The dedicated browser regression reports `PASS` without an uncaught harness error.
+
+final result: passed
+
+---
+
+# Support history date-range component design QA
+
+**Comparison target**
+
+- Source visual truth: Figma `CSC CR4.0 Prototype`, support-history `Date range` control selected from `S&S / history / start`; focused capture `/tmp/figma-support-history-date-control.png` at 1214 × 901 pixels, 1214 × 901 CSS px, density 1.
+- Implementation closed state: `/tmp/support-history-date-control-closed.png` at 1280 × 720 pixels, 1280 × 720 CSS px, density 1.
+- Implementation open state after refinement: `/tmp/support-history-date-control-open-final.png` at 1280 × 720 pixels, 1280 × 720 CSS px, density 1.
+- Route: `http://localhost:4173/?supportHistoryDateRange=5#support-history`.
+- State: desktop support-history filters with no applied range; open-state verification used August–September 2026 before selecting a range.
+- Normalization: source and implementation were reviewed together in one comparison input. Figma editor/search chrome was excluded from product judgement; the focused 243 × 40 date control and its adjacent filter grid were compared directly because the source and implementation viewport heights differ.
+
+**Full-view and focused comparison evidence**
+
+- The full support-history implementation preserves the previously aligned title band, 32px content gutter, search/date/edit-columns grid, table columns, row density, status chips, fixed sidebar, and footer.
+- The focused closed-state comparison confirms the trigger remains 243 × 40 with the same label hierarchy, neutral border, white background, 16px horizontal inset, and repository calendar icon placement as the Figma control.
+- A focused open-state comparison was required because the calendar actions are too small to judge in the full page. The final capture shows both months, navigation, weekday/day density, complete Clear/Cancel/Apply row, and the table remaining fixed behind the anchored popover.
+
+**Comparison history**
+
+- [P2 resolved] Initial open-state capture measured the dialog at 584 × 399 and placed its bottom at 784px in the 720px viewport, hiding the action row. The component calendar was compacted without changing its 584px width or the 243 × 40 trigger. The revised six-week-month dialog measures 584 × 334, ends at 719px, and keeps both Clear and Apply bottoms at 710.5px.
+- Post-fix evidence: the standalone component harness checks six-week month height, and `/tmp/support-history-date-control-open-final.png` shows all actions visible above the viewport edge.
+
+**Findings**
+
+- No actionable P0/P1/P2 differences remain.
+- Fonts and typography: the component uses the existing Arial/Helvetica application stack, 14px field/heading text, 16px month headings, and compact 28px day cells; hierarchy and optical weight match neighboring Komodo-style controls.
+- Spacing and layout rhythm: the trigger and support-history grid are unchanged. The dialog is anchored below the trigger, does not alter document flow, keeps a 24px two-month gap, and remains fully operable at the 1280 × 720 verification viewport.
+- Colors and visual tokens: neutral `#ccc` borders, white surfaces, `#dfeeff` range fill, `#0071d0` endpoints, red existing primary action, and blue focus outline follow the repository's established semantic palette.
+- Image quality and assets: calendar and chevron controls use the repository's existing SVG assets. Both browser harnesses report no broken images; no generated, inline, or placeholder icons were introduced.
+- Copy and content: `Date range`, `Select a date range`, `Select created date range`, `Clear`, `Cancel`, and `Apply` are explicit and consistent with the approved interaction specification.
+
+**Interaction verification**
+
+- Standalone browser harness: opening, two-month rendering, disabled Apply, same-day range, emitted ISO values, Cancel preservation, Escape dismissal/focus return, outside-click preservation, Clear, route-independent icons, trigger dimensions, and six-week-month containment all pass.
+- Support-history browser harness: `18 Oct 2020 – 18 Oct 2020` returns five Created rows; the total changes to `5`; Status `Open` and search `Detector-2B` each compose to one row; Clear restores 20 rendered rows and total `100`.
+- Direct routed-page verification: `12 May 2020 – 18 Oct 2020` returns nine rows; Status and live search each compose to one row; clearing restores the placeholder, 20 rows, total `100`, and trigger focus.
+
+**Follow-up polish**
+
+- No P3 items recorded for this component pass.
+
+final result: passed
+
+---
+
+# Support request history fidelity QA — 2026-08-13
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8272:202190`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8272-202190&t=jIBL8eK3P1BoX9qZ-1) and its repository export at `assets/flows/support-history.png` (`1440 × 1460` pixels).
+- Implementation: `http://localhost:4173/?supportHistoryFidelity=2#support-history`, captured in the in-app browser at a `1280 × 720` CSS viewport with device pixel ratio `2`; the browser screenshot API normalized the output to `1280 × 720` pixels.
+- State: desktop, collapsed navigation, default unfiltered table. The retained 48px prototype flow toolbar is outside the approved change scope, so comparison crops normalize it out and begin at the application title bar.
+- Full-view comparison evidence: `/tmp/support-history-comparison-pass1.png` (`2560 × 608`), with source and implementation titlebar-to-table regions placed side by side at 1:1 density.
+- Focused comparison evidence: `/tmp/support-history-comparison-pass2.png` (`2384 × 370`), with the heading, filters, column headers, badges, and first four rows placed side by side at 1:1 density.
+
+**Comparison history**
+
+- [P2 resolved] The implementation content began 2px to the right of the Figma grid because the shared collapsed sidebar uses a 58px main offset. A support-history-only main offset now restores the source’s 56px titlebar start and 88px content gutter without changing the sidebar itself.
+- [P2 resolved] The status select used the browser’s Arial default, sort glyphs were too dark, the status pills used a 10px radius, and the search copy omitted “instrument.” The revised controls inherit the application font, use source-matched icon opacity and 12px pill radius, and reproduce the Figma placeholder.
+- Post-fix full and focused comparison passes found no actionable P0/P1/P2 differences in the approved regions.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: the title, section heading, labels, inputs, header select, body cells, and badges use the application’s Helvetica Neue/Helvetica/Arial stack. The native status select now inherits that stack at `14px/22px`.
+- Spacing and layout rhythm: titlebar is `1384 × 88` from x=`56`; content is `1320px` from x=`88`; filters begin at x=`88`, `762`, and `1037`; table header is `45px`; data rows are `41px`.
+- Colors and tokens: existing Komodo-style red, blue, neutral borders, semantic badge colors, and repository surface tokens remain unchanged. Sort indicators now use the source’s subdued opacity while dropdown carets remain fully opaque.
+- Image quality and asset fidelity: all branding, navigation, search, calendar, caret, sort, and ticket icons continue to use repository assets; no new or generated imagery was introduced.
+- Copy and content: the source placeholder now reads “Search by instrument serial number, nickname, ticket number, or subject.” Existing ticket data and interactions remain intact.
+
+**Interaction verification**
+
+- Search for `SN98361W` returns one visible row and updates the count to `1`.
+- Closed-status filtering returns all 11 closed rows; clearing filters restores all 20 rows.
+- Ticket sorting remains functional; ascending order begins with ticket `46000283`.
+- Browser-rendered image audit reports no broken repository assets. The current in-app browser binding does not expose console-log collection; no visible error state or interaction failure occurred during the checks.
+
+final result: passed
+
+---
+
+# Installation fidelity rebuild QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `15019:277354`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=15019-277354&t=jIBL8eK3P1BoX9qZ-1), revisited at Figma’s 100% canvas zoom.
+- Implementation: `http://localhost:4173/?installationFidelity=1#request-installation`, inspected at a 1440px browser viewport.
+
+**Findings and resolution**
+
+- [P1 resolved] The earlier form used a uniform 300px width, generic helper copy, and a native single-select for orders. The source has a compact 296px Select order(s) control, 560px Installation topic and Additional details fields, helper copy “Get help from the installation team.”, and an order-list dropdown.
+- The native rebuild now applies those exact dimensions, source copy, source placeholder, and a checkbox order menu. It retains the required-field gating for selected orders, topic, and details.
+
+**Validation**
+
+- Computed browser widths: Select order(s) `296px`; Installation topic `560px`; Additional details `560px`.
+- The order selector opens with selectable installation orders; one selected order updates its summary label. Continue is disabled before details and enabled after details are provided.
+- Browser console logs: `[]`.
+
+final result: passed
+
+---
+
+# Installation form controls follow-up QA
+
+**Finding and resolution**
+
+- [P1 resolved] The Installation form used a 504px shared-form width and the first field label read “Select a service,” neither of which matched the Figma frame. The dedicated form now uses 300px dropdown controls and the source label, “Select service.”
+
+**Validation**
+
+- Browser-rendered computed widths: Select service `300px`; Installation type `300px`.
+- Browser console logs: `[]`.
+
+final result: passed
+
+---
+
+# Installation support design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `15019:277354`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=15019-277354&t=jIBL8eK3P1BoX9qZ-1), opened in the in-app browser. The source canvas declares `1440 × 1623`.
+- Implementation: `http://localhost:4173/?requestInstallationCompare=1#request-installation`, captured at 1440 × 1000 CSS px and device scale factor 1.
+- State: desktop, initial form state with disabled Continue; a second browser pass selected both required values and confirmed the enabled interaction state.
+
+**Comparison history**
+
+- [P1 resolved] The first native pass placed the request-details card too close to the three-step progress indicator and made it shorter than the source frame. The final page applies the source-matched card offset and 510px form-card height; the paired source/implementation capture confirms the corrected relationship.
+- Figma and implementation captures were emitted together for full-view comparison. Figma editor/cookie chrome is not part of the product-frame judgement.
+
+**Findings**
+
+- No actionable P0/P1/P2 discrepancies remain.
+- Fonts and typography: title, concise wizard labels, card heading, body helper text, labels, count, and compact footer actions follow the source hierarchy.
+- Spacing and layout rhythm: the 1440px shell, fixed sidebar/header, three-step line, empty-space balance, form-card offset/height, 504px form controls, and fixed bottom actions align to the reference.
+- Colors and tokens: source-style red active state and required indicator, neutral borders, subdued placeholder/count text, and disabled/enabled primary action styles reuse existing repository tokens.
+- Image quality and assets: repository branding and interface icons are reused; the source frame contains no new imagery.
+- Copy and content: visible Installation support request copy and field labels match the source. Option values are realistic interactive data for the otherwise static Figma select controls.
+
+**Interaction verification**
+
+- The Installation tile’s **Installation support** action routes from `#request-support` to `#request-installation`.
+- Continue remains disabled until both required selects have values; it then opens the Confirm contact information confirmation. Additional details enforces its 500-character count.
+- Browser console logs: `[]`.
+
+final result: passed
+
+---
+
+# Request calibration service design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8279:229273`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8279-229273&t=jIBL8eK3P1BoX9qZ-1), opened in the in-app browser. The source canvas declares `1440 × 1623`.
+- Implementation: `http://localhost:4173/?requestCalibrationSpacing=2#request-calibration`, captured in the in-app browser at 1440 × 1000 CSS px, device scale factor 1. The selected-instrument capture provides the focused table comparison.
+- State: desktop, initial selection state plus one selected instrument state. Figma editor/cookie chrome is excluded from the product-frame judgement.
+
+**Comparison history**
+
+- [P1 resolved] The first Calibration pass used the shared quote-screen gap, which placed the selection card too close to the two-line calibration explanation. The dedicated page now applies the source-matched 94px transition; the revised source/implementation capture aligns the title, wizard, explanatory copy, and selection-card start.
+- Source and implementation screenshots were captured together in one browser result for full-view comparison. The focused selected state was inspected for controls, table density, selection colors, pagination, and the persistent action bar.
+
+**Findings**
+
+- No actionable P0/P1/P2 discrepancies remain.
+- Fonts and typography: the existing Komodo-style title, wizard labels, body copy, card heading, table, and compact actions preserve the source hierarchy and wrapping.
+- Spacing and layout rhythm: fixed shell, title band, four-step sequence, long-form calibration explanation, selection-card offset, flat seven-column table, pagination, and bottom controls align to the `1440 × 1623` source composition.
+- Colors and tokens: the repository red active step/action, blue checkbox and serial states, neutral table borders, and semantic coverage chips reproduce the source’s interaction states.
+- Image quality and assets: existing branding and interface icon assets are used directly. The source table does not require product thumbnails, so the calibration-specific flat table intentionally contains no substituted imagery.
+- Copy and content: all visible Calibration-specific text is reproduced, including the laboratory-equipment restriction and biosafety/water-purification exclusion.
+
+**Interaction verification**
+
+- The Compliance services - Calibration **Request a quote** action on `#request-support` routes to `#request-calibration`.
+- Selecting an eligible instrument sets the parent selection checkbox indeterminate, enables Continue, and shows the Add request details confirmation.
+- Search, filter buttons, serial controls, pagination, Cancel, and Back use semantic interactive elements; the shared table layout remains responsive below desktop widths.
+- Browser console logs: `[]`.
+
+final result: passed
+
+---
+
+# Request qualification service design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8094:190356`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8094-190356&t=jIBL8eK3P1BoX9qZ-1), captured from the selected-instrument frame at Figma’s 28% canvas view. The source canvas declares `1440 × 1623`.
+- Implementation: `http://localhost:4173/?requestQualificationFinalQa=1#request-qualification`, captured in the in-app browser at 1440 × 1000 CSS px and device scale factor 1; full-page capture covers the native 1623px screen.
+- State: desktop, first wizard step, unselected instruments. A selected final table row was also captured to evaluate scroll, selection, and the enabled action state.
+
+**Comparison history**
+
+- [P1 resolved] The first native pass ended the instrument table too early and left a large blank area before the fixed action bar. The Qualification route now uses the source canvas height, 267-instrument copy, and a taller scrollable instrument table; the revised focused table capture shows the source-like row density, scrollbar, pagination, selected state, and persistent action bar.
+- The paired source/implementation capture was reviewed in the same browser result. Figma editor and cookie chrome are excluded from the comparison because they are not part of the product frame.
+
+**Findings**
+
+- No actionable P0/P1/P2 discrepancies remain.
+- Fonts and typography: the existing Komodo-style hierarchy matches the source’s title, wizard labels, explanation, card heading, table text, and compact fixed actions. Source capitalization is reproduced, including “Select instrument” and “Temperature mapping.”
+- Spacing and layout rhythm: the 1440px shell, fixed header/sidebar, page band, 1320px content column, four-step line, bordered selection card, dense scrollable table, pagination, and lower action/footer treatment reproduce the source structure.
+- Colors and tokens: repository red active-step/primary action, blue action and checkbox states, neutral borders, table fills, and coverage statuses map to the source’s visual states.
+- Image quality and assets: existing repository Thermo Fisher branding, interface icons, and instrument thumbnails are used directly; no page image, generated asset, placeholder, or custom SVG substitute was introduced.
+- Copy and content: Qualification-specific title, service description, and 267-instrument dataset are distinct from the Service Plan flow while reusing the shared accessible selection component.
+
+**Interaction verification**
+
+- The **Request a quote** button in the Compliance services - Qualification tile routes from `#request-support` to `#request-qualification`.
+- Selecting an instrument updates the indeterminate group checkbox, enables Continue, and displays the Add request details confirmation.
+- Search, instrument links, filters, paging controls, Cancel, and Back remain semantic keyboard-operable controls; the shared responsive table treatment remains available below desktop widths.
+- Browser console logs: `[]`.
+
+final result: passed
+
+---
+
+# Request service plan quote design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8085:184425`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8085-184425&t=jIBL8eK3P1BoX9qZ-1), captured in the in-app browser from the selected instrument-state canvas.
+- Implementation: `http://localhost:4173/?requestServicePlanLink=qa#request-serviceplan`, captured through the in-app browser at 1440 × 1000 CSS px, device scale factor 1.
+- State: desktop, first wizard step, unselected instruments. An additional capture used one selected table row to verify the selected state.
+
+**Findings**
+
+- No actionable P0/P1/P2 differences found after the native build. The implementation uses the same fixed Services Central shell, title band, four-step progress indicator, explanatory copy, multi-instrument selection card, dense filters/table, pagination, fixed action bar, and fixed footer seen in the source frame.
+- Fonts and typography: the existing application’s Komodo-style heading, progress-label, table, and action typography are retained; source copy is reproduced directly.
+- Spacing and layout rhythm: the 1320px content area, 32px page gutter, bordered selection card, search field, selection row, and persistent bottom controls align with the source composition.
+- Colors and visual tokens: the existing red active step and primary action, blue links/checkbox state, neutral table borders, and coverage chips are reused consistently.
+- Image and copy fidelity: existing repository instrument thumbnails and approved interface icon assets are used; no rasterized page or placeholder art was added.
+
+**Interaction verification**
+
+- The Service plans tile’s **Request a quote** button on `#request-support` opens `#request-serviceplan`.
+- Instrument checkboxes update the system/select-all indeterminate state and enable **Continue**; Continue confirms the next request step.
+- Search filters visible rows; table filters and instrument serial controls remain keyboard-accessible buttons.
+- Browser console logs on the routed page: `[]`.
+
+final result: passed
+
+---
+
+# Request PM scheduling design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8041:199081`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8041-199081&t=jIBL8eK3P1BoX9qZ-1), captured through the in-app browser at Figma's 100% canvas zoom.
+- Implementation: `http://localhost:4173/#request-pm`, captured through the in-app browser at a 1440 × 1000 desktop viewport.
+- State: initial unselected instrument-selection state. The source and implementation screenshots were captured together for visual review; Figma's cookie/editor chrome is excluded from the design judgement.
+
+**Findings**
+
+- No actionable P0/P1/P2 mismatches found. The native implementation matches the source composition: fixed Services Central header and sidebar, title band, five-step wizard, light-blue promotion banner, explanatory copy, multi-instrument selection card, pagination, fixed action bar, and footer.
+- Fonts and typography: existing application typography and hierarchy were reused; title, wizard labels, banner, card heading, and table text match the source hierarchy.
+- Spacing and layout rhythm: the 1320px content column, 184px banner, card treatment, desktop table density, and persistent bottom controls align to the source structure.
+- Colors and tokens: existing red active-step/primary-action, blue selection state, pale-blue promotion, neutral borders, and status-chip colors were retained.
+- Image and copy fidelity: all visible icons and instrument thumbnails use repository assets; the Figma text is reproduced directly in the page.
+
+**Interaction verification**
+
+- Request Support’s **Request PM scheduling** button opens `#request-pm`.
+- Continue is disabled on arrival, enabled after a checkbox selection, and presents the next-step confirmation.
+- System and page-level checkboxes reflect partial/all selection; search reduces visible rows.
+- Browser console: no errors.
+
+final result: passed
+
+---
+
+# Instrument support selection design QA
+
+**Comparison target**
+
+- Source visual truth: Figma frames `8036:174500` (unselected) and `8036:178325` (selected).
+- Implementation: `http://localhost:4173/#instrument-support-selection`.
+- Browser state: 1440 × 1000 desktop viewport override.
+
+**Validation**
+
+- Reused the existing Services Central shell, page footer, sidebar, Komodo-style buttons, inputs, table treatment, and available product thumbnail/icon assets.
+- Verified the four-step wizard, selection card, search input, outlined table filters, coverage statuses, product thumbnails, pagination, and fixed action bar against the source frame.
+- Continue is disabled initially, enabled after a single radio selection, and displays the next-step confirmation. Search narrows the visible instrument rows.
+- Browser console: no errors.
+
+final result: passed
+
+---
+
+# Instrument selection shell follow-up QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8036:174500`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8036-174500&t=jIBL8eK3P1BoX9qZ-1), captured in the in-app browser at the source's 20% canvas zoom.
+- Implementation: `http://localhost:4173/#instrument-support-selection`, captured in the in-app browser at the desktop viewport.
+- State: the first instrument row is selected, matching the selection control state used for interaction verification.
+
+**Findings and resolution**
+
+- [P1 resolved] The prototype-only flow toolbar appeared above the Komodo application header, creating an extra 48px band that is absent from the Figma frame. The selection template now begins with the fixed application header; its sidebar begins directly below that header.
+- Typography and layout: the title bar, four-step wizard, card, table, fixed action bar, and footer retain their existing source-matched proportions.
+- Colors and tokens: the existing Komodo-style red active step and primary action, blue radio state, neutral borders, and status chips were retained.
+- Assets and copy: repository icon and instrument assets remain in use; no placeholder or generated imagery was introduced.
+
+**Validation**
+
+- Browser-rendered check: no selection flow toolbar; header computed at `top: 0px`; sidebar computed at `top: 64px`.
+- Interaction check: selecting `1009996` enables Continue; browser console reports no errors.
+
+final result: passed
+
+---
+
+# Support History visit tooltip design QA
+
+**Comparison target**
+
+- Source: Figma frame `6036:233277`, `Visit scheduled` tooltip state.
+- Implementation: `http://localhost:4173/?supportHistoryVisitTooltip=qa#support-history`.
+- Supplied asset: `assets/icons/general/visit scheduled/size=24px, style=mono.svg` at 24 × 24 CSS px.
+- Tooltip measurement: 126 × 54 CSS px.
+
+**Findings**
+
+- No actionable P0/P1/P2 discrepancies remain.
+- The supplied mono SVG is used without changing shared navigation assets.
+- Tooltip placement does not change the 41 px row height or page width.
+- The existing quote tooltip remains 110 × 54 with `Quote ready` copy.
+
+**Interaction verification**
+
+- Hover and keyboard focus show `Visit scheduled`.
+- Pointer leave, blur, and Escape hide the tooltip.
+- Quote and support indicators are the only ticket-tooltip triggers.
+- Both dedicated browser regressions report `PASS`.
+
+final result: passed
+
+---
+
+# Support History header Status filter follow-up QA
+
+**Comparison target**
+
+- Dropdown source: Komodo Web Apps Library Storybook `core-components-dropdown--multi-select-open`, captured with two selected options.
+- Badge source: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Screenshot 2026-08-14 at 1.20.38 PM.png`, normalized to CSS-pixel scale for typography, spacing, color, and pill treatment.
+- Implementation: `http://localhost:4173/?supportHistoryHeaderStatus=qa#support-history`, captured in both open two-selection and closed applied-filter states.
+- Same-state evidence: the open Komodo dropdown and open implementation were emitted together; the normalized badge source and closed implementation were emitted together in the same visual comparison input.
+
+**Findings and resolution**
+
+- [P1 resolved] The Status trigger previously occupied the standalone filter row. The reusable component now supports a separate control mount, and Support History renders the live trigger and listbox inside the Status table header while leaving the applied badge in the existing filter row.
+- [P1 resolved] Separating the mounts initially allowed the applied element's top margin to collapse through its host. The final filter row establishes a flow-root boundary, preserving the approved 88px offset from the search-control block to the badge.
+- [P2 resolved] The earlier badge was 24px high. The requested final badge is 30px high with a 15px radius and remains a fully rounded pale-blue pill.
+- [P2 resolved] The application-shell button rule initially overrode the component link color. The final Clear filters selector resolves to `rgb(0, 113, 208)`, exactly matching Ticket no. links.
+
+**Measurements and interaction verification**
+
+- Header Status trigger: 81 × 30 CSS px inside the existing 113px Status column; menu: 180px wide; option rows remain 40px high.
+- Badge: 30px high, 15px radius, 88px below the `.sh-top` bottom edge. Clear filters and Ticket no. both compute to `rgb(0, 113, 208)`.
+- Table: 1320px wide; header: 45px; rows: 41px; the component introduces no new horizontal page overflow.
+- All, Open, In progress, Closed; persistent checked states; live OR filtering; search/date AND composition; outside click; Escape; Tab; Arrow keys; Enter; Space; badge removal; and Clear filters pass.
+- Browser regressions passed for the reusable component, Status integration, date range, quote tooltip, and visit tooltip. Focused Support History shell checks, JavaScript syntax checks, and `git diff --check` passed.
+
+final result: passed
