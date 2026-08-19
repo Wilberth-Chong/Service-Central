@@ -302,7 +302,6 @@ button {
   width: 1440px;
   min-height: 2000px;
   margin: 0 auto;
-  padding-top: 64px;
   color: var(--mi-ink);
   background: #fff;
   font-size: 14px;
@@ -730,6 +729,80 @@ button {
   width: calc(100% - 256px);
 }
 
+/* Legacy native flows use full-height shells; allow their page body to reach the shared footer. */
+.screen--ticket-summary .mi-stage,
+.screen--request-support .mi-stage,
+.screen--open-support-ticket .mi-stage,
+.screen--open-support-ticket-details .mi-stage,
+.screen--request-pm .mi-stage,
+.screen--request-serviceplan .mi-stage,
+.screen--request-qualification .mi-stage,
+.screen--request-calibration .mi-stage,
+.screen--request-installation .mi-stage {
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen--ticket-summary,
+.screen--request-support,
+.screen--open-support-ticket,
+.screen--open-support-ticket-details,
+.screen--request-pm,
+.screen--request-serviceplan,
+.screen--request-qualification,
+.screen--request-calibration,
+.screen--request-installation {
+  overflow-x: hidden;
+}
+
+/* Keep request-flow navigation aligned with the left edge of the centered application shell. */
+.screen--request-support .platform-sidebar,
+.screen--open-support-ticket .platform-sidebar,
+.screen--open-support-ticket-details .platform-sidebar,
+.screen--request-pm .platform-sidebar,
+.screen--request-serviceplan .platform-sidebar,
+.screen--request-qualification .platform-sidebar,
+.screen--request-calibration .platform-sidebar,
+.screen--request-installation .platform-sidebar {
+  left: max(0px, calc((100vw - 1440px) / 2));
+}
+
+.screen--request-support .platform-sidebar {
+  top: 112px;
+}
+
+/* Keep the shared footer visible while legacy native-flow content scrolls. */
+.screen--ticket-summary [data-footer-mount] .footer,
+.screen--request-support [data-footer-mount] .footer,
+.screen--open-support-ticket [data-footer-mount] .footer,
+.screen--open-support-ticket-details [data-footer-mount] .footer,
+.screen--request-pm [data-footer-mount] .footer,
+.screen--request-serviceplan [data-footer-mount] .footer,
+.screen--request-qualification [data-footer-mount] .footer,
+.screen--request-calibration [data-footer-mount] .footer,
+.screen--request-installation [data-footer-mount] .footer {
+  position: fixed;
+  z-index: 20;
+  right: max(0px, calc((100vw - 1440px) / 2));
+  bottom: 0;
+  left: max(58px, calc((100vw - 1440px) / 2 + 58px));
+  width: auto;
+}
+
+.screen--ticket-summary .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-support .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--open-support-ticket .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--open-support-ticket-details .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-pm .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-serviceplan .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-qualification .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-calibration .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-installation .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer {
+  left: max(256px, calc((100vw - 1440px) / 2 + 256px));
+  width: auto;
+}
+
 /* Request support — native implementation of Figma frame 8026:173099. */
 .screen--request-support { min-height: 100vh; background: #ececef; }
 .rs-shell { min-height: 1460px; }
@@ -1017,6 +1090,36 @@ button {
 .screen--ticket-summary .mi-header { top: 0; }
 .screen--ticket-summary .platform-sidebar { top: 64px; left: max(0px, calc((100vw - 1440px) / 2)); }
 .ts-shell { min-height: 1623px; }.ts-shell--tech { min-height: 2339px; }.ts-shell--tech .ts-main { min-height: 2235px; }.ts-main { min-height: 1519px; padding-bottom: 64px; }
+
+/* Match the fixed toolbar/header stack used by the standard platform pages. */
+.mi-shell--native-flow {
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mi-shell--native-flow > .topbar-sc {
+  position: fixed;
+  z-index: 60;
+  top: var(--platform-flow-toolbar-height);
+  right: max(0px, calc((100vw - 1440px) / 2));
+  left: max(0px, calc((100vw - 1440px) / 2));
+  width: auto;
+}
+
+.mi-shell--native-flow > .platform-sidebar {
+  top: calc(var(--platform-flow-toolbar-height) + var(--platform-topbar-height));
+}
+
+.mi-shell--native-flow > .mi-main {
+  box-sizing: border-box;
+  height: var(--platform-page-body-height);
+  min-height: 0;
+  margin-top: var(--platform-topbar-height);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .ts-titlebar { display: flex; height: 120px; align-items: flex-start; justify-content: space-between; padding: 24px 32px 0; background: #f7f7f7 url("assets/instruments/subheader-background.png") center -179px / 1384px 970px no-repeat; }
 .ts-titlebar h1 { display: flex; align-items: center; gap: 12px; margin: 0; color: #242429; font-size: 32px; font-weight: 500; line-height: 40px; }.ts-titlebar p { display: flex; gap: 24px; margin: 8px 0 0; color: #242429; font-size: 14px; line-height: 20px; }.ts-titlebar p strong { font-weight: 700; }.ts-titlebar time { margin-top: 17px; font-size: 12px; line-height: 18px; }
 .ts-title-date { display: grid; justify-items: end; margin-top: 3px; text-align: right; }
