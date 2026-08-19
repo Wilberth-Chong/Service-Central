@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Support Ticket detail refinements regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1440px; height: 900px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?openSupportTicketDetailRefinements=1&regression=detail-refinements#open-support-ticket" title="Open Support Ticket fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => { if (!condition) throw new Error(message); };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      frame.addEventListener("load", async () => {
+        try {
+          const doc = frame.contentDocument;
+          const steps = [...doc.querySelectorAll(".iss-steps li")];
+          const stepContainer = doc.querySelector(".iss-steps");
+          const redLine = getComputedStyle(stepContainer, "::after");
+          assert(getComputedStyle(steps[0]).fontSize === "14px", "step labels use the Figma 14px size");
+          assert(Math.abs(parseFloat(redLine.width) - (steps[1].querySelector("span").getBoundingClientRect().left - stepContainer.getBoundingClientRect().left - 16)) < 3, "red progress line ends at the left edge of step two");
+          assert(getComputedStyle(steps[1]).justifyItems === "start" && getComputedStyle(steps[2]).justifyItems === "start", "middle steps align their circles and labels left");
+
+          const filters = [...doc.querySelectorAll("[data-iss-filter-host] .msf__trigger")];
+          assert(filters.length === 4, "renders all four reusable column filters");
+          assert(filters.every((filter) => filter.querySelector("img").getBoundingClientRect().width === 8), "uses the Support History chevron size");
+          filters[0].click();
+          await nextFrame();
+          assert(!doc.querySelector("[data-iss-filter-host] .msf__menu").hidden, "opens the Support History style filter list");
+
+          const rows = [...doc.querySelectorAll("[data-iss-row]")];
+          doc.querySelector("[data-iss-system-toggle]").click();
+          await nextFrame();
+          assert(rows.slice(0, 5).every((row) => row.hidden), "collapsing hides only the first five system rows");
+          assert(rows.slice(5).every((row) => !row.hidden), "collapsing leaves later instruments visible");
+          doc.querySelector("[data-iss-system-toggle]").click();
+
+          assert(rows.slice(5).every((row) => row.cells[1].querySelector(".iss-indent-instrument") && !row.cells[2].querySelector("img")), "later instruments use the preceding indent column for their images");
+
+          const overflowTrigger = doc.querySelector("[data-iss-overflow-tooltip]");
+          assert(overflowTrigger, "ellipsis cells render the shared tooltip trigger");
+          const tooltip = doc.getElementById(overflowTrigger.getAttribute("aria-describedby"));
+          overflowTrigger.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+          await nextFrame();
+          assert(!tooltip.hidden, "hover shows the full ellipsis text in a tooltip");
+          assert(getComputedStyle(doc.querySelector(".iss-status--expired")).fontSize === "14px", "coverage badges use 14px text");
+          assert(Number(getComputedStyle(doc.querySelector(".iss-status--expired")).fontWeight) >= 500, "coverage badges use medium weight");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

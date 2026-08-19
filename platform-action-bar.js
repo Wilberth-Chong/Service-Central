@@ -36,10 +36,6 @@
       const button = pendingCancelButton;
       closeCancelDialog();
       if (!button) return;
-      if (window.history.state?.fromRoute) {
-        window.history.back();
-        return;
-      }
       button.dataset.actionbarCancelConfirmed = "true";
       button.click();
     });
@@ -80,10 +76,20 @@
       primaryRoute,
       auxiliaryRoute,
       primaryDisabled = false,
+      closeOnly = false,
+      closeRoute = "request-support",
     } = options;
     const bar = document.createElement("div");
     bar.className = "platform-actionbar";
     bar.dataset.platformActionbar = "";
+
+    if (closeOnly) {
+      const trailing = document.createElement("div");
+      trailing.className = "platform-actionbar__trailing";
+      trailing.append(createButton({ label: "Close", variant: "secondary", route: closeRoute, action: "close" }));
+      bar.append(trailing);
+      return bar;
+    }
 
     const cancel = createButton({ label: cancelLabel, variant: "tertiary", route: cancelRoute, action: "cancel" });
     cancel.addEventListener("click", (event) => {

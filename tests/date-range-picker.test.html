@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DateRangePicker regression harness</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="../date-range-picker.css?v=20260814-compact2" />
+    <style>
+      body { min-height: 720px; padding: 80px; background: #f7f7f7; }
+      #result { position: fixed; top: 16px; left: 16px; font: 600 14px/22px Arial, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <output id="result">RUNNING</output>
+    <div id="fixture" class="date-range-picker"></div>
+    <div id="six-week-fixture" class="date-range-picker" hidden></div>
+    <button id="outside" type="button">Outside target</button>
+
+    <script src="../date-range-picker.js"></script>
+    <script>
+      (async () => {
+        const result = document.querySelector("#result");
+        const root = document.querySelector("#fixture");
+        const changes = [];
+        const assert = (condition, message) => {
+          if (!condition) throw new Error(message);
+        };
+
+        try {
+          root.addEventListener("date-range-change", (event) => changes.push(event.detail));
+          new DateRangePicker(root, { initialMonth: new Date(2020, 9, 1) });
+
+          const trigger = root.querySelector("[data-date-range-trigger]");
+          const dialog = root.querySelector("[data-date-range-dialog]");
+          const apply = root.querySelector("[data-date-range-apply]");
+
+          const triggerStyle = getComputedStyle(trigger);
+          assert(trigger.getBoundingClientRect().width === 243, "trigger width is 243px");
+          assert(trigger.getBoundingClientRect().height === 40, "trigger height is 40px");
+          assert(triggerStyle.backgroundColor === "rgb(255, 255, 255)", "trigger uses a white background");
+
+          const sixWeekRoot = document.querySelector("#six-week-fixture");
+          sixWeekRoot.hidden = false;
+          new DateRangePicker(sixWeekRoot, { initialMonth: new Date(2026, 7, 1) });
+          sixWeekRoot.querySelector("[data-date-range-trigger]").click();
+          assert(sixWeekRoot.querySelector("[data-date-range-dialog]").getBoundingClientRect().height <= 335, "six-week months keep actions inside the app viewport");
+          sixWeekRoot.querySelector("[data-date-range-cancel]").click();
+          sixWeekRoot.hidden = true;
+
+          trigger.click();
+          assert(trigger.getAttribute("aria-expanded") === "true", "trigger opens the dialog");
+          assert(!dialog.hidden, "dialog is visible after opening");
+          assert(dialog.getBoundingClientRect().height <= 340, "dialog stays compact enough for the application viewport");
+          assert(root.querySelectorAll("[data-date-range-month]").length === 2, "renders two months");
+          assert(apply.disabled, "apply starts disabled");
+
+          root.querySelector('[data-date-value="2020-10-18"]').click();
+          root.querySelector('[data-date-value="2020-10-18"]').click();
+          assert(!apply.disabled, "complete range enables apply");
+          apply.click();
+          assert(JSON.stringify(changes[0]) === JSON.stringify({ start: "2020-10-18", end: "2020-10-18" }), "emits applied ISO range");
+          assert(root.querySelector("[data-date-range-label]").textContent === "18 Oct 2020 – 18 Oct 2020", "formats applied label");
+
+          trigger.click();
+          root.querySelector('[data-date-value="2020-10-20"]').click();
+          root.querySelector("[data-date-range-cancel]").click();
+          assert(root.querySelector("[data-date-range-label]").textContent === "18 Oct 2020 – 18 Oct 2020", "cancel preserves applied value");
+
+          trigger.click();
+          root.querySelector('[data-date-value="2020-10-21"]').click();
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          assert(dialog.hidden, "Escape closes the dialog");
+          assert(document.activeElement === trigger, "Escape returns focus to the trigger");
+          assert(root.querySelector("[data-date-range-label]").textContent === "18 Oct 2020 – 18 Oct 2020", "Escape preserves applied value");
+
+          trigger.click();
+          root.querySelector('[data-date-value="2020-10-22"]').click();
+          document.querySelector("#outside").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+          assert(dialog.hidden, "outside click closes the dialog");
+          assert(root.querySelector("[data-date-range-label]").textContent === "18 Oct 2020 – 18 Oct 2020", "outside click preserves applied value");
+
+          trigger.click();
+          root.querySelector("[data-date-range-clear]").click();
+          assert(JSON.stringify(changes[1]) === JSON.stringify({ start: "", end: "" }), "clear emits an empty range");
+          assert(root.querySelector("[data-date-range-label]").textContent === "Select a date range", "clear restores the placeholder");
+
+          await Promise.all([...root.querySelectorAll("img")].map((image) => image.complete
+            ? Promise.resolve()
+            : new Promise((resolve) => {
+                image.addEventListener("load", resolve, { once: true });
+                image.addEventListener("error", resolve, { once: true });
+              })));
+          assert([...root.querySelectorAll("img")].every((image) => image.naturalWidth > 0), "component assets load from every route");
+
+          document.body.dataset.testStatus = "passed";
+          result.textContent = "PASS";
+        } catch (error) {
+          document.body.dataset.testStatus = "failed";
+          result.textContent = `FAIL: ${error.message}`;
+          throw error;
+        }
+      })();
+    </script>
+  </body>
+</html>

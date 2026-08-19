@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260819-shared-dashboard-cards" />
+    <link rel="stylesheet" href="styles.css?v=20260819-step-four-layout-alignment" />
+    <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
+    <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -276,6 +278,242 @@
       </section>
     </template>
 
+    <template id="request-support-native-template">
+      <section class="screen screen--request-support" aria-label="Request support">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Request support</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell rs-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main rs-main">
+            <section class="mi-titlebar rs-titlebar"><h1>Request support</h1></section>
+            <section class="rs-content" aria-labelledby="rs-heading">
+              <div class="rs-intro"><h2 id="rs-heading">Submit a request for your instrument(s)</h2><p>Select the type of request you would like to submit for your instrument(s).</p></div>
+              <div class="rs-layout">
+                <div class="rs-request-list">
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Instrument support</h3><p>Request troubleshooting, diagnosis and repair to resolve an issue with your instrument.</p></div><button class="mi-button" type="button" data-route="open-support-ticket">Open a support ticket</button></article>
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Preventive maintenance</h3><p>Purchase or schedule a preventive maintenance service for your instrument.</p></div><button class="mi-button" type="button" data-route="request-pm">Request PM scheduling</button></article>
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Service plans</h3><p>Request a quote to renew or purchase a service plan for your instrument.</p></div><button class="mi-button" type="button" data-route="request-serviceplan">Request a quote</button></article>
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Compliance services - Qualification</h3><p>Request a quote for a compliance service such as Installation Qualification (IQ), Operational Qualification (OQ), Requalification (RQ), or Temperature Mapping (TM).</p></div><button class="mi-button" type="button" data-route="request-qualification">Request a quote</button></article>
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Compliance services - Calibration</h3><p>Request a quote for calibration of your lab equipment including centrifuges, cold rooms, incubators, environmental chambers, lab ovens, furnaces and more. Excluding biosafety cabinets and water purification.</p></div><button class="mi-button" type="button" data-route="request-calibration">Request a quote</button></article>
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Installation</h3><p>Request support if you have any questions about your installation.</p></div><button class="mi-button" type="button" data-route="installation-support">Installation support</button></article>
+                </div>
+                <aside class="rs-aside" aria-label="Additional services information">
+                  <section class="rs-promo"><h3>Get up to 20% off<br />Preventive Maintenance for<br />your HPLC</h3><p>Claim your discount today on an on-site PM visit.</p><small>Promo expires 30 Jun 2024. <button type="button" data-route="pm-cycle">See terms and conditions.</button></small></section>
+                  <article class="rs-info-card"><h3>Banner title <strong>lorem 10%</strong> ipsum dolor amet,<br />consectetur adipiscing elit.<br />Vestibulum sod...</h3><p><strong>Promotion description lorem 10% ipsum dolor amet,<br />consectetur adipiscing elit. Vestibulum sodales</strong></p><small>Promo expires 30 Jun 2024. Promotion disclaimer lorem 10% ipsum dolor amet, consectetur adipiscing elit. Vestibulum sodales velit in sapien egestas commodo. Proin ultrices, nec justo nec lacinia convallis, nulla. <button type="button" data-rs-toast="More information opened">See terms and conditions.</button></small></article>
+                  <article class="rs-info-card"><h3>Banner title <strong>lorem 10%</strong> ipsum dolor amet,<br />consectetur adipiscing elit.<br />Vestibulum sod...</h3><p><strong>Promotion description lorem 10% ipsum dolor amet,<br />consectetur adipiscing elit. Vestibulum sodales</strong></p><small>Promo expires 30 Jun 2024. Promotion disclaimer lorem 10% ipsum dolor amet, consectetur adipiscing elit. Vestibulum sodales velit in sapien egestas commodo. Proin ultrices, nec justo nec lacinia convallis, nulla. <button type="button" data-rs-toast="More information opened">See terms and conditions.</button></small></article>
+                </aside>
+              </div>
+            </section>
+          </main>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="request-pm-native-template">
+      <section class="screen screen--request-pm" aria-label="Request PM scheduling">
+        <div class="mi-stage"><div class="mi-shell pm-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main pm-main">
+            <section class="pm-titlebar"><h1>Request PM scheduling</h1></section>
+            <ol class="pm-steps" aria-label="PM request progress"><li class="is-current"><span>1</span><strong>Select instrument(s)</strong></li><li><span>2</span><span>View PM status</span></li><li><span>3</span><span>Add request details</span></li><li><span>4</span><span>Confirm contact information</span></li><li><span>5</span><span>Review and submit</span></li></ol>
+            <section class="pm-content" aria-labelledby="pm-description">
+              <section class="pm-promo" aria-label="Promotion"><button type="button" data-pm-promo="Previous promotion" aria-label="Previous promotion"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><div><h2>Save 35% on your next reversed phase column</h2><p><strong>Save now on your next C18, phenyl or other reversed phase column.</strong></p><small>Promo expires 29 Mar 2024. Applicable for online orders on analytical columns.</small></div><button type="button" data-pm-promo="Next promotion" aria-label="Next promotion"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button></section>
+              <p id="pm-description">Request planned maintenance to proactively resolve potential issues before they happen. Use this option to get a quote and/or to discuss scheduling.</p>
+              <article class="pm-card"><header><h2>Instrument(s) selection</h2><p>Select the instrument(s) you want to include in your request.</p></header>
+                <label class="pm-search"><span class="sr-only">Search instruments</span><input type="search" data-pm-search placeholder="Search by instrument serial number or nickname" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
+                <label class="pm-select-all"><input type="checkbox" data-pm-select-all /><span>Select all 240 instruments</span></label>
+                <div class="pm-table-wrap"><table class="pm-table"><colgroup><col class="pm-col-check" /><col class="pm-col-tree" /><col class="pm-col-image" /><col class="pm-col-serial" /><col class="pm-col-nickname" /><col class="pm-col-groups" /><col class="pm-col-type" /><col class="pm-col-model" /><col class="pm-col-coverage" /></colgroup><thead><tr><th><span class="sr-only">Selection</span></th><th></th><th></th><th>Serial number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Nickname <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-pm-filter>Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-pm-filter>Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-pm-filter>Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-pm-filter>Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th></tr></thead><tbody>
+                  <tr class="pm-system"><td><input type="checkbox" data-pm-system aria-label="Select all System instruments" /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td><img src="assets/icons/science/2 instruments/size=24px, style=mono.svg" alt="" /></td><td><button type="button" data-pm-instrument-link>System</button></td><td>Apline</td><td>—</td><td>LCMS</td><td>—</td><td>—</td></tr>
+                  <tr data-pm-row data-search="1009996 detector-2b"><td><input type="checkbox" data-pm-instrument aria-label="Select 1009996 Detector-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-pm-instrument-link>1009996</button></td><td>Detector-2B</td><td>—</td><td>HPLC</td><td>VQF0000DET</td><td>Under contract</td></tr>
+                  <tr data-pm-row data-search="1009999 column-2b"><td><input type="checkbox" data-pm-instrument aria-label="Select 1009999 Column-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-pm-instrument-link>1009999</button></td><td>Column-2B</td><td>—</td><td>HPLC</td><td>VQH0000VEN</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-pm-row data-search="1009998 sampler-2b"><td><input type="checkbox" data-pm-instrument aria-label="Select 1009998 Sampler-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-pm-instrument-link>1009998</button></td><td>Sampler-2B</td><td>—</td><td>HPLC</td><td>VQF00SAMPL</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-pm-row data-search="1009997 pump-2b"><td><input type="checkbox" data-pm-instrument aria-label="Select 1009997 Pump-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-pm-instrument-link>1009997</button></td><td>Pump-2B</td><td>—</td><td>HPLC</td><td>VQF000PUMP</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-pm-row data-search="tsq-z-12346 tsq-0"><td><input type="checkbox" data-pm-instrument aria-label="Select TSQ-Z-12346 TSQ-0" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-pm-instrument-link>TSQ-Z-12346</button></td><td>TSQ-0</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="pm-status pm-status--soon">Expiring soon</span></td></tr>
+                  <tr data-pm-row data-search="tsq-z-12347 tsq-1"><td><input type="checkbox" data-pm-instrument aria-label="Select TSQ-Z-12347 TSQ-1" /></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-pm-instrument-link>TSQ-Z-12347</button></td><td>TSQ-1</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="pm-status pm-status--soon">Expiring soon</span></td></tr>
+                  <tr data-pm-row data-search="sn98355w"><td><input type="checkbox" data-pm-instrument aria-label="Select SN98355W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-pm-instrument-link>SN98355W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                </tbody></table></div>
+                <footer class="pm-pagination"><div>Results per page <button class="pm-page-size" type="button" data-pm-promo="Results per page menu opened">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> <span>of</span> <strong>240</strong></div><div><button class="pm-page-arrow" type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><button class="pm-page-number is-current" type="button">1</button><button class="pm-page-number" type="button">2</button><button class="pm-page-number" type="button">3</button><button class="pm-page-number" type="button">4</button><span>...</span><button class="pm-page-number" type="button">9</button><button class="pm-page-arrow" type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><span>Go to:</span><input aria-label="Go to page" value="#" /></div></footer>
+              </article>
+            </section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="request-installation-native-template">
+      <section class="screen screen--request-installation" aria-label="Installation support">
+        <div class="mi-stage"><div class="mi-shell installation-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main installation-main">
+            <section class="pm-titlebar"><h1>Installation support</h1></section>
+            <ol class="pm-steps installation-steps" aria-label="Installation support request progress"><li class="is-current"><span>1</span><strong>Add request details</strong></li><li><span>2</span><span>Confirm contact information</span></li><li><span>3</span><span>Review and submit</span></li></ol>
+            <section class="installation-content"><article class="installation-card"><header><h2>Installation support request details</h2><p>Get help from the installation team.</p></header>
+              <form data-installation-form>
+                <label class="installation-order-select"><span>Select order(s) <b aria-hidden="true">*</b></span><input type="hidden" data-installation-service required /><button type="button" data-installation-order-toggle aria-expanded="false"><span data-installation-order-label>Please select order(s)</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="installation-order-menu" data-installation-order-menu hidden><strong>Select order(s)</strong><label><input type="checkbox" data-installation-order value="9012611245" /> Order no. 9012611245</label><label><input type="checkbox" data-installation-order value="9012611246" /> Order no. 9012611246</label><label><input type="checkbox" data-installation-order value="9012611247" /> Order no. 9012611247</label><label><input type="checkbox" data-installation-order value="9012611248" /> Order no. 9012611248</label><button type="button" data-installation-order-help>I can't see my installation order</button></div></label>
+                <label><span>Installation topic <b aria-hidden="true">*</b></span><select data-installation-type required aria-label="Installation topic"><option value="">Please select</option><option value="new">New installation</option><option value="relocation">Relocation</option><option value="upgrade">Upgrade</option></select></label>
+                <label class="installation-details"><span>Additional details <b aria-hidden="true">*</b><em><i data-installation-count>0</i>/500</em></span><textarea data-installation-details required maxlength="500" aria-label="Additional details" placeholder="Provide more details about your request."></textarea></label>
+              </form>
+            </article></section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="request-calibration-native-template">
+      <section class="screen screen--request-calibration" aria-label="Request a calibration service">
+        <div class="mi-stage"><div class="mi-shell cal-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main cal-main">
+            <section class="pm-titlebar"><h1>Request a calibration service</h1></section>
+            <ol class="pm-steps sp-steps cal-steps" aria-label="Calibration service request progress"><li class="is-current"><span>1</span><strong>Select instrument</strong></li><li><span>2</span><span>Add request details</span></li><li><span>3</span><span>Confirm contact information</span></li><li><span>4</span><span>Review and submit</span></li></ol>
+            <section class="pm-content cal-content" aria-labelledby="cal-description"><p id="cal-description">Only laboratory equipment in your account are listed here. Request a quote for calibration of your lab equipment including centrifuges, cold rooms, incubators, environmental chambers, lab ovens, furnaces and more. Excluding biosafety cabinets and water purification.</p>
+              <article class="pm-card cal-card"><header><h2>Instrument(s) selection</h2><p>Select the instrument(s) you want to include in your request.</p></header>
+                <label class="pm-search"><span class="sr-only">Search instruments</span><input type="search" data-cal-search placeholder="Search by instrument serial number or nickname" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
+                <label class="pm-select-all"><input type="checkbox" data-cal-select-all /><span>Select all 30 instruments</span></label>
+                <div class="cal-table-wrap"><table class="pm-table cal-table"><colgroup><col class="cal-col-check" /><col class="cal-col-serial" /><col class="cal-col-nickname" /><col class="cal-col-groups" /><col class="cal-col-type" /><col class="cal-col-model" /><col class="cal-col-coverage" /></colgroup><thead><tr><th><span class="sr-only">Selection</span></th><th>Serial number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Nickname <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-cal-filter>Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-cal-filter>Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-cal-filter>Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-cal-filter>Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th></tr></thead><tbody>
+                  <tr data-cal-row data-search="1141529637 ult freezer 1"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529637 ULT Freezer 1" /></td><td><button type="button" data-cal-instrument-link>1141529637</button></td><td>ULT Freezer 1</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td>Under contract</td></tr>
+                  <tr data-cal-row data-search="1141529638 ult freezer 2"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529638 ULT Freezer 2" /></td><td><button type="button" data-cal-instrument-link>1141529638</button></td><td>ULT Freezer 2</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-cal-row data-search="1141529639 ult freezer 3"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529639 ULT Freezer 3" /></td><td><button type="button" data-cal-instrument-link>1141529639</button></td><td>ULT Freezer 3</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-cal-row data-search="1141529640 ult freezer 4"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529640 ULT Freezer 4" /></td><td><button type="button" data-cal-instrument-link>1141529640</button></td><td>ULT Freezer 4</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-cal-row data-search="1141529641 ult freezer 5"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529641 ULT Freezer 5" /></td><td><button type="button" data-cal-instrument-link>1141529641</button></td><td>ULT Freezer 5</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-cal-row data-search="1141529642 ult freezer 6"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529642 ULT Freezer 6" /></td><td><button type="button" data-cal-instrument-link>1141529642</button></td><td>ULT Freezer 6</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-cal-row data-search="1141529643 ult freezer 7"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529643 ULT Freezer 7" /></td><td><button type="button" data-cal-instrument-link>1141529643</button></td><td>ULT Freezer 7</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-cal-row data-search="1141529644 ult freezer 8"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529644 ULT Freezer 8" /></td><td><button type="button" data-cal-instrument-link>1141529644</button></td><td>ULT Freezer 8</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td><span class="pm-status pm-status--soon">Expiring soon</span></td></tr>
+                  <tr data-cal-row data-search="1141529645 ult freezer 9"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529645 ULT Freezer 9" /></td><td><button type="button" data-cal-instrument-link>1141529645</button></td><td>ULT Freezer 9</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td>Under contract</td></tr>
+                  <tr data-cal-row data-search="1141529646 ult freezer 10"><td><input type="checkbox" data-cal-instrument aria-label="Select 1141529646 ULT Freezer 10" /></td><td><button type="button" data-cal-instrument-link>1141529646</button></td><td>ULT Freezer 10</td><td>—</td><td>ULT Freezers</td><td>ULT1788</td><td>Under contract</td></tr>
+                </tbody></table></div>
+                <footer class="pm-pagination"><div>Results per page <button class="pm-page-size" type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> <span>of</span> <strong>30</strong></div><div><button class="pm-page-arrow" type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><button class="pm-page-number is-current" type="button">1</button><button class="pm-page-number" type="button">2</button><button class="pm-page-arrow" type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><span>Go to:</span><input aria-label="Go to page" value="#" /></div></footer>
+              </article>
+            </section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="request-serviceplan-native-template">
+      <section class="screen screen--request-serviceplan" aria-label="Request a service plan quote">
+        <div class="mi-stage"><div class="mi-shell pm-shell sp-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main pm-main sp-main">
+            <section class="pm-titlebar"><h1>Request a service plan quote</h1></section>
+            <ol class="pm-steps sp-steps" aria-label="Service plan quote progress"><li class="is-current"><span>1</span><strong>Select instrument(s)</strong></li><li><span>2</span><span>Add request details</span></li><li><span>3</span><span>Confirm contact information</span></li><li><span>4</span><span>Review and submit</span></li></ol>
+            <section class="pm-content sp-content" aria-labelledby="sp-description"><p id="sp-description">Request a quote to renew or purchase a service plan for your instrument.</p>
+              <article class="pm-card"><header><h2>Instrument(s) selection</h2><p>Select the instrument(s) you want to include in your request.</p></header>
+                <label class="pm-search"><span class="sr-only">Search instruments</span><input type="search" data-sp-search placeholder="Search by instrument serial number or nickname" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
+                <label class="pm-select-all"><input type="checkbox" data-sp-select-all /><span>Select all 240 instruments</span></label>
+                <div class="pm-table-wrap"><table class="pm-table"><colgroup><col class="pm-col-check" /><col class="pm-col-tree" /><col class="pm-col-image" /><col class="pm-col-serial" /><col class="pm-col-nickname" /><col class="pm-col-groups" /><col class="pm-col-type" /><col class="pm-col-model" /><col class="pm-col-coverage" /></colgroup><thead><tr><th><span class="sr-only">Selection</span></th><th></th><th></th><th>Serial number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Nickname <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-sp-filter>Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-sp-filter>Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-sp-filter>Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button type="button" data-sp-filter>Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th></tr></thead><tbody>
+                  <tr class="pm-system"><td><input type="checkbox" data-sp-system aria-label="Select all System instruments" /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td><img src="assets/icons/science/2 instruments/size=24px, style=mono.svg" alt="" /></td><td><button type="button" data-sp-instrument-link>System</button></td><td>Apline</td><td>—</td><td>LCMS</td><td>—</td><td>—</td></tr>
+                  <tr data-sp-row data-search="1009996 detector-2b"><td><input type="checkbox" data-sp-instrument aria-label="Select 1009996 Detector-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-sp-instrument-link>1009996</button></td><td>Detector-2B</td><td>—</td><td>HPLC</td><td>VQF0000DET</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="1009999 column-2b"><td><input type="checkbox" data-sp-instrument aria-label="Select 1009999 Column-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-sp-instrument-link>1009999</button></td><td>Column-2B</td><td>—</td><td>HPLC</td><td>VQH0000VEN</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-sp-row data-search="1009998 sampler-2b"><td><input type="checkbox" data-sp-instrument aria-label="Select 1009998 Sampler-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-sp-instrument-link>1009998</button></td><td>Sampler-2B</td><td>—</td><td>HPLC</td><td>VQF00SAMPL</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-sp-row data-search="1009997 pump-2b"><td><input type="checkbox" data-sp-instrument aria-label="Select 1009997 Pump-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-sp-instrument-link>1009997</button></td><td>Pump-2B</td><td>—</td><td>HPLC</td><td>VQF000PUMP</td><td><span class="pm-status pm-status--expired">Coverage expired</span></td></tr>
+                  <tr data-sp-row data-search="tsq-z-12346 tsq-0"><td><input type="checkbox" data-sp-instrument aria-label="Select TSQ-Z-12346 TSQ-0" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-sp-instrument-link>TSQ-Z-12346</button></td><td>TSQ-0</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="pm-status pm-status--soon">Expiring soon</span></td></tr>
+                  <tr data-sp-row data-search="tsq-z-12347 tsq-1"><td><input type="checkbox" data-sp-instrument aria-label="Select TSQ-Z-12347 TSQ-1" /></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-sp-instrument-link>TSQ-Z-12347</button></td><td>TSQ-1</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="pm-status pm-status--soon">Expiring soon</span></td></tr>
+                  <tr data-sp-row data-search="sn98355w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98355W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98355W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98356w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98356W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98356W</button></td><td>—</td><td><button type="button" data-sp-instrument-link>Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98358w q-exactive-33"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98358W Q-EXACTIVE_33" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98358W</button></td><td>Q-EXACTIVE_33</td><td><button type="button" data-sp-instrument-link>Department...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98359w q-exactive-34"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98359W Q-EXACTIVE_34" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98359W</button></td><td>Q-EXACTIVE_34</td><td><button type="button" data-sp-instrument-link>Department...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98360w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98360W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98360W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98361w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98361W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98361W</button></td><td>—</td><td><button type="button" data-sp-instrument-link>Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98362w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98362W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98362W</button></td><td>—</td><td><button type="button" data-sp-instrument-link>Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98363w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98363W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98363W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-sp-row data-search="sn98364w"><td><input type="checkbox" data-sp-instrument aria-label="Select SN98364W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-sp-instrument-link>SN98364W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                </tbody></table></div>
+                <footer class="pm-pagination"><div>Results per page <button class="pm-page-size" type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> <span>of</span> <strong>240</strong></div><div><button class="pm-page-arrow" type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><button class="pm-page-number is-current" type="button">1</button><button class="pm-page-number" type="button">2</button><button class="pm-page-number" type="button">3</button><button class="pm-page-number" type="button">4</button><span>...</span><button class="pm-page-number" type="button">9</button><button class="pm-page-arrow" type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><span>Go to:</span><input aria-label="Go to page" value="#" /></div></footer>
+              </article>
+            </section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="open-support-ticket-template">
+      <section class="screen screen--open-support-ticket" aria-label="Open a support ticket">
+        <div class="mi-stage"><div class="mi-shell iss-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main iss-main">
+            <section class="iss-titlebar"><h1>Open a support ticket</h1></section>
+            <div data-ticket-step-viewer></div>
+            <section class="iss-content" aria-labelledby="iss-description"><p id="iss-description">Request troubleshooting, diagnosis and repair to resolve an issue with your instrument.</p>
+              <article class="iss-card"><header><h2>Instrument selection</h2><p>Support requests can only be submitted for one instrument.</p></header>
+                <label class="iss-search"><span class="sr-only">Search instruments</span><input type="search" data-iss-search placeholder="Search by instrument serial number or nickname" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
+                <div class="iss-table-wrap"><table class="iss-table"><colgroup><col class="iss-col-radio" /><col class="iss-col-tree" /><col class="iss-col-image" /><col class="iss-col-serial" /><col class="iss-col-nickname" /><col class="iss-col-groups" /><col class="iss-col-type" /><col class="iss-col-model" /><col class="iss-col-coverage" /></colgroup><thead><tr><th></th><th></th><th></th><th>Serial number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Nickname <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><div data-iss-filter-host="group"></div></th><th><div data-iss-filter-host="type"></div></th><th><div data-iss-filter-host="model"></div></th><th><div data-iss-filter-host="coverage"></div></th></tr></thead><tbody>
+                  <tr class="iss-system"><td></td><td><button class="iss-system-toggle" type="button" data-iss-system-toggle aria-expanded="true" aria-label="Collapse system"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" /></td><td><button type="button" data-iss-toast="System instruments opened">System</button></td><td>Apline</td><td>—</td><td>LCMS</td><td>—</td><td>—</td></tr>
+                  <tr data-iss-row data-search="1009996 detector-2b" data-group="—" data-type="HPLC" data-model="VQF0000DET" data-coverage="Under contract"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select 1009996 Detector-2B" /></td><td><img src="assets/icons/actions/system-return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-iss-instrument-link>1009996</button></td><td>Detector-2B</td><td>—</td><td>HPLC</td><td>VQF0000DET</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="1009999 column-2b" data-group="—" data-type="HPLC" data-model="VQH0000VEN" data-coverage="Coverage expired"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select 1009999 Column-2B" /></td><td><img src="assets/icons/actions/system-return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-iss-instrument-link>1009999</button></td><td>Column-2B</td><td>—</td><td>HPLC</td><td>VQH0000VEN</td><td><span class="iss-status iss-status--expired">Coverage expired</span></td></tr>
+                  <tr data-iss-row data-search="1009998 sampler-2b"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select 1009998 Sampler-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-iss-instrument-link>1009998</button></td><td>Sampler-2B</td><td>—</td><td>HPLC</td><td>VQF00SAMPL</td><td><span class="iss-status iss-status--expired">Coverage expired</span></td></tr>
+                  <tr data-iss-row data-search="1009997 pump-2b"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select 1009997 Pump-2B" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-iss-instrument-link>1009997</button></td><td>Pump-2B</td><td>—</td><td>HPLC</td><td>VQF000PUMP</td><td><span class="iss-status iss-status--expired">Coverage expired</span></td></tr>
+                  <tr data-iss-row data-search="tsq-z-12346 tsq-0"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select TSQ-Z-12346 TSQ-0" /></td><td><img src="assets/icons/actions/return/Size=16px, Style=Mono.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-iss-instrument-link>TSQ-Z-12346</button></td><td>TSQ-0</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="iss-status iss-status--soon">Expiring soon</span></td></tr>
+                  <tr data-iss-row data-search="tsq-z-12347 tsq-1"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select TSQ-Z-12347 TSQ-1" /></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-iss-instrument-link>TSQ-Z-12347</button></td><td>TSQ-1</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="iss-status iss-status--soon">Expiring soon</span></td></tr>
+                  <tr data-iss-row data-search="tsq-z-12348 tsq-2"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select TSQ-Z-12348 TSQ-2" /></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-iss-instrument-link>TSQ-Z-12348</button></td><td>TSQ-2</td><td>—</td><td>Mass Spec Lif...</td><td>MSTSQQUAN...</td><td><span class="iss-status iss-status--soon">Expiring soon</span></td></tr>
+                  <tr data-iss-row data-search="sn98355w"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98355W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98355W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98356w"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98356W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98356W</button></td><td>—</td><td><button type="button" data-iss-toast="Group opened">Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98357w q-exactive-33"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98357W Q-EXACTIVE 33" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98357W</button></td><td>Q-EXACTIVE_33</td><td><button type="button" data-iss-toast="Group opened">Department...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98358w q-exactive-34"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98358W Q-EXACTIVE 34" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98358W</button></td><td>Q-EXACTIVE_34</td><td><button type="button" data-iss-toast="Group opened">Department...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98359w"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98359W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98359W</button></td><td>—</td><td>—</td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98360w"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98360W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98360W</button></td><td>—</td><td><button type="button" data-iss-toast="Group opened">Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98361w"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98361W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98361W</button></td><td>—</td><td><button type="button" data-iss-toast="Group opened">Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                  <tr data-iss-row data-search="sn98362w"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select SN98362W" /></td><td></td><td><img src="assets/instruments/q-exactive.png" alt="" /></td><td><button type="button" data-iss-instrument-link>SN98362W</button></td><td>—</td><td><button type="button" data-iss-toast="Group opened">Global...</button></td><td>Mass Spec Lif...</td><td>QEXAC00001</td><td>Under contract</td></tr>
+                </tbody></table></div>
+                <footer class="iss-pagination"><div>Results per page <span class="iss-page-size-control"><button class="iss-page-size" type="button" data-iss-page-size aria-haspopup="listbox" aria-expanded="false">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="iss-page-size-menu" data-iss-page-size-menu role="listbox" aria-label="Results per page" hidden><button type="button" data-iss-page-size-option="10" role="option" aria-selected="false">10</button><button type="button" data-iss-page-size-option="20" role="option" aria-selected="true">20</button><button type="button" data-iss-page-size-option="30" role="option" aria-selected="false">30</button><button type="button" data-iss-page-size-option="40" role="option" aria-selected="false">40</button><button type="button" data-iss-page-size-option="50" role="option" aria-selected="false">50</button></div></span> <span>of</span> <strong class="iss-results-total">267</strong></div><div><button class="iss-page-arrow" type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><button class="iss-page-number is-current" type="button">1</button><button class="iss-page-number" type="button">2</button><button class="iss-page-number" type="button">3</button><button class="iss-page-number" type="button">4</button><span>...</span><button class="iss-page-number" type="button">9</button><button class="iss-page-arrow" type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><span class="iss-go-to">Go to:</span><input aria-label="Go to page" value="#" /></div></footer>
+              </article>
+            </section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="open-support-ticket-details-template">
+      <section class="screen screen--open-support-ticket-details" aria-label="Open a support ticket: add request details">
+        <div class="mi-stage"><div class="mi-shell isd-shell">
+          <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+          <div data-platform-sidebar-mount></div>
+          <main class="mi-main isd-main">
+            <section class="iss-titlebar"><h1>Open a support ticket</h1></section>
+            <div data-ticket-step-viewer></div>
+            <section class="isd-content">
+              <article class="isd-card"><header><h2>Support request details</h2><p>Please provide details for your support request below.</p></header>
+                <div class="isd-form">
+                  <label class="isd-field"><span>Request subject <b>*</b><em data-isd-count="subject">0 / 255</em></span><input data-isd-field="subject" maxlength="255" placeholder="Please enter your request subject." /></label>
+                  <label class="isd-field"><span>Describe the problem you are experiencing (or your request), in detail: <b>*</b><em data-isd-count="problem">0 / 4000</em></span><textarea data-isd-field="problem" maxlength="4000" rows="4" placeholder="Provide more details about your request and any troubleshooting steps you have already taken."></textarea></label>
+                  <label class="isd-field"><span>Are there any error codes? <b>*</b><em data-isd-count="errors">0 / 1000</em></span><input data-isd-field="errors" maxlength="1000" placeholder="Provide error codes or error messages." /></label>
+                  <label class="isd-field"><span>Are there any recent changes to the instrument or environment? <b>*</b><em data-isd-count="changes">0 / 2000</em></span><textarea data-isd-field="changes" maxlength="2000" rows="4" placeholder="Examples include software updates, new components, heating, air conditioning &amp; ventilation changes."></textarea></label>
+                  <section class="isd-upload"><h3>Upload files <span class="isd-info-tip" data-isd-info-tooltip tabindex="0" aria-label="More information" aria-describedby="isd-upload-information"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /><span class="iss-overflow-tooltip isd-info-tooltip" id="isd-upload-information" role="tooltip" hidden>Maximum file size is 50mb. You can upload up to 5 files.</span></span></h3><div class="isd-upload__options"><label class="isd-dropzone" data-isd-upload><span>Drag and drop, <strong>choose a file</strong></span><input type="file" multiple hidden /></label><span>or</span><button class="isd-paste" type="button" data-iss-toast="Paste files here using Cmd+V or Ctrl+V">Copy and paste here using<br />Cmd+V or Ctrl+V</button></div><div class="isd-filled-files" hidden><h3>Your files</h3><div class="isd-files" data-isd-files></div></div><ul class="isd-upload__requirements"><li>Maximum file size for each file: 50mb.</li><li>Upload up to 5 files.</li></ul></section>
+                </div>
+              </article>
+              <section class="isd-instrument"><h2>Instrument information</h2><div class="isd-instrument__panel"><img data-isd-instrument-image src="assets/instruments/vanquish-detector.png" alt="" /><dl class="isd-instrument__facts"><div><dt>Serial number</dt><dd data-isd-serial>1009996</dd></div><div><dt>Model number</dt><dd data-isd-model>VQF0000DET</dd></div><div><dt>Type</dt><dd data-isd-type>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd data-isd-nickname>Detector-2B</dd></div><div><dt>Groups</dt><dd>HPLC 2B Sys., Global Research and Development…</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd><button type="button" data-iss-toast="Operating manual opened">View operating manual</button><button type="button" data-iss-toast="System operating manual opened">View system operating manual</button></dd></div></dl><section class="isd-coverage"><h3>Instrument coverage</h3><div class="isd-coverage__facts"><dl><div><dt>Contract Number</dt><dd>MAIN353422</dd></div><div><dt>Coverage Start</dt><dd>22 July 2020</dd></div><div><dt>Coverage End</dt><dd>22 July 2022</dd></div></dl><span>Under contract</span></div><h4>What&#39;s included in the Essential Service Plan</h4><ul><li>Preventative maintenance</li><li>Corrective maintenance</li></ul></section></div></section>
+            </section>
+          </main>
+          <div data-platform-action-bar-mount></div>
+          <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="open-support-ticket-contact-template">
+      <section class="screen screen--open-support-ticket-contact" aria-label="Open a support ticket: confirm contact information"><div class="mi-stage"><div class="mi-shell isd-shell"><header class="mi-header"></header><div data-platform-sidebar-mount></div><main class="mi-main isd-main"><section class="iss-titlebar"><h1>Open a support ticket</h1></section><div data-ticket-step-viewer></div><section class="ost-content"><article class="ost-card"><header><h2>Ticket contact information</h2><p>This contact will be the primary recipient of communications regarding this ticket.</p></header><div class="ost-contact-grid"><label><span>First name <b>*</b></span><input data-ost-contact-field="firstName" required /></label><label><span>Last name <b>*</b></span><input data-ost-contact-field="lastName" required /></label><label><span>Phone number <b>*</b></span><input data-ost-contact-field="phone" type="tel" inputmode="numeric" pattern="[0-9]*" required /></label><label class="ost-contact-grid__email"><span>Email <b>*</b></span><input data-ost-contact-field="email" type="email" required /></label></div></article></section></main><div data-platform-action-bar-mount></div><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>
+    </template>
+
+    <template id="open-support-ticket-review-template">
+      <section class="screen screen--open-support-ticket-review" aria-label="Open a support ticket: review and submit"><div class="mi-stage"><div class="mi-shell isd-shell"><header class="mi-header"></header><div data-platform-sidebar-mount></div><main class="mi-main isd-main"><section class="iss-titlebar"><h1>Open a support ticket</h1></section><div data-ticket-step-viewer></div><section class="ost-content ost-review-content"><header class="ost-review-intro"><h2>Review and submit</h2><p>Please review your support request before submitting.</p></header><article class="ost-card ost-review-card"><h2>Support request details</h2><dl class="ost-review-details"><div><dt>Request subject</dt><dd data-ost-review-subject></dd></div><div class="ost-review-details__wide"><dt>Problem</dt><dd data-ost-review-problem></dd></div><div class="ost-review-details__wide"><dt>Error codes</dt><dd data-ost-review-errors></dd></div><div class="ost-review-details__wide"><dt>Recent changes to the instrument or environment</dt><dd data-ost-review-changes></dd></div><div class="ost-review-files"><dt>Files attached</dt><dd><button type="button" data-ost-review-files-toggle aria-expanded="false" aria-controls="ost-review-files-list"><span data-ost-review-files></span><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button><ul id="ost-review-files-list" data-ost-review-files-list hidden></ul></dd></div></dl></article><section class="isd-instrument ost-review-instrument"><h2>Instrument information</h2><div class="isd-instrument__panel"><img data-ost-review-instrument-image src="assets/instruments/vanquish-detector.png" alt="" /><dl class="isd-instrument__facts"><div><dt>Serial number</dt><dd data-ost-review-serial></dd></div><div><dt>Model number</dt><dd data-ost-review-model></dd></div><div><dt>Type</dt><dd data-ost-review-type></dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd data-ost-review-nickname></dd></div><div><dt>Groups</dt><dd>HPLC 2B Sys., Global Research and Development…</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd><button type="button" data-iss-toast="Operating manual opened">View operating manual</button><button type="button" data-iss-toast="System operating manual opened">View system operating manual</button></dd></div></dl><section class="isd-coverage"><h3>Instrument coverage</h3><div class="isd-coverage__facts"><dl><div><dt>Contract Number</dt><dd>MAIN353422</dd></div><div><dt>Coverage Start</dt><dd>22 July 2020</dd></div><div><dt>Coverage End</dt><dd>22 July 2022</dd></div></dl><span>Under contract</span></div><h4>What&#39;s included in the Essential Service Plan</h4><ul><li>Preventative maintenance</li><li>Corrective maintenance</li></ul></section></div></section><article class="ost-card ost-review-card"><h2>Contact information</h2><dl class="ost-review-details ost-review-details--contact"><div><dt>Name</dt><dd data-ost-review-name></dd></div><div><dt>Phone number</dt><dd data-ost-review-phone></dd></div><div><dt>Email</dt><dd data-ost-review-email></dd></div></dl></article></section></main><div data-platform-action-bar-mount></div><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>
+    </template>
+
     <template id="support-history-native-template">
       <section class="screen screen--support-history" aria-label="Support request history">
         <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Support request history</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
@@ -287,21 +525,30 @@
             <section class="sh-content" aria-labelledby="sh-ticket-heading">
               <div class="sh-top">
                 <h2 id="sh-ticket-heading">Support request tickets <span data-sh-count>100</span></h2>
-                <label class="sh-search"><strong>Search</strong><span><input type="search" data-sh-search placeholder="Search by serial number, nickname, ticket number, or subject" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></span></label>
-                <div class="sh-date"><strong>Date range</strong><button type="button" data-sh-date aria-haspopup="dialog"><span>Select a date range</span><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /></button></div>
+                <label class="sh-search"><strong>Search</strong><span><input type="search" data-sh-search placeholder="Search by instrument serial number, nickname, ticket number, or subject" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></span></label>
+                <div class="sh-date date-range-picker" data-sh-date-picker></div>
                 <button class="mi-button sh-edit-columns" type="button" data-sh-edit-columns>Edit columns</button>
               </div>
-              <div class="sh-table-wrap"><table class="sh-table"><colgroup><col class="sh-col-icon" /><col class="sh-col-status" /><col class="sh-col-ticket" /><col class="sh-col-type" /><col class="sh-col-subject" /><col class="sh-col-serial" /><col class="sh-col-model" /><col class="sh-col-nickname" /><col class="sh-col-groups" /><col class="sh-col-contact" /><col class="sh-col-created" /><col class="sh-col-closed" /></colgroup><thead><tr>
+              <div class="sh-applied-filters" aria-label="Ticket filters">
+                <div data-sh-status-filter></div>
+                <div data-sh-type-filter></div>
+                <div data-sh-model-filter></div>
+                <div data-sh-group-filter></div>
+                <div data-sh-contact-filter></div>
+                <button class="sh-clear-filters" type="button" data-sh-clear-filters hidden>Clear filter(s)</button>
+              </div>
+              <div class="sh-table-wrap"><table class="sh-table"><colgroup><col class="sh-col-icon" /><col class="sh-col-status" /><col class="sh-col-ticket" /><col class="sh-col-type" /><col class="sh-col-subject" /><col class="sh-col-systems" /><col class="sh-col-serial" /><col class="sh-col-model" /><col class="sh-col-nickname" /><col class="sh-col-groups" /><col class="sh-col-contact" /><col class="sh-col-created" /><col class="sh-col-closed" /></colgroup><thead><tr>
                 <th aria-label="Ticket indicator"></th>
-                <th><label class="sh-header-select"><span class="sr-only">Filter by status</span><select data-sh-status><option value="all">Status</option><option value="Open">Open</option><option value="In progress">In progress</option><option value="Closed">Closed</option></select></label></th>
+                <th><div data-sh-status-filter-trigger></div></th>
                 <th><button type="button" data-sh-sort="ticket">Ticket no.<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
-                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Ticket type">Ticket t...<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><div data-sh-column-filter-trigger="type"></div></th>
                 <th><button type="button" data-sh-sort="subject">Subject<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
+                <th aria-label="Systems"></th>
                 <th><button type="button" data-sh-sort="serial">Serial no.<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
-                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Model">Model<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><div data-sh-column-filter-trigger="model"></div></th>
                 <th><button type="button" data-sh-sort="nickname">Nickname<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
-                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Groups">Groups<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
-                <th><button class="sh-header-dropdown" type="button" data-sh-menu="Contact">Contact<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                <th><div data-sh-column-filter-trigger="group"></div></th>
+                <th><div data-sh-column-filter-trigger="contact"></div></th>
                 <th><button type="button" data-sh-sort="created">Created<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
                 <th><button type="button" data-sh-sort="closed">Closed<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
               </tr></thead><tbody data-sh-rows></tbody></table></div>
@@ -322,31 +569,82 @@
             <section class="splan-top">
               <div class="splan-heading"><div><h1>Service plan contacts</h1><p>Tell us who to contact for any service plan notifications or to renew your plan.</p></div><button class="mi-button mi-button--primary splan-primary" type="button" data-route="edit-spc">Edit service plan contact</button></div>
               <div class="splan-contact-grid">
-                <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-splan-action="Molly Hartman">Molly Hartman</button><span>molly_hartman@companyname.com</span></div></div><p>Service plan contact for 10 instruments</p><footer><button type="button" data-route="edit-spc"><img src="assets/icons/actions/edit alt/Size=16px, Style=Mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Molly Hartman menu" aria-label="More options for Molly Hartman"><img src="assets/icons/actions/more horizontal/size=24px, style=mono.svg" alt="" /></button></footer></article>
-                <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-splan-action="Sebastien Martin">Sebastien Martin</button><span>sebastien_martin@companyname.com</span></div></div><p>Service plan contact for 5 instruments</p><footer><button type="button" data-route="edit-spc"><img src="assets/icons/actions/edit alt/Size=16px, Style=Mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Sebastien Martin menu" aria-label="More options for Sebastien Martin"><img src="assets/icons/actions/more horizontal/size=24px, style=mono.svg" alt="" /></button></footer></article>
+                <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-splan-action="Molly Hartman">Molly Hartman</button><span>molly_hartman@companyname.com</span></div></div><p>Service plan contact for 10 instruments</p><footer><button type="button" data-route="edit-spc"><img class="splan-card__edit-icon" src="assets/icons/actions/edit/size=16px,%20style=mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Molly Hartman menu" aria-label="More options for Molly Hartman"><img src="assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg" alt="" /></button></footer></article>
+                <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-route="contact-page">Sebastien Martin</button><span>sebastien_martin@companyname.com</span></div></div><p>Service plan contact for 5 instruments</p><footer><button type="button" data-route="edit-spc"><img class="splan-card__edit-icon" src="assets/icons/actions/edit/size=16px,%20style=mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Sebastien Martin menu" aria-label="More options for Sebastien Martin"><img src="assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg" alt="" /></button></footer></article>
               </div>
             </section>
             <section class="splan-content">
               <section class="splan-group is-collapsed" data-splan-group>
                 <button class="splan-group__toggle" type="button" data-splan-toggle aria-expanded="false"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>15 out of 29 instruments with a service plan contact</strong><small>Select instrument(s), then click the red <b>Edit service plan contact</b> button to update.</small></span></button>
+                <div class="splan-group__body" data-splan-body>
+                  <button class="splan-select-all" type="button" data-splan-select-all data-splan-select-total="10">Select all 10 instruments</button>
+                  <table class="splan-table splan-table--contacts"><colgroup><col class="splan-col-check" /><col class="splan-col-chevron" /><col class="splan-col-coverage" /><col class="splan-col-kind" /><col class="splan-col-image" /><col class="splan-col-serial" /><col class="splan-col-nickname" /><col class="splan-col-contact" /></colgroup><thead><tr><th></th><th></th><th>Coverage</th><th></th><th></th><th>Serial number</th><th>Nickname</th><th>Service plan contact</th></tr></thead><tbody>
+                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select Essential Service Plan 0040222222" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Essential Service Plan - 0040222222</strong></td><td class="splan-final-cell">Molly Hartman</td></tr>
+                    <tr><td><input type="checkbox" aria-label="Select TSQ-Z-12347" data-splan-check /></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-instrument-icon" src="assets/instruments/tsq.png" alt="" /></td><td></td><td><button type="button" data-splan-action="TSQ-Z-12347">TSQ-Z-12347</button></td><td>TSQ-1</td><td>Molly Hartman</td></tr>
+                    <tr><td><input type="checkbox" aria-label="Select access-controlled TSQ-Z-12347" data-splan-check /></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-instrument-icon" src="assets/instruments/tsq.png" alt="" /></td><td class="splan-lock-cell"><span class="splan-lock-target"><img class="splan-lock-icon" src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /></span></td><td><button type="button" data-splan-action="TSQ-Z-12347">TSQ-Z-12347</button></td><td>TSQ-1</td><td>Molly Hartman</td></tr>
+                    <tr><td><input type="checkbox" aria-label="Select TSQ-Z-12348" data-splan-check /></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-instrument-icon" src="assets/instruments/tsq.png" alt="" /></td><td></td><td><button type="button" data-splan-action="TSQ-Z-12348">TSQ-Z-12348</button></td><td>TSQ-2</td><td>Molly Hartman</td></tr>
+                    <tr class="splan-row--system"><td><input type="checkbox" aria-label="Select Alpine 22 system" data-splan-check /></td><td></td><td>&mdash;</td><td><img class="splan-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td></td><td><button type="button" data-splan-action="System">System</button></td><td>Alpine 22</td><td>Molly Hartman</td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-splan-action="1009996">1009996</button></td><td>Detector-2B</td><td>Molly Hartman</td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-splan-action="1009999">1009999</button></td><td>Column-2B</td><td>Molly Hartman</td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-splan-action="1009998">1009998</button></td><td>Sampler-2B</td><td>Molly Hartman</td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-splan-action="1009997">1009997</button></td><td>Pump-2B</td><td>Molly Hartman</td></tr>
+                    <tr class="splan-row--child splan-row--last"><td></td><td></td><td><span class="splan-status splan-status--ok">Under contract</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-splan-action="TSQ-Z-12346">TSQ-Z-12346</button></td><td>TSQ-0</td><td>Molly Hartman</td></tr>
+                  </tbody></table>
+                </div>
               </section>
               <section class="splan-group is-expanded" data-splan-group>
                 <button class="splan-group__toggle" type="button" data-splan-toggle aria-expanded="true"><img src="assets/icons/directions/chevron down/size=24px, style=mono.svg" alt="" /><span><strong>14 out of 29 instruments without a service plan contact</strong><small>Select instrument(s), then click the red <b>Edit service plan contact</b> button to update.</small></span></button>
                 <div class="splan-group__body" data-splan-body>
-                  <button class="splan-select-all" type="button" data-splan-select-all>Select all 14 instruments</button>
+                  <button class="splan-select-all" type="button" data-splan-select-all data-splan-select-total="14">Select all 14 instruments</button>
                   <table class="splan-table"><colgroup><col class="splan-col-check" /><col class="splan-col-chevron" /><col class="splan-col-coverage" /><col class="splan-col-kind" /><col class="splan-col-image" /><col class="splan-col-serial" /><col class="splan-col-nickname" /><col class="splan-col-action" /></colgroup><thead><tr><th></th><th></th><th>Coverage</th><th></th><th></th><th>Serial number</th><th>Nickname</th><th>Action</th></tr></thead><tbody>
-                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select Essential Service Plan" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Essential Service Plan - 0040111111</strong></td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select instruments with no service plan" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Instruments with no service plan</strong></td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--system"><td><input type="checkbox" aria-label="Select System" data-splan-check /></td><td></td><td>—</td><td><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /><img src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="" /></td><td></td><td><button type="button" data-splan-action="System">System</button></td><td>Apline</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-splan-action="1009996">1009996</button></td><td>Detector-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-splan-action="1009999">1009999</button></td><td>Column-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-splan-action="1009998">1009998</button></td><td>Sampler-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-splan-action="1009997">1009997</button></td><td>Pump-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr class="splan-row--child splan-row--last"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><span class="splan-branch" aria-hidden="true">↳</span></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-splan-action="TSQ-Z-12346">TSQ-Z-12346</button></td><td>TSQ-0</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
-                    <tr><td><input type="checkbox" aria-label="Select TSQ-Z-12347" data-splan-check /></td><td></td><td><span class="splan-status splan-status--bad">Coverage expired</span></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-splan-action="TSQ-Z-12347">TSQ-Z-12347</button></td><td>TSQ-1</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select Essential Service Plan" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Essential Service Plan - 0040111111</strong></td><td class="splan-final-cell"><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--group"><td><input type="checkbox" aria-label="Select instruments with no service plan" data-splan-check /></td><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Instruments with no service plan</strong></td><td class="splan-final-cell"><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--system"><td><input type="checkbox" aria-label="Select System" data-splan-check /></td><td></td><td>—</td><td><img class="splan-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td class="splan-lock-cell"><span class="splan-lock-target"><img class="splan-lock-icon" src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /></span></td><td><button type="button" data-splan-action="System">System</button></td><td>Apline</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td><button type="button" data-splan-action="1009996">1009996</button></td><td>Detector-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td><button type="button" data-splan-action="1009999">1009999</button></td><td>Column-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td><button type="button" data-splan-action="1009998">1009998</button></td><td>Sampler-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td><button type="button" data-splan-action="1009997">1009997</button></td><td>Pump-2B</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr class="splan-row--child splan-row--last"><td></td><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><button type="button" data-splan-action="TSQ-Z-12346">TSQ-Z-12346</button></td><td>TSQ-0</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
+                    <tr><td><input type="checkbox" aria-label="Select TSQ-Z-12347" data-splan-check /></td><td></td><td><span class="splan-status splan-status--bad">Coverage expired</span></td><td><img class="splan-instrument-icon" src="assets/instruments/tsq.png" alt="" /></td><td></td><td><button type="button" data-splan-action="TSQ-Z-12347">TSQ-Z-12347</button></td><td>TSQ-1</td><td><button type="button" data-route="edit-spc">Edit contact</button></td></tr>
                   </tbody></table>
                 </div>
               </section>
+            </section>
+          </main>
+          <div data-footer-mount></div>
+        </div></div>
+      </section>
+    </template>
+
+    <template id="contact-page-native-template">
+      <section class="screen screen--contact-page" aria-label="Service plan contact detail">
+        <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>Service plan contact detail</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+        <div class="mi-stage"><div class="mi-shell contact-shell">
+          <div data-topbar-sc-mount></div>
+          <div data-platform-sidebar-mount></div>
+          <main class="platform-page-body mi-main contact-main">
+            <section class="mi-titlebar contact-titlebar"><h1>Service plan contacts</h1></section>
+            <section class="contact-content">
+              <header class="contact-heading">
+                <div>
+                  <nav class="contact-breadcrumb" aria-label="Breadcrumb"><button type="button" data-route="service-plan-contacts">Service plan contacts</button><img src="assets/icons/directions/chevron%20right/size=16px,%20style=mono.svg" alt="" /><strong>sebastien.martin@companyname.com</strong></nav>
+                  <p>Instruments with Sebastien Martin as the service plan contact</p>
+                </div>
+                <button class="mi-button contact-edit" type="button" data-route="edit-spc"><img src="assets/icons/actions/edit alt/Size=16px, Style=Mono.svg" alt="" />Edit contact</button>
+              </header>
+              <table class="contact-table">
+                <colgroup><col class="contact-col-toggle" /><col class="contact-col-coverage" /><col class="contact-col-kind" /><col class="contact-col-image" /><col class="contact-col-serial" /><col class="contact-col-nickname" /></colgroup>
+                <thead><tr><th></th><th>Coverage</th><th></th><th></th><th>Serial number</th><th>Nickname</th></tr></thead>
+                <tbody>
+                  <tr class="contact-row--group"><td><img src="assets/icons/directions/chevron up/size=16px, style=mono.svg" alt="" /></td><td colspan="5"><strong>Instruments with no service plan</strong></td></tr>
+                  <tr class="contact-row--system"><td></td><td>&mdash;</td><td><img src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /><img src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="" /></td><td></td><td>System</td><td>Alpine</td></tr>
+                  <tr class="contact-row--child"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="contact-table__arrow" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td>1009996</td><td>Detector-2B</td></tr>
+                  <tr class="contact-row--child"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="contact-table__arrow" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td>1009999</td><td>Column-2B</td></tr>
+                  <tr class="contact-row--child"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="contact-table__arrow" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td>1009998</td><td>Sampler-2B</td></tr>
+                  <tr class="contact-row--child"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="contact-table__arrow" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td>1009997</td><td>Pump-2B</td></tr>
+                  <tr class="contact-row--child contact-row--last"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img class="contact-table__arrow" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td>TSQ-Z-12346</td><td>TSQ-0</td></tr>
+                </tbody>
+              </table>
             </section>
           </main>
           <div data-footer-mount></div>
@@ -673,22 +971,22 @@
               <h1>Edit service plan contact</h1>
             </div>
 
-            <section class="spc-stepper" aria-label="Edit service plan contact progress">
-              <div class="spc-step is-current">
+            <section class="spc-stepper" data-spc-current-step="1" aria-label="Edit service plan contact progress">
+              <div class="spc-step is-current" data-spc-step="1" aria-current="step">
                 <span class="spc-step__number">1</span>
                 <strong>Select instruments</strong>
               </div>
-              <div class="spc-step">
+              <div class="spc-step" data-spc-step="2">
                 <span class="spc-step__number">2</span>
                 <span>Edit service plan contact</span>
               </div>
-              <div class="spc-step">
+              <div class="spc-step" data-spc-step="3">
                 <span class="spc-step__number">3</span>
                 <span>Review and confirm</span>
               </div>
             </section>
 
-            <section class="spc-card" aria-labelledby="select-instruments-title">
+            <section class="spc-card" data-spc-panel="1" aria-labelledby="select-instruments-title">
               <div class="spc-card__intro">
                 <div>
                   <h2 id="select-instruments-title">Select Instrument(s)</h2>
@@ -708,7 +1006,7 @@
               <label class="spc-search">
                 <span class="sr-only">Search instruments</span>
                 <input type="search" placeholder="Search by service plan, instrument serial number and nickname" />
-                <span class="spc-search__icon" aria-hidden="true"></span>
+                <img class="spc-search__icon" src="assets/icons/actions/search/size=24px,%20style=mono.svg" alt="" />
               </label>
 
               <button class="spc-select-all" type="button">Select all 240 instruments</button>
@@ -740,25 +1038,25 @@
                   <tbody>
                     <tr class="spc-row spc-row--group">
                       <td><input type="checkbox" checked aria-label="Select Essential Service Plan - 0040111111" /></td>
-                      <td><span class="spc-chevron spc-chevron--right" aria-hidden="true"></span></td>
+                      <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron right/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Essential Service Plan - 0040111111</strong></td>
                       <td>-</td>
                     </tr>
                     <tr class="spc-row spc-row--group">
                       <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040222222" /></td>
-                      <td><span class="spc-chevron spc-chevron--right" aria-hidden="true"></span></td>
+                      <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron right/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Essential Service Plan - 0040222222</strong></td>
                       <td>-</td>
                     </tr>
                     <tr class="spc-row spc-row--group">
                       <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040333333" /></td>
-                      <td><span class="spc-chevron spc-chevron--right" aria-hidden="true"></span></td>
+                      <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron right/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Essential Service Plan - 0040333333</strong></td>
                       <td>-</td>
                     </tr>
                     <tr class="spc-row spc-row--group">
                       <td><input type="checkbox" aria-label="Select Instruments with no service plan" /></td>
-                      <td><span class="spc-chevron spc-chevron--down" aria-hidden="true"></span></td>
+                      <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron down/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Instruments with no service plan</strong></td>
                       <td></td>
                     </tr>
@@ -766,8 +1064,8 @@
                       <td><input type="checkbox" aria-label="Select Alpine system" /></td>
                       <td></td>
                       <td>-</td>
-                      <td><span class="spc-system-icon" aria-hidden="true"></span><span class="spc-lock" aria-hidden="true"></span></td>
-                      <td></td>
+                      <td><img class="spc-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td>
+                      <td><img class="spc-lock-icon" src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /></td>
                       <td>System</td>
                       <td>Alpine</td>
                       <td>-</td>
@@ -776,8 +1074,8 @@
                       <td></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
-                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
-                      <td><span class="spc-thumb spc-thumb--detector" aria-hidden="true"></span></td>
+                      <td><img class="spc-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/vanquish-detector.png" alt="" /></td>
                       <td>1009996</td>
                       <td>Detector-2B</td>
                       <td>-</td>
@@ -786,8 +1084,8 @@
                       <td></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
-                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
-                      <td><span class="spc-thumb spc-thumb--column" aria-hidden="true"></span></td>
+                      <td><img class="spc-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/vanquish-column.png" alt="" /></td>
                       <td>1009999</td>
                       <td>Column-2B</td>
                       <td>-</td>
@@ -796,8 +1094,8 @@
                       <td></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
-                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
-                      <td><span class="spc-thumb spc-thumb--sampler" aria-hidden="true"></span></td>
+                      <td><img class="spc-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/vanquish-sampler.png" alt="" /></td>
                       <td>1009998</td>
                       <td>Sampler-2B</td>
                       <td>-</td>
@@ -806,8 +1104,8 @@
                       <td></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
-                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
-                      <td><span class="spc-thumb spc-thumb--pump" aria-hidden="true"></span></td>
+                      <td><img class="spc-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/vanquish-pump.png" alt="" /></td>
                       <td>1009997</td>
                       <td>Pump-2B</td>
                       <td>-</td>
@@ -816,8 +1114,8 @@
                       <td></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--ok">Under warranty</span></td>
-                      <td><span class="spc-child-mark" aria-hidden="true"></span></td>
-                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
+                      <td><img class="spc-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/tsq.png" alt="" /></td>
                       <td>TSQ-Z-12346</td>
                       <td>TSQ-0</td>
                       <td>-</td>
@@ -826,8 +1124,8 @@
                       <td><input type="checkbox" aria-label="Select TSQ-1 expired coverage" /></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--bad">Coverage expired</span></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/tsq.png" alt="" /></td>
                       <td></td>
-                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
                       <td>TSQ-Z-12347</td>
                       <td>TSQ-1</td>
                       <td>-</td>
@@ -836,8 +1134,8 @@
                       <td><input type="checkbox" aria-label="Select TSQ-1 expired coverage duplicate" /></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--bad">Coveragge expired</span></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/tsq.png" alt="" /></td>
                       <td></td>
-                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
                       <td>TSQ-Z-12347</td>
                       <td>TSQ-1</td>
                       <td>-</td>
@@ -846,8 +1144,8 @@
                       <td><input type="checkbox" aria-label="Select TSQ-2 warranty expired" /></td>
                       <td></td>
                       <td><span class="spc-pill spc-pill--bad">Warranty expired</span></td>
-                      <td><span class="spc-lock" aria-hidden="true"></span></td>
-                      <td><span class="spc-thumb spc-thumb--tsq" aria-hidden="true"></span></td>
+                      <td><img class="spc-instrument-image" src="assets/instruments/tsq.png" alt="" /></td>
+                      <td><img class="spc-lock-icon" src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /></td>
                       <td>TSQ-Z-12348</td>
                       <td>TSQ-2</td>
                       <td>-</td>
@@ -879,9 +1177,386 @@
               </div>
             </section>
 
+            <section class="spc-contact-step" data-spc-panel="2" aria-labelledby="edit-service-plan-contact-title" hidden>
+              <header class="spc-contact-step__intro">
+                <h2 id="edit-service-plan-contact-title">Edit service plan contact</h2>
+                <p>
+                  Enter the contact information of the person you want to designate as a service plan contact. This user will be the contact
+                  for any service plan notifications or to renew your plan.
+                </p>
+              </header>
+
+              <section class="spc-contact-card" aria-label="Service plan contact details">
+                <div class="spc-warning" role="status">
+                  <img src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="" />
+                  <p><strong>Warning:</strong> This will override the existing service plan contact(s).</p>
+                </div>
+
+                <fieldset class="spc-contact-options">
+                  <legend class="sr-only">Assign service plan contact</legend>
+                  <label class="spc-radio">
+                    <input type="radio" name="spc-contact-assignment" value="myself" checked data-spc-contact-assignment />
+                    <span>Assign myself</span>
+                  </label>
+                  <label class="spc-radio">
+                    <input type="radio" name="spc-contact-assignment" value="someone-else" data-spc-contact-assignment />
+                    <span>Assign someone else</span>
+                  </label>
+                </fieldset>
+
+                <label class="spc-contact-email">
+                  <span>Contact email<sup>*</sup></span>
+                  <input type="email" value="sebastien.martin@companyname.com" data-spc-contact-email readonly />
+                </label>
+
+                <button class="spc-selected-toggle" type="button" aria-expanded="false" data-spc-selected-toggle>
+                  <img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" />
+                  <span data-spc-selected-label>Show selected instrument(s)</span>
+                </button>
+
+                <div class="spc-selected-panel" data-spc-selected-panel hidden>
+                  <table class="spc-selected-table" aria-label="Selected instruments">
+                    <colgroup>
+                      <col class="spc-selected-col-plan-type" />
+                      <col class="spc-selected-col-plan-number" />
+                      <col class="spc-selected-col-kind" />
+                      <col class="spc-selected-col-image" />
+                      <col class="spc-selected-col-serial" />
+                      <col class="spc-selected-col-nickname" />
+                      <col class="spc-selected-col-contact" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th><span>Plan Type</span><span class="spc-selected-sort" aria-hidden="true"></span></th>
+                        <th><span>Plan number</span><span class="spc-selected-sort" aria-hidden="true"></span></th>
+                        <th></th>
+                        <th></th>
+                        <th>Serial number</th>
+                        <th>Nickname</th>
+                        <th><span>Service plan contact(s)</span><span class="spc-selected-sort" aria-hidden="true"></span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12347</td>
+                        <td>TSQ-1</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12348</td>
+                        <td>TSQ-2</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td>
+                        <td></td>
+                        <td>System</td>
+                        <td>Alpine</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-detector.png" alt="" /></td>
+                        <td>1009996</td>
+                        <td>Detector-2B</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-column.png" alt="" /></td>
+                        <td>1009999</td>
+                        <td>Column-2B</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-sampler.png" alt="" /></td>
+                        <td>1009998</td>
+                        <td>Sampler-2B</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr class="spc-selected-row--child spc-selected-row--last-child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-pump.png" alt="" /></td>
+                        <td>10099967</td>
+                        <td>Pump-2B</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12346</td>
+                        <td>TSQ-0</td>
+                        <td>jon.doe@company.com</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </section>
+
+            <section class="spc-review-step" data-spc-panel="3" aria-labelledby="review-service-plan-contact-title" hidden>
+              <header class="spc-review-step__intro">
+                <h2 id="review-service-plan-contact-title">Review and confirm</h2>
+                <p>Review the information and use the back button if any edits are needed. Click the submit button to complete the process.</p>
+              </header>
+
+              <div class="spc-warning spc-review-confirmation-notice" role="status" data-spc-contact-confirmation-notice hidden>
+                <img src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="" />
+                <p>
+                  <strong>Contact must confirm:</strong> Services Central will send an email to the contact asking them to login and confirm
+                  they are the service plan contact.
+                </p>
+              </div>
+
+              <section class="spc-review-contact-card" aria-labelledby="review-contact-title">
+                <h3 id="review-contact-title">Service plan contact</h3>
+                <dl>
+                  <dt>Email</dt>
+                  <dd>sebastien.martin@companyname.com</dd>
+                </dl>
+              </section>
+
+              <section class="spc-review-selected-card" aria-label="Selected instruments review">
+                <button class="spc-selected-toggle spc-selected-toggle--review" type="button" aria-expanded="true" data-spc-review-toggle>
+                  <img src="assets/icons/directions/chevron up/size=24px, style=mono.svg" alt="" />
+                  <span data-spc-review-label>Hide selected instrument(s)</span>
+                </button>
+
+                <div class="spc-selected-panel spc-review-selected-panel" data-spc-review-panel>
+                  <table class="spc-selected-table spc-review-table" aria-label="Selected instruments review">
+                    <colgroup>
+                      <col class="spc-review-col-plan-type" />
+                      <col class="spc-review-col-plan-number" />
+                      <col class="spc-review-col-kind" />
+                      <col class="spc-review-col-image" />
+                      <col class="spc-review-col-serial" />
+                      <col class="spc-review-col-nickname" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>Plan Type</th>
+                        <th>Plan number</th>
+                        <th></th>
+                        <th></th>
+                        <th>Serial number</th>
+                        <th>Nickname</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12347</td>
+                        <td>TSQ-1</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12348</td>
+                        <td>TSQ-2</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td>
+                        <td></td>
+                        <td>System</td>
+                        <td>Alpine 11</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-detector.png" alt="" /></td>
+                        <td>1009996</td>
+                        <td>Detector-2B</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-column.png" alt="" /></td>
+                        <td>1009999</td>
+                        <td>Column-2B</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-sampler.png" alt="" /></td>
+                        <td>1009998</td>
+                        <td>Sampler-2B</td>
+                      </tr>
+                      <tr class="spc-selected-row--child spc-selected-row--last-child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-pump.png" alt="" /></td>
+                        <td>10099967</td>
+                        <td>Pump-2B</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12346</td>
+                        <td>TSQ-0</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </section>
+
+            <section class="spc-summary-page" aria-labelledby="spc-summary-title" data-spc-summary hidden>
+              <div class="spc-success" role="status">
+                <img src="assets/icons/notifications/success/size=24px,%20style=bold.svg" alt="" />
+                <p><strong>Success:</strong> Invitation successfully sent. Waiting for the user to confirm.</p>
+              </div>
+
+              <h2 id="spc-summary-title">Summary</h2>
+
+              <section class="spc-review-contact-card spc-summary-contact-card" aria-labelledby="spc-summary-contact-title">
+                <h3 id="spc-summary-contact-title">Service plan contact</h3>
+                <dl>
+                  <dt>Email</dt>
+                  <dd>sebastien.martin@companyname.com</dd>
+                </dl>
+                <button class="spc-button spc-button--secondary spc-summary-review-button" type="button" data-route="service-plan-contacts">
+                  Review service plan contacts
+                </button>
+              </section>
+
+              <section class="spc-review-selected-card spc-summary-selected-card" aria-label="Selected instruments summary">
+                <button class="spc-selected-toggle spc-selected-toggle--review spc-selected-toggle--summary" type="button" aria-expanded="true" data-spc-summary-toggle>
+                  <img src="assets/icons/directions/chevron up/size=24px, style=mono.svg" alt="" />
+                  <span data-spc-summary-label>Hide selected instrument(s)</span>
+                </button>
+
+                <div class="spc-selected-panel spc-review-selected-panel" data-spc-summary-panel>
+                  <table class="spc-selected-table spc-review-table" aria-label="Selected instruments summary">
+                    <colgroup>
+                      <col class="spc-review-col-plan-type" />
+                      <col class="spc-review-col-plan-number" />
+                      <col class="spc-review-col-kind" />
+                      <col class="spc-review-col-image" />
+                      <col class="spc-review-col-serial" />
+                      <col class="spc-review-col-nickname" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>Plan Type</th>
+                        <th>Plan number</th>
+                        <th></th>
+                        <th></th>
+                        <th>Serial number</th>
+                        <th>Nickname</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12347</td>
+                        <td>TSQ-1</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12348</td>
+                        <td>TSQ-2</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td>
+                        <td></td>
+                        <td>System</td>
+                        <td>Alpine 11</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-detector.png" alt="" /></td>
+                        <td>1009996</td>
+                        <td>Detector-2B</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-column.png" alt="" /></td>
+                        <td>1009999</td>
+                        <td>Column-2B</td>
+                      </tr>
+                      <tr class="spc-selected-row--child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-sampler.png" alt="" /></td>
+                        <td>1009998</td>
+                        <td>Sampler-2B</td>
+                      </tr>
+                      <tr class="spc-selected-row--child spc-selected-row--last-child">
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td><img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" /></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/vanquish-pump.png" alt="" /></td>
+                        <td>10099967</td>
+                        <td>Pump-2B</td>
+                      </tr>
+                      <tr>
+                        <td>Essential Service Plan</td>
+                        <td>MAIN353422</td>
+                        <td></td>
+                        <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
+                        <td>TSQ-Z-12346</td>
+                        <td>TSQ-0</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </section>
+
             <div class="spc-actionbar">
-              <button class="spc-button spc-button--secondary" type="button" data-route="service-plan-contacts">Cancel</button>
-              <button class="spc-button spc-button--primary" type="button" data-spc-continue>Continue</button>
+              <button class="spc-button spc-button--secondary" type="button" data-route="service-plan-contacts" data-spc-cancel>Cancel</button>
+              <div class="spc-actionbar__right">
+                <button class="spc-button spc-button--secondary" type="button" data-spc-back hidden>Back</button>
+                <button class="spc-button spc-button--primary" type="button" data-spc-continue>Continue</button>
+                <button class="spc-button spc-button--secondary spc-summary-close" type="button" data-route="service-plan-contacts" data-spc-close hidden>Close</button>
+              </div>
             </div>
 
               </main>
@@ -906,21 +1581,7 @@
       <div class="flows-grid" data-flows-grid></div>
     </dialog>
 
-    <dialog id="installation-pending-dialog" class="installation-pending-dialog" aria-labelledby="installation-pending-title" aria-describedby="installation-pending-description">
-      <div class="installation-pending-modal">
-        <section class="installation-pending-modal__top">
-          <header class="installation-pending-modal__title">
-            <div><h2 id="installation-pending-title">Action(s) pending</h2><button type="button" data-installation-pending-close aria-label="Close pending actions"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></div>
-            <p id="installation-pending-description">You have important pending actions to ensure your delivery and installation stay on track.</p>
-          </header>
-          <div class="installation-pending-modal__actions">
-            <div class="installation-pending-modal__row"><img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span></div>
-            <button class="installation-pending-modal__row" type="button" data-installation-pending-instruments><img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>3456789</strong>. Review your instruments in <b>My instruments</b> tab.</span></button>
-          </div>
-        </section>
-        <footer class="installation-pending-modal__footer"><button class="installation-pending-modal__button installation-pending-modal__button--secondary" type="button" data-installation-pending-close>Cancel</button><button class="installation-pending-modal__button installation-pending-modal__button--primary" type="button" data-installation-pending-continue>Go to installation page</button></footer>
-      </div>
-    </dialog>
+    <div data-modal-mount="installation-pending"></div>
 
     <dialog id="add-user-order-dialog" class="add-user-order-dialog" aria-labelledby="add-user-order-title" aria-describedby="add-user-order-description">
       <form class="add-user-order-modal" method="dialog" data-add-user-form tabindex="-1">
@@ -1178,9 +1839,12 @@
     <script src="topbar-sc.js?v=20260811-topbar-sc"></script>
     <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
-    <script src="platform-action-bar.js?v=20260814-cancel-origin-v2"></script>
+    <script src="platform-action-bar.js?v=20260819-submitted-summary-close"></script>
+    <script src="ticket-step-viewer.js?v=20260819-step-viewer-spacing"></script>
     <script src="footer.js?v=20260812-footer"></script>
-    <script src="modal.js?v=20260819-shared-dashboard-cards"></script>
-    <script src="app.js?v=20260819-shared-dashboard-cards"></script>
+    <script src="modal.js?v=20260818-modal-component"></script>
+    <script src="date-range-picker.js?v=20260814-support-history"></script>
+    <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
+    <script src="app.js?v=20260819-summary-close-all"></script>
   </body>
 </html>

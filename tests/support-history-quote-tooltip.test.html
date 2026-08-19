@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support History quote tooltip regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1280px; height: 720px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?supportHistoryQuoteTooltipHarness=6#support-history" title="Support History fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      frame.addEventListener("load", async () => {
+        try {
+          const doc = frame.contentDocument;
+          const trigger = doc.querySelector("[data-sh-quote-tip]");
+          assert(trigger, "quote row renders a tooltip trigger");
+          const tooltip = doc.getElementById(trigger.getAttribute("aria-describedby"));
+          assert(tooltip?.getAttribute("role") === "tooltip", "trigger references a semantic tooltip");
+          assert(tooltip.textContent.trim() === "Quote ready", "tooltip uses the Figma copy");
+          assert(doc.querySelectorAll("[data-sh-quote-tip]").length === 1, "only the quote indicator receives a tooltip");
+          assert(tooltip.hidden, "tooltip starts hidden");
+
+          trigger.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+          await nextFrame();
+          assert(!tooltip.hidden, "hover opens the tooltip");
+          const tooltipRect = tooltip.getBoundingClientRect();
+          const triggerRect = trigger.getBoundingClientRect();
+          assert(tooltipRect.width < 193 && tooltipRect.height === 54, "quote tooltip width fits its text instead of using the systems width");
+          assert(getComputedStyle(tooltip, "::after").borderTopWidth === "8px", "quote tooltip uses the shared bottom pointer");
+          assert(getComputedStyle(tooltip).zIndex === "30", "only the quote tooltip rises above the side navigation");
+          assert(tooltipRect.bottom <= triggerRect.top, "tooltip is anchored above the quote icon");
+          const tableWrap = doc.querySelector(".sh-table-wrap");
+          assert(getComputedStyle(tableWrap).overflow === "visible", "tooltip is not clipped by the table wrapper");
+          assert(getComputedStyle(tableWrap).zIndex === "auto", "active tooltip does not raise the table layer");
+          assert(getComputedStyle(doc.querySelector(".sh-main")).zIndex === "auto", "tooltip does not raise the entire main content layer");
+
+          trigger.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: doc.body }));
+          await nextFrame();
+          assert(tooltip.hidden, "pointer leave closes the tooltip");
+
+          trigger.focus();
+          await nextFrame();
+          assert(!tooltip.hidden, "keyboard focus opens the tooltip");
+          trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await nextFrame();
+          assert(tooltip.hidden, "Escape closes the tooltip");
+
+          trigger.focus();
+          trigger.blur();
+          await nextFrame();
+          assert(tooltip.hidden, "blur closes the tooltip");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>
