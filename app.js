@@ -15,6 +15,7 @@ const installationStatusScenariosDialog = document.querySelector("#installation-
 const installationActivityDialog = document.querySelector("#installation-activity-dialog");
 const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
+const CONSUMABLES_SUPPORT_PORTAL_IMAGE = "assets/consumables/support-portal-login.png";
 const DEFAULT_INSTALLATION_USER_EMAIL = "holly.hartman@company.com";
 let toastTimer;
 let preferredDeliveryDatesSubmitted = false;
@@ -179,6 +180,7 @@ function wireWhiteGloveTooltips(scope = document) {
 }
 
 const CUSTOM_ROUTES = {
+  "contact-page": "Service plan contact detail",
   "edit-spc": "Edit service plan contact",
   "installation-faqs": "Installation frequently asked questions",
   "installations-progress": "Installations — order 7659430547",
@@ -210,7 +212,7 @@ const ROUTES = {
   "open-support-ticket-review": { title: "Open a support ticket — review and submit", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 1460, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
-  education: { title: "Browse education", src: "assets/flows/education.png", width: 1440, height: 1460, kind: "external" },
+  education: { title: "Browse education", src: "assets/flows/browser-education.png", width: 2878, height: 1826, kind: "external" },
   "ticket-detail": { title: "Support ticket detail", src: "assets/flows/ticket-detail.png", width: 1456, height: 2069, kind: "app" },
   "tech-support-summary": { title: "Tech support summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "service-requests-summary": { title: "Service request summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
@@ -251,6 +253,7 @@ const FLOW_MENU = [
   ["Installation support", "installation-support"],
   ["Support history", "support-history"],
   ["Service plan contacts", "service-plan-contacts"],
+  ["Service plan contact detail", "contact-page"],
   ["Edit service plan contact", "edit-spc"],
   ["Request support", "request-support"],
   ["Request PM scheduling", "request-pm"],
@@ -282,7 +285,7 @@ const DASHBOARD_HOTSPOTS = [
   { label: "Search instruments, groups and tickets", route: "my-instruments", x: 84, y: 329, w: 1272, h: 52 },
   { label: "Order consumables", route: "consumables", x: 88, y: 452, w: 304, h: 128 },
   { label: "Browse education", route: "education", x: 426, y: 452, w: 304, h: 128 },
-  { label: "Request service plan", route: "service-plan-approval", x: 764, y: 452, w: 304, h: 128 },
+  { label: "Request service plan", x: 764, y: 452, w: 304, h: 128 },
   { label: "Request maintenance or support", route: "request-support", x: 1102, y: 452, w: 304, h: 128 },
   { label: "Support request history", route: "support-history", x: 365, y: 870, w: 235, h: 42 },
   { label: "View all my instruments", route: "my-instruments", x: 360, y: 1846, w: 240, h: 42 },
@@ -1020,11 +1023,84 @@ function wireSignIn() {
   app.querySelector("[data-help]").addEventListener("click", () => helpDialog.showModal());
 }
 
+const DASHBOARD_SORT_ICON = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
+const DASHBOARD_SYSTEM_ICON = "assets/icons/science/system/size=24px,%20style=mono.svg";
+const DASHBOARD_VISIT_ICON = "assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg";
+const DASHBOARD_DOWNLOAD_ICON = "assets/icons/actions/download/Size=16px, Style=Mono.svg";
+
+const DASHBOARD_CLOSED_TICKETS = [
+  { ticket: "446532405", closed: "30 Jan 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12346", model: "VQF0000DET", image: "tsq.png", highlighted: true, report: true, download: true },
+  { ticket: "446532404", closed: "29 Feb 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12345", model: "VQH0000VEN", image: "tsq.png", highlighted: true, report: true, download: true },
+  { ticket: "446532403", closed: "28 Mar 2019", subject: "Need support for unknown instrument error", serial: "1009997", model: "VQF00SAMPL", image: "vanquish-column.png", report: true },
+  { ticket: "446532402", closed: "27 Apr 2019", subject: "Repair 0000123459 instrument parts", serial: "1009996", model: "VQF000PUMP", image: "vanquish-pump.png", system: true },
+  { ticket: "446532401", closed: "26 May 2019", subject: "Repair 0000123459 instrument parts", serial: "1009999", model: "MSTSQQUANTISPLUS", image: "vanquish-pump.png", system: true },
+  { ticket: "446532400", closed: "25 Jun 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12347", model: "MSTSQQUANTISPLUS", image: "tsq.png", report: true },
+  { ticket: "446532399", closed: "24 Jul 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", report: true, download: true },
+  { ticket: "446532398", closed: "23 Aug 2019", subject: "Need support for unknown instrument error", serial: "SN98355W", model: "MSTSQQUANTISPLUS", image: "q-exactive.png" },
+];
+
+const DASHBOARD_ONSITE_VISITS = [
+  { scheduled: "04 Mar 2024", ticket: "441582736", type: "PM (Contract)", subject: "Repair 0000123459 instrument parts", serial: "1009998", model: "VQF000PUMP", image: "vanquish-sampler.png", system: true, highlighted: true },
+  { scheduled: "05 Mar 2024", ticket: "441582735", type: "Service Request", subject: "Repair 0000123459 instrument parts", serial: "1009997", model: "MSTSQQUANTISPLUS", image: "vanquish-pump.png", system: true, highlighted: true },
+  { scheduled: "06 Mar 2024", ticket: "441582734", type: "Service Request", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12345", model: "MSTSQQUANTISPLUS", image: "tsq.png", highlighted: true },
+  { scheduled: "07 Mar 2024", ticket: "441582733", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12347", model: "MSTSQQUANTISPLUS", image: "tsq.png" },
+  { scheduled: "08 Mar 2024", ticket: "441582732", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", system: true },
+];
+
+function dashboardTableHeader(label) {
+  return `<th>${label} ${DASHBOARD_SORT_ICON}</th>`;
+}
+
+function dashboardSerialCell(ticket) {
+  const systemIcon = ticket.system ? `<img class="db-ticket-system-icon" src="${DASHBOARD_SYSTEM_ICON}" alt="" />` : "";
+  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#instrument-access">${ticket.serial}</a></span></td>`;
+}
+
+function dashboardReportCell(ticket) {
+  if (!ticket.report && !ticket.download) return "<td></td>";
+  const report = ticket.report ? '<button class="db-report-button" type="button">View report</button>' : "";
+  const download = ticket.download ? `<button class="db-download-button" type="button" aria-label="Download report"><img src="${DASHBOARD_DOWNLOAD_ICON}" alt="" /></button>` : "";
+  return `<td><div class="db-ticket-actions">${report}${download}</div></td>`;
+}
+
+function dashboardClosedTicketRow(ticket) {
+  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#ticket-detail">${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
+}
+
+function renderDashboardClosedTicketTable() {
+  return `<table class="db-table db-table--closed"><colgroup><col class="db-col-closed-status" /><col class="db-col-closed-ticket" /><col class="db-col-closed-date" /><col class="db-col-closed-subject" /><col class="db-col-system" /><col class="db-col-closed-serial" /><col class="db-col-closed-model" /><col class="db-col-closed-actions" /></colgroup><thead><tr>${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Closed")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}<th>Actions</th></tr></thead><tbody>${DASHBOARD_CLOSED_TICKETS.map(dashboardClosedTicketRow).join("")}</tbody></table>`;
+}
+
+function dashboardVisitRow(visit) {
+  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+}
+
+function renderDashboardVisitsTable() {
+  return `<table class="db-table db-table--visits"><colgroup><col class="db-col-visit-date" /><col class="db-col-visit-status" /><col class="db-col-visit-ticket" /><col class="db-col-visit-type" /><col class="db-col-visit-subject" /><col class="db-col-system" /><col class="db-col-visit-serial" /><col class="db-col-visit-model" /></colgroup><thead><tr>${dashboardTableHeader("Scheduled date")}${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Ticket type")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}</tr></thead><tbody>${DASHBOARD_ONSITE_VISITS.map(dashboardVisitRow).join("")}</tbody></table>`;
+}
+
 function wireDashboard() {
   app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
+  const tableWrap = app.querySelector("[data-db-ticket-table]");
+  const pagination = app.querySelector("[data-db-ticket-pagination]");
+  const filter = app.querySelector("[data-db-ticket-filter]");
+  const ticketCount = app.querySelector("[data-ticket-count]");
+  const activeTableMarkup = tableWrap?.innerHTML || "";
+  const ticketTables = {
+    active: { count: "16 active tickets", markup: activeTableMarkup, showFilter: true, showPagination: true },
+    closed: { count: "8 tickets closed within the last 30 days", markup: renderDashboardClosedTicketTable() },
+    visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
+  };
+  const showTicketTable = (state) => {
+    const table = ticketTables[state] || ticketTables.active;
+    if (ticketCount) ticketCount.textContent = table.count;
+    if (tableWrap) tableWrap.innerHTML = table.markup;
+    if (filter) filter.hidden = !table.showFilter;
+    if (pagination) pagination.hidden = !table.showPagination;
+  };
   app.querySelectorAll(".db-tabs [role='tab']").forEach((tab) => {
     tab.addEventListener("click", () => {
       app.querySelectorAll(".db-tabs [role='tab']").forEach((candidate) => {
@@ -1032,13 +1108,7 @@ function wireDashboard() {
         candidate.classList.toggle("is-active", selected);
         candidate.setAttribute("aria-selected", String(selected));
       });
-      const ticketCounts = {
-        active: "16 active tickets",
-        closed: "2 recently closed tickets",
-        visits: "3 upcoming on-site visits",
-      };
-      const ticketCount = app.querySelector("[data-ticket-count]");
-      if (ticketCount) ticketCount.textContent = ticketCounts[tab.dataset.ticketState] || ticketCounts.active;
+      showTicketTable(tab.dataset.ticketState);
     });
   });
   let bannerIndex = 0;
@@ -1142,6 +1212,111 @@ function mountTicketStepViewer(currentStep) {
 }
 
 function wireEditSpc() {
+  const screen = app.querySelector(".screen--spc");
+  const main = app.querySelector(".spc-main");
+  const stepper = app.querySelector(".spc-stepper");
+  const stepElements = [...app.querySelectorAll("[data-spc-step]")];
+  const panels = [...app.querySelectorAll("[data-spc-panel]")];
+  const summaryPage = app.querySelector("[data-spc-summary]");
+  const cancelButton = app.querySelector("[data-spc-cancel]");
+  const continueButton = app.querySelector("[data-spc-continue]");
+  const backButton = app.querySelector("[data-spc-back]");
+  const closeButton = app.querySelector("[data-spc-close]");
+  const contactEmail = app.querySelector("[data-spc-contact-email]");
+  const contactConfirmationNotice = app.querySelector("[data-spc-contact-confirmation-notice]");
+  const selectedToggle = app.querySelector("[data-spc-selected-toggle]");
+  const selectedToggleLabel = app.querySelector("[data-spc-selected-label]");
+  const selectedPanel = app.querySelector("[data-spc-selected-panel]");
+  const reviewToggle = app.querySelector("[data-spc-review-toggle]");
+  const reviewToggleLabel = app.querySelector("[data-spc-review-label]");
+  const reviewPanel = app.querySelector("[data-spc-review-panel]");
+  const summaryToggle = app.querySelector("[data-spc-summary-toggle]");
+  const summaryToggleLabel = app.querySelector("[data-spc-summary-label]");
+  const summaryPanel = app.querySelector("[data-spc-summary-panel]");
+  let currentStep = 1;
+
+  const setStep = (step) => {
+    currentStep = step;
+    screen?.classList.toggle("is-step-two", step === 2);
+    screen?.classList.remove("is-spc-summary");
+    if (summaryPage) {
+      summaryPage.hidden = true;
+    }
+    if (stepper) {
+      stepper.hidden = false;
+    }
+    stepper?.setAttribute("data-spc-current-step", String(step));
+    stepElements.forEach((element) => {
+      const stepNumber = Number(element.dataset.spcStep);
+      const isCurrent = stepNumber === step;
+      const isComplete = stepNumber < step;
+      const marker = element.querySelector(".spc-step__number");
+      element.classList.toggle("is-current", isCurrent);
+      element.classList.toggle("is-complete", isComplete);
+      if (isCurrent) {
+        element.setAttribute("aria-current", "step");
+      } else {
+        element.removeAttribute("aria-current");
+      }
+      if (marker) {
+        marker.textContent = isComplete ? "" : String(stepNumber);
+      }
+    });
+    panels.forEach((panel) => {
+      panel.hidden = Number(panel.dataset.spcPanel) !== step;
+    });
+    if (backButton) {
+      backButton.hidden = step === 1;
+    }
+    if (cancelButton) {
+      cancelButton.hidden = false;
+    }
+    if (continueButton) {
+      continueButton.hidden = false;
+      continueButton.textContent = step === 3 ? "Confirm" : "Continue";
+    }
+    if (closeButton) {
+      closeButton.hidden = true;
+    }
+    main?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const showSummary = () => {
+    currentStep = 4;
+    screen?.classList.remove("is-step-two");
+    screen?.classList.add("is-spc-summary");
+    if (stepper) {
+      stepper.hidden = true;
+    }
+    panels.forEach((panel) => {
+      panel.hidden = true;
+    });
+    if (summaryPage) {
+      summaryPage.hidden = false;
+    }
+    if (cancelButton) {
+      cancelButton.hidden = true;
+    }
+    if (backButton) {
+      backButton.hidden = true;
+    }
+    if (continueButton) {
+      continueButton.hidden = true;
+    }
+    if (closeButton) {
+      closeButton.hidden = false;
+    }
+    main?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const isAssigningSomeoneElse = () => app.querySelector("[data-spc-contact-assignment][value='someone-else']")?.checked;
+
+  const updateContactConfirmationNotice = () => {
+    if (contactConfirmationNotice) {
+      contactConfirmationNotice.hidden = !isAssigningSomeoneElse();
+    }
+  };
+
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1151,9 +1326,81 @@ function wireEditSpc() {
       button.classList.add("is-selected");
     });
   });
-  app.querySelector("[data-spc-continue]").addEventListener("click", () => {
-    showToast("Continue to contact details");
+  app.querySelectorAll("[data-spc-contact-assignment]").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!contactEmail || !radio.checked) return;
+      if (radio.value === "myself") {
+        contactEmail.value = "sebastien.martin@companyname.com";
+        contactEmail.readOnly = true;
+        contactEmail.removeAttribute("placeholder");
+      } else {
+        contactEmail.value = "";
+        contactEmail.readOnly = false;
+        contactEmail.placeholder = "name@companyname.com";
+        contactEmail.focus();
+      }
+      updateContactConfirmationNotice();
+    });
   });
+  selectedToggle?.addEventListener("click", () => {
+    const expanded = selectedToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = selectedToggle.querySelector("img");
+    selectedToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=24px, style=mono.svg`;
+    }
+    if (selectedToggleLabel) {
+      selectedToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (selectedPanel) {
+      selectedPanel.hidden = !nextExpanded;
+    }
+  });
+  reviewToggle?.addEventListener("click", () => {
+    const expanded = reviewToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = reviewToggle.querySelector("img");
+    reviewToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+    }
+    if (reviewToggleLabel) {
+      reviewToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (reviewPanel) {
+      reviewPanel.hidden = !nextExpanded;
+    }
+  });
+  summaryToggle?.addEventListener("click", () => {
+    const expanded = summaryToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = summaryToggle.querySelector("img");
+    summaryToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+    }
+    if (summaryToggleLabel) {
+      summaryToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (summaryPanel) {
+      summaryPanel.hidden = !nextExpanded;
+    }
+  });
+  continueButton?.addEventListener("click", () => {
+    if (currentStep === 1) {
+      setStep(2);
+      return;
+    }
+    if (currentStep === 2) {
+      updateContactConfirmationNotice();
+      setStep(3);
+      return;
+    }
+    showSummary();
+  });
+  backButton?.addEventListener("click", () => setStep(Math.max(1, currentStep - 1)));
+  setStep(1);
 }
 
 function renderEditSpc() {
@@ -2360,11 +2607,15 @@ function wireServicePlanContacts() {
       icon.src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
     });
   });
-  app.querySelector("[data-splan-select-all]").addEventListener("click", (event) => {
-    const checks = [...app.querySelectorAll("[data-splan-check]")];
-    const select = checks.some((check) => !check.checked);
-    checks.forEach((check) => { check.checked = select; });
-    event.currentTarget.textContent = select ? "Clear selection" : "Select all 14 instruments";
+  app.querySelectorAll("[data-splan-select-all]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const group = event.currentTarget.closest("[data-splan-group]");
+      const checks = [...(group || app).querySelectorAll("[data-splan-check]")];
+      const select = checks.some((check) => !check.checked);
+      const total = event.currentTarget.dataset.splanSelectTotal || checks.length;
+      checks.forEach((check) => { check.checked = select; });
+      event.currentTarget.textContent = select ? "Clear selection" : `Select all ${total} instruments`;
+    });
   });
   app.querySelectorAll("[data-splan-action]").forEach((button) => {
     button.addEventListener("click", () => showToast(`${button.dataset.splanAction} selected`));
@@ -2383,10 +2634,74 @@ function renderServicePlanContacts() {
   document.title = "Service plan contacts — Services Central";
 }
 
-function wireConsumables() {
+function wireContactPage() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("service-plan-contacts"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderContactPage() {
+  const template = document.querySelector("#contact-page-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
+  mountPlatformSidebar("service-plan-contacts");
+  mountFooter();
+  wireContactPage();
+  document.title = "Sebastien Martin — Service plan contacts";
+}
+
+function createConsumablesSupportPortalPreference() {
+  const label = document.createElement("label");
+  label.className = "consumables-support-modal__check";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.dataset.consumablesSupportPortalDontShow = "";
+
+  const text = document.createElement("span");
+  text.textContent = "Don't show this again";
+
+  label.append(checkbox, text);
+  return label;
+}
+
+function createConsumablesSupportPortalDialog() {
+  const dialog = window.PlatformModal?.mount('[data-modal-mount="launching-consumables-support-portal"]', {
+    id: "launching-consumables-support-portal",
+    title: "Launching Consumables Support Portal",
+    description: "The consumables support portal is separate from Services Central with separate login credentials. A new page will be launched where you will be required to login.",
+    size: "sm",
+    className: "consumables-support-modal",
+    bodyClassName: "consumables-support-modal__body",
+    footerClassName: "consumables-support-modal__footer",
+    closeButton: false,
+    closeOnBackdrop: false,
+    actions: [
+      {
+        label: "Got it",
+        variant: "primary",
+        action: "launch-consumables-support-portal",
+      },
+    ],
+  });
+
+  if (!dialog) return undefined;
+
+  dialog.querySelector(".modal__footer")?.prepend(createConsumablesSupportPortalPreference());
+  dialog.addEventListener("cancel", (event) => event.preventDefault());
+  dialog.addEventListener("modal:action", (event) => {
+    if (event.detail.action !== "launch-consumables-support-portal") return;
+    window.PlatformModal.close(dialog);
+    window.open(CONSUMABLES_SUPPORT_PORTAL_IMAGE, "_blank", "noopener,noreferrer");
+  });
+
+  return dialog;
+}
+
+function wireConsumables(consumablesSupportPortalDialog) {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
-  app.querySelectorAll("[data-cons-action]").forEach((button) => {
-    button.addEventListener("click", () => showToast(`${button.dataset.consAction} selected`));
+  app.querySelectorAll("[data-open-consumables-support-portal]").forEach((button) => {
+    button.addEventListener("click", () => window.PlatformModal?.open(consumablesSupportPortalDialog));
   });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -2398,7 +2713,8 @@ function renderConsumables() {
   mountTopbarSc();
   mountPlatformSidebar("consumables");
   mountFooter();
-  wireConsumables();
+  const consumablesSupportPortalDialog = createConsumablesSupportPortalDialog();
+  wireConsumables(consumablesSupportPortalDialog);
   document.title = "Consumables — Services Central";
 }
 
@@ -3229,6 +3545,8 @@ function render() {
     renderOpenSupportTicketReview();
   } else if (route === "service-plan-contacts") {
     renderServicePlanContacts();
+  } else if (route === "contact-page") {
+    renderContactPage();
   } else if (route === "consumables") {
     renderConsumables();
   } else if (route === "notifications") {
