@@ -739,9 +739,9 @@ button {
 .screen--request-qualification .mi-stage,
 .screen--request-calibration .mi-stage,
 .screen--request-installation .mi-stage {
-  height: auto;
-  min-height: 100vh;
-  overflow: visible;
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Keep request-flow navigation aligned with the left edge of the centered application shell. */
@@ -1080,6 +1080,12 @@ button {
 .ts-shell { min-height: 1623px; }.ts-shell--tech { min-height: 2339px; }.ts-shell--tech .ts-main { min-height: 2235px; }.ts-main { min-height: 1519px; padding-bottom: 64px; }
 
 /* Match the fixed toolbar/header stack used by the standard platform pages. */
+.mi-shell--native-flow {
+  height: var(--platform-shell-height);
+  min-height: 0;
+  overflow: hidden;
+}
+
 .mi-shell--native-flow > .topbar-sc {
   position: fixed;
   z-index: 60;
@@ -1094,6 +1100,12 @@ button {
 }
 
 .mi-shell--native-flow > .mi-main {
+  box-sizing: border-box;
+  height: var(--platform-page-body-height);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding-top: var(--platform-topbar-height);
 }
 .ts-titlebar { display: flex; height: 120px; align-items: flex-start; justify-content: space-between; padding: 24px 32px 0; background: #f7f7f7 url("assets/instruments/subheader-background.png") center -179px / 1384px 970px no-repeat; }
