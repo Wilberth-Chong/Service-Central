@@ -69,6 +69,79 @@ final result: passed
 
 ---
 
+# Open support ticket Step 4 attachment comparison QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8054:180026`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8054-180026&t=jIBL8eK3P1BoX9qZ-1), re-captured in the in-app browser at 50% zoom for readable detail comparison.
+- Implementation: `http://localhost:4173/#open-support-ticket-review`, browser-rendered in the clean no-file state.
+
+**Findings and resolution**
+
+- [P1 resolved] The source uses a single-column request-detail stack. The review card now has a single 1118px content track rather than a two-column summary grid.
+- [P1 resolved] The source disclosure shows an attached-file count and compact preview tiles. Uploaded files now render as an initially expanded `N attached files` disclosure using 160 × 90px image/document previews, two-line file names, and 12px file sizes. The disclosure remains collapsible with the matching up/down chevrons.
+- Instrument information continues to reuse the Step 2 panel, including coverage and manuals.
+
+**Validation**
+
+- Browser DOM confirms the single-column detail track, attachment preview-grid class, empty-state counter, and zero console errors.
+- Focused flow, shell, and footer regression scripts pass; `git diff --check` is clean.
+
+final result: passed
+
+---
+
+# Open support ticket Step 4 detail alignment QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8054:180026`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8054-180026&t=jIBL8eK3P1BoX9qZ-1), captured in the in-app browser.
+- Implementation: `http://localhost:4173/#open-support-ticket-review`, browser-rendered in a clean-route state.
+
+**Findings and resolution**
+
+- [P1 resolved] Removed the non-reference Request type row and shortened the request-detail labels to the source-aligned terms: Request subject, Problem, Error codes, and Recent changes to the instrument or environment.
+- [P1 resolved] Replaced the simplified instrument summary with the same facts, coverage, manuals, and included-service structure used in Step 2.
+- [P2 resolved] Combined first and last name into one Name row.
+- [P2 resolved] Added the dynamic files-attached counter with a keyboard-accessible expand/collapse button and directional chevrons. In the clean state it correctly reports No files attached and disables the disclosure.
+
+**Validation**
+
+- Browser DOM confirms the required labels, full Step 2 instrument panel, disabled zero-file state, and no console errors.
+- Focused flow, shell, and footer regression scripts pass; `git diff --check` is clean.
+
+final result: passed
+
+---
+
+# Open support ticket Step 4 review QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8054:180026`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8054-180026&t=jIBL8eK3P1BoX9qZ-1), captured in the in-app browser at its 20% canvas zoom.
+- Implementation: `http://localhost:4173/#open-support-ticket-review`, captured in the in-app browser at the desktop viewport.
+- State: source depicts completed request data; the clean-route implementation intentionally shows dynamic empty-data fallbacks until the user completes earlier steps.
+
+**Findings and resolution**
+
+- [P1 resolved] The former review route used a generic two-card summary. It now follows the source hierarchy: review introduction, support request details, instrument information, then contact information.
+- [P1 resolved] Request, instrument, contact, and attachment values are now populated dynamically from prior steps.
+- Fonts and typography: existing Komodo-compatible Helvetica stack, 24px section headings, and 14px detail labels/values are retained.
+- Spacing and layout rhythm: cards use the existing 1200px content column, 20px card separation, 32/40px internal padding, and a four-column instrument summary that collapses at the existing responsive breakpoint.
+- Colors and tokens: neutral card borders, pale instrument surface, and the green under-contract status use existing page tokens.
+- Image and copy fidelity: the existing instrument image asset and source labels are used; no generated or placeholder assets were introduced.
+
+**Validation**
+
+- Browser-rendered route has no console errors.
+- Full-view and focused review-card comparison performed from the in-app browser captures.
+- Primary interactions retained: Back returns to Step 3; Submit continues to use the existing confirmation toast.
+- Focused flow, shell, and footer regression scripts pass; `git diff --check` is clean.
+
+final result: passed
+
+---
+
 # Open support ticket — Step 2 design QA
 
 **Comparison target**

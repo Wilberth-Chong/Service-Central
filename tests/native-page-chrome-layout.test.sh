@@ -12,6 +12,6 @@ rg -q 'overflow: hidden;' "$css_file"
 rg -q '\.screen--request-support \.platform-sidebar,' "$css_file"
 rg -q '\.screen--request-installation \.platform-sidebar \{' "$css_file"
 rg -q 'left: max\(0px, calc\(\(100vw - 1440px\) / 2\)\);' "$css_file"
-rg -q 'styles\.css\?v=20260819-native-page-main-viewport' index.html
+rg -q 'styles\.css\?v=20260819-step-four-layout-alignment' index.html
 
 printf 'PASS: native page chrome keeps footers reachable and sidebars shell-aligned\n'

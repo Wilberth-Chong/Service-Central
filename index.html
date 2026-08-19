@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260819-native-page-main-viewport" />
+    <link rel="stylesheet" href="styles.css?v=20260819-step-four-layout-alignment" />
     <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
@@ -290,7 +290,7 @@
                   <article class="rs-request"><div class="rs-request__copy"><h3>Service plans</h3><p>Request a quote to renew or purchase a service plan for your instrument.</p></div><button class="mi-button" type="button" data-route="request-serviceplan">Request a quote</button></article>
                   <article class="rs-request"><div class="rs-request__copy"><h3>Compliance services - Qualification</h3><p>Request a quote for a compliance service such as Installation Qualification (IQ), Operational Qualification (OQ), Requalification (RQ), or Temperature Mapping (TM).</p></div><button class="mi-button" type="button" data-route="request-qualification">Request a quote</button></article>
                   <article class="rs-request"><div class="rs-request__copy"><h3>Compliance services - Calibration</h3><p>Request a quote for calibration of your lab equipment including centrifuges, cold rooms, incubators, environmental chambers, lab ovens, furnaces and more. Excluding biosafety cabinets and water purification.</p></div><button class="mi-button" type="button" data-route="request-calibration">Request a quote</button></article>
-                  <article class="rs-request"><div class="rs-request__copy"><h3>Installation</h3><p>Request support if you have any questions about your installation.</p></div><button class="mi-button" type="button" data-route="request-installation">Installation support</button></article>
+                  <article class="rs-request"><div class="rs-request__copy"><h3>Installation</h3><p>Request support if you have any questions about your installation.</p></div><button class="mi-button" type="button" data-route="installation-support">Installation support</button></article>
                 </div>
                 <aside class="rs-aside" aria-label="Additional services information">
                   <section class="rs-promo"><h3>Get up to 20% off<br />Preventive Maintenance for<br />your HPLC</h3><p>Claim your discount today on an on-site PM visit.</p><small>Promo expires 30 Jun 2024. <button type="button" data-route="pm-cycle">See terms and conditions.</button></small></section>
@@ -333,7 +333,7 @@
               </article>
             </section>
           </main>
-          <div class="pm-actionbar"><button class="mi-button" type="button" data-route="request-support">Cancel</button><div><button class="mi-button" type="button" data-route="request-support">Back</button><button class="mi-button mi-button--primary" type="button" data-pm-continue disabled>Continue <span class="sr-only" data-pm-selected-count>0</span></button></div></div>
+          <div data-platform-action-bar-mount></div>
           <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
@@ -355,7 +355,7 @@
               </form>
             </article></section>
           </main>
-          <div class="pm-actionbar"><button class="mi-button" type="button" data-route="request-support">Cancel</button><div><button class="mi-button" type="button" data-route="request-support">Back</button><button class="mi-button mi-button--primary" type="button" data-installation-continue disabled>Continue</button></div></div>
+          <div data-platform-action-bar-mount></div>
           <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
@@ -389,7 +389,7 @@
               </article>
             </section>
           </main>
-          <div class="pm-actionbar"><button class="mi-button" type="button" data-route="request-support">Cancel</button><div><button class="mi-button" type="button" data-route="request-support">Back</button><button class="mi-button mi-button--primary" type="button" data-cal-continue disabled>Continue</button></div></div>
+          <div data-platform-action-bar-mount></div>
           <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
@@ -429,7 +429,7 @@
               </article>
             </section>
           </main>
-          <div class="pm-actionbar"><button class="mi-button" type="button" data-route="request-support">Cancel</button><div><button class="mi-button" type="button" data-route="request-support">Back</button><button class="mi-button mi-button--primary" type="button" data-sp-continue disabled>Continue <span class="sr-only" data-sp-selected-count>0</span></button></div></div>
+          <div data-platform-action-bar-mount></div>
           <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
@@ -442,7 +442,7 @@
           <div data-platform-sidebar-mount></div>
           <main class="mi-main iss-main">
             <section class="iss-titlebar"><h1>Open a support ticket</h1></section>
-            <ol class="iss-steps" aria-label="Support ticket progress"><li class="is-current" aria-current="step"><span>1</span><strong>Select instrument</strong></li><li><span>2</span><strong>Add request details</strong></li><li><span>3</span><strong>Confirm contact information</strong></li><li><span>4</span><strong>Review and submit</strong></li></ol>
+            <div data-ticket-step-viewer></div>
             <section class="iss-content" aria-labelledby="iss-description"><p id="iss-description">Request troubleshooting, diagnosis and repair to resolve an issue with your instrument.</p>
               <article class="iss-card"><header><h2>Instrument selection</h2><p>Support requests can only be submitted for one instrument.</p></header>
                 <label class="iss-search"><span class="sr-only">Search instruments</span><input type="search" data-iss-search placeholder="Search by instrument serial number or nickname" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
@@ -468,7 +468,7 @@
               </article>
             </section>
           </main>
-          <div class="iss-actionbar"><button class="mi-button" type="button" data-route="request-support">Cancel</button><div><button class="mi-button" type="button" data-route="request-support">Back</button><button class="mi-button mi-button--primary" type="button" data-iss-continue disabled>Continue</button></div></div>
+          <div data-platform-action-bar-mount></div>
           <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
@@ -481,24 +481,32 @@
           <div data-platform-sidebar-mount></div>
           <main class="mi-main isd-main">
             <section class="iss-titlebar"><h1>Open a support ticket</h1></section>
-            <ol class="iss-steps isd-steps" aria-label="Support ticket progress"><li class="is-complete"><span>1</span><strong>Select instrument</strong></li><li class="is-current" aria-current="step"><span>2</span><strong>Add request details</strong></li><li><span>3</span><strong>Confirm contact information</strong></li><li><span>4</span><strong>Review and submit</strong></li></ol>
+            <div data-ticket-step-viewer></div>
             <section class="isd-content">
               <article class="isd-card"><header><h2>Support request details</h2><p>Please provide details for your support request below.</p></header>
                 <div class="isd-form">
                   <label class="isd-field"><span>Request subject <b>*</b><em data-isd-count="subject">0 / 255</em></span><input data-isd-field="subject" maxlength="255" placeholder="Please enter your request subject." /></label>
-                  <label class="isd-field"><span>Describe the problem you are experiencing (or your request), in detail: <b>*</b><em data-isd-count="problem">0 / 4000</em></span><textarea data-isd-field="problem" maxlength="4000" rows="4" placeholder="Please enter details about your issue."></textarea></label>
-                  <label class="isd-field"><span>Are there any error codes? <b>*</b><em data-isd-count="errors">0 / 1000</em></span><input data-isd-field="errors" maxlength="1000" placeholder="Please enter codes or error messages." /></label>
+                  <label class="isd-field"><span>Describe the problem you are experiencing (or your request), in detail: <b>*</b><em data-isd-count="problem">0 / 4000</em></span><textarea data-isd-field="problem" maxlength="4000" rows="4" placeholder="Provide more details about your request and any troubleshooting steps you have already taken."></textarea></label>
+                  <label class="isd-field"><span>Are there any error codes? <b>*</b><em data-isd-count="errors">0 / 1000</em></span><input data-isd-field="errors" maxlength="1000" placeholder="Provide error codes or error messages." /></label>
                   <label class="isd-field"><span>Are there any recent changes to the instrument or environment? <b>*</b><em data-isd-count="changes">0 / 2000</em></span><textarea data-isd-field="changes" maxlength="2000" rows="4" placeholder="Examples include software updates, new components, heating, air conditioning &amp; ventilation changes."></textarea></label>
-                  <section class="isd-upload"><h3>Upload files <span class="isd-info-tip" data-isd-info-tooltip tabindex="0" aria-label="More information" aria-describedby="isd-upload-information"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /><span class="iss-overflow-tooltip isd-info-tooltip" id="isd-upload-information" role="tooltip" hidden>Maximum file size is 50mb. You can upload up to 5 files.</span></span></h3><div><label class="isd-dropzone" data-isd-upload><span>Drag and drop, <strong>choose a file</strong></span><input type="file" multiple hidden /></label><span>or</span><button class="isd-paste" type="button" data-iss-toast="Paste files here using Cmd+V or Ctrl+V">Copy and paste here using<br />Cmd+V or Ctrl+V</button></div><ul class="isd-upload__requirements"><li>Maximum file size for each file: 50mb.</li><li>Upload up to 5 files.</li></ul><div class="isd-filled-files" hidden><h3>Your files</h3><div class="isd-files" data-isd-files></div></div></section>
+                  <section class="isd-upload"><h3>Upload files <span class="isd-info-tip" data-isd-info-tooltip tabindex="0" aria-label="More information" aria-describedby="isd-upload-information"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /><span class="iss-overflow-tooltip isd-info-tooltip" id="isd-upload-information" role="tooltip" hidden>Maximum file size is 50mb. You can upload up to 5 files.</span></span></h3><div class="isd-upload__options"><label class="isd-dropzone" data-isd-upload><span>Drag and drop, <strong>choose a file</strong></span><input type="file" multiple hidden /></label><span>or</span><button class="isd-paste" type="button" data-iss-toast="Paste files here using Cmd+V or Ctrl+V">Copy and paste here using<br />Cmd+V or Ctrl+V</button></div><div class="isd-filled-files" hidden><h3>Your files</h3><div class="isd-files" data-isd-files></div></div><ul class="isd-upload__requirements"><li>Maximum file size for each file: 50mb.</li><li>Upload up to 5 files.</li></ul></section>
                 </div>
               </article>
-              <section class="isd-instrument"><h2>Instrument information</h2><div><img data-isd-instrument-image src="assets/instruments/vanquish-detector.png" alt="" /><dl><div><dt>Serial number</dt><dd data-isd-serial>1009996</dd></div><div><dt>Model number</dt><dd data-isd-model>VQF0000DET</dd></div><div><dt>Type</dt><dd data-isd-type>HPLC</dd></div><div><dt>Nickname</dt><dd data-isd-nickname>Detector-2B</dd></div><div><dt>Catalog number</dt><dd>VQF0000DET</dd></div><div><dt>Instrument category</dt><dd>Liquid chromatography</dd></div><div><dt>System</dt><dd>Alpine</dd></div><div><dt>Manuals</dt><dd><button type="button" data-iss-toast="Manuals opened">View manuals</button></dd></div></dl></div><section class="isd-coverage"><h3>Instrument coverage</h3><dl><div><dt>Coverage</dt><dd><span>Under contract</span></dd></div><div><dt>Coverage end date</dt><dd>31 Dec 2025</dd></div><div><dt>Service plan</dt><dd>Premium service plan</dd></div></dl></section></section>
+              <section class="isd-instrument"><h2>Instrument information</h2><div class="isd-instrument__panel"><img data-isd-instrument-image src="assets/instruments/vanquish-detector.png" alt="" /><dl class="isd-instrument__facts"><div><dt>Serial number</dt><dd data-isd-serial>1009996</dd></div><div><dt>Model number</dt><dd data-isd-model>VQF0000DET</dd></div><div><dt>Type</dt><dd data-isd-type>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd data-isd-nickname>Detector-2B</dd></div><div><dt>Groups</dt><dd>HPLC 2B Sys., Global Research and Development…</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd><button type="button" data-iss-toast="Operating manual opened">View operating manual</button><button type="button" data-iss-toast="System operating manual opened">View system operating manual</button></dd></div></dl><section class="isd-coverage"><h3>Instrument coverage</h3><div class="isd-coverage__facts"><dl><div><dt>Contract Number</dt><dd>MAIN353422</dd></div><div><dt>Coverage Start</dt><dd>22 July 2020</dd></div><div><dt>Coverage End</dt><dd>22 July 2022</dd></div></dl><span>Under contract</span></div><h4>What&#39;s included in the Essential Service Plan</h4><ul><li>Preventative maintenance</li><li>Corrective maintenance</li></ul></section></div></section>
             </section>
           </main>
-          <div class="iss-actionbar isd-actionbar"><button class="mi-button" type="button" data-route="request-support">Cancel</button><div><button class="mi-button" type="button" data-route="open-support-ticket">Back</button><button class="mi-button mi-button--primary" type="button" data-isd-continue>Continue</button></div></div>
+          <div data-platform-action-bar-mount></div>
           <footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer>
         </div></div>
       </section>
+    </template>
+
+    <template id="open-support-ticket-contact-template">
+      <section class="screen screen--open-support-ticket-contact" aria-label="Open a support ticket: confirm contact information"><div class="mi-stage"><div class="mi-shell isd-shell"><header class="mi-header"></header><div data-platform-sidebar-mount></div><main class="mi-main isd-main"><section class="iss-titlebar"><h1>Open a support ticket</h1></section><div data-ticket-step-viewer></div><section class="ost-content"><article class="ost-card"><header><h2>Ticket contact information</h2><p>This contact will be the primary recipient of communications regarding this ticket.</p></header><div class="ost-contact-grid"><label><span>First name <b>*</b></span><input data-ost-contact-field="firstName" required /></label><label><span>Last name <b>*</b></span><input data-ost-contact-field="lastName" required /></label><label><span>Phone number <b>*</b></span><input data-ost-contact-field="phone" type="tel" inputmode="numeric" pattern="[0-9]*" required /></label><label class="ost-contact-grid__email"><span>Email <b>*</b></span><input data-ost-contact-field="email" type="email" required /></label></div></article></section></main><div data-platform-action-bar-mount></div><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>
+    </template>
+
+    <template id="open-support-ticket-review-template">
+      <section class="screen screen--open-support-ticket-review" aria-label="Open a support ticket: review and submit"><div class="mi-stage"><div class="mi-shell isd-shell"><header class="mi-header"></header><div data-platform-sidebar-mount></div><main class="mi-main isd-main"><section class="iss-titlebar"><h1>Open a support ticket</h1></section><div data-ticket-step-viewer></div><section class="ost-content ost-review-content"><header class="ost-review-intro"><h2>Review and submit</h2><p>Please review your support request before submitting.</p></header><article class="ost-card ost-review-card"><h2>Support request details</h2><dl class="ost-review-details"><div><dt>Request subject</dt><dd data-ost-review-subject></dd></div><div class="ost-review-details__wide"><dt>Problem</dt><dd data-ost-review-problem></dd></div><div class="ost-review-details__wide"><dt>Error codes</dt><dd data-ost-review-errors></dd></div><div class="ost-review-details__wide"><dt>Recent changes to the instrument or environment</dt><dd data-ost-review-changes></dd></div><div class="ost-review-files"><dt>Files attached</dt><dd><button type="button" data-ost-review-files-toggle aria-expanded="false" aria-controls="ost-review-files-list"><span data-ost-review-files></span><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button><ul id="ost-review-files-list" data-ost-review-files-list hidden></ul></dd></div></dl></article><section class="isd-instrument ost-review-instrument"><h2>Instrument information</h2><div class="isd-instrument__panel"><img data-ost-review-instrument-image src="assets/instruments/vanquish-detector.png" alt="" /><dl class="isd-instrument__facts"><div><dt>Serial number</dt><dd data-ost-review-serial></dd></div><div><dt>Model number</dt><dd data-ost-review-model></dd></div><div><dt>Type</dt><dd data-ost-review-type></dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd data-ost-review-nickname></dd></div><div><dt>Groups</dt><dd>HPLC 2B Sys., Global Research and Development…</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd><button type="button" data-iss-toast="Operating manual opened">View operating manual</button><button type="button" data-iss-toast="System operating manual opened">View system operating manual</button></dd></div></dl><section class="isd-coverage"><h3>Instrument coverage</h3><div class="isd-coverage__facts"><dl><div><dt>Contract Number</dt><dd>MAIN353422</dd></div><div><dt>Coverage Start</dt><dd>22 July 2020</dd></div><div><dt>Coverage End</dt><dd>22 July 2022</dd></div></dl><span>Under contract</span></div><h4>What&#39;s included in the Essential Service Plan</h4><ul><li>Preventative maintenance</li><li>Corrective maintenance</li></ul></section></div></section><article class="ost-card ost-review-card"><h2>Contact information</h2><dl class="ost-review-details ost-review-details--contact"><div><dt>Name</dt><dd data-ost-review-name></dd></div><div><dt>Phone number</dt><dd data-ost-review-phone></dd></div><div><dt>Email</dt><dd data-ost-review-email></dd></div></dl></article></section></main><div data-platform-action-bar-mount></div><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>
     </template>
 
     <template id="support-history-native-template">
@@ -1397,11 +1405,12 @@
     <script src="topbar-sc.js?v=20260811-topbar-sc"></script>
     <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
-    <script src="platform-action-bar.js?v=20260814-cancel-origin-v2"></script>
+    <script src="platform-action-bar.js?v=20260819-submitted-summary-close"></script>
+    <script src="ticket-step-viewer.js?v=20260819-step-viewer-spacing"></script>
     <script src="footer.js?v=20260812-footer"></script>
     <script src="modal.js?v=20260818-modal-component"></script>
     <script src="date-range-picker.js?v=20260814-support-history"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
-    <script src="app.js?v=20260819-shared-page-chrome"></script>
+    <script src="app.js?v=20260819-summary-close-all"></script>
   </body>
 </html>

@@ -45,6 +45,8 @@ const PREINSTALL_CHECKLISTS = [
 ];
 let preInstallTooltipCloseTimer;
 let selectedSupportHistoryTicket = null;
+let selectedOpenSupportTicketInstrument = null;
+const openSupportTicketDraft = { instrument: null, request: {}, files: [], contact: {} };
 
 class ChecklistUploadNote extends HTMLElement {
   connectedCallback() {
@@ -204,6 +206,8 @@ const ROUTES = {
   "request-installation": { title: "Installation support", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
   "open-support-ticket": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
   "open-support-ticket-details": { title: "Open a support ticket — add request details", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
+  "open-support-ticket-contact": { title: "Open a support ticket — contact information", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 1460, kind: "app" },
+  "open-support-ticket-review": { title: "Open a support ticket — review and submit", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 1460, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
   education: { title: "Browse education", src: "assets/flows/education.png", width: 1440, height: 1460, kind: "external" },
@@ -1123,6 +1127,20 @@ function mountNativePageChrome(activeRoute, { title, backRoute = "request-suppor
   mountFooter();
 }
 
+function mountNativeFlowActionBar({ cancelRoute = "request-support", backRoute = "request-support", primaryDisabled = true } = {}) {
+  const bar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), {
+    cancelRoute,
+    backRoute,
+    primaryDisabled,
+  });
+  bar?.classList.add("platform-actionbar--native-flow");
+  return bar;
+}
+
+function mountTicketStepViewer(currentStep) {
+  window.TicketStepViewer?.mount(app.querySelector("[data-ticket-step-viewer]"), { currentStep });
+}
+
 function wireEditSpc() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
@@ -1645,16 +1663,29 @@ function renderTicketSummary(route) {
     contact: historyTicket.contact || "---",
     created: historyTicket.created || baseTicket.created,
     closed: historyTicket.closed || "---",
+    problem: historyTicket.problem || "",
+    errors: historyTicket.errors || "",
+    changes: historyTicket.changes || "",
+    phone: historyTicket.phone || "",
+    email: historyTicket.email || "",
+    submitted: historyTicket.submitted === true,
     selectedFromHistory: true,
   } : baseTicket;
   const isTechSupport = ticket.isTechSupport === true;
   const usesReferenceLayout = isTechSupport || Boolean(ticket.summaryKind);
-  const titleMeta = usesReferenceLayout
+  const titleMeta = ticket.submitted
+    ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span></p>`
+    : usesReferenceLayout
     ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`
     : `<p>Ticket number: ${ticket.ticket} <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span></p>`;
   const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
+  const ticketPhone = ticket.selectedFromHistory ? ticket.phone || "---" : "123-456-7890";
+  const ticketEmail = ticket.selectedFromHistory ? ticket.email || "---" : "molly.hartman@thermofisher.com";
   const ticketCreated = ticket.selectedFromHistory ? ticket.created : "26 April 2023";
   const ticketClosed = ticket.state === "Closed" ? ticket.closed : "---";
+  const submittedNotice = ticket.submitted
+    ? `<img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><p><strong>Request submitted:</strong> A representative will respond to your request as soon as possible.<br />When processing is complete your ticket will be updated with the appropriate status.</p>`
+    : "";
   const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Model number</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
   const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl>`;
   const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
@@ -1668,7 +1699,37 @@ function renderTicketSummary(route) {
   app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
     <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
     <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div><h1>${ticket.title}${usesReferenceLayout ? ` <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>` : ""}</h1>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+  if (submittedNotice) {
+    const notice = document.createElement("section");
+    notice.className = "ts-notice ts-notice--submitted";
+    notice.innerHTML = submittedNotice;
+    app.querySelector(".ts-content").prepend(notice);
+    const [subject, problem, errors, changes] = app.querySelectorAll(".ts-tech-details dd");
+    if (subject) subject.textContent = ticket.subject;
+    if (problem) problem.textContent = ticket.problem || "—";
+    if (errors) errors.textContent = ticket.errors || "—";
+    if (changes) changes.textContent = ticket.changes || "—";
+    const contactDetails = app.querySelectorAll(".ts-contact dd");
+    if (contactDetails[1]) contactDetails[1].textContent = ticketPhone;
+    if (contactDetails[2]) contactDetails[2].textContent = ticketEmail;
+  }
   mountNativePageChrome("support-history", { title: ticket.title, backRoute: "support-history" });
+  const summaryCloseRoute = ticket.submitted ? "request-support" : "support-history";
+  const closeBar = window.PlatformActionBar?.create({ closeOnly: true, closeRoute: summaryCloseRoute });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
+  const action = closeBar?.querySelector('[data-actionbar-action="close"], [data-actionbar-action="cancel"]');
+  if (closeBar && action) {
+    const closeButton = action.cloneNode(true);
+    closeButton.textContent = "Close";
+    closeButton.className = "platform-actionbar__button platform-actionbar__button--secondary";
+    closeButton.dataset.actionbarAction = "close";
+    closeButton.dataset.route = summaryCloseRoute;
+    const trailing = document.createElement("div");
+    trailing.className = "platform-actionbar__trailing";
+    trailing.append(closeButton);
+    closeBar.replaceChildren(trailing);
+  }
+  app.querySelector("[data-footer-mount]")?.before(closeBar);
   app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute("support-history"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1693,7 +1754,7 @@ function renderRequestSupport() {
 }
 
 function wireInstrumentSupportSelection() {
-  const continueButton = app.querySelector("[data-iss-continue]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-iss-search]");
   const systemToggle = app.querySelector("[data-iss-system-toggle]");
   const systemRow = app.querySelector(".iss-system");
@@ -1824,6 +1885,7 @@ function wireInstrumentSupportSelection() {
         model: selectedRow.cells[7].textContent.trim(),
         image: selectedRow.querySelector('img[src*="assets/instruments/"]')?.getAttribute("src"),
       };
+      openSupportTicketDraft.instrument = selectedOpenSupportTicketInstrument;
     }
     setRoute("open-support-ticket-details");
   });
@@ -1836,19 +1898,22 @@ function renderOpenSupportTicket() {
   const template = document.querySelector("#open-support-ticket-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "request-support" });
+  mountTicketStepViewer(1);
+  mountNativeFlowActionBar();
   wireInstrumentSupportSelection();
   document.title = "Open a support ticket — Services Central";
 }
 
 function wireOpenSupportTicketDetails() {
   const fields = [...app.querySelectorAll("[data-isd-field]")];
-  const continueButton = app.querySelector("[data-isd-continue]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const detailsCard = app.querySelector(".isd-card");
   const uploadRequirements = app.querySelector(".isd-upload__requirements");
   const filledFiles = app.querySelector(".isd-filled-files");
   const uploadInput = app.querySelector("[data-isd-upload] input");
   const filesRoot = app.querySelector("[data-isd-files]");
-  let uploadedFiles = [];
+  let uploadedFiles = openSupportTicketDraft.files;
+  const previewUrls = new WeakMap();
   if (selectedOpenSupportTicketInstrument) {
     const selected = selectedOpenSupportTicketInstrument;
     app.querySelector("[data-isd-serial]").textContent = selected.serial;
@@ -1863,17 +1928,55 @@ function wireOpenSupportTicketDetails() {
       if (updateCounts && count) count.textContent = `${field.value.length} / ${field.maxLength}`;
     });
     const isComplete = fields.every((field) => field.value.trim());
+    fields.forEach((field) => { openSupportTicketDraft.request[field.dataset.isdField] = field.value; });
     continueButton.disabled = !isComplete;
     detailsCard.classList.toggle("is-filled", isComplete);
     uploadRequirements.hidden = uploadedFiles.length > 0;
     filledFiles.hidden = uploadedFiles.length === 0;
   };
+  fields.forEach((field) => { field.value = openSupportTicketDraft.request[field.dataset.isdField] || ""; });
   fields.forEach((field) => field.addEventListener("input", () => updateForm()));
   const renderUploadedFiles = () => {
     filesRoot.replaceChildren(...uploadedFiles.map((file, index) => {
       const item = document.createElement("article");
-      item.innerHTML = `<img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><span>${file.name}</span><small>${Math.max(1, Math.ceil(file.size / 1024 / 1024))}mb</small><button type="button" aria-label="Remove ${file.name}"><img src="assets/icons/actions/delete/size=16px, style=mono.svg" alt="" /></button>`;
-      item.querySelector("button").addEventListener("click", () => {
+      const isPreviewable = file.type.startsWith("image/");
+      const previewUrl = isPreviewable && (previewUrls.get(file) || URL.createObjectURL(file));
+      if (previewUrl) previewUrls.set(file, previewUrl);
+      item.className = isPreviewable ? "isd-file--preview" : "isd-file--document";
+      const previewFrame = document.createElement("div");
+      previewFrame.className = "isd-file__preview-frame";
+      const preview = document.createElement("img");
+      if (isPreviewable) {
+        preview.className = "isd-file__preview";
+        preview.src = previewUrl;
+        preview.alt = `Preview of ${file.name}`;
+      } else {
+        preview.className = "isd-file__type-icon";
+        preview.src = file.name.toLowerCase().endsWith(".csv")
+          ? "assets/icons/documents/CSV/Size=32px, Style=Bold.svg"
+          : "assets/icons/media/document/size=32px, style=mono.svg";
+        preview.alt = "";
+      }
+      previewFrame.append(preview);
+      const metadata = document.createElement("div");
+      metadata.className = "isd-file__meta";
+      const filename = document.createElement("span");
+      filename.textContent = file.name;
+      filename.title = file.name;
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.setAttribute("aria-label", `Remove ${file.name}`);
+      const removeIcon = document.createElement("img");
+      removeIcon.src = "assets/icons/actions/bin/size=16px, style=mono.svg";
+      removeIcon.alt = "";
+      removeButton.append(removeIcon);
+      metadata.append(filename, removeButton);
+      const size = document.createElement("small");
+      size.textContent = `${Math.max(1, Math.ceil(file.size / 1024 / 1024))}mb`;
+      item.append(previewFrame, metadata, size);
+      removeButton.addEventListener("click", () => {
+        const url = previewUrls.get(file);
+        if (url) URL.revokeObjectURL(url);
         uploadedFiles.splice(index, 1);
         renderUploadedFiles();
         updateForm();
@@ -1885,7 +1988,10 @@ function wireOpenSupportTicketDetails() {
     if (event.target !== uploadInput) uploadInput.click();
   });
   uploadInput.addEventListener("change", () => {
-    uploadedFiles = [...uploadInput.files].slice(0, 5);
+    const nextFiles = [...uploadInput.files];
+    uploadedFiles = [...uploadedFiles, ...nextFiles].slice(0, 5);
+    openSupportTicketDraft.files = uploadedFiles;
+    uploadInput.value = "";
     renderUploadedFiles();
     updateForm();
   });
@@ -1897,7 +2003,7 @@ function wireOpenSupportTicketDetails() {
   infoTrigger.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setSupportHistoryTooltip(infoTrigger, false);
   });
-  continueButton.addEventListener("click", () => showToast("Continue to confirm contact information"));
+  continueButton.addEventListener("click", () => setRoute("open-support-ticket-contact"));
   updateForm({ updateCounts: false });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1907,12 +2013,146 @@ function renderOpenSupportTicketDetails() {
   const template = document.querySelector("#open-support-ticket-details-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket" });
+  mountTicketStepViewer(2);
+  mountNativeFlowActionBar({ backRoute: "open-support-ticket" });
   wireOpenSupportTicketDetails();
   document.title = "Open a support ticket — add request details";
 }
 
+function wireOpenSupportTicketContact() {
+  const fields = [...app.querySelectorAll("[data-ost-contact-field]")];
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const contactDefaults = { firstName: "Molly", lastName: "Hartman" };
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isFieldValid = (field) => {
+    const value = field.value.trim();
+    if (!value) return false;
+    if (field.dataset.ostContactField === "phone") return /^\d+$/.test(value);
+    if (field.dataset.ostContactField === "email") return emailPattern.test(value);
+    return true;
+  };
+  const update = () => {
+    fields.forEach((field) => { openSupportTicketDraft.contact[field.dataset.ostContactField] = field.value; });
+    continueButton.disabled = !fields.every(isFieldValid);
+  };
+  fields.forEach((field) => {
+    field.value = openSupportTicketDraft.contact[field.dataset.ostContactField] || contactDefaults[field.dataset.ostContactField] || "";
+    field.addEventListener("input", () => {
+      if (field.dataset.ostContactField === "phone") field.value = field.value.replace(/\D/g, "");
+      update();
+    });
+  });
+  continueButton.addEventListener("click", () => setRoute("open-support-ticket-review"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderOpenSupportTicketContact() {
+  const template = document.querySelector("#open-support-ticket-contact-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket-details" });
+  mountTicketStepViewer(3);
+  mountNativeFlowActionBar({ backRoute: "open-support-ticket-details" });
+  wireOpenSupportTicketContact();
+  document.title = "Open a support ticket — contact information";
+}
+
+function renderOpenSupportTicketReview() {
+  const template = document.querySelector("#open-support-ticket-review-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket-contact" });
+  mountTicketStepViewer(4);
+  const bar = mountNativeFlowActionBar({ backRoute: "open-support-ticket-contact", primaryDisabled: false });
+  bar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit request";
+  const instrument = openSupportTicketDraft.instrument || {};
+  const { request = {}, contact = {} } = openSupportTicketDraft;
+  app.querySelector("[data-ost-review-subject]").textContent = request.subject || "—";
+  app.querySelector("[data-ost-review-problem]").textContent = request.problem || "—";
+  app.querySelector("[data-ost-review-errors]").textContent = request.errors || "—";
+  app.querySelector("[data-ost-review-changes]").textContent = request.changes || "—";
+  const filesSection = app.querySelector(".ost-review-files");
+  const filesToggle = app.querySelector("[data-ost-review-files-toggle]");
+  const filesList = app.querySelector("[data-ost-review-files-list]");
+  const attachedFiles = openSupportTicketDraft.files;
+  filesSection.hidden = attachedFiles.length === 0;
+  app.querySelector("[data-ost-review-files]").textContent = `${attachedFiles.length} attached file${attachedFiles.length === 1 ? "" : "s"}`;
+  filesToggle.setAttribute("aria-expanded", "true");
+  filesToggle.querySelector("img").src = "assets/icons/directions/chevron up/size=16px, style=mono.svg";
+  filesList.className = "ost-review-files__grid isd-files";
+  filesList.hidden = false;
+  filesList.replaceChildren(...attachedFiles.map((file) => {
+    const item = document.createElement("li");
+    const card = document.createElement("article");
+    const previewFrame = document.createElement("div");
+    previewFrame.className = "ost-review-file__preview-frame";
+    const preview = document.createElement("img");
+    if (file.type.startsWith("image/")) {
+      preview.className = "ost-review-file--preview";
+      preview.src = URL.createObjectURL(file);
+      preview.alt = `Preview of ${file.name}`;
+    } else {
+      preview.className = "ost-review-file__type-icon";
+      preview.src = file.name.toLowerCase().endsWith(".csv")
+        ? "assets/icons/documents/CSV/Size=32px, Style=Bold.svg"
+        : "assets/icons/media/document/size=32px, style=mono.svg";
+      preview.alt = "";
+    }
+    previewFrame.append(preview);
+    const filename = document.createElement("span");
+    filename.textContent = file.name;
+    filename.title = file.name;
+    const size = document.createElement("small");
+    size.textContent = `${Math.max(1, Math.ceil(file.size / 1024 / 1024))}mb`;
+    card.append(previewFrame, filename, size);
+    item.append(card);
+    return item;
+  }));
+  filesToggle.addEventListener("click", () => {
+    const expanded = filesToggle.getAttribute("aria-expanded") === "true";
+    filesToggle.setAttribute("aria-expanded", String(!expanded));
+    filesList.hidden = expanded;
+    filesToggle.querySelector("img").src = expanded
+      ? "assets/icons/directions/chevron right/size=16px, style=mono.svg"
+      : "assets/icons/directions/chevron up/size=16px, style=mono.svg";
+  });
+  app.querySelector("[data-ost-review-instrument-image]").src = instrument.image || "assets/instruments/vanquish-detector.png";
+  app.querySelector("[data-ost-review-serial]").textContent = instrument.serial || "—";
+  app.querySelector("[data-ost-review-model]").textContent = instrument.model || "—";
+  app.querySelector("[data-ost-review-type]").textContent = instrument.type || "—";
+  app.querySelector("[data-ost-review-nickname]").textContent = instrument.nickname || "—";
+  app.querySelector("[data-ost-review-name]").textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  app.querySelector("[data-ost-review-phone]").textContent = contact.phone || "—";
+  app.querySelector("[data-ost-review-email]").textContent = contact.email || "—";
+  bar.querySelector('[data-actionbar-action="primary"]').addEventListener("click", () => {
+    const submittedOn = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+    setRoute("tech-support-summary", {
+      title: request.subject || "Support request",
+      ticket: "Pending",
+      status: "Submitted",
+      type: "Tech Support",
+      subject: request.subject || "—",
+      problem: request.problem || "",
+      errors: request.errors || "",
+      changes: request.changes || "",
+      serial: instrument.serial || "—",
+      model: instrument.model || "—",
+      nickname: instrument.nickname || "—",
+      contact: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—",
+      phone: contact.phone || "—",
+      email: contact.email || "—",
+      created: submittedOn,
+      closed: "---",
+      submitted: true,
+    });
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Open a support ticket — review and submit";
+}
+
 function wireRequestPm() {
-  const continueButton = app.querySelector("[data-pm-continue]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-pm-search]");
   const selectAll = app.querySelector("[data-pm-select-all]");
   const system = app.querySelector("[data-pm-system]");
@@ -1925,7 +2165,8 @@ function wireRequestPm() {
     selectAll.checked = system.checked;
     selectAll.indeterminate = system.indeterminate;
     continueButton.disabled = selected === 0;
-    app.querySelector("[data-pm-selected-count]").textContent = String(selected);
+    const pmSelectedCount = app.querySelector("[data-pm-selected-count]");
+    if (pmSelectedCount) pmSelectedCount.textContent = String(selected);
   };
 
   const setAll = (checked) => {
@@ -1955,12 +2196,13 @@ function renderRequestPm() {
   const template = document.querySelector("#request-pm-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-support" });
+  mountNativeFlowActionBar();
   wireRequestPm();
   document.title = "Request PM scheduling — Services Central";
 }
 
 function wireRequestServicePlan() {
-  const continueButton = app.querySelector("[data-sp-continue]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-sp-search]");
   const selectAll = app.querySelector("[data-sp-select-all]");
   const system = app.querySelector("[data-sp-system]");
@@ -1973,7 +2215,8 @@ function wireRequestServicePlan() {
     selectAll.checked = system.checked;
     selectAll.indeterminate = system.indeterminate;
     continueButton.disabled = selected === 0;
-    app.querySelector("[data-sp-selected-count]").textContent = String(selected);
+    const spSelectedCount = app.querySelector("[data-sp-selected-count]");
+    if (spSelectedCount) spSelectedCount.textContent = String(selected);
   };
 
   const setAll = (checked) => {
@@ -2003,6 +2246,7 @@ function renderRequestServicePlan() {
   const template = document.querySelector("#request-serviceplan-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Request a service plan quote", backRoute: "request-support" });
+  mountNativeFlowActionBar();
   wireRequestServicePlan();
   document.title = "Request a service plan quote — Services Central";
 }
@@ -2020,12 +2264,13 @@ function renderRequestQualification() {
   app.querySelector(".pm-select-all span").textContent = "Select all 267 instruments";
   app.querySelector(".pm-pagination strong").textContent = "267";
   mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-support" });
+  mountNativeFlowActionBar();
   wireRequestServicePlan();
   document.title = "Request qualification service — Services Central";
 }
 
 function wireRequestCalibration() {
-  const continueButton = app.querySelector("[data-cal-continue]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-cal-search]");
   const selectAll = app.querySelector("[data-cal-select-all]");
   const instruments = [...app.querySelectorAll("[data-cal-instrument]")];
@@ -2055,6 +2300,7 @@ function renderRequestCalibration() {
   const template = document.querySelector("#request-calibration-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Request a calibration service", backRoute: "request-support" });
+  mountNativeFlowActionBar();
   wireRequestCalibration();
   document.title = "Request a calibration service — Services Central";
 }
@@ -2063,7 +2309,7 @@ function wireRequestInstallation() {
   const service = app.querySelector("[data-installation-service]");
   const type = app.querySelector("[data-installation-type]");
   const details = app.querySelector("[data-installation-details]");
-  const continueButton = app.querySelector("[data-installation-continue]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const orderToggle = app.querySelector("[data-installation-order-toggle]");
   const orderMenu = app.querySelector("[data-installation-order-menu]");
   const orderLabel = app.querySelector("[data-installation-order-label]");
@@ -2096,6 +2342,7 @@ function renderRequestInstallation() {
   const template = document.querySelector("#request-installation-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Installation support", backRoute: "request-support" });
+  mountNativeFlowActionBar();
   wireRequestInstallation();
   document.title = "Installation support — Services Central";
 }
@@ -2976,6 +3223,10 @@ function render() {
     renderOpenSupportTicket();
   } else if (route === "open-support-ticket-details") {
     renderOpenSupportTicketDetails();
+  } else if (route === "open-support-ticket-contact") {
+    renderOpenSupportTicketContact();
+  } else if (route === "open-support-ticket-review") {
+    renderOpenSupportTicketReview();
   } else if (route === "service-plan-contacts") {
     renderServicePlanContacts();
   } else if (route === "consumables") {
