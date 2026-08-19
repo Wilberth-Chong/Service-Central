@@ -744,6 +744,18 @@ button {
   overflow: hidden;
 }
 
+.screen--ticket-summary,
+.screen--request-support,
+.screen--open-support-ticket,
+.screen--open-support-ticket-details,
+.screen--request-pm,
+.screen--request-serviceplan,
+.screen--request-qualification,
+.screen--request-calibration,
+.screen--request-installation {
+  overflow-x: hidden;
+}
+
 /* Keep request-flow navigation aligned with the left edge of the centered application shell. */
 .screen--request-support .platform-sidebar,
 .screen--open-support-ticket .platform-sidebar,
@@ -1103,10 +1115,10 @@ button {
   box-sizing: border-box;
   height: var(--platform-page-body-height);
   min-height: 0;
+  margin-top: var(--platform-topbar-height);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-top: var(--platform-topbar-height);
 }
 .ts-titlebar { display: flex; height: 120px; align-items: flex-start; justify-content: space-between; padding: 24px 32px 0; background: #f7f7f7 url("assets/instruments/subheader-background.png") center -179px / 1384px 970px no-repeat; }
 .ts-titlebar h1 { display: flex; align-items: center; gap: 12px; margin: 0; color: #242429; font-size: 32px; font-weight: 500; line-height: 40px; }.ts-titlebar p { display: flex; gap: 24px; margin: 8px 0 0; color: #242429; font-size: 14px; line-height: 20px; }.ts-titlebar p strong { font-weight: 700; }.ts-titlebar time { margin-top: 17px; font-size: 12px; line-height: 18px; }

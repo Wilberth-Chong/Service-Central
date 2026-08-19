@@ -15,6 +15,6 @@ printf '%s\n' "$main_rule" | rg -q 'height: var\(--platform-page-body-height\);'
 printf '%s\n' "$main_rule" | rg -q 'overflow-x: hidden;'
 printf '%s\n' "$main_rule" | rg -q 'overflow-y: auto;'
 printf '%s\n' "$main_rule" | rg -q 'overscroll-behavior: contain;'
-rg -q 'styles\.css\?v=20260819-native-flow-scroll-container' index.html
+rg -q 'styles\.css\?v=20260819-native-page-main-viewport' index.html
 
 printf 'PASS: native flow pages use the platform scroll container\n'
