@@ -1078,6 +1078,24 @@ button {
 .screen--ticket-summary .mi-header { top: 0; }
 .screen--ticket-summary .platform-sidebar { top: 64px; left: max(0px, calc((100vw - 1440px) / 2)); }
 .ts-shell { min-height: 1623px; }.ts-shell--tech { min-height: 2339px; }.ts-shell--tech .ts-main { min-height: 2235px; }.ts-main { min-height: 1519px; padding-bottom: 64px; }
+
+/* Match the fixed toolbar/header stack used by the standard platform pages. */
+.mi-shell--native-flow > .topbar-sc {
+  position: fixed;
+  z-index: 60;
+  top: var(--platform-flow-toolbar-height);
+  right: max(0px, calc((100vw - 1440px) / 2));
+  left: max(0px, calc((100vw - 1440px) / 2));
+  width: auto;
+}
+
+.mi-shell--native-flow > .platform-sidebar {
+  top: calc(var(--platform-flow-toolbar-height) + var(--platform-topbar-height));
+}
+
+.mi-shell--native-flow > .mi-main {
+  padding-top: var(--platform-topbar-height);
+}
 .ts-titlebar { display: flex; height: 120px; align-items: flex-start; justify-content: space-between; padding: 24px 32px 0; background: #f7f7f7 url("assets/instruments/subheader-background.png") center -179px / 1384px 970px no-repeat; }
 .ts-titlebar h1 { display: flex; align-items: center; gap: 12px; margin: 0; color: #242429; font-size: 32px; font-weight: 500; line-height: 40px; }.ts-titlebar p { display: flex; gap: 24px; margin: 8px 0 0; color: #242429; font-size: 14px; line-height: 20px; }.ts-titlebar p strong { font-weight: 700; }.ts-titlebar time { margin-top: 17px; font-size: 12px; line-height: 18px; }
 .ts-title-date { display: grid; justify-items: end; margin-top: 3px; text-align: right; }
