@@ -907,6 +907,13 @@ button {
 }
 .screen--qualification-summary { min-height: 100vh; background: #fff; }
 .screen--qualification-summary .platform-sidebar { top: 64px; left: max(0px, calc((100vw - 1440px) / 2)); }
+.screen--request-calibration-details .platform-sidebar,
+.screen--request-calibration-contact .platform-sidebar,
+.screen--request-calibration-review .platform-sidebar,
+.screen--calibration-summary .platform-sidebar { top: 64px; left: max(0px, calc((100vw - 1440px) / 2)); }
+.screen--calibration-summary { min-height: 100vh; background: #fff; }
+.calibration-table input[type="checkbox"] { appearance: none; width: 20px; height: 20px; margin: 0; border: 1px solid #ccc; border-radius: 0; background: #fff; vertical-align: middle; cursor: pointer; }
+.calibration-table input[type="checkbox"]:checked { border-color: var(--mi-blue); background: var(--mi-blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10l4 4 8-9' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center / 18px no-repeat; }
 .qualification-summary-shell { min-height: 100vh; }
 .qualification-summary-main { min-height: calc(100vh - 104px); padding-bottom: 104px; }
 .qualification-summary-content { width: 1200px; margin: 40px 32px 120px; }

@@ -49,6 +49,7 @@ let selectedSupportHistoryTicket = null;
 let selectedOpenSupportTicketInstrument = null;
 const openSupportTicketDraft = { instrument: null, request: {}, files: [], contact: {} };
 const qualificationRequestDraft = { instruments: [], additionalDetails: "", contact: {} };
+const calibrationRequestDraft = { instruments: [], additionalDetails: "", contact: {} };
 
 class ChecklistUploadNote extends HTMLElement {
   connectedCallback() {
@@ -210,6 +211,10 @@ const ROUTES = {
   "request-qualification-review": { title: "Request qualification service — review and submit", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "qualification-summary": { title: "Request qualification service — submitted", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-calibration": { title: "Request a calibration service", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
+  "request-calibration-details": { title: "Request a calibration service — add request details", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-calibration-contact": { title: "Request a calibration service — confirm contact information", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-calibration-review": { title: "Request a calibration service — review and submit", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "calibration-summary": { title: "Request a calibration service — submitted", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-installation": { title: "Installation support", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
   "open-support-ticket": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
   "open-support-ticket-details": { title: "Open a support ticket — add request details", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
@@ -2946,37 +2951,244 @@ function renderQualificationSummary() {
 function wireRequestCalibration() {
   const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-cal-search]");
-  const selectAll = app.querySelector("[data-cal-select-all]");
+  const selectAll = app.querySelector("[data-calibration-select-all]");
+  const tableSelectAll = app.querySelector("[data-calibration-select-all-table]");
   const instruments = [...app.querySelectorAll("[data-cal-instrument]")];
   const updateSelection = () => {
     const selected = instruments.filter((input) => input.checked).length;
-    selectAll.checked = selected > 0 && selected === instruments.length;
-    selectAll.indeterminate = selected > 0 && selected < instruments.length;
+    tableSelectAll.checked = selected > 0 && selected === instruments.length;
+    tableSelectAll.indeterminate = selected > 0 && selected < instruments.length;
+    selectAll.setAttribute("aria-pressed", String(tableSelectAll.checked));
     continueButton.disabled = selected === 0;
   };
-  selectAll.addEventListener("change", () => {
-    instruments.forEach((input) => { input.checked = selectAll.checked; });
+  selectAll.addEventListener("click", () => {
+    const checked = !tableSelectAll.checked;
+    instruments.forEach((input) => { input.checked = checked; });
+    updateSelection();
+  });
+  tableSelectAll.addEventListener("change", () => {
+    instruments.forEach((input) => { input.checked = tableSelectAll.checked; });
     updateSelection();
   });
   instruments.forEach((input) => input.addEventListener("change", updateSelection));
-  search.addEventListener("input", () => {
-    const query = search.value.trim().toLowerCase();
-    app.querySelectorAll("[data-cal-row]").forEach((row) => { row.hidden = Boolean(query) && !row.dataset.search.includes(query); });
+  const rows = [...app.querySelectorAll("[data-cal-row]")];
+  const appliedFilters = app.querySelector("[data-calibration-applied-filters]");
+  const appliedBadges = app.querySelector("[data-calibration-applied-badges]");
+  const clearFilters = app.querySelector("[data-calibration-clear-filters]");
+  rows.forEach((row) => {
+    const cells = row.cells;
+    row.dataset.group = cells[4].textContent.trim() || "—";
+    row.dataset.type = cells[5].textContent.trim() || "—";
+    row.dataset.model = cells[6].textContent.trim() || "—";
+    row.dataset.coverage = cells[7].textContent.trim() || "—";
   });
-  continueButton.addEventListener("click", () => showToast("Continue to Add request details"));
+  const filters = [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].map(([key, label]) => {
+    const host = document.createElement("div");
+    appliedBadges.append(host);
+    const controlHost = app.querySelector(`[data-calibration-filter-host="${key}"]`);
+    const options = [...new Set(rows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], controlHost, menuStyle: "figma-column" }) };
+  });
+  const filterRows = () => {
+    const query = search.value.trim().toLowerCase();
+    rows.forEach((row) => {
+      const matchesFilters = filters.every(({ key, filter }) => !filter.values.length || filter.values.includes(row.dataset[key]));
+      row.hidden = (Boolean(query) && !row.dataset.search.includes(query)) || !matchesFilters;
+    });
+  };
+  const updateAppliedFilters = () => {
+    const active = filters.some(({ filter }) => filter.values.length);
+    appliedFilters.hidden = !active;
+    clearFilters.hidden = !active;
+  };
+  filters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", () => { filterRows(); updateAppliedFilters(); }));
+  clearFilters.addEventListener("click", () => { filters.forEach(({ filter }) => filter.clear()); updateAppliedFilters(); });
+  search.addEventListener("input", () => {
+    filterRows();
+  });
+  continueButton.addEventListener("click", () => {
+    calibrationRequestDraft.instruments = instruments.filter((input) => input.checked).map((input) => {
+      const cells = input.closest("tr").cells;
+      return { serial: cells[2].textContent.trim(), nickname: cells[3].textContent.trim(), image: "assets/instruments/vanquish-detector.png" };
+    });
+    setRoute("request-calibration-details");
+  });
   app.querySelectorAll("[data-cal-filter], [data-cal-instrument-link]").forEach((button) => button.addEventListener("click", () => showToast("Instrument details opened")));
   updateSelection();
+  filterRows();
+  updateAppliedFilters();
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
+}
+
+function prepareCalibrationStepOne() {
+  const selectAll = app.querySelector(".pm-select-all");
+  selectAll.outerHTML = '<button class="pm-select-all qualification-select-all" type="button" data-calibration-select-all aria-pressed="false">Select all 30 instruments</button>';
+  const applied = document.createElement("div");
+  applied.className = "sh-applied-filters iss-applied-filters";
+  applied.dataset.calibrationAppliedFilters = "";
+  applied.hidden = true;
+  applied.innerHTML = '<div class="iss-applied-filters__badges" data-calibration-applied-badges></div><button class="sh-clear-filters" type="button" data-calibration-clear-filters hidden>Clear filter(s)</button>';
+  app.querySelector("[data-calibration-select-all]").after(applied);
+  const tableWrap = app.querySelector(".cal-table-wrap");
+  tableWrap.className = "iss-table-wrap calibration-table-wrap";
+  const table = tableWrap.querySelector(".cal-table");
+  table.className = "iss-table calibration-table";
+  const columns = table.querySelector("colgroup");
+  columns.replaceChildren(...["iss-col-radio", "iss-col-image", "iss-col-serial", "iss-col-nickname", "iss-col-groups", "iss-col-type", "iss-col-model", "iss-col-coverage"].map((className) => {
+    const column = document.createElement("col");
+    column.className = className;
+    return column;
+  }));
+  table.tHead.rows[0].insertCell(1).innerHTML = '<span class="sr-only">Instrument image</span>';
+  [...table.tBodies[0].rows].forEach((row) => {
+    const imageCell = row.insertCell(1);
+    imageCell.innerHTML = '<img data-calibration-instrument-image src="assets/instruments/vanquish-detector.png" alt="" />';
+  });
+  table.tHead.rows[0].cells[0].innerHTML = '<input type="checkbox" data-calibration-select-all-table aria-label="Select all instruments" />';
+  [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].forEach(([key, label], index) => {
+    table.tHead.rows[0].cells[index + 4].innerHTML = `<div data-calibration-filter-host="${key}" aria-label="${label} filter"></div>`;
+  });
+  const pagination = app.querySelector(".pm-pagination");
+  pagination.className = "iss-pagination calibration-pagination";
+  pagination.querySelectorAll(".pm-page-arrow").forEach((button) => { button.className = "iss-page-arrow"; });
+  pagination.querySelectorAll(".pm-page-number").forEach((button) => { button.className = button.classList.contains("is-current") ? "iss-page-number is-current" : "iss-page-number"; });
+  pagination.querySelector("strong").className = "iss-results-total";
+  pagination.querySelector("span:last-of-type").className = "iss-go-to";
 }
 
 function renderRequestCalibration() {
   const template = document.querySelector("#request-calibration-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Request a calibration service", backRoute: "request-support" });
+  const legacySteps = app.querySelector(".cal-steps");
+  const stepMount = document.createElement("div");
+  stepMount.dataset.ticketStepViewer = "";
+  legacySteps.replaceWith(stepMount);
+  mountTicketStepViewer(1, { labels: ["Select instrument(s)", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Calibration service request progress" });
+  prepareCalibrationStepOne();
   mountNativeFlowActionBar();
   wireRequestCalibration();
   document.title = "Request a calibration service — Services Central";
+}
+
+function renderCalibrationSelectedInstruments(host) {
+  const table = document.createElement("table");
+  table.className = "qualification-selected-table";
+  table.innerHTML = '<colgroup><col class="qualification-selected-table__image" /><col /><col /></colgroup><thead><tr><th></th><th>Serial number</th><th>Nickname</th></tr></thead>';
+  const body = document.createElement("tbody");
+  calibrationRequestDraft.instruments.forEach((instrument) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td><img src="${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td>`;
+    body.append(row);
+  });
+  table.append(body);
+  host.replaceChildren(table);
+}
+
+function mountCalibrationFlowTemplate(templateId, screenClass, currentStep, backRoute, primaryDisabled = true) {
+  const template = document.querySelector(templateId);
+  app.replaceChildren(template.content.cloneNode(true));
+  const screen = app.querySelector(".screen");
+  screen.classList.add(screenClass);
+  screen.setAttribute("aria-label", `Request a calibration service: step ${currentStep}`);
+  app.querySelector(".iss-titlebar h1").textContent = "Request a calibration service";
+  mountNativePageChrome("request-support", { title: "Request a calibration service", backRoute });
+  mountTicketStepViewer(currentStep, { labels: ["Select instrument(s)", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Calibration service request progress" });
+  return mountNativeFlowActionBar({ backRoute, primaryDisabled });
+}
+
+function wireCalibrationDetails() {
+  const textarea = app.querySelector("[data-qualification-details]");
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  app.querySelector(".qualification-flow-card header p").textContent = "Please provide any additional details you would like to share with us about your calibration request.";
+  textarea.placeholder = "Provide additional details about your calibration service request.";
+  renderCalibrationSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  textarea.value = calibrationRequestDraft.additionalDetails;
+  const update = () => { calibrationRequestDraft.additionalDetails = textarea.value; primary.disabled = !textarea.value.trim(); };
+  textarea.addEventListener("input", update);
+  primary.addEventListener("click", () => setRoute("request-calibration-contact"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestCalibrationDetails() {
+  mountCalibrationFlowTemplate("#request-qualification-details-template", "screen--request-calibration-details", 2, "request-calibration");
+  wireCalibrationDetails();
+  document.title = "Request a calibration service — add request details";
+}
+
+function wireCalibrationContact() {
+  const defaults = { firstName: "Molly", lastName: "Hartman", phone: "555-555-5555", email: "molly.hartman@thermofisher.com", country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
+  const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const update = () => {
+    fields.forEach((field) => { calibrationRequestDraft.contact[field.dataset.qualificationContactField] = field.value; });
+    primary.disabled = !fields.filter((field) => field.required).every((field) => field.validity.valid && field.value.trim());
+  };
+  fields.forEach((field) => {
+    field.value = calibrationRequestDraft.contact[field.dataset.qualificationContactField] || defaults[field.dataset.qualificationContactField] || field.value;
+    field.addEventListener("input", () => { if (field.dataset.qualificationContactField === "phone") field.value = field.value.replace(/[^0-9 -]/g, ""); update(); });
+    field.addEventListener("change", update);
+  });
+  primary.addEventListener("click", () => setRoute("request-calibration-review"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestCalibrationContact() {
+  mountCalibrationFlowTemplate("#request-qualification-contact-template", "screen--request-calibration-contact", 3, "request-calibration-details");
+  wireCalibrationContact();
+  document.title = "Request a calibration service — confirm contact information";
+}
+
+function calibrationServiceAddress() {
+  const contact = calibrationRequestDraft.contact;
+  return [[contact.serviceAddress, contact.additionalAddress].filter(Boolean).join(", "), [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", ")].filter(Boolean).join("\n") || "—";
+}
+
+function fillCalibrationReview(scope, prefix) {
+  const contact = calibrationRequestDraft.contact;
+  scope.querySelector(`[data-${prefix}-details]`).textContent = calibrationRequestDraft.additionalDetails || "—";
+  const values = { name: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—", phone: contact.phone || "—", email: contact.email || "—", company: contact.company || "—", serviceAddress: calibrationServiceAddress() };
+  Object.entries(values).forEach(([key, value]) => {
+    const output = scope.querySelector(`[data-${prefix}-contact="${key}"]`);
+    if (output) output.textContent = value;
+  });
+}
+
+function renderRequestCalibrationReview() {
+  const actionBar = mountCalibrationFlowTemplate("#request-qualification-review-template", "screen--request-calibration-review", 4, "request-calibration-contact", false);
+  actionBar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit";
+  fillCalibrationReview(app, "qualification-review");
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderCalibrationSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  actionBar.querySelector('[data-actionbar-action="primary"]').addEventListener("click", () => setRoute("calibration-summary"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request a calibration service — review and submit";
+}
+
+function renderCalibrationSummary() {
+  const template = document.querySelector("#qualification-summary-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  app.querySelector(".screen").classList.add("screen--calibration-summary");
+  app.querySelector(".iss-titlebar h1").textContent = "Request a calibration service";
+  mountNativePageChrome("request-support", { title: "Request a calibration service", backRoute: "request-support" });
+  fillCalibrationReview(app, "qualification-summary");
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderCalibrationSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  const closeBar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), { closeOnly: true, closeRoute: "request-support" });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request a calibration service — submitted";
 }
 
 function wireRequestInstallation() {
@@ -3968,6 +4180,14 @@ function render() {
     renderQualificationSummary();
   } else if (route === "request-calibration") {
     renderRequestCalibration();
+  } else if (route === "request-calibration-details") {
+    renderRequestCalibrationDetails();
+  } else if (route === "request-calibration-contact") {
+    renderRequestCalibrationContact();
+  } else if (route === "request-calibration-review") {
+    renderRequestCalibrationReview();
+  } else if (route === "calibration-summary") {
+    renderCalibrationSummary();
   } else if (route === "request-installation") {
     renderRequestInstallation();
   } else if (route === "open-support-ticket") {

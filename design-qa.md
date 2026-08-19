@@ -104,6 +104,16 @@ final result: blocked
 
 final result: passed
 
+## Calibration four-step flow
+
+**Implementation and verification**
+
+- Calibration now follows the same shared step-viewer and native action-bar pattern as Qualification across instrument selection, request details, contact confirmation, review, and submitted summary.
+- Calibration retains its own draft state, selected freezer instruments, request details, contact information, and submitted-summary route.
+- Browser verification completed the full user journey from one selected instrument through required details/contact fields to the submitted summary. Step 4 displayed enabled `Submit`; the summary contained the entered request detail, the submitted notice, and Close; console errors: none.
+
+final result: passed
+
 ## Qualification submitted summary
 
 **Comparison target**
