@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Support Ticket details regression</title>
+    <style>body { margin: 0; } #result { position: fixed; z-index: 100; top: 8px; right: 8px; background: #fff; padding: 8px; } iframe { width: 1440px; height: 900px; border: 0; }</style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?openSupportTicketDetailsTest=1&regression=details-refinements#open-support-ticket-details" title="Open Support Ticket Step 2 fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => { if (!condition) throw new Error(message); };
+      frame.addEventListener("load", () => {
+        try {
+          const doc = frame.contentDocument;
+          assert(doc.querySelector(".isd-card"), "renders the Step 2 support request form");
+          assert(doc.querySelector(".isd-steps .is-current strong").textContent.trim() === "Add request details", "marks Add request details as the current step");
+          const fields = [...doc.querySelectorAll("[data-isd-field]")];
+          assert(doc.querySelector('[data-isd-field="subject"]'), "renders the request-subject field");
+          assert(doc.querySelector('[data-isd-field="problem"]'), "renders the problem-details field");
+          assert(doc.querySelector("[data-isd-upload]"), "renders the file-upload control");
+          assert(doc.querySelector(".isd-instrument"), "renders the selected instrument summary");
+          assert(doc.querySelector(".isd-instrument").textContent.includes("Catalog number") && doc.querySelector(".isd-instrument").textContent.includes("Manuals") && doc.querySelector(".isd-coverage"), "renders catalog, manuals, and instrument coverage details");
+          assert(fields.every((field) => field.value === ""), "shows the empty first-visit Figma state");
+          assert(doc.querySelector(".isd-upload__requirements"), "shows initial upload limits");
+          assert(doc.querySelector(".isd-filled-files").hidden, "hides filled-state file cards initially");
+          const completeStep = doc.querySelector(".isd-steps .is-complete");
+          assert(getComputedStyle(completeStep.querySelector("span")).borderTopWidth === "2px" && getComputedStyle(completeStep.querySelector("span")).color === "rgb(27, 27, 29)", "styles the completed step circle with the Figma black bold numeral");
+          assert(Number(getComputedStyle(completeStep.querySelector("strong")).fontWeight) >= 500, "uses medium weight for the completed step label");
+          assert(doc.querySelector("[data-isd-info-tooltip]"), "uses the Komodo bold information icon trigger");
+          assert(getComputedStyle(doc.querySelector(".isd-upload__requirements li")).fontSize === "12px", "uses the Figma upload-requirement text size");
+          assert(doc.querySelector("[data-isd-continue]").disabled, "keeps Continue disabled before the required fields are complete");
+          fields.forEach((field, index) => {
+            field.value = `Filled value ${index + 1}`;
+            field.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+          assert(doc.querySelector(".isd-card").classList.contains("is-filled"), "applies the filled Figma state after all required fields are complete");
+          assert(doc.querySelector(".isd-filled-files").hidden, "keeps file cards hidden until a file is uploaded");
+          const uploadInput = doc.querySelector("[data-isd-upload] input");
+          Object.defineProperty(uploadInput, "files", { configurable: true, value: [new File(["test"], "support-log.csv", { type: "text/csv" })] });
+          uploadInput.dispatchEvent(new Event("change", { bubbles: true }));
+          assert(!doc.querySelector(".isd-filled-files").hidden, "shows file cards after an upload");
+          assert(doc.querySelector(".isd-files article").textContent.includes("support-log.csv"), "renders the uploaded file name");
+          assert(!doc.querySelector("[data-isd-continue]").disabled, "enables Continue after all required fields are complete");
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

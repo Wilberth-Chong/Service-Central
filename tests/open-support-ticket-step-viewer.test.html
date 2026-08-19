@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Support Ticket step viewer regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1440px; height: 900px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?openSupportTicketStepViewerTest=1#open-support-ticket" title="Open Support Ticket fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+
+      frame.addEventListener("load", () => {
+        try {
+          const doc = frame.contentDocument;
+          const steps = [...doc.querySelectorAll(".iss-steps li")];
+          const labels = steps.map((step) => {
+            const number = step.querySelector(":scope > span")?.textContent.trim();
+            const label = step.querySelector(":scope > strong, :scope > span:last-child")?.textContent.trim();
+            return `${number} ${label}`;
+          });
+          assert(steps.length === 4, "renders four steps");
+          assert(doc.querySelectorAll(".iss-steps .is-current").length === 1, "renders one active step");
+          assert(labels.join("|") === "1 Select instrument|2 Add request details|3 Confirm contact information|4 Review and submit", "keeps the Figma step labels");
+
+          const activeCircle = doc.querySelector(".iss-steps .is-current > span");
+          const inactiveCircle = doc.querySelector(".iss-steps li:not(.is-current) > span");
+          const activeStyle = getComputedStyle(activeCircle);
+          const inactiveStyle = getComputedStyle(inactiveCircle);
+          assert(activeStyle.width === "32px" && activeStyle.height === "32px", "uses the 32px step indicator in the selected Figma frame");
+          assert(activeStyle.backgroundColor !== inactiveStyle.backgroundColor, "active and inactive circles are visually distinct");
+          assert(getComputedStyle(doc.querySelector(".iss-steps")).display === "grid", "uses a horizontal step-viewer layout");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

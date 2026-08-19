@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="../" />
+    <title>MultiSelectFilter regression</title>
+    <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
+    <style>
+      #result { position: fixed; z-index: 10; top: 8px; right: 8px; padding: 8px; background: #fff; }
+      body { font-family: "Helvetica Neue", Arial, sans-serif; }
+      .fixture { width: 640px; margin: 64px; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <div class="fixture"><div id="fixture-filter"></div></div>
+    <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
+    <script>
+      const result = document.querySelector("#result");
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const selectedLabels = (root) => [...root.querySelectorAll("[data-msf-option][aria-selected='true']")]
+        .map((option) => option.dataset.value);
+
+      (async () => {
+        try {
+          const host = document.querySelector("#fixture-filter");
+          const changes = [];
+          host.addEventListener("multiselect-filter-change", (event) => changes.push(event.detail.values));
+          const filter = new window.MultiSelectFilter(host, {
+            label: "Status",
+            allLabel: "All",
+            options: ["Open", "In progress", "Closed"],
+          });
+
+          const trigger = host.querySelector("[data-msf-trigger]");
+          const menu = host.querySelector("[data-msf-menu]");
+          assert(trigger.getBoundingClientRect().height === 40, "trigger is 40px high");
+          assert(trigger.getAttribute("aria-haspopup") === "listbox", "trigger identifies a listbox");
+          assert(trigger.getAttribute("aria-expanded") === "false", "trigger starts collapsed");
+          assert(menu.getAttribute("aria-multiselectable") === "true", "menu exposes multiselect semantics");
+          assert([...host.querySelectorAll("[data-msf-option]")].map((option) => option.dataset.value).join("|") === "All|Open|In progress|Closed", "options render in exact order");
+          assert(selectedLabels(host).join("|") === "All", "All is selected initially");
+          assert(filter.values.length === 0, "empty values represent All");
+
+          trigger.click();
+          await nextFrame();
+          assert(!menu.hidden && trigger.getAttribute("aria-expanded") === "true", "trigger opens the menu");
+          const rows = [...host.querySelectorAll("[data-msf-option]")];
+          assert(rows.every((row) => row.getBoundingClientRect().height === 40), "each menu row is 40px high");
+          rows[1].click();
+          await nextFrame();
+          assert(filter.values.join("|") === "Open", "specific selection clears All");
+          assert(selectedLabels(host).join("|") === "Open", "selected state stays visible");
+          assert(host.querySelector("[data-msf-badge-text]").textContent.trim() === "Status: Open", "single selection renders badge copy");
+          assert(changes.at(-1).join("|") === "Open", "user selection emits values");
+
+          rows[2].click();
+          await nextFrame();
+          assert(filter.values.join("|") === "Open|In progress", "component retains multiple selections");
+          assert(host.querySelector("[data-msf-badge-text]").textContent.trim() === "Status: Open, In progress", "multiple selection badge matches reference format");
+          assert(host.querySelector("[data-msf-remove] img").getAttribute("src") === "assets/icons/actions/close/size=16px, style=mono.svg", "badge uses repository close asset");
+          assert(host.querySelector(".msf__badge").getBoundingClientRect().height === 30, "badge is 30px high");
+          assert(getComputedStyle(host.querySelector(".msf__badge")).borderRadius === "15px", "badge has a fully rounded radius");
+          assert(getComputedStyle(host.querySelector(".msf__clear")).color === "rgb(0, 113, 208)", "Clear filters uses the shared ticket-link blue");
+          assert(menu.getBoundingClientRect().width === trigger.getBoundingClientRect().width, "menu matches trigger width");
+          assert(getComputedStyle(rows[1]).backgroundColor === "rgb(255, 255, 255)", "selected rows retain the neutral Komodo surface");
+
+          trigger.focus();
+          trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+          await nextFrame();
+          assert(document.activeElement === rows[0].querySelector("input"), "ArrowDown opens and focuses first option");
+          rows[0].querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+          assert(document.activeElement === rows[1].querySelector("input"), "ArrowDown advances option focus");
+          rows[1].querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+          await nextFrame();
+          assert(filter.values.join("|") === "In progress", "Space toggles the focused option");
+          rows[1].querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+          assert(document.activeElement === rows[2].querySelector("input"), "ArrowDown reaches the remaining selected option");
+          rows[2].querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+          await nextFrame();
+          assert(filter.values.length === 0, "Enter toggles the final selected option back to All");
+          rows[2].querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await nextFrame();
+          assert(menu.hidden && document.activeElement === trigger, "Escape closes and restores trigger focus");
+
+          trigger.click();
+          rows[0].querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+          await nextFrame();
+          assert(menu.hidden, "Tab closes the menu without trapping focus");
+          trigger.click();
+          document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+          await nextFrame();
+          assert(menu.hidden, "outside click closes the menu");
+
+          filter.setValues(["Open", "In progress", "Closed", "Unknown"]);
+          assert(filter.values.join("|") === "Open|In progress|Closed", "setValues keeps every configured explicit selection and rejects unknown values");
+          host.querySelector("[data-msf-remove]").click();
+          await nextFrame();
+          assert(filter.values.length === 0 && selectedLabels(host).join("|") === "All", "badge removal restores All");
+
+          filter.setValues(["Open"]);
+          host.querySelector("[data-msf-clear]").click();
+          await nextFrame();
+          assert(filter.values.length === 0 && changes.at(-1).length === 0, "Clear filters restores All and emits change");
+
+          const secondHost = document.createElement("div");
+          document.body.append(secondHost);
+          const second = new window.MultiSelectFilter(secondHost, {
+            label: "Region",
+            allLabel: "Everywhere",
+            options: ["North", "South"],
+          });
+          second.setValues(["South"]);
+          assert(secondHost.textContent.includes("Region: South"), "component is reusable with alternate configuration");
+
+          const splitControlHost = document.createElement("div");
+          const splitHost = document.createElement("div");
+          document.body.append(splitControlHost, splitHost);
+          const split = new window.MultiSelectFilter(splitHost, {
+            label: "Region",
+            allLabel: "Everywhere",
+            options: ["North", "South"],
+            controlHost: splitControlHost,
+          });
+          const splitTrigger = splitControlHost.querySelector("[data-msf-trigger]");
+          assert(splitTrigger, "split host renders trigger in control mount");
+          assert(!splitHost.querySelector("[data-msf-trigger]"), "split host keeps trigger out of badge mount");
+          splitTrigger.click();
+          const splitSouth = splitControlHost.querySelector('[data-msf-option][data-value="South"]');
+          splitSouth.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+          assert(!splitControlHost.querySelector("[data-msf-menu]").hidden, "control mount is inside the outside-click boundary");
+          splitSouth.click();
+          await nextFrame();
+          assert(splitHost.querySelector("[data-msf-badge-text]").textContent.trim() === "Region: South", "split host badge follows header selection");
+          assert(split.values.join("|") === "South", "split host preserves the public selection API");
+
+          const columnHost = document.createElement("div");
+          document.body.append(columnHost);
+          const column = new window.MultiSelectFilter(columnHost, {
+            label: "Model",
+            options: ["VQF0000DET", "VQH0000VEN"],
+            menuStyle: "figma-column",
+          });
+          const columnMenu = columnHost.querySelector("[data-msf-menu]");
+          assert(columnMenu.querySelector("[data-msf-sort='asc']") && columnMenu.querySelector("[data-msf-sort='desc']"), "column menu includes Figma A to Z and Z to A controls");
+          assert(columnMenu.querySelector("[data-msf-clear-menu]"), "column menu includes the Figma clear filter control");
+          assert(!columnMenu.querySelector('[data-msf-option][data-value="All"]'), "column menu omits the All checkbox in favor of Clear");
+          let sortDirection = "";
+          columnHost.addEventListener("multiselect-filter-sort", (event) => { sortDirection = event.detail.direction; });
+          columnMenu.querySelector("[data-msf-sort='desc']").click();
+          assert(sortDirection === "desc", "column menu emits a descending sort request");
+          const clearMenu = columnMenu.querySelector("[data-msf-clear-menu]");
+          assert(getComputedStyle(clearMenu).color === "rgb(0, 113, 208)", "column Clear uses Komodo link blue");
+          assert(getComputedStyle(clearMenu).backgroundColor === "rgb(255, 255, 255)", "column Clear keeps a white background");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      })();
+    </script>
+  </body>
+</html>

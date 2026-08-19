@@ -2,7 +2,7 @@ const app = document.querySelector("#app");
 const helpDialog = document.querySelector("#help-dialog");
 const servicesHelpDialog = document.querySelector("#services-help-dialog");
 const flowsDialog = document.querySelector("#flows-dialog");
-const installationPendingDialog = document.querySelector("#installation-pending-dialog");
+const installationPendingDialog = createInstallationPendingDialog();
 const addUserOrderDialog = document.querySelector("#add-user-order-dialog");
 const preferredDeliveryDatesDialog = document.querySelector("#preferred-delivery-dates-dialog");
 const deliveryChecklistUploadDialog = document.querySelector("#delivery-checklist-upload-dialog");
@@ -24,6 +24,7 @@ const miShareDialog = document.querySelector("#mi-share-dialog");
 const miCoverageDialog = document.querySelector("#mi-coverage-dialog");
 const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
+const CONSUMABLES_SUPPORT_PORTAL_IMAGE = "assets/consumables/support-portal-login.png";
 const DEFAULT_INSTALLATION_USER_EMAIL = "holly.hartman@company.com";
 let toastTimer;
 let preferredDeliveryDatesSubmitted = false;
@@ -53,6 +54,9 @@ const PREINSTALL_CHECKLISTS = [
   { id: "fifth", name: "Fifth template long name", instruments: "1 instrument(s)", submittedBy: "adam.smith@companyname.com", submittedOn: "03 Jul 2025", items: [["18", "1", "BRE725660", "Astral"]] },
 ];
 let preInstallTooltipCloseTimer;
+let selectedSupportHistoryTicket = null;
+let selectedOpenSupportTicketInstrument = null;
+const openSupportTicketDraft = { instrument: null, request: {}, files: [], contact: {} };
 
 class ChecklistUploadNote extends HTMLElement {
   connectedCallback() {
@@ -185,6 +189,7 @@ function wireWhiteGloveTooltips(scope = document) {
 }
 
 const CUSTOM_ROUTES = {
+  "contact-page": "Service plan contact detail",
   "edit-spc": "Edit service plan contact",
   "instrument-1009996": "Instrument 1009996",
   "installation-faqs": "Installation frequently asked questions",
@@ -206,11 +211,23 @@ const ROUTES = {
   "support-history": { title: "Support request history", src: "assets/flows/support-history.png", width: 1440, height: 1460, kind: "app" },
   "service-plan-contacts": { title: "Service plan contacts", src: "assets/flows/service-plan-contacts.png", width: 1440, height: 1800, kind: "app" },
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
-  "instrument-support-selection": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
+  "request-pm": { title: "Request PM scheduling", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
+  "request-serviceplan": { title: "Request a service plan quote", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-qualification": { title: "Request qualification service", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-calibration": { title: "Request a calibration service", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
+  "request-installation": { title: "Installation support", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
+  "open-support-ticket": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
+  "open-support-ticket-details": { title: "Open a support ticket — add request details", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
+  "open-support-ticket-contact": { title: "Open a support ticket — contact information", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 1460, kind: "app" },
+  "open-support-ticket-review": { title: "Open a support ticket — review and submit", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 1460, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
-  education: { title: "Browse education", src: "assets/flows/education.png", width: 1440, height: 1460, kind: "external" },
+  education: { title: "Browse education", src: "assets/flows/browser-education.png", width: 2878, height: 1826, kind: "external" },
   "ticket-detail": { title: "Support ticket detail", src: "assets/flows/ticket-detail.png", width: 1456, height: 2069, kind: "app" },
+  "tech-support-summary": { title: "Tech support summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
+  "service-requests-summary": { title: "Service request summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
+  "pm-summary": { title: "Preventive maintenance summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
+  "closed-summary": { title: "Closed ticket summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "user-not-mapped": { title: "From sign in — user not mapped", src: "assets/flows/user-not-mapped.png", width: 1440, height: 1090, kind: "signin", cta: { x: 204, y: 452, w: 392, h: 53, route: "add-instruments", label: "Continue user-not-mapped flow" } },
   "installation-order": { title: "From installation order ready", src: "assets/flows/installation-order.png", width: 600, height: 941, kind: "email", cta: { x: 56, y: 428, w: 198, h: 42, route: "request-support", label: "View installation order" } },
   "service-plan-approval": { title: "From service plan contact approval", src: "assets/flows/service-plan-approval.png", width: 600, height: 1494, kind: "email", cta: { x: 56, y: 375, w: 184, h: 42, route: "my-instruments", label: "Review and confirm" } },
@@ -246,8 +263,14 @@ const FLOW_MENU = [
   ["Installation support", "installation-support"],
   ["Support history", "support-history"],
   ["Service plan contacts", "service-plan-contacts"],
+  ["Service plan contact detail", "contact-page"],
   ["Edit service plan contact", "edit-spc"],
   ["Request support", "request-support"],
+  ["Request PM scheduling", "request-pm"],
+  ["Request a service plan quote", "request-serviceplan"],
+  ["Request qualification service", "request-qualification"],
+  ["Request a calibration service", "request-calibration"],
+  ["Installation support", "request-installation"],
   ["Notification settings", "notifications"],
   ["Consumables", "consumables"],
   ["Browse education", "education"],
@@ -272,7 +295,7 @@ const DASHBOARD_HOTSPOTS = [
   { label: "Search instruments, groups and tickets", route: "my-instruments", x: 84, y: 329, w: 1272, h: 52 },
   { label: "Order consumables", route: "consumables", x: 88, y: 452, w: 304, h: 128 },
   { label: "Browse education", route: "education", x: 426, y: 452, w: 304, h: 128 },
-  { label: "Request service plan", route: "service-plan-approval", x: 764, y: 452, w: 304, h: 128 },
+  { label: "Request service plan", x: 764, y: 452, w: 304, h: 128 },
   { label: "Request maintenance or support", route: "request-support", x: 1102, y: 452, w: 304, h: 128 },
   { label: "Support request history", route: "support-history", x: 365, y: 870, w: 235, h: 42 },
   { label: "View all my instruments", route: "my-instruments", x: 360, y: 1846, w: 240, h: 42 },
@@ -297,6 +320,51 @@ function showToast(message, { title = "", variant = "info", duration = 4000 } = 
 }
 
 toast.querySelector("[data-toast-close]").addEventListener("click", hideToast);
+
+function createInstallationPendingContent() {
+  const actions = document.createElement("div");
+  actions.className = "installation-pending-modal__actions";
+
+  const deliveryRow = document.createElement("div");
+  deliveryRow.className = "installation-pending-modal__row";
+  deliveryRow.innerHTML = '<img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span>';
+
+  const instrumentsRow = document.createElement("button");
+  instrumentsRow.type = "button";
+  instrumentsRow.className = "installation-pending-modal__row";
+  instrumentsRow.dataset.installationPendingInstruments = "";
+  instrumentsRow.innerHTML = '<img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>3456789</strong>. Review your instruments in <b>My instruments</b> tab.</span>';
+
+  actions.append(deliveryRow, instrumentsRow);
+  return actions;
+}
+
+function createInstallationPendingDialog() {
+  return window.Modal?.mount('[data-modal-mount="installation-pending"]', {
+    id: "installation-pending-dialog",
+    title: "Action(s) pending",
+    description: "You have important pending actions to ensure your delivery and installation stay on track.",
+    size: "md",
+    className: "installation-pending-dialog",
+    content: createInstallationPendingContent(),
+    closeLabel: "Close pending actions",
+    closeDataset: { installationPendingClose: "" },
+    actions: [
+      {
+        label: "Cancel",
+        variant: "secondary",
+        closes: true,
+        dataset: { installationPendingClose: "" },
+      },
+      {
+        label: "Go to installation page",
+        variant: "primary",
+        closes: true,
+        dataset: { installationPendingContinue: "" },
+      },
+    ],
+  });
+}
 
 function openServicesHelpModal(trigger) {
   if (servicesHelpDialog.open) return;
@@ -877,7 +945,8 @@ function routeFromHash() {
   return "signin";
 }
 
-function setRoute(route) {
+function setRoute(route, summaryTicket = null) {
+  selectedSupportHistoryTicket = summaryTicket;
   const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
   if (window.location.hash !== nextHash) window.history.pushState({ fromRoute: routeFromHash() }, "", nextHash);
@@ -929,8 +998,8 @@ function addScreenSpecificHotspots(canvas, route, screen) {
       { label: "Edit contact for instruments with no service plan", route: "edit-spc", x: 1110, y: 765, w: 116, h: 32 },
     ],
     "request-support": [
-      { label: "Open a support ticket", route: "instrument-support-selection", x: 730, y: 348, w: 210, h: 50 },
-      { label: "Request preventive maintenance", route: "pm-cycle", x: 730, y: 483, w: 210, h: 50 },
+      { label: "Open a support ticket", route: "open-support-ticket", x: 730, y: 348, w: 210, h: 50 },
+      { label: "Request preventive maintenance", route: "request-pm", x: 730, y: 483, w: 210, h: 50 },
       { label: "Request a service plan", route: "service-plan-approval", x: 730, y: 618, w: 210, h: 50 },
       { label: "Installation support", route: "installation-support", x: 730, y: 888, w: 210, h: 50 },
     ],
@@ -967,11 +1036,308 @@ function wireSignIn() {
   app.querySelector("[data-help]").addEventListener("click", () => helpDialog.showModal());
 }
 
+const DASHBOARD_SORT_ICON = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
+const DASHBOARD_SYSTEM_ICON = "assets/icons/science/system/size=24px,%20style=mono.svg";
+const DASHBOARD_VISIT_ICON = "assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg";
+const DASHBOARD_DOWNLOAD_ICON = "assets/icons/actions/download/Size=16px, Style=Mono.svg";
+const DASHBOARD_BANNERS = [
+  {
+    title: "We found 24 instrument(s) associated with your email address",
+    body: "Review and add the suggested instruments to your account.",
+    action: "Go to suggestions",
+    image: "assets/instruments/add-instruments-suggestion.svg",
+  },
+  {
+    title: "6 related system(s) suggested",
+    body: "Review the system(s) and add or ignore.",
+    action: "Go to suggestions",
+    image: "assets/dashboard/related-systems-suggestion.svg",
+  },
+  {
+    title: "3 instrument(s) access requests awaiting your approval",
+    body: "Review the instrument(s) and approve or deny.",
+    action: "Go to pending",
+    image: "assets/instruments/add-instruments-suggestion.svg",
+  },
+  {
+    title: "5 instrument(s) shared with you",
+    body: "Review and add instruments to your account.",
+    action: "Go to pending",
+    image: "assets/instruments/add-instruments-suggestion.svg",
+  },
+];
+
+const DASHBOARD_CARD_ICONS = {
+  favorite: "assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg",
+  close: "assets/icons/actions/close/size=32px,%20style=bold.svg",
+  lock: "assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg",
+  users: "assets/icons/general/2%20users/size=16px,%20style=mono.svg",
+  support: "assets/icons/navigation/support/size=16px, style=bold.svg",
+  expand: "assets/icons/tools/resize%20large/size=16px,%20style=bold.svg",
+  more: "assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg",
+};
+
+const DASHBOARD_FAVORITE_INSTRUMENTS = [
+  {
+    serial: "TSQ-Z-12346",
+    name: "Triple Quadrupole LC-MS",
+    nickname: "TSQ-0",
+    model: "MSTSQQUANTISPLUS",
+    type: "LC",
+    groups: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    userCount: 3,
+  },
+  {
+    serial: "TSQ-Z-12347",
+    name: "Triple Quadrupole LC-MS",
+    nickname: "TSQ-1",
+    model: "MSTSQQUANTISPLUS",
+    type: "Cold Chromatograph",
+    groups: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    userCount: 4,
+  },
+  {
+    serial: "TSQ-Z-12348",
+    name: "Triple Quadrupole LC-MS",
+    nickname: "TSQ-2",
+    model: "MSTSQQUANTISPLUS",
+    type: "Mass Spec Life Science",
+    groups: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    userCount: 5,
+  },
+];
+
+const DASHBOARD_QUICK_VIEW_INSTRUMENTS = [
+  {
+    serial: "1009996",
+    name: "Vanquish&trade; Detector F",
+    nickname: "Detector-2B",
+    model: "VQF0000DET",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-detector.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+  {
+    serial: "1009999",
+    name: "Vanquish&trade; Column",
+    nickname: "Column-2B",
+    model: "VQH000OVEN",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-column.png",
+    coverage: "Contract expired",
+    coverageTone: "expired",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+  {
+    serial: "1009998",
+    name: "Vanquish&trade; Sampler",
+    nickname: "Sampler-2B",
+    model: "VQF00SAMPL",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-sampler.png",
+    coverage: "Contract expired",
+    coverageTone: "expired",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+  {
+    serial: "1009997",
+    name: "Vanquish&trade; Binary Pump H",
+    nickname: "Pump-2B",
+    model: "VQF000PUMP",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-pump.png",
+    coverage: "Contract expired",
+    coverageTone: "expired",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+];
+
+const DASHBOARD_CLOSED_TICKETS = [
+  { ticket: "446532405", closed: "30 Jan 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12346", model: "VQF0000DET", image: "tsq.png", highlighted: true, report: true, download: true },
+  { ticket: "446532404", closed: "29 Feb 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12345", model: "VQH0000VEN", image: "tsq.png", highlighted: true, report: true, download: true },
+  { ticket: "446532403", closed: "28 Mar 2019", subject: "Need support for unknown instrument error", serial: "1009997", model: "VQF00SAMPL", image: "vanquish-column.png", report: true },
+  { ticket: "446532402", closed: "27 Apr 2019", subject: "Repair 0000123459 instrument parts", serial: "1009996", model: "VQF000PUMP", image: "vanquish-pump.png", system: true },
+  { ticket: "446532401", closed: "26 May 2019", subject: "Repair 0000123459 instrument parts", serial: "1009999", model: "MSTSQQUANTISPLUS", image: "vanquish-pump.png", system: true },
+  { ticket: "446532400", closed: "25 Jun 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12347", model: "MSTSQQUANTISPLUS", image: "tsq.png", report: true },
+  { ticket: "446532399", closed: "24 Jul 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", report: true, download: true },
+  { ticket: "446532398", closed: "23 Aug 2019", subject: "Need support for unknown instrument error", serial: "SN98355W", model: "MSTSQQUANTISPLUS", image: "q-exactive.png" },
+];
+
+const DASHBOARD_ONSITE_VISITS = [
+  { scheduled: "04 Mar 2024", ticket: "441582736", type: "PM (Contract)", subject: "Repair 0000123459 instrument parts", serial: "1009998", model: "VQF000PUMP", image: "vanquish-sampler.png", system: true, highlighted: true },
+  { scheduled: "05 Mar 2024", ticket: "441582735", type: "Service Request", subject: "Repair 0000123459 instrument parts", serial: "1009997", model: "MSTSQQUANTISPLUS", image: "vanquish-pump.png", system: true, highlighted: true },
+  { scheduled: "06 Mar 2024", ticket: "441582734", type: "Service Request", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12345", model: "MSTSQQUANTISPLUS", image: "tsq.png", highlighted: true },
+  { scheduled: "07 Mar 2024", ticket: "441582733", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12347", model: "MSTSQQUANTISPLUS", image: "tsq.png" },
+  { scheduled: "08 Mar 2024", ticket: "441582732", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", system: true },
+];
+
+function dashboardTableHeader(label) {
+  return `<th>${label} ${DASHBOARD_SORT_ICON}</th>`;
+}
+
+function dashboardSerialCell(ticket) {
+  const systemIcon = ticket.system ? `<img class="db-ticket-system-icon" src="${DASHBOARD_SYSTEM_ICON}" alt="" />` : "";
+  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#instrument-access">${ticket.serial}</a></span></td>`;
+}
+
+function dashboardReportCell(ticket) {
+  if (!ticket.report && !ticket.download) return "<td></td>";
+  const report = ticket.report ? '<button class="db-report-button" type="button">View report</button>' : "";
+  const download = ticket.download ? `<button class="db-download-button" type="button" aria-label="Download report"><img src="${DASHBOARD_DOWNLOAD_ICON}" alt="" /></button>` : "";
+  return `<td><div class="db-ticket-actions">${report}${download}</div></td>`;
+}
+
+function dashboardClosedTicketRow(ticket) {
+  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#ticket-detail">${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
+}
+
+function renderDashboardClosedTicketTable() {
+  return `<table class="db-table db-table--closed"><colgroup><col class="db-col-closed-status" /><col class="db-col-closed-ticket" /><col class="db-col-closed-date" /><col class="db-col-closed-subject" /><col class="db-col-system" /><col class="db-col-closed-serial" /><col class="db-col-closed-model" /><col class="db-col-closed-actions" /></colgroup><thead><tr>${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Closed")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}<th>Actions</th></tr></thead><tbody>${DASHBOARD_CLOSED_TICKETS.map(dashboardClosedTicketRow).join("")}</tbody></table>`;
+}
+
+function dashboardVisitRow(visit) {
+  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+}
+
+function renderDashboardVisitsTable() {
+  return `<table class="db-table db-table--visits"><colgroup><col class="db-col-visit-date" /><col class="db-col-visit-status" /><col class="db-col-visit-ticket" /><col class="db-col-visit-type" /><col class="db-col-visit-subject" /><col class="db-col-system" /><col class="db-col-visit-serial" /><col class="db-col-visit-model" /></colgroup><thead><tr>${dashboardTableHeader("Scheduled date")}${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Ticket type")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}</tr></thead><tbody>${DASHBOARD_ONSITE_VISITS.map(dashboardVisitRow).join("")}</tbody></table>`;
+}
+
+function dashboardInstrumentCard(instrument) {
+  const userCount = instrument.userCount ?? 3;
+  const coverageToneClass = instrument.coverageTone ? ` db-coverage--${instrument.coverageTone}` : "";
+  const groups = instrument.groupsAsLink ? `<span class="db-card__text-link">${instrument.groups}</span>` : instrument.groups;
+
+  return `<article class="db-card">
+    <header>
+      <img class="db-card__product" src="assets/instruments/${instrument.image}" alt="" />
+      <div>
+        <small>Serial no.</small>
+        <a href="#instrument-access">${instrument.serial}</a>
+        <p>${instrument.name}</p>
+      </div>
+      <button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="${DASHBOARD_CARD_ICONS.favorite}" alt="" /></button>
+      <span class="db-card__users" aria-label="${userCount} users"><img src="${DASHBOARD_CARD_ICONS.users}" alt="" />${userCount}</span>
+    </header>
+    <dl>
+      <dt>Nickname</dt><dd>${instrument.nickname}</dd>
+      <dt>Model no.</dt><dd>${instrument.model}</dd>
+      <dt>Type</dt><dd>${instrument.type}</dd>
+      <dt>Groups</dt><dd>${groups}</dd>
+    </dl>
+    <span class="db-coverage${coverageToneClass}">${instrument.coverage}</span>
+    <footer>
+      <button type="button" data-route="request-support"><img src="${DASHBOARD_CARD_ICONS.support}" alt="" />Request support</button>
+      <button type="button" aria-label="More options"><img class="db-card__more-icon" src="${DASHBOARD_CARD_ICONS.more}" alt="" /></button>
+    </footer>
+  </article>`;
+}
+
+function dashboardSystemFavoriteCard() {
+  return `<div class="db-card-stack">
+    <div class="db-card-stack__backs" aria-hidden="true">
+      <span class="db-card-stack__back db-card-stack__back--last"></span>
+      <span class="db-card-stack__back db-card-stack__back--second"></span>
+    </div>
+    <article class="db-card db-card--group">
+      <header>
+        <span>LC/MS</span>
+        <button type="button" aria-label="Favorite group"><img src="${DASHBOARD_CARD_ICONS.favorite}" alt="" /></button>
+        <img src="${DASHBOARD_CARD_ICONS.lock}" alt="" />
+        <span class="db-card__users" aria-label="3 users"><img src="${DASHBOARD_CARD_ICONS.users}" alt="" />3</span>
+        <a href="#instrument-access">Alpine</a>
+      </header>
+      <dl>
+        <dt>Components</dt><dd>total components</dd>
+        <dt>Groups</dt><dd><span class="db-card__text-link">Department of Medical...</span> <b>+3</b></dd>
+        <dt>Tickets</dt><dd><span class="db-card__text-link">16 total support tickets</span></dd>
+      </dl>
+      <footer>
+        <button type="button" data-open-system-quick-view aria-label="Expand group"><img src="${DASHBOARD_CARD_ICONS.expand}" alt="" /></button>
+        <button type="button" aria-label="More options"><img class="db-card__more-icon" src="${DASHBOARD_CARD_ICONS.more}" alt="" /></button>
+      </footer>
+    </article>
+  </div>`;
+}
+
+function renderDashboardFavoriteCards() {
+  const target = app.querySelector("[data-dashboard-favorite-cards]");
+  if (!target) return;
+  target.innerHTML = `${dashboardSystemFavoriteCard()}${DASHBOARD_FAVORITE_INSTRUMENTS.map(dashboardInstrumentCard).join("")}`;
+}
+
+function dashboardSystemQuickViewContent() {
+  return `<section class="system-quick-view" aria-label="Alpine system quick view">
+    <header class="system-quick-view__hero">
+      <div class="system-quick-view__meta">
+        <img class="system-quick-view__favorite" src="${DASHBOARD_CARD_ICONS.favorite}" alt="" />
+        <span>LC</span>
+      </div>
+      <h2>Alpine</h2>
+    </header>
+    <div class="system-quick-view__cards">
+      ${DASHBOARD_QUICK_VIEW_INSTRUMENTS.map(dashboardInstrumentCard).join("")}
+    </div>
+  </section>`;
+}
+
+function createDashboardSystemQuickViewModal() {
+  return window.PlatformModal?.mount('[data-modal-mount="system-quick-view-modal"]', {
+    id: "system-quick-view-modal",
+    title: "Create a system",
+    size: "xl",
+    className: "system-quick-view-modal",
+    bodyClassName: "system-quick-view-modal__body",
+    closeLabel: "Close system quick view",
+    closeIcon: DASHBOARD_CARD_ICONS.close,
+    content: dashboardSystemQuickViewContent(),
+  });
+}
+
 function wireDashboard() {
   app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
+  renderDashboardFavoriteCards();
+  const systemQuickViewDialog = createDashboardSystemQuickViewModal();
+  app.querySelector("[data-open-system-quick-view]")?.addEventListener("click", () => window.PlatformModal?.open(systemQuickViewDialog));
+  const tableWrap = app.querySelector("[data-db-ticket-table]");
+  const pagination = app.querySelector("[data-db-ticket-pagination]");
+  const filter = app.querySelector("[data-db-ticket-filter]");
+  const ticketCount = app.querySelector("[data-ticket-count]");
+  const activeTableMarkup = tableWrap?.innerHTML || "";
+  const ticketTables = {
+    active: { count: "16 active tickets", markup: activeTableMarkup, showFilter: true, showPagination: true },
+    closed: { count: "8 tickets closed within the last 30 days", markup: renderDashboardClosedTicketTable() },
+    visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
+  };
+  const showTicketTable = (state) => {
+    const table = ticketTables[state] || ticketTables.active;
+    if (ticketCount) ticketCount.textContent = table.count;
+    if (tableWrap) tableWrap.innerHTML = table.markup;
+    if (filter) filter.hidden = !table.showFilter;
+    if (pagination) pagination.hidden = !table.showPagination;
+  };
   app.querySelectorAll(".db-tabs [role='tab']").forEach((tab) => {
     tab.addEventListener("click", () => {
       app.querySelectorAll(".db-tabs [role='tab']").forEach((candidate) => {
@@ -979,22 +1345,26 @@ function wireDashboard() {
         candidate.classList.toggle("is-active", selected);
         candidate.setAttribute("aria-selected", String(selected));
       });
-      const ticketCounts = {
-        active: "16 active tickets",
-        closed: "2 recently closed tickets",
-        visits: "3 upcoming on-site visits",
-      };
-      const ticketCount = app.querySelector("[data-ticket-count]");
-      if (ticketCount) ticketCount.textContent = ticketCounts[tab.dataset.ticketState] || ticketCounts.active;
+      showTicketTable(tab.dataset.ticketState);
     });
   });
   let bannerIndex = 0;
   const updateBanner = () => {
+    const banner = DASHBOARD_BANNERS[bannerIndex];
+    const bannerArt = app.querySelector("[data-db-banner-art]");
+    if (bannerArt) bannerArt.src = banner.image;
+    const bannerTitle = app.querySelector("[data-db-banner-title]");
+    if (bannerTitle) bannerTitle.textContent = banner.title;
+    const bannerBody = app.querySelector("[data-db-banner-body]");
+    if (bannerBody) bannerBody.textContent = banner.body;
+    const bannerAction = app.querySelector("[data-db-banner-action]");
+    if (bannerAction) bannerAction.textContent = banner.action;
     app.querySelectorAll(".db-banner .ai-banner__dots span").forEach((dot, index) => dot.classList.toggle("is-active", index === bannerIndex));
-    app.querySelector(".db-banner .ai-banner__dots")?.setAttribute("aria-label", `Notification ${bannerIndex + 1} of 3`);
+    app.querySelector(".db-banner .ai-banner__dots")?.setAttribute("aria-label", `Notification ${bannerIndex + 1} of ${DASHBOARD_BANNERS.length}`);
   };
-  app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 2) % 3; updateBanner(); });
-  app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBanner(); });
+  updateBanner();
+  app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + DASHBOARD_BANNERS.length - 1) % DASHBOARD_BANNERS.length; updateBanner(); });
+  app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % DASHBOARD_BANNERS.length; updateBanner(); });
   app.querySelector(".db-promo__close")?.addEventListener("click", (event) => event.currentTarget.closest(".db-promo")?.remove());
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1042,7 +1412,158 @@ function mountFooter(options = {}) {
   window.Footer?.mount(app.querySelector("[data-footer-mount]"), options);
 }
 
+function mountNativePageChrome(activeRoute, { title, backRoute = "request-support" } = {}) {
+  const stage = app.querySelector(".mi-stage");
+  const shell = app.querySelector(".mi-shell");
+  const legacyHeader = app.querySelector(".mi-header");
+  const legacyFooter = app.querySelector(".mi-footer");
+
+  if (!app.querySelector(".flow-toolbar") && stage) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "flow-toolbar";
+    toolbar.innerHTML = `<button type="button" data-route="${backRoute}">Back</button><strong>${title}</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div>`;
+    stage.before(toolbar);
+  }
+
+  if (shell) shell.classList.add("mi-shell--native-flow");
+
+  if (legacyHeader && !app.querySelector("[data-topbar-sc-mount]")) {
+    const topbarMount = document.createElement("div");
+    topbarMount.dataset.topbarScMount = "";
+    legacyHeader.replaceWith(topbarMount);
+  }
+
+  if (legacyFooter && !app.querySelector("[data-footer-mount]")) {
+    const footerMount = document.createElement("div");
+    footerMount.dataset.footerMount = "";
+    legacyFooter.replaceWith(footerMount);
+  }
+
+  mountTopbarSc();
+  mountPlatformSidebar(activeRoute);
+  mountFooter();
+}
+
+function mountNativeFlowActionBar({ cancelRoute = "request-support", backRoute = "request-support", primaryDisabled = true } = {}) {
+  const bar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), {
+    cancelRoute,
+    backRoute,
+    primaryDisabled,
+  });
+  bar?.classList.add("platform-actionbar--native-flow");
+  return bar;
+}
+
+function mountTicketStepViewer(currentStep) {
+  window.TicketStepViewer?.mount(app.querySelector("[data-ticket-step-viewer]"), { currentStep });
+}
+
 function wireEditSpc() {
+  const screen = app.querySelector(".screen--spc");
+  const main = app.querySelector(".spc-main");
+  const stepper = app.querySelector(".spc-stepper");
+  const stepElements = [...app.querySelectorAll("[data-spc-step]")];
+  const panels = [...app.querySelectorAll("[data-spc-panel]")];
+  const summaryPage = app.querySelector("[data-spc-summary]");
+  const cancelButton = app.querySelector("[data-spc-cancel]");
+  const continueButton = app.querySelector("[data-spc-continue]");
+  const backButton = app.querySelector("[data-spc-back]");
+  const closeButton = app.querySelector("[data-spc-close]");
+  const contactEmail = app.querySelector("[data-spc-contact-email]");
+  const contactConfirmationNotice = app.querySelector("[data-spc-contact-confirmation-notice]");
+  const selectedToggle = app.querySelector("[data-spc-selected-toggle]");
+  const selectedToggleLabel = app.querySelector("[data-spc-selected-label]");
+  const selectedPanel = app.querySelector("[data-spc-selected-panel]");
+  const reviewToggle = app.querySelector("[data-spc-review-toggle]");
+  const reviewToggleLabel = app.querySelector("[data-spc-review-label]");
+  const reviewPanel = app.querySelector("[data-spc-review-panel]");
+  const summaryToggle = app.querySelector("[data-spc-summary-toggle]");
+  const summaryToggleLabel = app.querySelector("[data-spc-summary-label]");
+  const summaryPanel = app.querySelector("[data-spc-summary-panel]");
+  let currentStep = 1;
+
+  const setStep = (step) => {
+    currentStep = step;
+    screen?.classList.toggle("is-step-two", step === 2);
+    screen?.classList.remove("is-spc-summary");
+    if (summaryPage) {
+      summaryPage.hidden = true;
+    }
+    if (stepper) {
+      stepper.hidden = false;
+    }
+    stepper?.setAttribute("data-spc-current-step", String(step));
+    stepElements.forEach((element) => {
+      const stepNumber = Number(element.dataset.spcStep);
+      const isCurrent = stepNumber === step;
+      const isComplete = stepNumber < step;
+      const marker = element.querySelector(".spc-step__number");
+      element.classList.toggle("is-current", isCurrent);
+      element.classList.toggle("is-complete", isComplete);
+      if (isCurrent) {
+        element.setAttribute("aria-current", "step");
+      } else {
+        element.removeAttribute("aria-current");
+      }
+      if (marker) {
+        marker.textContent = isComplete ? "" : String(stepNumber);
+      }
+    });
+    panels.forEach((panel) => {
+      panel.hidden = Number(panel.dataset.spcPanel) !== step;
+    });
+    if (backButton) {
+      backButton.hidden = step === 1;
+    }
+    if (cancelButton) {
+      cancelButton.hidden = false;
+    }
+    if (continueButton) {
+      continueButton.hidden = false;
+      continueButton.textContent = step === 3 ? "Confirm" : "Continue";
+    }
+    if (closeButton) {
+      closeButton.hidden = true;
+    }
+    main?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const showSummary = () => {
+    currentStep = 4;
+    screen?.classList.remove("is-step-two");
+    screen?.classList.add("is-spc-summary");
+    if (stepper) {
+      stepper.hidden = true;
+    }
+    panels.forEach((panel) => {
+      panel.hidden = true;
+    });
+    if (summaryPage) {
+      summaryPage.hidden = false;
+    }
+    if (cancelButton) {
+      cancelButton.hidden = true;
+    }
+    if (backButton) {
+      backButton.hidden = true;
+    }
+    if (continueButton) {
+      continueButton.hidden = true;
+    }
+    if (closeButton) {
+      closeButton.hidden = false;
+    }
+    main?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const isAssigningSomeoneElse = () => app.querySelector("[data-spc-contact-assignment][value='someone-else']")?.checked;
+
+  const updateContactConfirmationNotice = () => {
+    if (contactConfirmationNotice) {
+      contactConfirmationNotice.hidden = !isAssigningSomeoneElse();
+    }
+  };
+
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1052,9 +1573,81 @@ function wireEditSpc() {
       button.classList.add("is-selected");
     });
   });
-  app.querySelector("[data-spc-continue]").addEventListener("click", () => {
-    showToast("Continue to contact details");
+  app.querySelectorAll("[data-spc-contact-assignment]").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!contactEmail || !radio.checked) return;
+      if (radio.value === "myself") {
+        contactEmail.value = "sebastien.martin@companyname.com";
+        contactEmail.readOnly = true;
+        contactEmail.removeAttribute("placeholder");
+      } else {
+        contactEmail.value = "";
+        contactEmail.readOnly = false;
+        contactEmail.placeholder = "name@companyname.com";
+        contactEmail.focus();
+      }
+      updateContactConfirmationNotice();
+    });
   });
+  selectedToggle?.addEventListener("click", () => {
+    const expanded = selectedToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = selectedToggle.querySelector("img");
+    selectedToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=24px, style=mono.svg`;
+    }
+    if (selectedToggleLabel) {
+      selectedToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (selectedPanel) {
+      selectedPanel.hidden = !nextExpanded;
+    }
+  });
+  reviewToggle?.addEventListener("click", () => {
+    const expanded = reviewToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = reviewToggle.querySelector("img");
+    reviewToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+    }
+    if (reviewToggleLabel) {
+      reviewToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (reviewPanel) {
+      reviewPanel.hidden = !nextExpanded;
+    }
+  });
+  summaryToggle?.addEventListener("click", () => {
+    const expanded = summaryToggle.getAttribute("aria-expanded") === "true";
+    const nextExpanded = !expanded;
+    const icon = summaryToggle.querySelector("img");
+    summaryToggle.setAttribute("aria-expanded", String(nextExpanded));
+    if (icon) {
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+    }
+    if (summaryToggleLabel) {
+      summaryToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    }
+    if (summaryPanel) {
+      summaryPanel.hidden = !nextExpanded;
+    }
+  });
+  continueButton?.addEventListener("click", () => {
+    if (currentStep === 1) {
+      setStep(2);
+      return;
+    }
+    if (currentStep === 2) {
+      updateContactConfirmationNotice();
+      setStep(3);
+      return;
+    }
+    showSummary();
+  });
+  backButton?.addEventListener("click", () => setStep(Math.max(1, currentStep - 1)));
+  setStep(1);
 }
 
 function renderEditSpc() {
@@ -3561,9 +4154,9 @@ function renderAddInstruments() {
 }
 
 const SUPPORT_HISTORY_TICKETS = [
-  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", subjectIcon: true },
+  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", systemNames: ["Alpine", "Sasha"] },
   { status: "In progress", ticket: "46521863", type: "Service Request", subject: "Repair 0000123459", serial: "1009999", model: "VQH0000VEN", nickname: "Column-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "quote" },
-  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "support" },
+  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "support", systemNames: ["Alpine", "Sasha"] },
   { status: "In progress", ticket: "465218988", type: "Inquiry", subject: "Repair instrument", serial: "1009997", model: "VQF000PUMP", nickname: "Pump-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
   { status: "In progress", ticket: "46927364", type: "Tech Support", subject: "Repair instrument", serial: "8044421", model: "ULT3R0PDET", nickname: "Pump-RD", group: "Biotherapeutics...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
   { status: "In progress", ticket: "46719836", type: "Inquiry", subject: "Need support for error", serial: "8044422", model: "ULT3S0MISC", nickname: "Misc-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
@@ -3583,40 +4176,247 @@ const SUPPORT_HISTORY_TICKETS = [
   { status: "Closed", ticket: "46434295", type: "Installation", subject: "Need support", serial: "SN98361W", model: "QEXAC00001", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
 ];
 
+const SUPPORT_HISTORY_SUMMARY_ROUTES = {
+  "5551726344": "tech-support-summary",
+  "46521863": "service-requests-summary",
+  "46927364": "pm-summary",
+  "46195527": "closed-summary",
+};
+
+function summaryRouteForTicket(ticket) {
+  if (!ticket) return null;
+  if (ticket.status === "Closed" && ["Tech Support", "Service Request", "Depot Repair", "Inquiry", "PM (Contract)"].includes(ticket.type)) return "closed-summary";
+  if (ticket.type === "Tech Support") return "tech-support-summary";
+  if (["Service Request", "Depot Repair", "Inquiry"].includes(ticket.type)) return "service-requests-summary";
+  if (ticket.type === "PM (Contract)") return "pm-summary";
+  return null;
+}
+
+const TICKET_SUMMARIES = {
+  "tech-support-summary": { title: "Won’t turn on", ticket: "5551726344", state: "Open", subject: "Need support for unknown instrument error", type: "Tech Support", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", created: "26 April 2023", isTechSupport: true },
+  "service-requests-summary": { title: "Repair 0000123459 instrument parts", ticket: "46521863", state: "In progress", type: "Service Request", serial: "1009999", model: "VQH0000VEN", nickname: "Detector-2B", created: "Monday, 30 Apr 2023", summaryKind: "quote" },
+  "pm-summary": { title: "Preventive Maintenance - 0012345L", ticket: "46927364", state: "In progress", type: "PM (Contract)", serial: "1009998", model: "VQF00SAMPL", nickname: "Detector-2B", created: "Monday, 12 May 2023", summaryKind: "preventive" },
+  "closed-summary": { title: "Preventive Maintenance 00000", ticket: "46195527", state: "Closed", type: "PM (Contract)", serial: "SN98355W", model: "QEXAC00001", nickname: "Detector-2B", created: "Tuesday, 15 May 2019", summaryKind: "closed" },
+};
+
+const SUPPORT_HISTORY_MONTH_INDEX = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+};
+
+function parseSupportHistoryDate(value) {
+  const parts = String(value || "").trim().split(/\s+/);
+  if (parts.length !== 3) return null;
+  const [dayText, monthText, yearText] = parts;
+  const day = Number(dayText);
+  const month = SUPPORT_HISTORY_MONTH_INDEX[monthText];
+  const year = Number(yearText);
+  if (!Number.isInteger(day) || month === undefined || !Number.isInteger(year)) return null;
+  const date = new Date(year, month, day);
+  return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day ? date : null;
+}
+
+function supportHistoryDateKey(value) {
+  const date = parseSupportHistoryDate(value);
+  if (!date) return "";
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function supportHistoryDateInRange(value, start, end) {
+  if (!start || !end) return true;
+  return Boolean(value && value >= start && value <= end);
+}
+
+function supportHistorySearchText(ticket) {
+  return [ticket.serial, ticket.nickname, ticket.ticket, ticket.subject]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+const SUPPORT_HISTORY_INDICATORS = {
+  quote: {
+    src: "assets/icons/general/quote/size=24px, style=mono.svg",
+    label: "Quote status",
+    tooltip: "Quote ready",
+    modifier: "sh-ticket-tooltip--quote",
+    hook: "data-sh-quote-tip",
+  },
+  support: {
+    src: "assets/icons/general/visit scheduled/size=24px, style=mono.svg",
+    label: "Visit status",
+    tooltip: "Visit scheduled",
+    modifier: "sh-ticket-tooltip--visit",
+    hook: "data-sh-support-tip",
+  },
+};
+
+function supportHistorySystemsMarkup(ticket) {
+  if (!ticket.systemNames) return "";
+  const tooltipId = `sh-systems-tooltip-${ticket.ticket}`;
+  return `<span class="sh-system-tip" data-sh-system-tip tabindex="0" aria-label="Systems" aria-describedby="${tooltipId}">
+    <img class="sh-system-icon" src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" />
+    <span class="sh-system-tooltip" id="${tooltipId}" role="tooltip" hidden><span class="sh-system-tooltip__content">In system(s): ${ticket.systemNames.map((name) => `<span class="sh-system-name">${name}</span>`).join(", ")}</span></span>
+  </span>`;
+}
+
+function supportHistoryOverflowMarkup(ticket, field, value) {
+  const tooltipId = `sh-overflow-tooltip-${ticket.ticket}-${ticket.serial}-${field}`;
+  return `<span class="sh-overflow" data-sh-tooltip tabindex="0" aria-describedby="${tooltipId}">${value}<span class="sh-overflow-tooltip" id="${tooltipId}" role="tooltip" hidden>${value}</span></span>`;
+}
+
+function supportHistoryIndicatorMarkup(ticket) {
+  const indicator = SUPPORT_HISTORY_INDICATORS[ticket.icon];
+  if (!indicator) return "";
+  const tooltipId = `sh-${ticket.icon}-tooltip-${ticket.ticket}`;
+  return `<span class="sh-ticket-tip" data-sh-ticket-tip ${indicator.hook} tabindex="0" aria-label="${indicator.label}" aria-describedby="${tooltipId}">
+    <img class="sh-ticket-icon" src="${indicator.src}" alt="" />
+    <span class="sh-ticket-tooltip ${indicator.modifier}" id="${tooltipId}" role="tooltip" hidden>${indicator.tooltip}</span>
+  </span>`;
+}
+
 function supportHistoryRowMarkup(ticket) {
   const statusClass = ticket.status === "Open" ? "sh-status--open" : ticket.status === "In progress" ? "sh-status--progress" : "sh-status--closed";
-  const rowIcon = ticket.icon === "quote" ? "assets/icons/general/quote/size=24px, style=mono.svg" : ticket.icon === "support" ? "assets/icons/navigation/support/size=24px, style=mono.svg" : "";
-  const subjectIcon = ticket.subjectIcon ? '<img class="sh-inline-icon" src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="" />' : "";
-  return `<tr data-sh-row data-status="${ticket.status}" data-search="${Object.values(ticket).join(" ").toLowerCase()}">
-    <td>${rowIcon ? `<img class="sh-ticket-icon" src="${rowIcon}" alt="" />` : ""}</td>
+  return `<tr data-sh-row data-status="${ticket.status}" data-type="${ticket.type}" data-model="${ticket.model}" data-group="${ticket.group}" data-contact="${ticket.contact}" data-search="${supportHistorySearchText(ticket)}" data-created="${supportHistoryDateKey(ticket.created)}">
+    <td>${supportHistoryIndicatorMarkup(ticket)}</td>
     <td><span class="sh-status ${statusClass}">${ticket.status}</span></td>
-    <td><button class="sh-link" type="button" data-sh-ticket>${ticket.ticket}</button></td>
-    <td title="${ticket.type}">${ticket.type}</td><td title="${ticket.subject}">${ticket.subject}${subjectIcon}</td>
+    <td><button class="sh-link" type="button" data-sh-ticket="${ticket.ticket}" data-sh-ticket-index="${SUPPORT_HISTORY_TICKETS.indexOf(ticket)}">${ticket.ticket}</button></td>
+    <td>${supportHistoryOverflowMarkup(ticket, "type", ticket.type)}</td><td>${supportHistoryOverflowMarkup(ticket, "subject", ticket.subject)}</td><td>${supportHistorySystemsMarkup(ticket)}</td>
     <td><button class="sh-link" type="button" data-route="instrument-access">${ticket.serial}</button></td>
-    <td title="${ticket.model}">${ticket.model}</td><td title="${ticket.nickname}">${ticket.nickname}</td>
+    <td>${supportHistoryOverflowMarkup(ticket, "model", ticket.model)}</td><td>${supportHistoryOverflowMarkup(ticket, "nickname", ticket.nickname)}</td>
     <td title="${ticket.group}">${ticket.group ? `<button class="sh-link" type="button" data-sh-group>${ticket.group}</button>` : ""}</td>
-    <td title="${ticket.contact}">${ticket.contact}</td><td>${ticket.created}</td><td>${ticket.closed}</td>
+    <td>${supportHistoryOverflowMarkup(ticket, "contact", ticket.contact)}</td><td>${ticket.created}</td><td>${ticket.closed}</td>
   </tr>`;
+}
+
+function setSupportHistoryTooltip(trigger, visible) {
+  const tooltipId = trigger?.getAttribute("aria-describedby");
+  const tooltip = tooltipId ? document.getElementById(tooltipId) : null;
+  if (!tooltip) return;
+  if (visible) {
+    tooltip.hidden = false;
+    document.body.append(tooltip);
+    const triggerRect = trigger.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    tooltip.style.top = `${triggerRect.top - tooltipRect.height - 8}px`;
+    tooltip.style.left = `${triggerRect.left + triggerRect.width / 2}px`;
+    tooltip.style.bottom = "auto";
+  } else {
+    tooltip.hidden = true;
+    trigger.append(tooltip);
+    tooltip.removeAttribute("style");
+  }
+  trigger.classList.toggle("is-tooltip-visible", visible);
+  trigger.closest("td")?.classList.toggle("is-tooltip-visible", visible);
+}
+
+function canShowSupportHistoryTooltip(trigger) {
+  return !trigger.matches("[data-sh-tooltip]") || trigger.scrollWidth > trigger.clientWidth;
 }
 
 function wireSupportHistory() {
   const tbody = app.querySelector("[data-sh-rows]");
+  const datePickerRoot = app.querySelector("[data-sh-date-picker]");
+  const statusFilterRoot = app.querySelector("[data-sh-status-filter]");
+  const statusFilterTriggerRoot = app.querySelector("[data-sh-status-filter-trigger]");
+  const statusFilter = new window.MultiSelectFilter(statusFilterRoot, {
+    label: "Status",
+    allLabel: "All",
+    options: ["Open", "In progress", "Closed"],
+    controlHost: statusFilterTriggerRoot,
+  });
+  const columnFilterConfig = [
+    { key: "type", label: "Ticket type" },
+    { key: "model", label: "Model" },
+    { key: "group", label: "Groups" },
+    { key: "contact", label: "Contact" },
+  ];
+  const columnFilters = columnFilterConfig.map(({ key, label }) => {
+    const root = app.querySelector(`[data-sh-${key}-filter]`);
+    const controlHost = app.querySelector(`[data-sh-column-filter-trigger="${key}"]`);
+    const options = [...new Set(SUPPORT_HISTORY_TICKETS.map((ticket) => ticket[key]).filter(Boolean))];
+    return { key, root, filter: new window.MultiSelectFilter(root, {
+      label,
+      controlLabel: key === "type" ? "Ticket t..." : label,
+      allLabel: "All",
+      options,
+      controlHost,
+      menuStyle: "figma-column",
+    }) };
+  });
+  const allFilters = [statusFilter, ...columnFilters.map(({ filter }) => filter)];
+  const clearFiltersButton = app.querySelector("[data-sh-clear-filters]");
+  const updateClearFilters = () => {
+    clearFiltersButton.hidden = allFilters.every((filter) => filter.values.length === 0);
+  };
   let tickets = [...SUPPORT_HISTORY_TICKETS];
-  const renderRows = () => { tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join(""); };
+  let appliedStart = "";
+  let appliedEnd = "";
+  new window.DateRangePicker(datePickerRoot);
+  const renderRows = () => {
+    tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join("");
+    tbody.querySelectorAll("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]").forEach((trigger) => {
+      trigger.addEventListener("pointerenter", () => { if (canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true); });
+      trigger.addEventListener("pointerleave", () => setSupportHistoryTooltip(trigger, false));
+    });
+  };
   const filterRows = () => {
     const query = app.querySelector("[data-sh-search]").value.trim().toLowerCase();
-    const status = app.querySelector("[data-sh-status]").value;
+    const statuses = statusFilter.values;
     let visible = 0;
     app.querySelectorAll("[data-sh-row]").forEach((row) => {
-      row.hidden = (query && !row.dataset.search.includes(query)) || (status !== "all" && row.dataset.status !== status);
+      const textMatches = !query || row.dataset.search.includes(query);
+      const statusMatches = statuses.length === 0 || statuses.includes(row.dataset.status);
+      const columnMatches = columnFilters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(row.dataset[key]));
+      const dateMatches = supportHistoryDateInRange(row.dataset.created, appliedStart, appliedEnd);
+      row.hidden = !textMatches || !statusMatches || !columnMatches || !dateMatches;
       if (!row.hidden) visible += 1;
     });
-    app.querySelector("[data-sh-count]").textContent = query || status !== "all" ? String(visible) : "100";
+    app.querySelector("[data-sh-count]").textContent = query || statuses.length || (appliedStart && appliedEnd) ? String(visible) : "100";
+    updateClearFilters();
   };
   renderRows();
+  tbody.addEventListener("mouseover", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true);
+  });
+  tbody.addEventListener("mouseout", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && !trigger.contains(event.relatedTarget)) setSupportHistoryTooltip(trigger, false);
+  });
+  tbody.addEventListener("focusin", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true);
+  });
+  tbody.addEventListener("focusout", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger) setSupportHistoryTooltip(trigger, false);
+  });
+  tbody.addEventListener("keydown", (event) => {
+    const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
+    if (trigger && event.key === "Escape") {
+      event.preventDefault();
+      setSupportHistoryTooltip(trigger, false);
+    }
+  });
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   app.querySelector("[data-sh-search]").addEventListener("input", filterRows);
-  app.querySelector("[data-sh-status]").addEventListener("change", filterRows);
+  statusFilterRoot.addEventListener("multiselect-filter-change", filterRows);
+  columnFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", filterRows));
+  columnFilters.forEach(({ key, root }) => root.addEventListener("multiselect-filter-sort", (event) => {
+    const direction = event.detail.direction === "desc" ? -1 : 1;
+    tickets.sort((left, right) => direction * String(left[key]).localeCompare(String(right[key])));
+    renderRows();
+    filterRows();
+  }));
+  clearFiltersButton.addEventListener("click", () => allFilters.forEach((filter) => filter.clear()));
+  datePickerRoot.addEventListener("date-range-change", (event) => {
+    appliedStart = event.detail.start;
+    appliedEnd = event.detail.end;
+    filterRows();
+  });
   app.querySelectorAll("[data-sh-sort]").forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.shSort;
@@ -3628,10 +4428,13 @@ function wireSupportHistory() {
     });
   });
   tbody.addEventListener("click", (event) => {
-    if (event.target.closest("[data-sh-ticket]")) setRoute("ticket-detail");
+    const ticketButton = event.target.closest("[data-sh-ticket]");
+    if (ticketButton) {
+      const historyTicket = SUPPORT_HISTORY_TICKETS[Number(ticketButton.dataset.shTicketIndex)];
+      setRoute(summaryRouteForTicket(historyTicket) || SUPPORT_HISTORY_SUMMARY_ROUTES[ticketButton.dataset.shTicket] || "ticket-detail", historyTicket || null);
+    }
     if (event.target.closest("[data-sh-group]")) showToast("Instrument group opened");
   });
-  app.querySelector("[data-sh-date]").addEventListener("click", () => showToast("Date range selector opened"));
   app.querySelector("[data-sh-edit-columns]").addEventListener("click", () => showToast("Column editor opened"));
   app.querySelectorAll("[data-sh-menu]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.shMenu} filter opened`)));
   window.PlatformSidebar?.wire(app);
@@ -3648,6 +4451,707 @@ function renderSupportHistory() {
   document.title = "Support request history — Services Central";
 }
 
+function renderTicketSummary(route) {
+  const baseTicket = TICKET_SUMMARIES[route];
+  const historyTicket = selectedSupportHistoryTicket && summaryRouteForTicket(selectedSupportHistoryTicket) === route ? selectedSupportHistoryTicket : null;
+  const ticket = historyTicket ? {
+    ...baseTicket,
+    title: historyTicket.subject || baseTicket.title,
+    ticket: historyTicket.ticket,
+    state: historyTicket.status,
+    type: historyTicket.type,
+    subject: historyTicket.subject || baseTicket.subject,
+    serial: historyTicket.serial || baseTicket.serial,
+    model: historyTicket.model || baseTicket.model,
+    nickname: historyTicket.nickname || baseTicket.nickname,
+    group: historyTicket.group || "---",
+    contact: historyTicket.contact || "---",
+    created: historyTicket.created || baseTicket.created,
+    closed: historyTicket.closed || "---",
+    problem: historyTicket.problem || "",
+    errors: historyTicket.errors || "",
+    changes: historyTicket.changes || "",
+    phone: historyTicket.phone || "",
+    email: historyTicket.email || "",
+    submitted: historyTicket.submitted === true,
+    selectedFromHistory: true,
+  } : baseTicket;
+  const isTechSupport = ticket.isTechSupport === true;
+  const usesReferenceLayout = isTechSupport || Boolean(ticket.summaryKind);
+  const titleMeta = ticket.submitted
+    ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span></p>`
+    : usesReferenceLayout
+    ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`
+    : `<p>Ticket number: ${ticket.ticket} <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span></p>`;
+  const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
+  const ticketPhone = ticket.selectedFromHistory ? ticket.phone || "---" : "123-456-7890";
+  const ticketEmail = ticket.selectedFromHistory ? ticket.email || "---" : "molly.hartman@thermofisher.com";
+  const ticketCreated = ticket.selectedFromHistory ? ticket.created : "26 April 2023";
+  const ticketClosed = ticket.state === "Closed" ? ticket.closed : "---";
+  const submittedNotice = ticket.submitted
+    ? `<img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><p><strong>Request submitted:</strong> A representative will respond to your request as soon as possible.<br />When processing is complete your ticket will be updated with the appropriate status.</p>`
+    : "";
+  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Model number</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl>`;
+  const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
+  const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Model number</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const quoteContent = `<article class="ts-card ts-card--standard ts-card--quote">${contactMarkup}<div class="ts-summary-split"><section>${requestMarkup}</section><section class="ts-quotes"><header><h2>Quote(s)</h2><span>Prices are subject to change</span></header><article class="ts-quote"><img src="assets/icons/general/quote/size=24px, style=mono.svg" alt="" /><div><span><b>Quote:</b> <span class="ts-quote__number">17171847</span></span><span><b>Created:</b> 11 Apr 2023</span><span><b>Total:</b> $10,285</span></div><div class="ts-quote__actions"><button class="mi-button" type="button">View quote</button><button class="mi-button" type="button">Place order</button></div></article></section></div><section class="ts-service ts-service--quote"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 30 Apr 2023</dd></div></dl></section></article>${instrumentMarkup}`;
+  const preventiveContent = `<article class="ts-card ts-card--standard ts-card--preventive">${contactMarkup}${requestMarkup}<section class="ts-service ts-service--preventive"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 12 May 2023</dd></div></dl></section></article>${instrumentMarkup}`;
+  const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
+  const closedContent = `<article class="ts-card ts-card--standard ts-card--closed">${contactMarkup}${closedRequestMarkup}<section class="ts-service ts-service--closed"><h3>Service details</h3><div class="ts-service--closed__body"><div class="ts-service--closed__details"><dl><div><dt>Arrival date</dt><dd>12 Mar 2023</dd></div><div><dt>Completion date</dt><dd>12 Mar 2023</dd></div><div><dt>Type of service</dt><dd>Preventive maintenance</dd></div></dl><dl class="ts-service-description"><div><dt>Service description</dt><dd>Cras gravida nibh enim, sit amet molestie nisi congue id. Proin rhoncus consectetur arcu, in lobortis magna. Donec purus ipsum, dignissim non maximus nec, rhoncus accumsan erat. Proin consectetur tincidunt mi eget cursus. Sed facilisis at risus imperdiet.</dd></div></dl></div><article class="ts-service-report"><div><strong>View service report</strong><p>Available here until dd mmm yyyy.<br />After this date, contact support.</p></div><button type="button" aria-label="Download service report"><img src="assets/icons/actions/download/Size=24px, Style=Mono, Color=Blue.svg" alt="" /></button></article></div></section></article>${instrumentMarkup}`;
+  const defaultContent = ticket.summaryKind === "quote" ? quoteContent : ticket.summaryKind === "preventive" ? preventiveContent : closedContent;
+  const titleDate = ticket.summaryKind === "quote" || ticket.summaryKind === "preventive" ? `<div class="ts-title-date"><span>Scheduled start date</span><time>${ticket.created}</time></div>` : ticket.summaryKind === "closed" || isTechSupport ? "" : `<time>${ticket.created}</time>`;
+  app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
+    <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
+    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div><h1>${ticket.title}${usesReferenceLayout ? ` <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>` : ""}</h1>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+  if (submittedNotice) {
+    const notice = document.createElement("section");
+    notice.className = "ts-notice ts-notice--submitted";
+    notice.innerHTML = submittedNotice;
+    app.querySelector(".ts-content").prepend(notice);
+    const [subject, problem, errors, changes] = app.querySelectorAll(".ts-tech-details dd");
+    if (subject) subject.textContent = ticket.subject;
+    if (problem) problem.textContent = ticket.problem || "—";
+    if (errors) errors.textContent = ticket.errors || "—";
+    if (changes) changes.textContent = ticket.changes || "—";
+    const contactDetails = app.querySelectorAll(".ts-contact dd");
+    if (contactDetails[1]) contactDetails[1].textContent = ticketPhone;
+    if (contactDetails[2]) contactDetails[2].textContent = ticketEmail;
+  }
+  mountNativePageChrome("support-history", { title: ticket.title, backRoute: "support-history" });
+  const summaryCloseRoute = ticket.submitted ? "request-support" : "support-history";
+  const closeBar = window.PlatformActionBar?.create({ closeOnly: true, closeRoute: summaryCloseRoute });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
+  const action = closeBar?.querySelector('[data-actionbar-action="close"], [data-actionbar-action="cancel"]');
+  if (closeBar && action) {
+    const closeButton = action.cloneNode(true);
+    closeButton.textContent = "Close";
+    closeButton.className = "platform-actionbar__button platform-actionbar__button--secondary";
+    closeButton.dataset.actionbarAction = "close";
+    closeButton.dataset.route = summaryCloseRoute;
+    const trailing = document.createElement("div");
+    trailing.className = "platform-actionbar__trailing";
+    trailing.append(closeButton);
+    closeBar.replaceChildren(trailing);
+  }
+  app.querySelector("[data-footer-mount]")?.before(closeBar);
+  app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute("support-history"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${ticket.title} — Services Central`;
+}
+
+function wireRequestSupport() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelectorAll("[data-rs-toast]").forEach((button) => {
+    button.addEventListener("click", () => showToast(button.dataset.rsToast));
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestSupport() {
+  const template = document.querySelector("#request-support-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request support", backRoute: "dashboard" });
+  wireRequestSupport();
+  document.title = "Request support — Services Central";
+}
+
+function wireInstrumentSupportSelection() {
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const search = app.querySelector("[data-iss-search]");
+  const systemToggle = app.querySelector("[data-iss-system-toggle]");
+  const systemRow = app.querySelector(".iss-system");
+  const systemRows = [...app.querySelectorAll("[data-iss-row]")];
+  const collapsibleSystemRows = systemRows.slice(0, 5);
+  let systemExpanded = true;
+  systemRows.forEach((row) => {
+    row.classList.add("iss-system-child");
+    row.querySelectorAll('img[src="assets/icons/actions/return/Size=16px, Style=Mono.svg"]').forEach((icon) => {
+      icon.src = "assets/icons/actions/system-return/Size=16px, Style=Mono.svg";
+    });
+    const cells = row.cells;
+    if (!row.dataset.group) row.dataset.group = cells[5]?.textContent.trim() || "—";
+    if (!row.dataset.type) row.dataset.type = cells[6]?.textContent.trim() || "—";
+    if (!row.dataset.model) row.dataset.model = cells[7]?.textContent.trim() || "—";
+    if (!row.dataset.coverage) row.dataset.coverage = cells[8]?.textContent.trim() || "—";
+  });
+  systemRows.slice(5).forEach((row) => {
+    const image = row.cells[2]?.querySelector("img");
+    if (!image) return;
+    image.classList.add("iss-indent-instrument");
+    row.cells[1].replaceChildren(image);
+  });
+  const fullEllipsisText = new Map([
+    ["Mass Spec Lif...", "Mass Spec Life Sciences"],
+    ["MSTSQQUAN...", "MSTSQQUANTISPLUS"],
+    ["Global...", "Global group"],
+    ["Department...", "Department group"],
+  ]);
+  let tooltipCount = 0;
+  systemRows.forEach((row) => {
+    [5, 6, 7].forEach((column) => {
+      const cell = row.cells[column];
+      const value = cell?.textContent.trim();
+      if (!value?.includes("...")) return;
+      const trigger = cell.querySelector("button") || document.createElement("span");
+      if (!trigger.parentElement) {
+        trigger.textContent = value;
+        trigger.tabIndex = 0;
+        cell.replaceChildren(trigger);
+      }
+      const tooltip = document.createElement("span");
+      const tooltipId = `iss-overflow-tooltip-${++tooltipCount}`;
+      tooltip.className = "iss-overflow-tooltip";
+      tooltip.id = tooltipId;
+      tooltip.setAttribute("role", "tooltip");
+      tooltip.hidden = true;
+      tooltip.textContent = fullEllipsisText.get(value) || value;
+      trigger.classList.add("iss-overflow");
+      trigger.dataset.issOverflowTooltip = "";
+      trigger.setAttribute("aria-describedby", tooltipId);
+      trigger.append(tooltip);
+      const showTooltip = () => setSupportHistoryTooltip(trigger, true);
+      const hideTooltip = () => setSupportHistoryTooltip(trigger, false);
+      trigger.addEventListener("mouseover", showTooltip);
+      trigger.addEventListener("mouseout", hideTooltip);
+      trigger.addEventListener("focus", showTooltip);
+      trigger.addEventListener("blur", hideTooltip);
+      trigger.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          hideTooltip();
+          trigger.blur();
+        }
+      });
+    });
+  });
+  const filterConfig = [
+    ["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"],
+  ];
+  const tableFilters = filterConfig.map(([key, label]) => {
+    const host = app.querySelector(`[data-iss-filter-host="${key}"]`);
+    const options = [...new Set(systemRows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], menuStyle: "figma-column" }) };
+  });
+  const filterRows = () => {
+    const query = search.value.trim().toLowerCase();
+    let visibleSystemInstrument = false;
+    systemRows.forEach((row) => {
+      const matchesSearch = !query || row.dataset.search.includes(query);
+      const matchesFilters = tableFilters.every(({ key, filter }) => !filter.values.length || filter.values.includes(row.dataset[key]));
+      row.hidden = (!systemExpanded && collapsibleSystemRows.includes(row)) || !matchesSearch || !matchesFilters;
+      if (collapsibleSystemRows.includes(row) && !row.hidden) visibleSystemInstrument = true;
+    });
+    systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
+  };
+  systemToggle.addEventListener("click", () => {
+    systemExpanded = !systemExpanded;
+    systemToggle.setAttribute("aria-expanded", String(systemExpanded));
+    systemToggle.setAttribute("aria-label", `${systemExpanded ? "Collapse" : "Expand"} system`);
+    systemToggle.querySelector("img").style.transform = systemExpanded ? "" : "rotate(-90deg)";
+    filterRows();
+  });
+  tableFilters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", filterRows));
+  const pageSizeButton = app.querySelector("[data-iss-page-size]");
+  const pageSizeMenu = app.querySelector("[data-iss-page-size-menu]");
+  const closePageSizeMenu = () => {
+    pageSizeMenu.hidden = true;
+    pageSizeButton.setAttribute("aria-expanded", "false");
+  };
+  pageSizeButton.addEventListener("click", () => {
+    pageSizeMenu.hidden = !pageSizeMenu.hidden;
+    pageSizeButton.setAttribute("aria-expanded", String(!pageSizeMenu.hidden));
+  });
+  pageSizeMenu.querySelectorAll("[data-iss-page-size-option]").forEach((option) => option.addEventListener("click", () => {
+    const value = option.dataset.issPageSizeOption;
+    const caret = pageSizeButton.querySelector("img");
+    pageSizeButton.replaceChildren(document.createTextNode(`${value} `), caret);
+    pageSizeMenu.querySelectorAll("[data-iss-page-size-option]").forEach((item) => item.setAttribute("aria-selected", String(item === option)));
+    closePageSizeMenu();
+  }));
+  document.addEventListener("mousedown", (event) => {
+    if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu();
+  });
+  pageSizeButton.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closePageSizeMenu();
+  });
+  app.querySelectorAll("[data-iss-instrument]").forEach((input) => input.addEventListener("change", () => {
+    continueButton.disabled = !input.checked;
+  }));
+  search.addEventListener("input", filterRows);
+  continueButton.addEventListener("click", () => {
+    const selectedRow = app.querySelector("[data-iss-instrument]:checked")?.closest("tr");
+    if (selectedRow) {
+      selectedOpenSupportTicketInstrument = {
+        serial: selectedRow.cells[3].textContent.trim(),
+        nickname: selectedRow.cells[4].textContent.trim(),
+        type: selectedRow.cells[6].textContent.trim(),
+        model: selectedRow.cells[7].textContent.trim(),
+        image: selectedRow.querySelector('img[src*="assets/instruments/"]')?.getAttribute("src"),
+      };
+      openSupportTicketDraft.instrument = selectedOpenSupportTicketInstrument;
+    }
+    setRoute("open-support-ticket-details");
+  });
+  app.querySelectorAll("[data-iss-toast], [data-iss-filter], [data-iss-instrument-link]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.issToast || "Instrument details opened")));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderOpenSupportTicket() {
+  const template = document.querySelector("#open-support-ticket-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "request-support" });
+  mountTicketStepViewer(1);
+  mountNativeFlowActionBar();
+  wireInstrumentSupportSelection();
+  document.title = "Open a support ticket — Services Central";
+}
+
+function wireOpenSupportTicketDetails() {
+  const fields = [...app.querySelectorAll("[data-isd-field]")];
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const detailsCard = app.querySelector(".isd-card");
+  const uploadRequirements = app.querySelector(".isd-upload__requirements");
+  const filledFiles = app.querySelector(".isd-filled-files");
+  const uploadInput = app.querySelector("[data-isd-upload] input");
+  const filesRoot = app.querySelector("[data-isd-files]");
+  let uploadedFiles = openSupportTicketDraft.files;
+  const previewUrls = new WeakMap();
+  if (selectedOpenSupportTicketInstrument) {
+    const selected = selectedOpenSupportTicketInstrument;
+    app.querySelector("[data-isd-serial]").textContent = selected.serial;
+    app.querySelector("[data-isd-nickname]").textContent = selected.nickname;
+    app.querySelector("[data-isd-type]").textContent = selected.type;
+    app.querySelector("[data-isd-model]").textContent = selected.model;
+    if (selected.image) app.querySelector("[data-isd-instrument-image]").src = selected.image;
+  }
+  const updateForm = ({ updateCounts = true } = {}) => {
+    fields.forEach((field) => {
+      const count = app.querySelector(`[data-isd-count="${field.dataset.isdField}"]`);
+      if (updateCounts && count) count.textContent = `${field.value.length} / ${field.maxLength}`;
+    });
+    const isComplete = fields.every((field) => field.value.trim());
+    fields.forEach((field) => { openSupportTicketDraft.request[field.dataset.isdField] = field.value; });
+    continueButton.disabled = !isComplete;
+    detailsCard.classList.toggle("is-filled", isComplete);
+    uploadRequirements.hidden = uploadedFiles.length > 0;
+    filledFiles.hidden = uploadedFiles.length === 0;
+  };
+  fields.forEach((field) => { field.value = openSupportTicketDraft.request[field.dataset.isdField] || ""; });
+  fields.forEach((field) => field.addEventListener("input", () => updateForm()));
+  const renderUploadedFiles = () => {
+    filesRoot.replaceChildren(...uploadedFiles.map((file, index) => {
+      const item = document.createElement("article");
+      const isPreviewable = file.type.startsWith("image/");
+      const previewUrl = isPreviewable && (previewUrls.get(file) || URL.createObjectURL(file));
+      if (previewUrl) previewUrls.set(file, previewUrl);
+      item.className = isPreviewable ? "isd-file--preview" : "isd-file--document";
+      const previewFrame = document.createElement("div");
+      previewFrame.className = "isd-file__preview-frame";
+      const preview = document.createElement("img");
+      if (isPreviewable) {
+        preview.className = "isd-file__preview";
+        preview.src = previewUrl;
+        preview.alt = `Preview of ${file.name}`;
+      } else {
+        preview.className = "isd-file__type-icon";
+        preview.src = file.name.toLowerCase().endsWith(".csv")
+          ? "assets/icons/documents/CSV/Size=32px, Style=Bold.svg"
+          : "assets/icons/media/document/size=32px, style=mono.svg";
+        preview.alt = "";
+      }
+      previewFrame.append(preview);
+      const metadata = document.createElement("div");
+      metadata.className = "isd-file__meta";
+      const filename = document.createElement("span");
+      filename.textContent = file.name;
+      filename.title = file.name;
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.setAttribute("aria-label", `Remove ${file.name}`);
+      const removeIcon = document.createElement("img");
+      removeIcon.src = "assets/icons/actions/bin/size=16px, style=mono.svg";
+      removeIcon.alt = "";
+      removeButton.append(removeIcon);
+      metadata.append(filename, removeButton);
+      const size = document.createElement("small");
+      size.textContent = `${Math.max(1, Math.ceil(file.size / 1024 / 1024))}mb`;
+      item.append(previewFrame, metadata, size);
+      removeButton.addEventListener("click", () => {
+        const url = previewUrls.get(file);
+        if (url) URL.revokeObjectURL(url);
+        uploadedFiles.splice(index, 1);
+        renderUploadedFiles();
+        updateForm();
+      });
+      return item;
+    }));
+  };
+  app.querySelector("[data-isd-upload]").addEventListener("click", (event) => {
+    if (event.target !== uploadInput) uploadInput.click();
+  });
+  uploadInput.addEventListener("change", () => {
+    const nextFiles = [...uploadInput.files];
+    uploadedFiles = [...uploadedFiles, ...nextFiles].slice(0, 5);
+    openSupportTicketDraft.files = uploadedFiles;
+    uploadInput.value = "";
+    renderUploadedFiles();
+    updateForm();
+  });
+  const infoTrigger = app.querySelector("[data-isd-info-tooltip]");
+  infoTrigger.addEventListener("pointerenter", () => setSupportHistoryTooltip(infoTrigger, true));
+  infoTrigger.addEventListener("pointerleave", () => setSupportHistoryTooltip(infoTrigger, false));
+  infoTrigger.addEventListener("focus", () => setSupportHistoryTooltip(infoTrigger, true));
+  infoTrigger.addEventListener("blur", () => setSupportHistoryTooltip(infoTrigger, false));
+  infoTrigger.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setSupportHistoryTooltip(infoTrigger, false);
+  });
+  continueButton.addEventListener("click", () => setRoute("open-support-ticket-contact"));
+  updateForm({ updateCounts: false });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderOpenSupportTicketDetails() {
+  const template = document.querySelector("#open-support-ticket-details-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket" });
+  mountTicketStepViewer(2);
+  mountNativeFlowActionBar({ backRoute: "open-support-ticket" });
+  wireOpenSupportTicketDetails();
+  document.title = "Open a support ticket — add request details";
+}
+
+function wireOpenSupportTicketContact() {
+  const fields = [...app.querySelectorAll("[data-ost-contact-field]")];
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const contactDefaults = { firstName: "Molly", lastName: "Hartman" };
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isFieldValid = (field) => {
+    const value = field.value.trim();
+    if (!value) return false;
+    if (field.dataset.ostContactField === "phone") return /^\d+$/.test(value);
+    if (field.dataset.ostContactField === "email") return emailPattern.test(value);
+    return true;
+  };
+  const update = () => {
+    fields.forEach((field) => { openSupportTicketDraft.contact[field.dataset.ostContactField] = field.value; });
+    continueButton.disabled = !fields.every(isFieldValid);
+  };
+  fields.forEach((field) => {
+    field.value = openSupportTicketDraft.contact[field.dataset.ostContactField] || contactDefaults[field.dataset.ostContactField] || "";
+    field.addEventListener("input", () => {
+      if (field.dataset.ostContactField === "phone") field.value = field.value.replace(/\D/g, "");
+      update();
+    });
+  });
+  continueButton.addEventListener("click", () => setRoute("open-support-ticket-review"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderOpenSupportTicketContact() {
+  const template = document.querySelector("#open-support-ticket-contact-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket-details" });
+  mountTicketStepViewer(3);
+  mountNativeFlowActionBar({ backRoute: "open-support-ticket-details" });
+  wireOpenSupportTicketContact();
+  document.title = "Open a support ticket — contact information";
+}
+
+function renderOpenSupportTicketReview() {
+  const template = document.querySelector("#open-support-ticket-review-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket-contact" });
+  mountTicketStepViewer(4);
+  const bar = mountNativeFlowActionBar({ backRoute: "open-support-ticket-contact", primaryDisabled: false });
+  bar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit request";
+  const instrument = openSupportTicketDraft.instrument || {};
+  const { request = {}, contact = {} } = openSupportTicketDraft;
+  app.querySelector("[data-ost-review-subject]").textContent = request.subject || "—";
+  app.querySelector("[data-ost-review-problem]").textContent = request.problem || "—";
+  app.querySelector("[data-ost-review-errors]").textContent = request.errors || "—";
+  app.querySelector("[data-ost-review-changes]").textContent = request.changes || "—";
+  const filesSection = app.querySelector(".ost-review-files");
+  const filesToggle = app.querySelector("[data-ost-review-files-toggle]");
+  const filesList = app.querySelector("[data-ost-review-files-list]");
+  const attachedFiles = openSupportTicketDraft.files;
+  filesSection.hidden = attachedFiles.length === 0;
+  app.querySelector("[data-ost-review-files]").textContent = `${attachedFiles.length} attached file${attachedFiles.length === 1 ? "" : "s"}`;
+  filesToggle.setAttribute("aria-expanded", "true");
+  filesToggle.querySelector("img").src = "assets/icons/directions/chevron up/size=16px, style=mono.svg";
+  filesList.className = "ost-review-files__grid isd-files";
+  filesList.hidden = false;
+  filesList.replaceChildren(...attachedFiles.map((file) => {
+    const item = document.createElement("li");
+    const card = document.createElement("article");
+    const previewFrame = document.createElement("div");
+    previewFrame.className = "ost-review-file__preview-frame";
+    const preview = document.createElement("img");
+    if (file.type.startsWith("image/")) {
+      preview.className = "ost-review-file--preview";
+      preview.src = URL.createObjectURL(file);
+      preview.alt = `Preview of ${file.name}`;
+    } else {
+      preview.className = "ost-review-file__type-icon";
+      preview.src = file.name.toLowerCase().endsWith(".csv")
+        ? "assets/icons/documents/CSV/Size=32px, Style=Bold.svg"
+        : "assets/icons/media/document/size=32px, style=mono.svg";
+      preview.alt = "";
+    }
+    previewFrame.append(preview);
+    const filename = document.createElement("span");
+    filename.textContent = file.name;
+    filename.title = file.name;
+    const size = document.createElement("small");
+    size.textContent = `${Math.max(1, Math.ceil(file.size / 1024 / 1024))}mb`;
+    card.append(previewFrame, filename, size);
+    item.append(card);
+    return item;
+  }));
+  filesToggle.addEventListener("click", () => {
+    const expanded = filesToggle.getAttribute("aria-expanded") === "true";
+    filesToggle.setAttribute("aria-expanded", String(!expanded));
+    filesList.hidden = expanded;
+    filesToggle.querySelector("img").src = expanded
+      ? "assets/icons/directions/chevron right/size=16px, style=mono.svg"
+      : "assets/icons/directions/chevron up/size=16px, style=mono.svg";
+  });
+  app.querySelector("[data-ost-review-instrument-image]").src = instrument.image || "assets/instruments/vanquish-detector.png";
+  app.querySelector("[data-ost-review-serial]").textContent = instrument.serial || "—";
+  app.querySelector("[data-ost-review-model]").textContent = instrument.model || "—";
+  app.querySelector("[data-ost-review-type]").textContent = instrument.type || "—";
+  app.querySelector("[data-ost-review-nickname]").textContent = instrument.nickname || "—";
+  app.querySelector("[data-ost-review-name]").textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  app.querySelector("[data-ost-review-phone]").textContent = contact.phone || "—";
+  app.querySelector("[data-ost-review-email]").textContent = contact.email || "—";
+  bar.querySelector('[data-actionbar-action="primary"]').addEventListener("click", () => {
+    const submittedOn = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+    setRoute("tech-support-summary", {
+      title: request.subject || "Support request",
+      ticket: "Pending",
+      status: "Submitted",
+      type: "Tech Support",
+      subject: request.subject || "—",
+      problem: request.problem || "",
+      errors: request.errors || "",
+      changes: request.changes || "",
+      serial: instrument.serial || "—",
+      model: instrument.model || "—",
+      nickname: instrument.nickname || "—",
+      contact: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—",
+      phone: contact.phone || "—",
+      email: contact.email || "—",
+      created: submittedOn,
+      closed: "---",
+      submitted: true,
+    });
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Open a support ticket — review and submit";
+}
+
+function wireRequestPm() {
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const search = app.querySelector("[data-pm-search]");
+  const selectAll = app.querySelector("[data-pm-select-all]");
+  const system = app.querySelector("[data-pm-system]");
+  const instruments = [...app.querySelectorAll("[data-pm-instrument]")];
+
+  const updateSelection = () => {
+    const selected = instruments.filter((input) => input.checked).length;
+    system.checked = selected > 0 && selected === instruments.length;
+    system.indeterminate = selected > 0 && selected < instruments.length;
+    selectAll.checked = system.checked;
+    selectAll.indeterminate = system.indeterminate;
+    continueButton.disabled = selected === 0;
+    const pmSelectedCount = app.querySelector("[data-pm-selected-count]");
+    if (pmSelectedCount) pmSelectedCount.textContent = String(selected);
+  };
+
+  const setAll = (checked) => {
+    instruments.forEach((input) => { input.checked = checked; });
+    updateSelection();
+  };
+
+  system.addEventListener("change", () => setAll(system.checked));
+  selectAll.addEventListener("change", () => setAll(selectAll.checked));
+  instruments.forEach((input) => input.addEventListener("change", updateSelection));
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-pm-row]").forEach((row) => {
+      row.hidden = Boolean(query) && !row.dataset.search.includes(query);
+    });
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to View PM status"));
+  app.querySelectorAll("[data-pm-promo], [data-pm-filter], [data-pm-instrument-link]").forEach((button) => {
+    button.addEventListener("click", () => showToast(button.dataset.pmPromo || "Instrument details opened"));
+  });
+  updateSelection();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestPm() {
+  const template = document.querySelector("#request-pm-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-support" });
+  mountNativeFlowActionBar();
+  wireRequestPm();
+  document.title = "Request PM scheduling — Services Central";
+}
+
+function wireRequestServicePlan() {
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const search = app.querySelector("[data-sp-search]");
+  const selectAll = app.querySelector("[data-sp-select-all]");
+  const system = app.querySelector("[data-sp-system]");
+  const instruments = [...app.querySelectorAll("[data-sp-instrument]")];
+
+  const updateSelection = () => {
+    const selected = instruments.filter((input) => input.checked).length;
+    system.checked = selected > 0 && selected === instruments.length;
+    system.indeterminate = selected > 0 && selected < instruments.length;
+    selectAll.checked = system.checked;
+    selectAll.indeterminate = system.indeterminate;
+    continueButton.disabled = selected === 0;
+    const spSelectedCount = app.querySelector("[data-sp-selected-count]");
+    if (spSelectedCount) spSelectedCount.textContent = String(selected);
+  };
+
+  const setAll = (checked) => {
+    instruments.forEach((input) => { input.checked = checked; });
+    updateSelection();
+  };
+
+  system.addEventListener("change", () => setAll(system.checked));
+  selectAll.addEventListener("change", () => setAll(selectAll.checked));
+  instruments.forEach((input) => input.addEventListener("change", updateSelection));
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-sp-row]").forEach((row) => {
+      row.hidden = Boolean(query) && !row.dataset.search.includes(query);
+    });
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to Add request details"));
+  app.querySelectorAll("[data-sp-filter], [data-sp-instrument-link]").forEach((button) => {
+    button.addEventListener("click", () => showToast("Instrument details opened"));
+  });
+  updateSelection();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestServicePlan() {
+  const template = document.querySelector("#request-serviceplan-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request a service plan quote", backRoute: "request-support" });
+  mountNativeFlowActionBar();
+  wireRequestServicePlan();
+  document.title = "Request a service plan quote — Services Central";
+}
+
+function renderRequestQualification() {
+  const template = document.querySelector("#request-serviceplan-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  const section = app.querySelector(".screen--request-serviceplan");
+  section.classList.replace("screen--request-serviceplan", "screen--request-qualification");
+  section.setAttribute("aria-label", "Request qualification service");
+  app.querySelector(".pm-titlebar h1").textContent = "Request qualification service";
+  app.querySelector(".sp-steps li:first-child strong").textContent = "Select instrument";
+  app.querySelector("#sp-description").textContent = "Request a quote for a compliance service such as Installation Qualification (IQ), Operational Qualification (OQ), Requalification (RQ), or Temperature mapping.";
+  app.querySelector(".sp-steps").setAttribute("aria-label", "Qualification service request progress");
+  app.querySelector(".pm-select-all span").textContent = "Select all 267 instruments";
+  app.querySelector(".pm-pagination strong").textContent = "267";
+  mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-support" });
+  mountNativeFlowActionBar();
+  wireRequestServicePlan();
+  document.title = "Request qualification service — Services Central";
+}
+
+function wireRequestCalibration() {
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const search = app.querySelector("[data-cal-search]");
+  const selectAll = app.querySelector("[data-cal-select-all]");
+  const instruments = [...app.querySelectorAll("[data-cal-instrument]")];
+  const updateSelection = () => {
+    const selected = instruments.filter((input) => input.checked).length;
+    selectAll.checked = selected > 0 && selected === instruments.length;
+    selectAll.indeterminate = selected > 0 && selected < instruments.length;
+    continueButton.disabled = selected === 0;
+  };
+  selectAll.addEventListener("change", () => {
+    instruments.forEach((input) => { input.checked = selectAll.checked; });
+    updateSelection();
+  });
+  instruments.forEach((input) => input.addEventListener("change", updateSelection));
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    app.querySelectorAll("[data-cal-row]").forEach((row) => { row.hidden = Boolean(query) && !row.dataset.search.includes(query); });
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to Add request details"));
+  app.querySelectorAll("[data-cal-filter], [data-cal-instrument-link]").forEach((button) => button.addEventListener("click", () => showToast("Instrument details opened")));
+  updateSelection();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestCalibration() {
+  const template = document.querySelector("#request-calibration-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request a calibration service", backRoute: "request-support" });
+  mountNativeFlowActionBar();
+  wireRequestCalibration();
+  document.title = "Request a calibration service — Services Central";
+}
+
+function wireRequestInstallation() {
+  const service = app.querySelector("[data-installation-service]");
+  const type = app.querySelector("[data-installation-type]");
+  const details = app.querySelector("[data-installation-details]");
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const orderToggle = app.querySelector("[data-installation-order-toggle]");
+  const orderMenu = app.querySelector("[data-installation-order-menu]");
+  const orderLabel = app.querySelector("[data-installation-order-label]");
+  const orderInputs = [...app.querySelectorAll("[data-installation-order]")];
+  const update = () => { continueButton.disabled = !service.value || !type.value || !details.value.trim(); };
+  type.addEventListener("change", update);
+  orderToggle.addEventListener("click", () => {
+    const expanded = orderToggle.getAttribute("aria-expanded") !== "true";
+    orderToggle.setAttribute("aria-expanded", String(expanded));
+    orderMenu.hidden = !expanded;
+  });
+  orderInputs.forEach((input) => input.addEventListener("change", () => {
+    const selected = orderInputs.filter((order) => order.checked);
+    service.value = selected.map((order) => order.value).join(",");
+    orderLabel.textContent = selected.length ? `${selected.length} order(s) selected` : "Please select order(s)";
+    update();
+  }));
+  app.querySelector("[data-installation-order-help]").addEventListener("click", () => showToast("Installation order support opened"));
+  details.addEventListener("input", () => {
+    app.querySelector("[data-installation-count]").textContent = String(details.value.length);
+    update();
+  });
+  continueButton.addEventListener("click", () => showToast("Continue to Confirm contact information"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestInstallation() {
+  const template = document.querySelector("#request-installation-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Installation support", backRoute: "request-support" });
+  mountNativeFlowActionBar();
+  wireRequestInstallation();
+  document.title = "Installation support — Services Central";
+}
+
 function wireServicePlanContacts() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   app.querySelectorAll("[data-splan-toggle]").forEach((toggle) => {
@@ -3661,11 +5165,15 @@ function wireServicePlanContacts() {
       icon.src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
     });
   });
-  app.querySelector("[data-splan-select-all]").addEventListener("click", (event) => {
-    const checks = [...app.querySelectorAll("[data-splan-check]")];
-    const select = checks.some((check) => !check.checked);
-    checks.forEach((check) => { check.checked = select; });
-    event.currentTarget.textContent = select ? "Clear selection" : "Select all 14 instruments";
+  app.querySelectorAll("[data-splan-select-all]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      const group = event.currentTarget.closest("[data-splan-group]");
+      const checks = [...(group || app).querySelectorAll("[data-splan-check]")];
+      const select = checks.some((check) => !check.checked);
+      const total = event.currentTarget.dataset.splanSelectTotal || checks.length;
+      checks.forEach((check) => { check.checked = select; });
+      event.currentTarget.textContent = select ? "Clear selection" : `Select all ${total} instruments`;
+    });
   });
   app.querySelectorAll("[data-splan-action]").forEach((button) => {
     button.addEventListener("click", () => showToast(`${button.dataset.splanAction} selected`));
@@ -3684,10 +5192,74 @@ function renderServicePlanContacts() {
   document.title = "Service plan contacts — Services Central";
 }
 
-function wireConsumables() {
+function wireContactPage() {
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("service-plan-contacts"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderContactPage() {
+  const template = document.querySelector("#contact-page-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
+  mountPlatformSidebar("service-plan-contacts");
+  mountFooter();
+  wireContactPage();
+  document.title = "Sebastien Martin — Service plan contacts";
+}
+
+function createConsumablesSupportPortalPreference() {
+  const label = document.createElement("label");
+  label.className = "consumables-support-modal__check";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.dataset.consumablesSupportPortalDontShow = "";
+
+  const text = document.createElement("span");
+  text.textContent = "Don't show this again";
+
+  label.append(checkbox, text);
+  return label;
+}
+
+function createConsumablesSupportPortalDialog() {
+  const dialog = window.PlatformModal?.mount('[data-modal-mount="launching-consumables-support-portal"]', {
+    id: "launching-consumables-support-portal",
+    title: "Launching Consumables Support Portal",
+    description: "The consumables support portal is separate from Services Central with separate login credentials. A new page will be launched where you will be required to login.",
+    size: "sm",
+    className: "consumables-support-modal",
+    bodyClassName: "consumables-support-modal__body",
+    footerClassName: "consumables-support-modal__footer",
+    closeButton: false,
+    closeOnBackdrop: false,
+    actions: [
+      {
+        label: "Got it",
+        variant: "primary",
+        action: "launch-consumables-support-portal",
+      },
+    ],
+  });
+
+  if (!dialog) return undefined;
+
+  dialog.querySelector(".modal__footer")?.prepend(createConsumablesSupportPortalPreference());
+  dialog.addEventListener("cancel", (event) => event.preventDefault());
+  dialog.addEventListener("modal:action", (event) => {
+    if (event.detail.action !== "launch-consumables-support-portal") return;
+    window.PlatformModal.close(dialog);
+    window.open(CONSUMABLES_SUPPORT_PORTAL_IMAGE, "_blank", "noopener,noreferrer");
+  });
+
+  return dialog;
+}
+
+function wireConsumables(consumablesSupportPortalDialog) {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
-  app.querySelectorAll("[data-cons-action]").forEach((button) => {
-    button.addEventListener("click", () => showToast(`${button.dataset.consAction} selected`));
+  app.querySelectorAll("[data-open-consumables-support-portal]").forEach((button) => {
+    button.addEventListener("click", () => window.PlatformModal?.open(consumablesSupportPortalDialog));
   });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -3699,7 +5271,8 @@ function renderConsumables() {
   mountTopbarSc();
   mountPlatformSidebar("consumables");
   mountFooter();
-  wireConsumables();
+  const consumablesSupportPortalDialog = createConsumablesSupportPortalDialog();
+  wireConsumables(consumablesSupportPortalDialog);
   document.title = "Consumables — Services Central";
 }
 
@@ -4516,8 +6089,32 @@ function render() {
     renderInstallationShellDetail(route);
   } else if (route === "support-history") {
     renderSupportHistory();
+  } else if (TICKET_SUMMARIES[route]) {
+    renderTicketSummary(route);
+  } else if (route === "request-support") {
+    renderRequestSupport();
+  } else if (route === "request-pm") {
+    renderRequestPm();
+  } else if (route === "request-serviceplan") {
+    renderRequestServicePlan();
+  } else if (route === "request-qualification") {
+    renderRequestQualification();
+  } else if (route === "request-calibration") {
+    renderRequestCalibration();
+  } else if (route === "request-installation") {
+    renderRequestInstallation();
+  } else if (route === "open-support-ticket") {
+    renderOpenSupportTicket();
+  } else if (route === "open-support-ticket-details") {
+    renderOpenSupportTicketDetails();
+  } else if (route === "open-support-ticket-contact") {
+    renderOpenSupportTicketContact();
+  } else if (route === "open-support-ticket-review") {
+    renderOpenSupportTicketReview();
   } else if (route === "service-plan-contacts") {
     renderServicePlanContacts();
+  } else if (route === "contact-page") {
+    renderContactPage();
   } else if (route === "consumables") {
     renderConsumables();
   } else if (route === "notifications") {

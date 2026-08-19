@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Support Ticket table behavior regression</title>
+    <style>body { margin: 0; } #result { position: fixed; z-index: 100; top: 8px; right: 8px; background: #fff; padding: 8px; } iframe { width: 1440px; height: 900px; border: 0; }</style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?openSupportTicketTableBehavior=1&regression=table-behavior#open-support-ticket" title="Open Support Ticket fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => { if (!condition) throw new Error(message); };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      frame.addEventListener("load", async () => {
+        try {
+          const doc = frame.contentDocument;
+          const steps = doc.querySelector(".iss-steps");
+          const second = steps.querySelectorAll("li > span")[1].getBoundingClientRect();
+          const redLineWidth = parseFloat(getComputedStyle(steps, "::after").width);
+          const expectedRedLineWidth = second.left - steps.getBoundingClientRect().left - 16;
+          assert(Math.abs(redLineWidth - expectedRedLineWidth) < 3, "red line ends at step two's left edge");
+          assert(getComputedStyle(doc.querySelector(".iss-table-wrap")).overflow === "visible", "table does not scroll internally");
+
+          const search = doc.querySelector("[data-iss-search]");
+          search.value = "SN98355W";
+          search.dispatchEvent(new Event("input", { bubbles: true }));
+          await nextFrame();
+          assert(doc.querySelector(".iss-system").hidden, "system row hides when search result is not a system instrument");
+          search.value = "1009996";
+          search.dispatchEvent(new Event("input", { bubbles: true }));
+          await nextFrame();
+          assert(!doc.querySelector(".iss-system").hidden, "system row remains visible for a system instrument search");
+
+          const filterTrigger = doc.querySelector('[data-iss-filter-host="model"] .msf__trigger');
+          filterTrigger.click();
+          await nextFrame();
+          const filterMenu = doc.querySelector('[data-iss-filter-host="model"] .msf__menu');
+          assert(!filterMenu.hidden && Number(getComputedStyle(filterMenu).zIndex) >= 30, "column menu opens above table content");
+          assert(filterMenu.textContent.includes("VQF0000DET") && filterMenu.textContent.includes("QEXAC00001"), "column menu includes its table values");
+
+          const pageSize = doc.querySelector("[data-iss-page-size]");
+          assert(pageSize, "renders the results-per-page selector");
+          pageSize.click();
+          await nextFrame();
+          const pageMenu = doc.querySelector("[data-iss-page-size-menu]");
+          assert(!pageMenu.hidden && [...pageMenu.querySelectorAll("[data-iss-page-size-option]")].map((option) => option.textContent.trim()).join(",") === "10,20,30,40,50", "results-per-page menu exposes the Komodo options");
+          pageMenu.querySelector('[data-iss-page-size-option="30"]').click();
+          assert(pageSize.textContent.includes("30"), "results-per-page selection updates the control");
+          assert(getComputedStyle(doc.querySelector(".iss-results-total")).fontWeight === "400", "result total uses regular weight");
+          assert(Number(getComputedStyle(doc.querySelector(".iss-page-number")).fontWeight) >= 500, "page numbers use medium weight");
+          assert(Number(getComputedStyle(doc.querySelector(".iss-go-to")).fontWeight) >= 500, "Go to label uses medium weight");
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>
