@@ -44,6 +44,7 @@ const PREINSTALL_CHECKLISTS = [
   { id: "fifth", name: "Fifth template long name", instruments: "1 instrument(s)", submittedBy: "adam.smith@companyname.com", submittedOn: "03 Jul 2025", items: [["18", "1", "BRE725660", "Astral"]] },
 ];
 let preInstallTooltipCloseTimer;
+let selectedSupportHistoryTicket = null;
 
 class ChecklistUploadNote extends HTMLElement {
   connectedCallback() {
@@ -926,7 +927,8 @@ function routeFromHash() {
   return "signin";
 }
 
-function setRoute(route) {
+function setRoute(route, summaryTicket = null) {
+  selectedSupportHistoryTicket = summaryTicket;
   const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
   if (window.location.hash !== nextHash) window.history.pushState({ fromRoute: routeFromHash() }, "", nextHash);
