@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support History visit tooltip regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1280px; height: 720px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?supportHistoryVisitTooltipHarness=1#support-history" title="Support History fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      frame.addEventListener("load", async () => {
+        try {
+          const doc = frame.contentDocument;
+          const supportTrigger = doc.querySelector("[data-sh-support-tip]");
+          assert(supportTrigger, "support row renders a visit tooltip trigger");
+          const supportIcon = supportTrigger.querySelector(".sh-ticket-icon");
+          assert(supportIcon.getAttribute("src") === "assets/icons/general/visit scheduled/size=24px, style=mono.svg", "support row uses the supplied repository asset");
+          assert(supportIcon.naturalWidth === 24 && supportIcon.naturalHeight === 24, "support asset loads at 24 by 24");
+
+          const supportTooltip = doc.getElementById(supportTrigger.getAttribute("aria-describedby"));
+          assert(supportTrigger.getAttribute("aria-label") === "Visit status", "support trigger has the accessible visit label");
+          assert(supportTooltip?.getAttribute("role") === "tooltip", "support trigger references a semantic tooltip");
+          assert(supportTooltip.textContent.trim() === "Visit scheduled", "support tooltip uses the Figma copy");
+          assert(supportTooltip.hidden, "support tooltip starts hidden");
+
+          supportTrigger.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+          await nextFrame();
+          assert(!supportTooltip.hidden, "hover opens the support tooltip");
+          const supportRect = supportTooltip.getBoundingClientRect();
+          assert(supportRect.width < 193 && supportRect.height === 54, "visit tooltip width fits its text instead of using the systems width");
+          assert(getComputedStyle(supportTooltip, "::after").borderTopWidth === "8px", "visit tooltip uses the shared bottom pointer");
+          assert(getComputedStyle(supportTooltip.closest("td")).zIndex === "30", "visit tooltip rises above the side navigation");
+          assert(getComputedStyle(doc.querySelector(".sh-table-wrap")).overflow === "visible", "support tooltip is not clipped by the table wrapper");
+
+          supportTrigger.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: doc.body }));
+          await nextFrame();
+          assert(supportTooltip.hidden, "pointer leave closes the support tooltip");
+          supportTrigger.focus();
+          await nextFrame();
+          assert(!supportTooltip.hidden, "keyboard focus opens the support tooltip");
+          supportTrigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await nextFrame();
+          assert(supportTooltip.hidden, "Escape closes the support tooltip");
+          supportTrigger.blur();
+          await nextFrame();
+          supportTrigger.focus();
+          await nextFrame();
+          assert(!supportTooltip.hidden, "keyboard focus reopens the support tooltip");
+          supportTrigger.blur();
+          await nextFrame();
+          assert(supportTooltip.hidden, "blur closes the support tooltip");
+
+          const quoteTrigger = doc.querySelector("[data-sh-quote-tip]");
+          const quoteTooltip = doc.getElementById(quoteTrigger.getAttribute("aria-describedby"));
+          quoteTrigger.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+          await nextFrame();
+          const quoteRect = quoteTooltip.getBoundingClientRect();
+          assert(quoteTooltip.textContent.trim() === "Quote ready", "quote tooltip copy is unchanged");
+          assert(quoteRect.width < 193 && quoteRect.height === 54, "quote tooltip uses a text-fit width");
+          assert(doc.querySelectorAll("[data-sh-ticket-tip]").length === 2, "only quote and support indicators receive tooltip triggers");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

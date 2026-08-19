@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support History status multiselect regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1280px; height: 720px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?supportHistoryHeaderStatusHarness=2#support-history" title="Support History fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      frame.addEventListener("load", async () => {
+        try {
+          const doc = frame.contentDocument;
+          const visibleRows = () => [...doc.querySelectorAll("[data-sh-row]")].filter((row) => !row.hidden);
+          const initialPageWidth = doc.documentElement.scrollWidth;
+          const initialHeaderHeight = doc.querySelector(".sh-table thead tr").getBoundingClientRect().height;
+          const initialRowHeight = doc.querySelector("[data-sh-row]").getBoundingClientRect().height;
+          const host = doc.querySelector("[data-sh-status-filter]");
+          const triggerHost = doc.querySelector("[data-sh-status-filter-trigger]");
+          const appliedFilters = doc.querySelector(".sh-applied-filters");
+          const typeControl = doc.querySelector('[data-sh-column-filter-trigger="type"]');
+          const modelControl = doc.querySelector('[data-sh-column-filter-trigger="model"]');
+          const groupControl = doc.querySelector('[data-sh-column-filter-trigger="group"]');
+          const contactControl = doc.querySelector('[data-sh-column-filter-trigger="contact"]');
+          const clearFilters = doc.querySelector("[data-sh-clear-filters]");
+          assert(host, "status component host renders");
+          assert(triggerHost, "status trigger host renders");
+          assert(appliedFilters, "applied filter strip renders");
+          assert(clearFilters, "shared Clear filter(s) action renders");
+          assert(!doc.querySelector(".sh-filter-row"), "standalone filter row is removed");
+          assert(appliedFilters.nextElementSibling.classList.contains("sh-table-wrap"), "applied badges sit directly before table");
+          assert(host.querySelector("[data-msf-applied]").hidden, "badge stays hidden until a status is selected");
+          assert(clearFilters.hidden, "shared Clear filter(s) action stays hidden initially");
+          assert(!doc.querySelector("[data-sh-status]"), "obsolete header select is removed");
+          assert(triggerHost.closest("th") === doc.querySelector(".sh-table thead th:nth-child(2)"), "Status trigger renders in table header");
+          assert(typeControl && modelControl && groupControl && contactControl, "Ticket type, Model, Groups, and Contact controls render in their headers");
+          assert(typeControl.querySelector("[data-msf-trigger] span").textContent.trim() === "Ticket t...", "Ticket type trigger uses an ellipsis label");
+          assert(getComputedStyle(groupControl.querySelector("[data-msf-trigger]")).paddingLeft === "8px", "Groups trigger reserves caret spacing");
+          assert(getComputedStyle(contactControl.querySelector("[data-msf-trigger]")).paddingRight === "8px", "Contact trigger reserves caret spacing");
+
+          typeControl.querySelector("[data-msf-trigger]").click();
+          const typeOptions = [...typeControl.querySelectorAll("[data-msf-option]")];
+          assert(typeOptions.map((option) => option.dataset.value).join("|") === "All|Tech Support|Service Request|PM (Contract)|Inquiry|Depot Repair|Installation", "Ticket type list uses its column values");
+          typeOptions.find((option) => option.dataset.value === "Depot Repair").click();
+          await nextFrame();
+          assert(visibleRows().length === 1 && visibleRows()[0].querySelector("td:nth-child(4)").textContent.trim() === "Depot Repair", "Ticket type filters its column live");
+          assert(!clearFilters.hidden && clearFilters.textContent.trim() === "Clear filter(s)", "one shared Clear filter(s) action appears for active filters");
+          clearFilters.click();
+          assert(visibleRows().length === 20 && clearFilters.hidden, "shared Clear filter(s) resets every active table filter");
+
+          const trigger = triggerHost.querySelector("[data-msf-trigger]");
+          assert(trigger, "header mount owns the Status trigger");
+          trigger.click();
+          await nextFrame();
+          const options = [...triggerHost.querySelectorAll("[data-msf-option]")];
+          assert(options.map((option) => option.dataset.value).join("|") === "All|Open|In progress|Closed", "exact status options render");
+          assert(options[0].getAttribute("aria-selected") === "true", "All is selected initially");
+
+          options.find((option) => option.dataset.value === "Open").click();
+          await nextFrame();
+          assert(visibleRows().length === 1 && visibleRows()[0].dataset.status === "Open", "Open filters live");
+          assert(options[0].getAttribute("aria-selected") === "false" && options[1].getAttribute("aria-selected") === "true", "selected state remains visible");
+          assert(host.querySelector("[data-msf-badge-text]").textContent.trim() === "Status: Open", "Open badge renders");
+          assert(doc.querySelector("[data-sh-count]").textContent === "1", "count follows one selected status");
+
+          options.find((option) => option.dataset.value === "In progress").click();
+          await nextFrame();
+          assert(visibleRows().length === 9, "Open and In progress use OR semantics");
+          assert(host.querySelector("[data-msf-badge-text]").textContent.trim() === "Status: Open, In progress", "multiple badge matches reference");
+          assert(host.querySelector("[data-msf-remove] img").getAttribute("src") === "assets/icons/actions/close/size=16px, style=mono.svg", "badge uses the repository close asset");
+          const badge = host.querySelector(".msf__badge");
+          const clear = host.querySelector(".msf__clear");
+          assert(badge.getBoundingClientRect().top - doc.querySelector(".sh-top").getBoundingClientRect().bottom === 16, "badge appears only after selection in the compact filter space");
+          assert(badge.getBoundingClientRect().height === 30, "badge is 30px high");
+          assert(getComputedStyle(badge).borderRadius === "15px", "badge has fully rounded radius");
+          assert(getComputedStyle(clear).color === "rgb(0, 113, 208)", "Clear filters matches Ticket no. blue");
+
+          const search = doc.querySelector("[data-sh-search]");
+          search.value = "1009996";
+          search.dispatchEvent(new Event("input", { bubbles: true }));
+          await nextFrame();
+          assert(visibleRows().length === 1, "search and status compose with AND semantics");
+          clearFilters.click();
+          await nextFrame();
+          assert(search.value === "1009996" && visibleRows().length === 1, "Clear filters resets only Status");
+          assert(options[0].getAttribute("aria-selected") === "true", "Clear filters restores All selected state");
+
+          search.value = "";
+          search.dispatchEvent(new Event("input", { bubbles: true }));
+          doc.querySelector("[data-sh-date-picker]").dispatchEvent(new CustomEvent("date-range-change", {
+            bubbles: true,
+            detail: { start: "2020-10-18", end: "2020-10-18" },
+          }));
+          options.find((option) => option.dataset.value === "Closed").click();
+          await nextFrame();
+          assert(visibleRows().length === 0, "created date and Status compose with AND semantics");
+          assert(doc.querySelector("[data-sh-count]").textContent === "0", "count follows composed filters");
+
+          assert(initialHeaderHeight === 45, "header height remains 45px");
+          assert(initialRowHeight === 41, "row height remains 41px");
+          assert(doc.documentElement.scrollWidth === initialPageWidth, "status component adds no page-width overflow");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

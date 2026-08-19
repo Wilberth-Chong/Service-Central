@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support History systems tooltip regression</title>
+    <style>body{margin:0;font-family:Arial,sans-serif}#result{position:fixed;z-index:100;top:8px;right:8px;padding:8px 12px;background:#fff}iframe{width:1280px;height:720px;border:0}</style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" title="Support History fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => { if (!condition) throw new Error(message); };
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      frame.addEventListener("load", async () => {
+        try {
+          const doc = frame.contentDocument;
+          const rows = [...doc.querySelectorAll("[data-sh-row]")];
+          const triggers = [...doc.querySelectorAll("[data-sh-system-tip]")];
+          assert(doc.querySelectorAll(".sh-inline-icon").length === 0, "subject no longer renders an inline icon");
+          assert(rows[0].querySelector("[data-sh-system-tip]") && rows[2].querySelector("[data-sh-system-tip]"), "first and third ticket rows render systems icons");
+          assert(triggers.length === 2, "only the first and third rows receive systems icons");
+          const trigger = triggers[0];
+          const icon = trigger.querySelector(".sh-system-icon");
+          assert(icon.getAttribute("src") === "assets/icons/general/in systems/size=24px, style=mono.svg", "systems column uses the supplied SVG asset");
+          const tooltip = doc.getElementById(trigger.getAttribute("aria-describedby"));
+          assert(tooltip.textContent.trim() === "In system(s): Alpine, Sasha", "systems tooltip uses the supplied copy");
+          assert(tooltip.querySelector(".sh-system-tooltip__content"), "systems tooltip keeps its sentence in one inline content group");
+          assert(tooltip.getBoundingClientRect().width === 193, "systems tooltip matches the 193px Figma width");
+          assert(getComputedStyle(tooltip, "::after").borderTopWidth === "8px", "systems tooltip has the Figma bottom pointer");
+          assert(getComputedStyle(tooltip.querySelectorAll(".sh-system-name")[0]).color === "rgb(0, 113, 208)", "Alpine uses ticket-link blue");
+          assert(getComputedStyle(tooltip.querySelectorAll(".sh-system-name")[1]).color === "rgb(0, 113, 208)", "Sasha uses ticket-link blue");
+          trigger.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+          await nextFrame();
+          assert(!tooltip.hidden, "hover opens the systems tooltip");
+          assert(trigger.closest("td").classList.contains("is-tooltip-visible"), "hover exposes the systems tooltip beyond its table cell");
+          trigger.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: doc.body }));
+          await nextFrame();
+          assert(tooltip.hidden, "pointer leave closes the systems tooltip");
+          trigger.dispatchEvent(new PointerEvent("pointerenter"));
+          await nextFrame();
+          assert(!tooltip.hidden, "direct pointer hover opens the systems tooltip");
+          trigger.dispatchEvent(new PointerEvent("pointerleave"));
+          await nextFrame();
+          assert(tooltip.hidden, "direct pointer leave closes the systems tooltip");
+          trigger.focus();
+          await nextFrame();
+          assert(!tooltip.hidden, "keyboard focus opens the systems tooltip");
+          trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          await nextFrame();
+          assert(tooltip.hidden, "Escape closes the systems tooltip");
+          result.textContent = "PASS";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+        }
+      });
+      frame.src = `../?supportHistorySystemsTooltipHarness=1&figmaSystemTooltip=${Date.now()}#support-history`;
+    </script>
+  </body>
+</html>
