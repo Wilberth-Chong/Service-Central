@@ -796,6 +796,7 @@ button {
 .splan-card > footer button { display: inline-flex; height: 24px; align-items: center; gap: 8px; border: 0; padding: 0; color: #0071d0; background: transparent; font-size: 13px; font-weight: 500; cursor: pointer; }
 .splan-card > footer button > img { width: 16px; height: 16px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
 .splan-card > footer button:last-child img { width: 24px; height: 24px; }
+.splan-card > footer button > img.splan-card__edit-icon { filter: brightness(0) saturate(100%) invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
 .splan-content { width: 1320px; margin: 0 32px; padding-top: 32px; }
 .splan-group { width: 1320px; margin-top: 0; }
 .splan-group + .splan-group { margin-top: 24px; }
