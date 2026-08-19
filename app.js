@@ -48,6 +48,7 @@ let preInstallTooltipCloseTimer;
 let selectedSupportHistoryTicket = null;
 let selectedOpenSupportTicketInstrument = null;
 const openSupportTicketDraft = { instrument: null, request: {}, files: [], contact: {} };
+const qualificationRequestDraft = { instruments: [], additionalDetails: "", contact: {} };
 
 class ChecklistUploadNote extends HTMLElement {
   connectedCallback() {
@@ -204,6 +205,10 @@ const ROUTES = {
   "request-pm": { title: "Request PM scheduling", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
   "request-serviceplan": { title: "Request a service plan quote", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-qualification": { title: "Request qualification service", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-qualification-details": { title: "Request qualification service — add request details", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-qualification-contact": { title: "Request qualification service — confirm contact information", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-qualification-review": { title: "Request qualification service — review and submit", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "qualification-summary": { title: "Request qualification service — submitted", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-calibration": { title: "Request a calibration service", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
   "request-installation": { title: "Installation support", src: "assets/flows/request-support.png", width: 1440, height: 1623, kind: "app" },
   "open-support-ticket": { title: "Open a support ticket", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 2339, kind: "app" },
@@ -1207,8 +1212,8 @@ function mountNativeFlowActionBar({ cancelRoute = "request-support", backRoute =
   return bar;
 }
 
-function mountTicketStepViewer(currentStep) {
-  window.TicketStepViewer?.mount(app.querySelector("[data-ticket-step-viewer]"), { currentStep });
+function mountTicketStepViewer(currentStep, options = {}) {
+  window.TicketStepViewer?.mount(app.querySelector("[data-ticket-step-viewer]"), { currentStep, ...options });
 }
 
 function wireEditSpc() {
@@ -2071,11 +2076,21 @@ function wireInstrumentSupportSelection() {
   const filterConfig = [
     ["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"],
   ];
+  const appliedFilters = app.querySelector("[data-iss-applied-filters]");
+  const appliedBadges = app.querySelector("[data-iss-applied-badges]");
+  const clearFiltersButton = app.querySelector("[data-iss-clear-filters]");
   const tableFilters = filterConfig.map(([key, label]) => {
-    const host = app.querySelector(`[data-iss-filter-host="${key}"]`);
+    const controlHost = app.querySelector(`[data-iss-filter-host="${key}"]`);
+    const host = document.createElement("div");
+    appliedBadges.append(host);
     const options = [...new Set(systemRows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
-    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], menuStyle: "figma-column" }) };
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], controlHost, menuStyle: "figma-column" }) };
   });
+  const updateAppliedFilters = () => {
+    const hasFilters = tableFilters.some(({ filter }) => filter.values.length);
+    appliedFilters.hidden = !hasFilters;
+    clearFiltersButton.hidden = !hasFilters;
+  };
   const filterRows = () => {
     const query = search.value.trim().toLowerCase();
     let visibleSystemInstrument = false;
@@ -2094,7 +2109,14 @@ function wireInstrumentSupportSelection() {
     systemToggle.querySelector("img").style.transform = systemExpanded ? "" : "rotate(-90deg)";
     filterRows();
   });
-  tableFilters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", filterRows));
+  tableFilters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", () => {
+    filterRows();
+    updateAppliedFilters();
+  }));
+  clearFiltersButton.addEventListener("click", () => {
+    tableFilters.forEach(({ filter }) => filter.clear());
+    updateAppliedFilters();
+  });
   const pageSizeButton = app.querySelector("[data-iss-page-size]");
   const pageSizeMenu = app.querySelector("[data-iss-page-size-menu]");
   const closePageSizeMenu = () => {
@@ -2115,6 +2137,7 @@ function wireInstrumentSupportSelection() {
   document.addEventListener("mousedown", (event) => {
     if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu();
   });
+  updateAppliedFilters();
   pageSizeButton.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closePageSizeMenu();
   });
@@ -2311,7 +2334,7 @@ function renderOpenSupportTicketReview() {
   mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "open-support-ticket-contact" });
   mountTicketStepViewer(4);
   const bar = mountNativeFlowActionBar({ backRoute: "open-support-ticket-contact", primaryDisabled: false });
-  bar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit request";
+  bar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit";
   const instrument = openSupportTicketDraft.instrument || {};
   const { request = {}, contact = {} } = openSupportTicketDraft;
   app.querySelector("[data-ost-review-subject]").textContent = request.subject || "—";
@@ -2498,6 +2521,181 @@ function renderRequestServicePlan() {
   document.title = "Request a service plan quote — Services Central";
 }
 
+function wireRequestQualification() {
+  const continueButton = app.querySelector('[data-actionbar-action="primary"]');
+  const search = app.querySelector("[data-sp-search]");
+  const selectAll = app.querySelector("[data-qualification-select-all]");
+  const tableSelectAll = app.querySelector("[data-qualification-select-all-table]");
+  const systemRow = app.querySelector(".iss-system");
+  const systemToggle = app.querySelector("[data-qualification-system-toggle]");
+  const systemCheckbox = app.querySelector("[data-sp-system]");
+  const rows = [...app.querySelectorAll("[data-sp-row]")];
+  const collapsibleRows = rows.slice(0, 5);
+  let expanded = true;
+
+  rows.forEach((row) => {
+    const cells = row.cells;
+    row.classList.add("iss-system-child");
+    row.dataset.group = cells[5]?.textContent.trim() || "—";
+    row.dataset.type = cells[6]?.textContent.trim() || "—";
+    row.dataset.model = cells[7]?.textContent.trim() || "—";
+    row.dataset.coverage = cells[8]?.textContent.trim() || "—";
+    row.querySelectorAll('img[src="assets/icons/actions/return/Size=16px, Style=Mono.svg"]').forEach((icon) => {
+      icon.src = "assets/icons/actions/system-return/Size=16px, Style=Mono.svg";
+    });
+  });
+  rows.slice(5).forEach((row) => {
+    const image = row.cells[2]?.querySelector("img");
+    if (!image) return;
+    image.classList.add("iss-indent-instrument");
+    row.cells[1].replaceChildren(image);
+  });
+
+  const fullEllipsisText = new Map([
+    ["Mass Spec Lif...", "Mass Spec Life Sciences"],
+    ["MSTSQQUAN...", "MSTSQQUANTISPLUS"],
+    ["Global...", "Global group"],
+    ["Department...", "Department group"],
+  ]);
+  let tooltipIndex = 0;
+  rows.forEach((row) => {
+    [5, 6, 7].forEach((column) => {
+      const cell = row.cells[column];
+      const value = cell?.textContent.trim();
+      if (!value?.includes("...")) return;
+      const trigger = cell.querySelector("button") || document.createElement("span");
+      if (!trigger.parentElement) {
+        trigger.textContent = value;
+        trigger.tabIndex = 0;
+        cell.replaceChildren(trigger);
+      }
+      const tooltip = document.createElement("span");
+      const id = `qualification-overflow-tooltip-${++tooltipIndex}`;
+      tooltip.className = "iss-overflow-tooltip";
+      tooltip.id = id;
+      tooltip.setAttribute("role", "tooltip");
+      tooltip.hidden = true;
+      tooltip.textContent = fullEllipsisText.get(value) || value;
+      trigger.classList.add("iss-overflow");
+      trigger.setAttribute("aria-describedby", id);
+      trigger.append(tooltip);
+      trigger.addEventListener("pointerenter", () => setSupportHistoryTooltip(trigger, true));
+      trigger.addEventListener("pointerleave", () => setSupportHistoryTooltip(trigger, false));
+      trigger.addEventListener("focus", () => setSupportHistoryTooltip(trigger, true));
+      trigger.addEventListener("blur", () => setSupportHistoryTooltip(trigger, false));
+      trigger.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setSupportHistoryTooltip(trigger, false);
+      });
+    });
+  });
+
+  const appliedFilters = app.querySelector("[data-qualification-applied-filters]");
+  const appliedBadges = app.querySelector("[data-qualification-applied-badges]");
+  const clearFiltersButton = app.querySelector("[data-qualification-clear-filters]");
+  const filters = [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].map(([key, label]) => {
+    const controlHost = app.querySelector(`[data-qualification-filter-host="${key}"]`);
+    const host = document.createElement("div");
+    appliedBadges.append(host);
+    const options = [...new Set(rows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], controlHost, menuStyle: "figma-column" }) };
+  });
+  const updateAppliedFilters = () => {
+    const hasFilters = filters.some(({ filter }) => filter.values.length);
+    appliedFilters.hidden = !hasFilters;
+    clearFiltersButton.hidden = !hasFilters;
+  };
+
+  const updateSelection = () => {
+    const selected = rows.filter((row) => row.querySelector("[data-sp-instrument]").checked);
+    const selectedSystemRows = collapsibleRows.filter((row) => row.querySelector("[data-sp-instrument]").checked);
+    systemCheckbox.checked = selectedSystemRows.length === collapsibleRows.length;
+    systemCheckbox.indeterminate = selectedSystemRows.length > 0 && selectedSystemRows.length < collapsibleRows.length;
+    tableSelectAll.checked = selected.length === rows.length;
+    tableSelectAll.indeterminate = selected.length > 0 && selected.length < rows.length;
+    selectAll.setAttribute("aria-pressed", String(tableSelectAll.checked));
+    continueButton.disabled = selected.length === 0;
+  };
+  const filterRows = () => {
+    const query = search.value.trim().toLowerCase();
+    let visibleSystemInstrument = false;
+    rows.forEach((row) => {
+      const matchesSearch = !query || row.dataset.search.includes(query);
+      const matchesFilters = filters.every(({ key, filter }) => !filter.values.length || filter.values.includes(row.dataset[key]));
+      row.hidden = (!expanded && collapsibleRows.includes(row)) || !matchesSearch || !matchesFilters;
+      if (collapsibleRows.includes(row) && !row.hidden) visibleSystemInstrument = true;
+    });
+    systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
+  };
+  const setAllRows = (checked) => {
+    rows.forEach((row) => { row.querySelector("[data-sp-instrument]").checked = checked; });
+    updateSelection();
+  };
+
+  const setAllSystemRows = (checked) => {
+    collapsibleRows.forEach((row) => { row.querySelector("[data-sp-instrument]").checked = checked; });
+    updateSelection();
+  };
+
+  search.addEventListener("input", filterRows);
+  selectAll.addEventListener("click", () => setAllRows(!tableSelectAll.checked));
+  tableSelectAll.addEventListener("change", () => setAllRows(tableSelectAll.checked));
+  systemCheckbox.addEventListener("change", () => setAllSystemRows(systemCheckbox.checked));
+  rows.forEach((row) => row.querySelector("[data-sp-instrument]").addEventListener("change", updateSelection));
+  systemToggle.addEventListener("click", () => {
+    expanded = !expanded;
+    systemToggle.setAttribute("aria-expanded", String(expanded));
+    systemToggle.setAttribute("aria-label", `${expanded ? "Collapse" : "Expand"} system`);
+    systemToggle.querySelector("img").style.transform = expanded ? "" : "rotate(-90deg)";
+    filterRows();
+  });
+  filters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", () => {
+    filterRows();
+    updateAppliedFilters();
+  }));
+  clearFiltersButton.addEventListener("click", () => {
+    filters.forEach(({ filter }) => filter.clear());
+    updateAppliedFilters();
+  });
+
+  const pageSizeButton = app.querySelector("[data-qualification-page-size]");
+  const pageSizeMenu = app.querySelector("[data-qualification-page-size-menu]");
+  const closePageSizeMenu = () => {
+    pageSizeMenu.hidden = true;
+    pageSizeButton.setAttribute("aria-expanded", "false");
+  };
+  pageSizeButton.addEventListener("click", () => {
+    pageSizeMenu.hidden = !pageSizeMenu.hidden;
+    pageSizeButton.setAttribute("aria-expanded", String(!pageSizeMenu.hidden));
+  });
+  pageSizeMenu.querySelectorAll("[data-qualification-page-size-option]").forEach((option) => option.addEventListener("click", () => {
+    const caret = pageSizeButton.querySelector("img");
+    pageSizeButton.replaceChildren(document.createTextNode(`${option.dataset.qualificationPageSizeOption} `), caret);
+    pageSizeMenu.querySelectorAll("[data-qualification-page-size-option]").forEach((item) => item.setAttribute("aria-selected", String(item === option)));
+    closePageSizeMenu();
+  }));
+  document.addEventListener("mousedown", (event) => {
+    if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu();
+  });
+  continueButton.addEventListener("click", () => {
+    qualificationRequestDraft.instruments = rows.filter((row) => row.querySelector("[data-sp-instrument]")?.checked).map((row) => ({
+      serial: row.cells[3]?.textContent.trim() || "—",
+      nickname: row.cells[4]?.textContent.trim() || "—",
+      type: row.dataset.type || "—",
+      model: row.dataset.model || "—",
+      coverage: row.dataset.coverage || "—",
+      image: row.cells[2]?.querySelector("img")?.getAttribute("src") || "",
+      system: collapsibleRows.includes(row),
+    }));
+    setRoute("request-qualification-details");
+  });
+  app.querySelectorAll("[data-sp-instrument-link]").forEach((button) => button.addEventListener("click", () => showToast("Instrument details opened")));
+  updateSelection();
+  filterRows();
+  updateAppliedFilters();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
 function renderRequestQualification() {
   const template = document.querySelector("#request-serviceplan-native-template");
   app.replaceChildren(template.content.cloneNode(true));
@@ -2505,15 +2703,244 @@ function renderRequestQualification() {
   section.classList.replace("screen--request-serviceplan", "screen--request-qualification");
   section.setAttribute("aria-label", "Request qualification service");
   app.querySelector(".pm-titlebar h1").textContent = "Request qualification service";
-  app.querySelector(".sp-steps li:first-child strong").textContent = "Select instrument";
+  const legacySteps = app.querySelector(".sp-steps");
+  const stepViewerHost = document.createElement("div");
+  stepViewerHost.dataset.ticketStepViewer = "";
+  legacySteps.replaceWith(stepViewerHost);
+  mountTicketStepViewer(1, {
+    labels: ["Select instrument(s)", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel: "Qualification service request progress",
+  });
   app.querySelector("#sp-description").textContent = "Request a quote for a compliance service such as Installation Qualification (IQ), Operational Qualification (OQ), Requalification (RQ), or Temperature mapping.";
-  app.querySelector(".sp-steps").setAttribute("aria-label", "Qualification service request progress");
-  app.querySelector(".pm-select-all span").textContent = "Select all 267 instruments";
-  app.querySelector(".pm-pagination strong").textContent = "267";
+  const selectAll = app.querySelector(".pm-select-all");
+  selectAll.outerHTML = '<button class="pm-select-all qualification-select-all" type="button" data-qualification-select-all aria-pressed="false">Select all 267 instruments</button>';
+  const qualificationAppliedFilters = document.createElement("div");
+  qualificationAppliedFilters.className = "sh-applied-filters iss-applied-filters";
+  qualificationAppliedFilters.dataset.qualificationAppliedFilters = "";
+  qualificationAppliedFilters.setAttribute("aria-label", "Instrument filters");
+  qualificationAppliedFilters.hidden = true;
+  qualificationAppliedFilters.innerHTML = '<div class="iss-applied-filters__badges" data-qualification-applied-badges></div><button class="sh-clear-filters" type="button" data-qualification-clear-filters hidden>Clear filter(s)</button>';
+  app.querySelector("[data-qualification-select-all]").after(qualificationAppliedFilters);
+  const tableWrap = app.querySelector(".pm-table-wrap");
+  tableWrap.className = "iss-table-wrap qualification-table-wrap";
+  const table = tableWrap.querySelector(".pm-table");
+  table.className = "iss-table qualification-table";
+  const systemRow = table.querySelector(".pm-system");
+  systemRow.className = "iss-system qualification-system";
+  const systemCell = systemRow.cells[1];
+  table.tHead.rows[0].cells[0].innerHTML = '<input type="checkbox" data-qualification-select-all-table aria-label="Select all instruments" />';
+  systemCell.innerHTML = '<button class="iss-system-toggle" type="button" data-qualification-system-toggle aria-expanded="true" aria-label="Collapse system"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>';
+  [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].forEach(([key, label], index) => {
+    table.tHead.rows[0].cells[index + 5].innerHTML = `<div data-qualification-filter-host="${key}" aria-label="${label} filter"></div>`;
+  });
+  const pagination = app.querySelector(".pm-pagination");
+  pagination.className = "iss-pagination qualification-pagination";
+  const pageSize = pagination.querySelector(".pm-page-size");
+  pageSize.className = "iss-page-size";
+  pageSize.dataset.qualificationPageSize = "";
+  pageSize.setAttribute("aria-expanded", "false");
+  const pageSizeControl = document.createElement("span");
+  pageSizeControl.className = "iss-page-size-control";
+  pageSize.replaceWith(pageSizeControl);
+  pageSizeControl.append(pageSize);
+  const pageSizeMenu = document.createElement("div");
+  pageSizeMenu.className = "iss-page-size-menu";
+  pageSizeMenu.dataset.qualificationPageSizeMenu = "";
+  pageSizeMenu.hidden = true;
+  pageSizeMenu.innerHTML = [10, 20, 30, 40, 50].map((value) => `<button type="button" data-qualification-page-size-option="${value}" aria-selected="${value === 20}">${value}</button>`).join("");
+  pageSizeControl.append(pageSizeMenu);
+  pagination.querySelector("strong").textContent = "267";
+  pagination.querySelector("strong").className = "iss-results-total";
+  pagination.querySelectorAll(".pm-page-arrow").forEach((button) => { button.className = "iss-page-arrow"; });
+  pagination.querySelectorAll(".pm-page-number").forEach((button) => { button.className = `${button.classList.contains("is-current") ? "iss-page-number is-current" : "iss-page-number"}`; });
+  pagination.querySelector("span:last-of-type").className = "iss-go-to";
   mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-support" });
   mountNativeFlowActionBar();
-  wireRequestServicePlan();
+  wireRequestQualification();
   document.title = "Request qualification service — Services Central";
+}
+
+function renderQualificationSelectedInstruments(host) {
+  const table = document.createElement("table");
+  table.className = "qualification-selected-table";
+  table.innerHTML = "<colgroup><col class=\"qualification-selected-table__image\" /><col /><col /></colgroup><thead><tr><th></th><th>Serial number</th><th>Nickname</th></tr></thead>";
+  const body = document.createElement("tbody");
+  qualificationRequestDraft.instruments.forEach((instrument) => {
+    const row = document.createElement("tr");
+    const imageCell = document.createElement("td");
+    const image = document.createElement("img");
+    image.src = instrument.image || "assets/instruments/vanquish-detector.png";
+    image.alt = "";
+    imageCell.append(image);
+    const serial = document.createElement("td");
+    serial.textContent = instrument.serial || "—";
+    const nickname = document.createElement("td");
+    nickname.textContent = instrument.nickname || "—";
+    row.append(imageCell, serial, nickname);
+    body.append(row);
+  });
+  if (qualificationRequestDraft.instruments.some((instrument) => instrument.system)) {
+    const systemRow = document.createElement("tr");
+    const systemIconCell = document.createElement("td");
+    const systemIcon = document.createElement("img");
+    systemIcon.className = "qualification-selected-table__system-icon";
+    systemIcon.src = "assets/icons/science/2 instruments/size=24px, style=mono.svg";
+    systemIcon.alt = "";
+    systemIconCell.append(systemIcon);
+    const systemSerial = document.createElement("td");
+    systemSerial.textContent = "System";
+    const systemNickname = document.createElement("td");
+    systemNickname.textContent = "Apline";
+    systemRow.append(systemIconCell, systemSerial, systemNickname);
+    body.append(systemRow);
+  }
+  table.append(body);
+  host.replaceChildren(table);
+}
+
+function wireQualificationInstrumentDisclosure(toggle, panel) {
+  const update = () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    panel.hidden = !expanded;
+    toggle.querySelector("span").textContent = expanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
+    toggle.querySelector("img").src = expanded ? "assets/icons/directions/chevron up/size=16px, style=mono.svg" : "assets/icons/directions/chevron down/size=16px, style=mono.svg";
+  };
+  toggle.addEventListener("click", () => {
+    toggle.setAttribute("aria-expanded", String(toggle.getAttribute("aria-expanded") !== "true"));
+    update();
+  });
+  update();
+}
+
+function wireRequestQualificationDetails() {
+  const textarea = app.querySelector("[data-qualification-details]");
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderQualificationSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  const update = () => {
+    qualificationRequestDraft.additionalDetails = textarea.value;
+    primary.disabled = !textarea.value.trim();
+  };
+  textarea.value = qualificationRequestDraft.additionalDetails;
+  textarea.addEventListener("input", update);
+  primary.addEventListener("click", () => setRoute("request-qualification-contact"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestQualificationDetails() {
+  const template = document.querySelector("#request-qualification-details-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-qualification" });
+  mountTicketStepViewer(2, { labels: ["Select instrument(s)", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Qualification service request progress" });
+  mountNativeFlowActionBar({ backRoute: "request-qualification" });
+  wireRequestQualificationDetails();
+  document.title = "Request qualification service — add request details";
+}
+
+function wireRequestQualificationContact() {
+  const defaultQualificationContact = {
+    firstName: "Molly",
+    lastName: "Hartman",
+    phone: "555-555-5555",
+    email: "molly.hartman@thermofisher.com",
+    country: "USA",
+    state: "California",
+    city: "Carlsbad",
+    postalCode: "93047",
+  };
+  const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
+  const requiredFields = fields.filter((field) => field.required);
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const update = () => {
+    fields.forEach((field) => { qualificationRequestDraft.contact[field.dataset.qualificationContactField] = field.value; });
+    primary.disabled = !requiredFields.every((field) => field.validity.valid && field.value.trim());
+  };
+  fields.forEach((field) => {
+    field.value = qualificationRequestDraft.contact[field.dataset.qualificationContactField]
+      || defaultQualificationContact[field.dataset.qualificationContactField]
+      || field.value;
+    field.addEventListener("input", () => {
+      if (field.dataset.qualificationContactField === "phone") field.value = field.value.replace(/[^0-9 -]/g, "");
+      update();
+    });
+    field.addEventListener("change", update);
+  });
+  primary.addEventListener("click", () => setRoute("request-qualification-review"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestQualificationContact() {
+  const template = document.querySelector("#request-qualification-contact-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-qualification-details" });
+  mountTicketStepViewer(3, { labels: ["Select instrument(s)", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Qualification service request progress" });
+  mountNativeFlowActionBar({ backRoute: "request-qualification-details" });
+  wireRequestQualificationContact();
+  document.title = "Request qualification service — confirm contact information";
+}
+
+function renderRequestQualificationReview() {
+  const template = document.querySelector("#request-qualification-review-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-qualification-contact" });
+  mountTicketStepViewer(4, { labels: ["Select instrument(s)", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Qualification service request progress" });
+  const actionBar = mountNativeFlowActionBar({ backRoute: "request-qualification-contact", primaryDisabled: false });
+  actionBar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit";
+  const contact = qualificationRequestDraft.contact;
+  const formatQualificationServiceAddress = () => {
+    const street = [contact.serviceAddress, contact.additionalAddress].filter(Boolean).join(", ");
+    const locality = [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", ");
+    return [street, locality].filter(Boolean).join("\n") || "—";
+  };
+  app.querySelector("[data-qualification-review-details]").textContent = qualificationRequestDraft.additionalDetails || "—";
+  app.querySelector("[data-qualification-review-name]").textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  ["phone", "email", "company"].forEach((key) => {
+    const output = app.querySelector(`[data-qualification-review-contact="${key}"]`);
+    if (output) output.textContent = contact[key] || "—";
+  });
+  app.querySelector("[data-qualification-review-service-address]").textContent = formatQualificationServiceAddress();
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderQualificationSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  actionBar.querySelector('[data-actionbar-action="primary"]').addEventListener("click", () => setRoute("qualification-summary"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request qualification service — review and submit";
+}
+
+function renderQualificationSummary() {
+  const template = document.querySelector("#qualification-summary-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request qualification service", backRoute: "request-support" });
+  const contact = qualificationRequestDraft.contact;
+  const serviceAddress = [
+    [contact.serviceAddress, contact.additionalAddress].filter(Boolean).join(", "),
+    [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", "),
+  ].filter(Boolean).join("\n") || "—";
+  app.querySelector("[data-qualification-summary-details]").textContent = qualificationRequestDraft.additionalDetails || "—";
+  const contactValues = {
+    name: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—",
+    phone: contact.phone || "—",
+    email: contact.email || "—",
+    company: contact.company || "—",
+    serviceAddress,
+  };
+  Object.entries(contactValues).forEach(([key, value]) => {
+    app.querySelector(`[data-qualification-summary-contact="${key}"]`).textContent = value;
+  });
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderQualificationSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  const closeBar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), { closeOnly: true, closeRoute: "request-support" });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request qualification service — submitted";
 }
 
 function wireRequestCalibration() {
@@ -3531,6 +3958,14 @@ function render() {
     renderRequestServicePlan();
   } else if (route === "request-qualification") {
     renderRequestQualification();
+  } else if (route === "request-qualification-details") {
+    renderRequestQualificationDetails();
+  } else if (route === "request-qualification-contact") {
+    renderRequestQualificationContact();
+  } else if (route === "request-qualification-review") {
+    renderRequestQualificationReview();
+  } else if (route === "qualification-summary") {
+    renderQualificationSummary();
   } else if (route === "request-calibration") {
     renderRequestCalibration();
   } else if (route === "request-installation") {

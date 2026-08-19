@@ -1,11 +1,13 @@
 (function () {
-  const labels = ["Select instrument", "Add request details", "Confirm contact information", "Review and submit"];
-
-  function mount(target, { currentStep = 1 } = {}) {
+  function mount(target, {
+    currentStep = 1,
+    labels = ["Select instrument", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel = "Support ticket progress",
+  } = {}) {
     if (!target) return undefined;
     const list = document.createElement("ol");
     list.className = "iss-steps";
-    list.setAttribute("aria-label", "Support ticket progress");
+    list.setAttribute("aria-label", ariaLabel);
     const progress = currentStep === 1 ? "0px" : `${[0, 300, 600, 900][currentStep - 1] - 18}px`;
     list.style.setProperty("--ticket-step-progress", progress);
     labels.forEach((label, index) => {
