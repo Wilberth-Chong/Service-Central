@@ -729,6 +729,37 @@ button {
   width: calc(100% - 256px);
 }
 
+/* Legacy native flows use full-height shells; allow their page body to reach the shared footer. */
+.screen--ticket-summary .mi-stage,
+.screen--request-support .mi-stage,
+.screen--open-support-ticket .mi-stage,
+.screen--open-support-ticket-details .mi-stage,
+.screen--request-pm .mi-stage,
+.screen--request-serviceplan .mi-stage,
+.screen--request-qualification .mi-stage,
+.screen--request-calibration .mi-stage,
+.screen--request-installation .mi-stage {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+/* Keep request-flow navigation aligned with the left edge of the centered application shell. */
+.screen--request-support .platform-sidebar,
+.screen--open-support-ticket .platform-sidebar,
+.screen--open-support-ticket-details .platform-sidebar,
+.screen--request-pm .platform-sidebar,
+.screen--request-serviceplan .platform-sidebar,
+.screen--request-qualification .platform-sidebar,
+.screen--request-calibration .platform-sidebar,
+.screen--request-installation .platform-sidebar {
+  left: max(0px, calc((100vw - 1440px) / 2));
+}
+
+.screen--request-support .platform-sidebar {
+  top: 112px;
+}
+
 /* Request support — native implementation of Figma frame 8026:173099. */
 .screen--request-support { min-height: 100vh; background: #ececef; }
 .rs-shell { min-height: 1460px; }
