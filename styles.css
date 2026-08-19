@@ -302,6 +302,7 @@ button {
   width: 1440px;
   min-height: 2000px;
   margin: 0 auto;
+  padding-top: 64px;
   color: var(--mi-ink);
   background: #fff;
   font-size: 14px;
