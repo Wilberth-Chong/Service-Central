@@ -13,6 +13,15 @@ const deliveryDatesConfirmationDialog = document.querySelector("#delivery-dates-
 const deliveryDatesPauseDialog = document.querySelector("#delivery-dates-pause-dialog");
 const installationStatusScenariosDialog = document.querySelector("#installation-status-scenarios-dialog");
 const installationActivityDialog = document.querySelector("#installation-activity-dialog");
+const miEditColumnsDialog = document.querySelector("#mi-edit-columns-dialog");
+const miCreateDialog = document.querySelector("#mi-create-dialog");
+const miCreateSystemDialog = document.querySelector("#mi-create-system-dialog");
+const miCreateGroupDialog = document.querySelector("#mi-create-group-dialog");
+const miSystemQuickviewDialog = document.querySelector("#mi-system-quickview-dialog");
+const miAccessDialog = document.querySelector("#mi-access-dialog");
+const miBulkAccessDialog = document.querySelector("#mi-bulk-access-dialog");
+const miShareDialog = document.querySelector("#mi-share-dialog");
+const miCoverageDialog = document.querySelector("#mi-coverage-dialog");
 const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
 const CONSUMABLES_SUPPORT_PORTAL_IMAGE = "assets/consumables/support-portal-login.png";
@@ -182,6 +191,7 @@ function wireWhiteGloveTooltips(scope = document) {
 const CUSTOM_ROUTES = {
   "contact-page": "Service plan contact detail",
   "edit-spc": "Edit service plan contact",
+  "instrument-1009996": "Instrument 1009996",
   "installation-faqs": "Installation frequently asked questions",
   "installations-progress": "Installations — order 7659430547",
   "installation-support": "Installation support",
@@ -298,9 +308,10 @@ function hideToast() {
 
 function showToast(message, { title = "", variant = "info", duration = 4000 } = {}) {
   window.clearTimeout(toastTimer);
-  const isSuccess = variant === "success" || variant === "checklist";
+  const isSuccess = variant === "success" || variant === "checklist" || variant === "system-success";
   toast.classList.toggle("toast--success", isSuccess);
   toast.classList.toggle("toast--checklist", variant === "checklist");
+  toast.classList.toggle("toast--system", variant === "system-success");
   toast.querySelector("[data-toast-icon]").hidden = !isSuccess;
   toast.querySelector("[data-toast-title]").textContent = title ? `${title} ` : "";
   toast.querySelector("[data-toast-message]").textContent = message;
@@ -930,13 +941,13 @@ window.ServicesHelpModal = Object.freeze({
 
 function routeFromHash() {
   const route = window.location.hash.replace(/^#\/?/, "");
-  if (route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route)) return route;
+  if (route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route)) return route;
   return "signin";
 }
 
 function setRoute(route, summaryTicket = null) {
   selectedSupportHistoryTicket = summaryTicket;
-  const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) ? route : "signin";
+  const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
   if (window.location.hash !== nextHash) window.history.pushState({ fromRoute: routeFromHash() }, "", nextHash);
   render();
@@ -1005,6 +1016,7 @@ function addScreenSpecificHotspots(canvas, route, screen) {
 }
 
 function wireRouteControls(scope = app) {
+  hideMiUsersTooltip();
   scope.querySelectorAll("[data-route]").forEach((control) => {
     control.addEventListener("click", () => setRoute(control.dataset.route));
   });
@@ -1013,6 +1025,7 @@ function wireRouteControls(scope = app) {
   });
   window.TopbarSc?.wire(scope);
   window.ServicesHelpModal.wire(scope);
+  wireMiUserCountTooltips(scope);
 }
 
 function wireSignIn() {
@@ -1666,47 +1679,1582 @@ const MY_INSTRUMENTS = [
   { image: "q-exactive.png", serial: "SN98362W", nickname: "—", users: "3", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
 ];
 
+const MI_USERS = [
+  { email: "holly.hartman@company.com", instruments: [5, 6, 7] },
+  { email: "sebastien.martin@company.com", instruments: [0, 4, 8, 11] },
+  { email: "ines.mitchell@company.com", instruments: [1, 2, 9, 13, 14] },
+  { email: "patty.jones@company.com", instruments: [3, 6, 10] },
+  { email: "tamara.miller@company.com", instruments: [0, 2, 4, 8, 12, 14] },
+].map((user) => ({ ...user, slug: user.email.split("@")[0].replaceAll(".", "-") }));
+
+function isMiUserDetailRoute(route) {
+  return /^user-detail-[a-z0-9-]+$/.test(route);
+}
+
+function isMiGroupDetailRoute(route) {
+  return /^group-detail-\d+$/.test(route);
+}
+
+function isMiSystemDetailRoute(route) {
+  return /^system-detail-[a-z0-9-]+$/.test(route);
+}
+
+function miInstrumentDetailRoute(serial) {
+  return `instrument-detail-${serial}`;
+}
+
+function isMiInstrumentDetailRoute(route) {
+  return /^instrument-detail-[A-Za-z0-9-]+$/.test(route);
+}
+
+const MI_OPTIONAL_COLUMNS = ["instrument-images", "nickname", "users", "groups", "type", "model", "coverage", "coverage-end", "added-date"];
+const miVisibleColumns = new Set(MI_OPTIONAL_COLUMNS);
 function instrumentRowMarkup(instrument) {
   const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
-  return `<tr data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+  const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
+  return `<tr class="${instrument.pendingNew ? "is-new" : ""}" data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
     <td><input type="checkbox" data-mi-checkbox aria-label="Select ${instrument.serial}" /></td>
-    <td><button class="mi-favorite" type="button" aria-label="Add ${instrument.serial} to favorites" aria-pressed="false"><img src="assets/icons/commerce/rating/Size=16px, Style=Mono.svg" alt="" /></button></td>
-    <td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td>
-    <td>${instrument.locked ? '<img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" />' : ""}</td>
-    <td><button class="mi-link" type="button" data-route="instrument-access">${instrument.serial}</button></td>
-    <td><span class="mi-ellipsis">${instrument.nickname}</span></td>
-    <td><button class="mi-link mi-link--center" type="button" data-mi-toast="Users opened">${instrument.users}</button></td>
-    <td>${instrument.group === "—" ? '<span class="mi-ellipsis">—</span>' : `<button class="mi-link mi-ellipsis" type="button" data-mi-toast="Group opened">${instrument.group}</button>`}</td>
-    <td><span class="mi-ellipsis">${instrument.model}</span></td>
-    <td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td>
-    <td>${instrument.end}</td>
-    <td><button class="mi-more" type="button" data-mi-toast="Instrument actions opened" aria-label="Actions for ${instrument.serial}"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></td>
+    <td>${miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`)}</td>
+    <td></td>
+    <td data-mi-table-column="instrument-images"><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td>
+    <td data-mi-table-column="instrument-images">${miLockMarkup(instrument.locked)}</td>
+    <td><button class="mi-link" type="button" data-route="${instrumentRoute}">${instrument.serial}</button></td>
+    <td data-mi-table-column="nickname"><span class="mi-ellipsis">${instrument.nickname}</span></td>
+    <td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td>
+    <td data-mi-table-column="groups">${instrument.group === "—" ? '<span class="mi-ellipsis">—</span>' : `<button class="mi-link mi-ellipsis" type="button" data-mi-toast="Group opened">${instrument.group}</button>`}</td>
+    <td data-mi-table-column="type"><span class="mi-ellipsis">${miInstrumentType(instrument)}</span></td>
+    <td data-mi-table-column="model"><span class="mi-ellipsis">${instrument.model}</span></td>
+    <td data-mi-table-column="coverage">${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td>
+    <td data-mi-table-column="coverage-end">${instrument.end}</td>
+    <td data-mi-table-column="added-date">10 May 2022</td>
+    <td>${miMoreButton(instrument.serial, "instrument", instrument.serial)}</td>
   </tr>`;
 }
 
+function miCreatedSystemRowsMarkup(system) {
+  const key = `my-system-${system.id}`;
+  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
+  const parent = `<tr class="mi-system-row ${system.pendingNew ? "is-new" : ""}" data-mi-row data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
+    <td><input type="checkbox" data-mi-checkbox aria-label="Select ${system.nickname} system" /></td>
+    <td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td>
+    <td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td>
+    <td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>—</td><td>${system.typeCode}</td><td>—</td><td>—</td><td>—</td><td>17 Aug 2026</td><td>${miMoreButton(system.nickname, "system", system.id)}</td>
+  </tr>`;
+  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td></td><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td>${instrument.group}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td>10 May 2022</td><td></td></tr>`).join("");
+  return parent + children;
+}
+
+function miInstrumentType(instrument) {
+  return instrument.image.startsWith("vanquish") ? "HPLC" : "Mass Spec Life Science";
+}
+
+function miSystemUserCount(system) {
+  return String(system.users ?? 3);
+}
+
+function miUserCountMarkup(count, accessKey = "") {
+  return `<button class="mi-link mi-link--center mi-user-count" type="button" data-mi-user-count="${count}"${accessKey ? ` data-mi-user-access-key="${accessKey}"` : ""} data-mi-toast="Users opened">${count}</button>`;
+}
+
+const MI_TOOLTIP_USERS = [
+  "my_name.lastname@company.com",
+  "sebastien.martin@company.com",
+  "holly.hartman@company.com",
+  "ines.mitchell@company.com",
+  "patty.jones@company.com",
+];
+let miUsersTooltip;
+let miUsersTooltipTrigger;
+let miUsersTooltipReposition;
+
+function ensureMiUsersTooltip() {
+  if (miUsersTooltip?.isConnected) return miUsersTooltip;
+  miUsersTooltip = document.createElement("div");
+  miUsersTooltip.className = "mi-users-tooltip";
+  miUsersTooltip.id = "mi-users-count-tooltip";
+  miUsersTooltip.setAttribute("role", "tooltip");
+  miUsersTooltip.hidden = true;
+  document.body.append(miUsersTooltip);
+  return miUsersTooltip;
+}
+
+function positionMiUsersTooltip(trigger, tooltip) {
+  const rect = trigger.getBoundingClientRect();
+  const tooltipWidth = tooltip.offsetWidth;
+  const viewportPadding = 8;
+  const anchorCenter = rect.left + rect.width / 2;
+  const left = Math.max(viewportPadding, Math.min(window.innerWidth - tooltipWidth - viewportPadding, anchorCenter - tooltipWidth / 2));
+  const arrowLeft = Math.max(16, Math.min(tooltipWidth - 16, anchorCenter - left));
+  tooltip.classList.remove("mi-users-tooltip--below");
+  let top = rect.top - tooltip.offsetHeight - 8;
+  if (top < viewportPadding) {
+    tooltip.classList.add("mi-users-tooltip--below");
+    top = rect.bottom + 8;
+  }
+  tooltip.style.left = `${Math.round(left)}px`;
+  tooltip.style.top = `${Math.round(top)}px`;
+  tooltip.style.setProperty("--mi-users-tooltip-arrow-left", `${Math.round(arrowLeft)}px`);
+}
+
+function showMiUsersTooltip(trigger) {
+  hideMiUsersTooltip();
+  const tooltip = ensureMiUsersTooltip();
+  const requestedCount = Math.max(1, Number.parseInt(trigger.dataset.miUserCount, 10) || 1);
+  const users = MI_TOOLTIP_USERS.slice(0, Math.min(requestedCount, MI_TOOLTIP_USERS.length));
+  const accessTarget = miAccessTarget(trigger.dataset.miUserAccessKey);
+  const restricted = Boolean(accessTarget?.locked);
+  tooltip.innerHTML = `<strong>Current users</strong><div class="mi-users-tooltip__list">${users.map((user, index) => `<span><i>${(index === 0 ? miIsAdmin(accessTarget) : restricted && index === 1) ? '<img src="assets/icons/general/admin/size=16px, style=mono.svg" alt="Administrator" />' : ""}</i>${user}</span>`).join("")}</div>`;
+  tooltip.hidden = false;
+  miUsersTooltipTrigger = trigger;
+  trigger.setAttribute("aria-describedby", tooltip.id);
+  miUsersTooltipReposition = () => positionMiUsersTooltip(trigger, tooltip);
+  positionMiUsersTooltip(trigger, tooltip);
+  window.addEventListener("resize", miUsersTooltipReposition);
+  window.addEventListener("scroll", miUsersTooltipReposition, true);
+}
+
+function hideMiUsersTooltip() {
+  if (!miUsersTooltip) return;
+  miUsersTooltip.hidden = true;
+  miUsersTooltipTrigger?.removeAttribute("aria-describedby");
+  miUsersTooltipTrigger = undefined;
+  if (miUsersTooltipReposition) {
+    window.removeEventListener("resize", miUsersTooltipReposition);
+    window.removeEventListener("scroll", miUsersTooltipReposition, true);
+    miUsersTooltipReposition = undefined;
+  }
+}
+
+function wireMiUserCountTooltips(scope = app) {
+  scope.querySelectorAll("[data-mi-user-count]").forEach((trigger) => {
+    if (trigger.dataset.miUsersTooltipWired) return;
+    trigger.dataset.miUsersTooltipWired = "true";
+    trigger.addEventListener("mouseenter", () => showMiUsersTooltip(trigger));
+    trigger.addEventListener("mouseleave", hideMiUsersTooltip);
+    trigger.addEventListener("focus", () => showMiUsersTooltip(trigger));
+    trigger.addEventListener("blur", hideMiUsersTooltip);
+  });
+}
+
+function miSelectionRowMarkup(instrument, context) {
+  const search = `${instrument.serial} ${instrument.nickname} ${instrument.model}`;
+  if (context === "share") return `<tr data-mi-selection-row data-search="${search}"><td><input type="checkbox" aria-label="Select ${instrument.serial}" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${instrument.users}</td><td>${instrument.model}</td></tr>`;
+  const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
+  return `<tr data-mi-selection-row data-search="${search} ${instrument.coverage}"><td><input type="checkbox" aria-label="Select ${instrument.serial}" /></td><td><img class="mi-dialog-product" src="assets/instruments/${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td></tr>`;
+}
+
+function miGridCardMarkup(instrument, { favoritable = true } = {}) {
+  const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "mi-status--contract";
+  const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
+  return `<article class="mi-instrument-card" data-mi-grid-card data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+    <div class="mi-card-surface">
+      <header class="mi-card-top mi-card-top--instrument">
+        <div class="mi-card-icons">${favoritable ? miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`) : ""}${favoritable ? miLockMarkup(instrument.locked) : ""}<button type="button" data-mi-toast="Users opened" aria-label="${instrument.users} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${instrument.users}</span></button></div>
+        <div class="mi-card-instrument-summary"><img src="assets/instruments/${instrument.image}" alt="" /><div><span>Serial no.</span><a class="mi-card-title" href="#${instrumentRoute}" data-route="${instrumentRoute}">${instrument.serial}</a><p>${miInstrumentType(instrument)}</p></div></div>
+      </header>
+      <dl class="mi-card-details mi-card-details--instrument"><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Model no.</dt><dd>${instrument.model}</dd></div><div><dt>Type</dt><dd>${miInstrumentType(instrument)}</dd></div><div><dt>Groups</dt><dd>${instrument.group === "—" ? "—" : `<button type="button" data-mi-toast="Group opened">${instrument.group}</button>`}</dd></div></dl>
+      <div class="mi-card-coverage"><span class="mi-status ${coverageClass}">${instrument.coverage}</span></div>
+      <footer class="mi-card-footer mi-card-footer--instrument"><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><div><button type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${instrument.serial}"><img src="assets/icons/actions/more horizontal/size=16px, style=bold.svg" alt="" /></button></div></footer>
+    </div>
+  </article>`;
+}
+
+function miCreatedSystemCardMarkup(system) {
+  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
+  return `<article class="mi-instrument-card mi-system-card" data-mi-grid-card data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
+    <span class="mi-card-stack mi-card-stack--back" aria-hidden="true"></span><span class="mi-card-stack mi-card-stack--middle" aria-hidden="true"></span>
+    <div class="mi-card-surface">
+      <header class="mi-card-top"><span class="mi-card-badge">${system.typeCode}</span><div class="mi-card-icons">${miFavoriteButton(system.nickname, false, `system:${system.id}`)}${miLockMarkup(system.locked)}<button type="button" data-mi-toast="Users opened" aria-label="${miSystemUserCount(system)} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${miSystemUserCount(system)}</span></button></div><button class="mi-card-title" type="button" data-mi-toast="System opened">${system.nickname}</button></header>
+      <dl class="mi-card-details"><div><dt>Components</dt><dd>${components.length} total components <img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></dd></div><div><dt>Groups</dt><dd>—</dd></div><div><dt>Tickets</dt><dd><button type="button" data-mi-toast="Support tickets opened">0 total support tickets</button></dd></div></dl>
+      <footer class="mi-card-footer"><span></span><div><button type="button" data-mi-system-quickview="${system.id}" aria-label="View all components in ${system.nickname}"><img src="assets/icons/tools/resize large/size=16px, style=bold.svg" alt="" /></button><i></i><button type="button" data-mi-action-menu-kind="system" data-mi-action-menu-id="${system.id}" data-mi-action-menu-label="${system.nickname}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${system.nickname}"><img src="assets/icons/actions/more horizontal/size=16px, style=bold.svg" alt="" /></button></div></footer>
+    </div>
+  </article>`;
+}
+
+function openMiSystemQuickview(system) {
+  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-type]").textContent = system.typeCode;
+  miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-title]").textContent = system.nickname;
+  miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-grid]").innerHTML = components.map((instrument) => miGridCardMarkup(instrument, { favoritable: false })).join("");
+  miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-close]").onclick = () => miSystemQuickviewDialog.close();
+  miSystemQuickviewDialog.onclick = (event) => {
+    if (event.target !== miSystemQuickviewDialog) return;
+    const rect = miSystemQuickviewDialog.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) miSystemQuickviewDialog.close();
+  };
+  miSystemQuickviewDialog.querySelectorAll(".mi-card-title").forEach((link) => link.addEventListener("click", () => miSystemQuickviewDialog.close()));
+  miSystemQuickviewDialog.querySelectorAll(".mi-favorite").forEach((button) => button.addEventListener("click", () => toggleMiFavorite(button)));
+  miSystemQuickviewDialog.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  wireRouteControls(miSystemQuickviewDialog);
+  openMiDialog(miSystemQuickviewDialog);
+}
+
+function openMiDialog(dialog) {
+  if (!dialog.open) dialog.showModal();
+}
+
+function wireMiDialogDismiss(dialog) {
+  dialog.querySelectorAll("[data-mi-dialog-close]").forEach((button) => { button.onclick = () => dialog.close(); });
+  dialog.onclick = (event) => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+  };
+}
+
+function wireMiSelectionDialog(dialog, context) {
+  const rows = dialog.querySelector(`[data-mi-${context}-rows]`);
+  rows.innerHTML = MY_INSTRUMENTS.map((instrument) => miSelectionRowMarkup(instrument, context)).join("");
+  const checkboxes = [...rows.querySelectorAll("input[type='checkbox']")];
+  const confirm = dialog.querySelector(context === "share" ? "[data-mi-share-confirm]" : "[data-mi-coverage-next]");
+  const email = dialog.querySelector("[data-mi-share-email]");
+  const update = () => { confirm.disabled = !checkboxes.some((checkbox) => checkbox.checked) || (email ? email.value.trim() === "" : false); };
+  checkboxes.forEach((checkbox) => { checkbox.onchange = update; });
+  if (email) email.oninput = update;
+  dialog.querySelector(`[data-mi-${context}-search]`).oninput = (event) => {
+    const query = event.currentTarget.value.trim().toLowerCase();
+    rows.querySelectorAll("[data-mi-selection-row]").forEach((row) => { row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query); });
+  };
+  dialog.querySelector(`[data-mi-${context}-form]`).onsubmit = (event) => {
+    event.preventDefault();
+    if (confirm.disabled) return;
+    dialog.close();
+    showToast(context === "share" ? "Instrument access shared" : "Coverage quote request started");
+  };
+  wireMiDialogDismiss(dialog);
+  update();
+}
+
+const MI_SYSTEM_TYPES = [
+  ["LC", "Liquid Chromatography", "Includes: HPLC / UHPLC"],
+  ["LCMS", "Liquid Chromatography / Mass Spectrometry", ""],
+  ["GC", "Gas Chromatography", ""],
+  ["GCMS", "Gas Chromatography / Mass Spectrometry", ""],
+  ["IC", "Ion Chromatography", ""],
+  ["ICMS", "Ion Chromatography / Mass Spectrometry", ""],
+  ["IOMS", "Inorganic Mass Spectrometry", ""],
+  ["TEA", "Trace Elemental Analysis", "Includes: ICP-MS, ICP-OES, AA"],
+  ["Spectroscopy", "Includes: FT-IR, NIR, Raman, UV, UV/VIS", ""],
+];
+
+function miSystemTypeLabel([code, name, includes]) {
+  return `<b>${code}</b> (${name})${includes ? ` (${includes})` : ""}`;
+}
+
+function miAvailableStandaloneInstruments() {
+  const componentSerials = new Set([...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].flatMap((system) => system.components));
+  return MY_INSTRUMENTS.filter((instrument) => !componentSerials.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+}
+
+function miBuilderInstrumentRow(instrument, value, context, extraCells = "") {
+  return `<tr data-mi-builder-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td><input type="checkbox" value="${value}" data-mi-builder-choice aria-label="Select ${instrument.serial}" /></td>${extraCells}<td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td></tr>`;
+}
+
+let miEditingSystemId = null;
+
+function resetMiSystemBuilder(system = null) {
+  const form = miCreateSystemDialog.querySelector("[data-mi-system-form]");
+  form.reset();
+  miEditingSystemId = system?.id || null;
+  const otherSystemComponents = new Set([...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].filter((candidate) => candidate.id !== system?.id).flatMap((candidate) => candidate.components));
+  const available = system ? MY_INSTRUMENTS.filter((instrument) => !otherSystemComponents.has(instrument.serial)) : miAvailableStandaloneInstruments();
+  form.querySelector("[data-mi-system-rows]").innerHTML = available.map((instrument) => miBuilderInstrumentRow(instrument, instrument.serial, "system")).join("");
+  form.querySelector("#mi-create-system-title").textContent = system ? "Edit system" : "Create a system";
+  form.querySelector(".mi-builder__header p").textContent = system ? "Add or remove instrument components in this system. Changes will apply to all users." : "Create a system for your instruments that have several components and view them as one unit in the My Instruments tab. Systems are visible to all users.";
+  form.querySelector("[data-mi-builder-close]").setAttribute("aria-label", system ? "Close edit system" : "Close create system");
+  form.querySelector("[data-mi-system-submit]").textContent = system ? "Save changes" : "Create system";
+  form.querySelector("[data-mi-system-name]").value = system?.nickname || "";
+  form.querySelector("[data-mi-system-notes]").value = system?.notes || "";
+  form.querySelector("[data-mi-system-type]").value = system?.typeCode || "";
+  const currentType = system ? MI_SYSTEM_TYPES.find((type) => type[0] === system.typeCode) : null;
+  form.querySelector("[data-mi-system-type-label]").innerHTML = currentType ? miSystemTypeLabel(currentType) : "Select system type";
+  if (system) form.querySelectorAll("[data-mi-builder-choice]").forEach((checkbox) => { checkbox.checked = system.components.includes(checkbox.value); });
+  form.querySelector("[data-mi-system-type-trigger]").setAttribute("aria-expanded", "false");
+  form.querySelector("[data-mi-system-type-menu]").hidden = true;
+  updateMiSystemBuilder();
+}
+
+function updateMiSystemBuilder() {
+  const form = miCreateSystemDialog.querySelector("[data-mi-system-form]");
+  const selected = [...form.querySelectorAll("[data-mi-builder-choice]:checked")];
+  form.querySelector("[data-mi-system-name-count]").textContent = `${form.querySelector("[data-mi-system-name]").value.length} / 128`;
+  form.querySelector("[data-mi-system-notes-count]").textContent = `${form.querySelector("[data-mi-system-notes]").value.length} / 150`;
+  form.querySelector("[data-mi-system-summary]").hidden = selected.length === 0;
+  form.querySelector("[data-mi-system-selected-count]").textContent = `${selected.length} instrument${selected.length === 1 ? "" : "s"} selected`;
+  form.querySelector("[data-mi-system-select-all]").textContent = `Select all ${form.querySelectorAll("[data-mi-builder-choice]").length} instruments`;
+  form.querySelector("[data-mi-system-submit]").disabled = form.querySelector("[data-mi-system-name]").value.trim() === "" || form.querySelector("[data-mi-system-type]").value === "" || selected.length < 2;
+}
+
+function resetMiGroupBuilder() {
+  const form = miCreateGroupDialog.querySelector("[data-mi-group-form]");
+  form.reset();
+  const systemRows = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].map((system) => {
+    const key = `builder-system-${system.id}`;
+    const parent = `<tr class="mi-builder-system-row" data-mi-builder-row data-search="System ${system.nickname} ${system.typeCode}"><td><input type="checkbox" value="system:${system.id}" data-mi-builder-choice aria-label="Select ${system.nickname} system" /></td><td><button class="mi-system-toggle" type="button" data-mi-builder-system-toggle="${key}" aria-expanded="true" aria-label="Collapse ${system.nickname} components">${miExpandIcon}</button></td><td>System</td><td>${system.nickname}</td><td>${system.typeCode}</td><td>—</td></tr>`;
+    const children = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean).map((instrument) => `<tr class="mi-builder-child-row" data-mi-builder-component="${key}" data-mi-builder-row data-search="${instrument.serial} ${instrument.nickname}"><td></td><td>${miBranchIcon}</td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td></tr>`).join("");
+    return parent + children;
+  }).join("");
+  const instrumentRows = miAvailableStandaloneInstruments().map((instrument) => miBuilderInstrumentRow(instrument, `instrument:${instrument.serial}`, "group", "<td></td>")).join("");
+  form.querySelector("[data-mi-group-rows]").innerHTML = systemRows + instrumentRows;
+  updateMiGroupBuilder();
+}
+
+function updateMiGroupBuilder() {
+  const form = miCreateGroupDialog.querySelector("[data-mi-group-form]");
+  const selected = [...form.querySelectorAll("[data-mi-builder-choice]:checked")];
+  form.querySelector("[data-mi-group-name-count]").textContent = `${form.querySelector("[data-mi-group-name]").value.length} / 128`;
+  form.querySelector("[data-mi-group-description-count]").textContent = `${form.querySelector("[data-mi-group-description]").value.length} / 150`;
+  form.querySelector("[data-mi-group-summary]").hidden = selected.length === 0;
+  form.querySelector("[data-mi-group-selected-count]").textContent = `${selected.length} item${selected.length === 1 ? "" : "s"} selected`;
+  form.querySelector("[data-mi-group-select-all]").textContent = `Select all ${form.querySelectorAll("[data-mi-builder-choice]").length} items`;
+  form.querySelector("[data-mi-group-submit]").disabled = form.querySelector("[data-mi-group-name]").value.trim() === "";
+}
+
+function wireMiBuilderDialog(dialog, context) {
+  const form = dialog.querySelector(`[data-mi-${context}-form]`);
+  const update = context === "system" ? updateMiSystemBuilder : updateMiGroupBuilder;
+  form.oninput = update;
+  form.onchange = update;
+  form.querySelectorAll("[data-mi-builder-close], [data-mi-builder-cancel]").forEach((button) => { button.onclick = () => dialog.close(); });
+  dialog.onclick = (event) => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+  };
+  form.querySelector(`[data-mi-${context}-search]`).oninput = (event) => {
+    const query = event.currentTarget.value.trim().toLowerCase();
+    form.querySelectorAll("[data-mi-builder-row]").forEach((row) => { row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query); });
+    update();
+  };
+  form.querySelector(`[data-mi-${context}-select-all]`).onclick = () => {
+    form.querySelectorAll('[data-mi-builder-row]:not([hidden]) [data-mi-builder-choice]').forEach((checkbox) => { checkbox.checked = true; });
+    update();
+  };
+  form.querySelector(`[data-mi-${context}-clear]`).onclick = () => {
+    form.querySelectorAll("[data-mi-builder-choice]").forEach((checkbox) => { checkbox.checked = false; });
+    update();
+  };
+}
+
+function wireMiBuilderDialogs() {
+  wireMiBuilderDialog(miCreateSystemDialog, "system");
+  wireMiBuilderDialog(miCreateGroupDialog, "group");
+  const typeMenu = miCreateSystemDialog.querySelector("[data-mi-system-type-menu]");
+  typeMenu.innerHTML = MI_SYSTEM_TYPES.map((type) => `<button type="button" role="option" data-mi-system-type-option="${type[0]}">${miSystemTypeLabel(type)}</button>`).join("");
+  miCreateSystemDialog.querySelector("[data-mi-system-type-trigger]").onclick = () => {
+    const expanded = miCreateSystemDialog.querySelector("[data-mi-system-type-trigger]").getAttribute("aria-expanded") === "true";
+    miCreateSystemDialog.querySelector("[data-mi-system-type-trigger]").setAttribute("aria-expanded", String(!expanded));
+    typeMenu.hidden = expanded;
+  };
+  typeMenu.querySelectorAll("[data-mi-system-type-option]").forEach((option) => {
+    option.onclick = () => {
+      const type = MI_SYSTEM_TYPES.find((candidate) => candidate[0] === option.dataset.miSystemTypeOption);
+      miCreateSystemDialog.querySelector("[data-mi-system-type]").value = type[0];
+      miCreateSystemDialog.querySelector("[data-mi-system-type-label]").innerHTML = miSystemTypeLabel(type);
+      miCreateSystemDialog.querySelector("[data-mi-system-type-trigger]").setAttribute("aria-expanded", "false");
+      typeMenu.hidden = true;
+      updateMiSystemBuilder();
+    };
+  });
+  miCreateSystemDialog.querySelector("[data-mi-system-form]").onsubmit = (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (form.querySelector("[data-mi-system-submit]").disabled) return;
+    const values = { nickname: form.querySelector("[data-mi-system-name]").value.trim(), notes: form.querySelector("[data-mi-system-notes]").value.trim(), typeCode: form.querySelector("[data-mi-system-type]").value, components: [...form.querySelectorAll("[data-mi-builder-choice]:checked")].map((checkbox) => checkbox.value) };
+    values.components.forEach((serial) => MI_FAVORITES.delete(`instrument:${serial}`));
+    if (miEditingSystemId) Object.assign(miFindSystemById(miEditingSystemId), values);
+    else MI_CREATED_SYSTEMS.push({ id: String(Date.now()), users: "3", locked: false, ...values });
+    miCreateSystemDialog.close();
+    const editedSystemId = miEditingSystemId;
+    miEditingSystemId = null;
+    setRoute(editedSystemId ? `system-detail-${editedSystemId}` : "my-instruments");
+    showToast(editedSystemId ? "System updated" : "System created", { variant: "success" });
+  };
+  miCreateGroupDialog.querySelector("[data-mi-group-form]").onsubmit = (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (form.querySelector("[data-mi-group-submit]").disabled) return;
+    const nextId = Math.max(...MI_GROUPS.map((group) => group.id)) + 1;
+    const members = [...form.querySelectorAll("[data-mi-builder-choice]:checked")].map((checkbox) => checkbox.value);
+    MI_GROUPS.unshift({ id: nextId, name: form.querySelector("[data-mi-group-name]").value.trim(), count: members.length, date: "17 Aug 2026", description: form.querySelector("[data-mi-group-description]").value.trim(), members });
+    miCreateGroupDialog.close();
+    setRoute("my-instruments");
+    app.querySelector('[data-mi-tab="groups"]')?.click();
+    showToast("Group created");
+  };
+  miCreateGroupDialog.querySelector("[data-mi-group-rows]").onclick = (event) => {
+    const toggle = event.target.closest("[data-mi-builder-system-toggle]");
+    if (!toggle) return;
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.querySelector("img").style.transform = expanded ? "rotate(-90deg)" : "";
+    miCreateGroupDialog.querySelectorAll(`[data-mi-builder-component="${toggle.dataset.miBuilderSystemToggle}"]`).forEach((row) => { row.hidden = expanded; });
+  };
+}
+
+function miBulkAccessAssets(mode) {
+  const systems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS];
+  const componentSerials = new Set(systems.flatMap((system) => system.components));
+  const matchesMode = (asset) => mode === "restrict" ? !asset.locked : miIsAdmin(asset);
+  return [
+    ...systems.filter(matchesMode).map((system) => ({ kind: "system", key: `system:${system.id}`, target: system })),
+    ...MY_INSTRUMENTS.filter((instrument) => !componentSerials.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial) && matchesMode(instrument)).map((instrument) => ({ kind: "instrument", key: `instrument:${instrument.serial}`, target: instrument })),
+  ];
+}
+
+function miBulkAccessRowsMarkup(assets) {
+  return assets.map(({ kind, key, target }) => {
+    if (kind === "instrument") {
+      const search = `${target.serial} ${target.nickname} ${target.model}`;
+      return `<tr data-mi-bulk-row data-search="${search}"><td><input type="checkbox" value="${key}" data-mi-bulk-choice aria-label="Select ${target.serial}" /></td><td></td><td>${target.serial}</td><td>${target.nickname}</td><td class="mi-bulk-users">${target.users}</td><td>${target.model}</td></tr>`;
+    }
+    const rowKey = `bulk-system-${target.id}`;
+    const components = target.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+    const componentSearch = components.map((instrument) => `${instrument.serial} ${instrument.nickname} ${instrument.model}`).join(" ");
+    const parent = `<tr class="mi-bulk-system-row" data-mi-bulk-row data-mi-bulk-parent="${rowKey}" data-search="System ${target.nickname} ${target.typeCode} ${componentSearch}"><td><input type="checkbox" value="${key}" data-mi-bulk-choice aria-label="Select ${target.nickname} system" /></td><td><button class="mi-system-toggle" type="button" data-mi-bulk-system-toggle="${rowKey}" aria-expanded="true" aria-label="Collapse ${target.nickname} components">${miExpandIcon}</button></td><td>System</td><td>${target.nickname}</td><td class="mi-bulk-users">${miSystemUserCount(target)}</td><td>—</td></tr>`;
+    const children = components.map((instrument) => `<tr class="mi-bulk-child-row" data-mi-bulk-component="${rowKey}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td></td><td>${miBranchIcon}</td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td></td><td>${instrument.model}</td></tr>`).join("");
+    return parent + children;
+  }).join("");
+}
+
+function openMiBulkAccessDialog(mode) {
+  const assets = miBulkAccessAssets(mode);
+  const rows = miBulkAccessDialog.querySelector("[data-mi-bulk-access-rows]");
+  const search = miBulkAccessDialog.querySelector("[data-mi-bulk-access-search]");
+  const selectAll = miBulkAccessDialog.querySelector("[data-mi-bulk-access-select-all]");
+  const confirm = miBulkAccessDialog.querySelector("[data-mi-bulk-access-confirm]");
+  const isRestrict = mode === "restrict";
+  miBulkAccessDialog.dataset.mode = mode;
+  miBulkAccessDialog.querySelector("[data-mi-bulk-access-title]").textContent = isRestrict ? "Restrict instrument access" : "Remove myself as Admin";
+  miBulkAccessDialog.querySelector("[data-mi-bulk-access-description]").textContent = isRestrict
+    ? "Select the instruments for which you'd like to control access. When any user attempts to add the selected instruments, a request will be sent to you for your approval."
+    : "You will become a User of the selected instrument(s).";
+  rows.innerHTML = miBulkAccessRowsMarkup(assets);
+  search.value = "";
+  selectAll.textContent = `Select all ${assets.length} instrument${assets.length === 1 ? "" : "s"}`;
+  selectAll.disabled = assets.length === 0;
+  confirm.disabled = true;
+
+  const update = () => { confirm.disabled = !rows.querySelector("[data-mi-bulk-choice]:checked"); };
+  rows.querySelectorAll("[data-mi-bulk-choice]").forEach((checkbox) => { checkbox.onchange = update; });
+  rows.querySelectorAll("[data-mi-bulk-system-toggle]").forEach((toggle) => {
+    toggle.onclick = () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      toggle.querySelector("img").style.transform = expanded ? "rotate(-90deg)" : "";
+      rows.querySelectorAll(`[data-mi-bulk-component="${toggle.dataset.miBulkSystemToggle}"]`).forEach((row) => { row.hidden = expanded; });
+    };
+  });
+  search.oninput = () => {
+    const query = search.value.trim().toLowerCase();
+    rows.querySelectorAll("[data-mi-bulk-row]").forEach((row) => {
+      const systemKey = row.dataset.miBulkParent;
+      const children = systemKey ? [...rows.querySelectorAll(`[data-mi-bulk-component="${systemKey}"]`)] : [];
+      const parentMatches = row.dataset.search.toLowerCase().includes(query);
+      const childMatches = children.some((child) => child.dataset.search.toLowerCase().includes(query));
+      row.hidden = query !== "" && !parentMatches && !childMatches;
+      children.forEach((child) => {
+        const expanded = row.querySelector("[data-mi-bulk-system-toggle]")?.getAttribute("aria-expanded") === "true";
+        child.hidden = !expanded || (query !== "" && !parentMatches && !child.dataset.search.toLowerCase().includes(query));
+      });
+    });
+  };
+  miAccessDialog.close();
+  openMiDialog(miBulkAccessDialog);
+}
+
+function wireMiBulkAccessDialog() {
+  wireMiDialogDismiss(miBulkAccessDialog);
+  miBulkAccessDialog.querySelector("[data-mi-bulk-access-back]").onclick = () => { miBulkAccessDialog.close(); openMiDialog(miAccessDialog); };
+  miBulkAccessDialog.querySelector("[data-mi-bulk-access-select-all]").onclick = () => {
+    miBulkAccessDialog.querySelectorAll("[data-mi-bulk-row]:not([hidden]) [data-mi-bulk-choice]").forEach((checkbox) => { checkbox.checked = true; });
+    miBulkAccessDialog.querySelector("[data-mi-bulk-access-confirm]").disabled = !miBulkAccessDialog.querySelector("[data-mi-bulk-choice]:checked");
+  };
+  miBulkAccessDialog.querySelector("[data-mi-bulk-access-form]").onsubmit = (event) => {
+    event.preventDefault();
+    const selected = [...miBulkAccessDialog.querySelectorAll("[data-mi-bulk-choice]:checked")];
+    if (selected.length === 0) return;
+    const restricted = miBulkAccessDialog.dataset.mode === "restrict";
+    selected.forEach((checkbox) => {
+      const target = miAccessTarget(checkbox.value);
+      if (!target) return;
+      if (restricted) {
+        target.locked = true;
+        target.admin = true;
+      } else target.admin = false;
+    });
+    miBulkAccessDialog.close();
+    render();
+    showToast(restricted ? `Access restricted for ${selected.length} item${selected.length === 1 ? "" : "s"}` : `Admin role removed for ${selected.length} item${selected.length === 1 ? "" : "s"}`, { variant: "success" });
+  };
+}
+
+function wireMyInstrumentActions() {
+  wireMiDialogDismiss(miCreateDialog);
+  wireMiDialogDismiss(miAccessDialog);
+  wireMiBulkAccessDialog();
+  wireMiSelectionDialog(miShareDialog, "share");
+  wireMiSelectionDialog(miCoverageDialog, "coverage");
+
+  app.querySelector("[data-mi-create]").onclick = () => openMiDialog(miCreateDialog);
+  app.querySelector("[data-mi-share]").onclick = () => openMiDialog(miShareDialog);
+  app.querySelector("[data-mi-access]").onclick = () => openMiDialog(miAccessDialog);
+  app.querySelector("[data-mi-coverage]").onclick = () => openMiDialog(miCoverageDialog);
+  wireMiBuilderDialogs();
+  miCreateDialog.querySelector("[data-mi-create-system]").onclick = () => { miCreateDialog.close(); resetMiSystemBuilder(); openMiDialog(miCreateSystemDialog); };
+  miCreateDialog.querySelector("[data-mi-create-group]").onclick = () => { miCreateDialog.close(); resetMiGroupBuilder(); openMiDialog(miCreateGroupDialog); };
+  miAccessDialog.querySelector("[data-mi-access-share]").onclick = () => { miAccessDialog.close(); openMiDialog(miShareDialog); };
+  miAccessDialog.querySelector("[data-mi-access-users]").onclick = () => { miAccessDialog.close(); app.querySelector('[data-mi-tab="users"]')?.click(); };
+  miAccessDialog.querySelector("[data-mi-restrict-access]").onclick = () => openMiBulkAccessDialog("restrict");
+  miAccessDialog.querySelector("[data-mi-stop-admin]").onclick = () => openMiBulkAccessDialog("admin");
+  miShareDialog.querySelector("[data-mi-share-access]").onclick = () => { miShareDialog.close(); openMiDialog(miAccessDialog); };
+  miShareDialog.querySelector("[data-mi-share-select-all]").onclick = () => {
+    miShareDialog.querySelectorAll("[data-mi-share-rows] input[type='checkbox']").forEach((checkbox) => { checkbox.checked = true; checkbox.dispatchEvent(new Event("change")); });
+  };
+  miCoverageDialog.querySelector("[data-mi-coverage-dismiss]").onclick = () => { miCoverageDialog.close(); showToast("Coverage alert dismissed"); };
+}
+
+const MI_GROUPS = [
+  ["HPLC 804 Sys.", 4, "10 May 2022"], ["LCMS Laboratory", 17, "6 Jan 2022"], ["Precision Medicine Research Unit", 9, "19 Feb 2022"], ["Biotherapeutics Discovery Research Unit", 11, "4 Mar 2022"],
+  ["Safety Research Unit", 17, "10 May 2022"], ["Rare Disease Research Unit (RDRU)", 9, "6 Jan 2022"], ["Immunology and Autoimmunity", 32, "19 Feb 2022"], ["Global Research and Development", 32, "4 Mar 2022"],
+  ["Dynamics and Metabolism Department", 20, "10 May 2022"], ["Department of Medical Affairs", 4, "6 Jan 2022"], ["Safety Research Unit", 20, "19 Feb 2022"], ["Dynamics and Metabolism Department", 33, "4 Mar 2022"],
+  ["Safety Research Unit", 43, "10 May 2022"], ["Dynamics and Metabolism Department", 22, "6 Jan 2022"], ["Immunology and Autoimmunity", 94, "19 Feb 2022"], ["Molecule Therapeutics Discovery Unit", 42, "4 Mar 2022"],
+  ["Dynamics and Metabolism Department", 14, "10 May 2022"], ["Department of Medical Affairs", 54, "6 Jan 2022"], ["Precision Medicine Research Unit", 51, "19 Feb 2022"], ["Rare Disease Research Unit (RDRU)", 13, "4 Mar 2022"],
+].map(([name, count, date], id) => ({ id, name, count, date }));
+MI_GROUPS[0].members = ["system:alpine", "instrument:TSQ-Z-12347", "instrument:SN98355W", "instrument:SN98356W"];
+const MI_REFERENCE_SYSTEMS = [{ id: "alpine", nickname: "Alpine", notes: "", typeCode: "LCMS", users: "3", locked: true, components: ["1009996", "1009999", "1009998", "1009997", "TSQ-Z-12346"] }];
+const MI_CREATED_SYSTEMS = [];
+const MI_REMOVED_INSTRUMENTS = new Set();
+const MI_FAVORITES = new Set(["system:alpine", "instrument:TSQ-Z-12347", "instrument:TSQ-Z-12348", "instrument:TSQ-Z-12349", "group:0", "group:1", "group:2", "group:9"]);
+const MI_CURRENT_USER_EMAIL = "my_name.lastname@company.com";
+const MI_USER_ROLES = new Map();
+let miFavoritesView = "list";
+let miGroupsView = "list";
+
+function miFindSystemById(id) {
+  return MI_CREATED_SYSTEMS.find((system) => system.id === id) || MI_REFERENCE_SYSTEMS.find((system) => system.id === id);
+}
+
+function miAccessTarget(accessKey) {
+  const [kind, id] = String(accessKey || "").split(":");
+  return kind === "system" ? miFindSystemById(id) : kind === "instrument" ? MY_INSTRUMENTS.find((instrument) => instrument.serial === id) : undefined;
+}
+
+function miIsAdmin(target) {
+  return target?.admin ?? Boolean(target?.locked);
+}
+
+function miRoleForAsset(accessKey, email, target = miAccessTarget(accessKey)) {
+  if (!target?.locked) return "User";
+  if (email === MI_CURRENT_USER_EMAIL) return miIsAdmin(target) ? "Admin" : "User";
+  return MI_USER_ROLES.get(`${accessKey}|${email}`) || (email === "sebastien.martin@company.com" ? "Admin" : "User");
+}
+
+function miSetRoleForAsset(accessKey, email, role) {
+  const target = miAccessTarget(accessKey);
+  if (!target || !miIsAdmin(target)) return false;
+  if (role === "Admin") target.locked = true;
+  if (email === MI_CURRENT_USER_EMAIL) target.admin = role === "Admin";
+  else MI_USER_ROLES.set(`${accessKey}|${email}`, role);
+  return true;
+}
+
+function miLockMarkup(restricted, size = 16) {
+  return restricted ? `<img class="mi-lock" src="assets/icons/actions/lock closed/size=${size}px, style=mono.svg" alt="Access controlled" />` : "";
+}
+
+function miRoleBadge(isAdmin, { accessKey = "", email = "", editable = false } = {}) {
+  const role = isAdmin ? "Admin" : "User";
+  if (!editable) return `<span class="mi-user-role${isAdmin ? " mi-user-role--admin" : ""}"><span>${role}</span></span>`;
+  return `<button class="mi-user-role mi-user-role--editable${isAdmin ? " mi-user-role--admin" : ""}" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Change ${email} role, currently ${role}" data-mi-role-badge data-mi-role-access-key="${accessKey}" data-mi-role-email="${email}"><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /><span>${role}</span></button>`;
+}
+
+let miRoleMenu;
+let miRoleMenuTrigger;
+
+function closeMiRoleMenu({ restoreFocus = false } = {}) {
+  if (!miRoleMenu) return;
+  const trigger = miRoleMenuTrigger;
+  trigger?.setAttribute("aria-expanded", "false");
+  miRoleMenu.remove();
+  miRoleMenu = undefined;
+  miRoleMenuTrigger = undefined;
+  if (restoreFocus) trigger?.focus();
+}
+
+function positionMiRoleMenu(trigger, menu) {
+  const rect = trigger.getBoundingClientRect();
+  const width = 136;
+  const left = Math.max(8, Math.min(window.innerWidth - width - 8, rect.left));
+  menu.style.left = `${Math.round(left)}px`;
+  menu.style.top = `${Math.round(rect.bottom + 4)}px`;
+}
+
+function openMiRoleMenu(trigger, onRoleChange) {
+  closeMiRoleMenu();
+  const accessKey = trigger.dataset.miRoleAccessKey;
+  const email = trigger.dataset.miRoleEmail;
+  const currentRole = miRoleForAsset(accessKey, email);
+  const menu = document.createElement("div");
+  menu.className = "mi-role-menu";
+  menu.setAttribute("role", "menu");
+  menu.setAttribute("aria-label", `Choose role for ${email}`);
+  menu.innerHTML = ["User", "Admin"].map((role) => `<button type="button" role="menuitemradio" aria-checked="${role === currentRole}" data-mi-role-option="${role}"><span>${role}</span>${role === currentRole ? '<img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="Selected" />' : ""}</button>`).join("");
+  document.body.append(menu);
+  miRoleMenu = menu;
+  miRoleMenuTrigger = trigger;
+  trigger.setAttribute("aria-expanded", "true");
+  positionMiRoleMenu(trigger, menu);
+  menu.querySelectorAll("[data-mi-role-option]").forEach((option) => option.addEventListener("click", () => {
+    const role = option.dataset.miRoleOption;
+    if (!miSetRoleForAsset(accessKey, email, role)) return;
+    closeMiRoleMenu();
+    onRoleChange?.(role, email);
+    showToast(`${email} is now ${role === "Admin" ? "an Admin" : "a User"}`, { variant: "success" });
+  }));
+  menu.addEventListener("keydown", (event) => {
+    const options = [...menu.querySelectorAll("[data-mi-role-option]")];
+    const index = options.indexOf(document.activeElement);
+    if (event.key === "Escape") { closeMiRoleMenu({ restoreFocus: true }); return; }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      options[(index + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length].focus();
+    }
+  });
+  menu.querySelector("[aria-checked='true']")?.focus();
+}
+
+function wireMiRoleSelectors(scope, onRoleChange) {
+  scope.querySelectorAll("[data-mi-role-badge]").forEach((badge) => badge.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (miRoleMenuTrigger === badge) closeMiRoleMenu({ restoreFocus: true });
+    else openMiRoleMenu(badge, onRoleChange);
+  }));
+}
+
+document.addEventListener("click", (event) => {
+  if (miRoleMenu && !event.target.closest(".mi-role-menu") && !event.target.closest("[data-mi-role-badge]")) closeMiRoleMenu();
+});
+window.addEventListener("resize", () => { if (miRoleMenu && miRoleMenuTrigger) positionMiRoleMenu(miRoleMenuTrigger, miRoleMenu); });
+window.addEventListener("scroll", () => { if (miRoleMenu && miRoleMenuTrigger) positionMiRoleMenu(miRoleMenuTrigger, miRoleMenu); }, true);
+
+function miRemoveSystem(system, removeComponents) {
+  [MI_CREATED_SYSTEMS, MI_REFERENCE_SYSTEMS].forEach((systems) => {
+    const index = systems.findIndex((candidate) => candidate.id === system.id);
+    if (index !== -1) systems.splice(index, 1);
+  });
+  MI_GROUPS.forEach((group) => {
+    if (!group.members) return;
+    group.members = group.members.filter((member) => member !== `system:${system.id}`);
+    group.count = group.members.length;
+  });
+  MI_FAVORITES.delete(`system:${system.id}`);
+  if (removeComponents) system.components.forEach((serial) => {
+    MI_REMOVED_INSTRUMENTS.add(serial);
+    MI_FAVORITES.delete(`instrument:${serial}`);
+  });
+}
+
+const MI_SUGGESTION_COMPONENT_BLUEPRINTS = [
+  ["Detector", "VQF0000DET", "HPLC", "vanquish-detector.png"],
+  ["Column", "VQH0000VEN", "HPLC", "vanquish-column.png"],
+  ["Sampler", "VQF00SAMPL", "HPLC", "vanquish-sampler.png"],
+  ["Pump", "VQF000PUMP", "HPLC", "vanquish-pump.png"],
+  ["Quantis", "MSTSQQUANTISPLUS", "Mass Spec Life Science", "tsq.png"],
+];
+
+function miSuggestionComponents(prefix, systemName) {
+  return MI_SUGGESTION_COMPONENT_BLUEPRINTS.map(([name, model, type, image], index) => ({ serial: `${prefix}-${String(41027 + index * 9713).padStart(5, "0")}`, nickname: `${systemName} ${name}`, model, type, image }));
+}
+
+const MI_SUGGESTION_SUPPORT_ITEMS = [
+  { id: "support-horizon", kind: "system", systemId: "support-horizon-array", serial: "System", nickname: "Horizon Array", model: "—", type: "LCMS", image: "system", expanded: true, components: miSuggestionComponents("HRA", "Horizon") },
+  ...["Aster Detector", "Beacon Column", "Cobalt Sampler", "Drift Pump", "Equinox LC", "Flare Quant", "Glacier Analyzer", "Harbor MS", "Indigo LC", "Juniper Pump", "Keystone Quant", "Lagoon Detector", "Mosaic Column", "Nucleus Sampler", "Opal LC", "Prairie Quant", "Quartz Analyzer", "Ridge MS"].map((nickname, index) => ({
+    id: `support-${index + 1}`,
+    kind: "instrument",
+    serial: `SUP-${String(74021 + index * 613).padStart(5, "0")}`,
+    nickname: index % 3 === 1 ? "" : nickname,
+    model: index % 4 === 0 ? "VQF0000DET" : index % 4 === 1 ? "VQH0000VEN" : index % 4 === 2 ? "MSTSQQUANTISPLUS" : "QEXAC00001",
+    type: index % 4 < 2 ? "HPLC" : "Mass Spec Life Science",
+    image: index % 4 === 0 ? "vanquish-detector.png" : index % 4 === 1 ? "vanquish-column.png" : index % 4 === 2 ? "tsq.png" : "q-exactive.png",
+  })),
+];
+
+const MI_SUGGESTION_RELATED_ITEMS = ["Celestial Flow", "Delta Arc", "Evergreen LC", "Fusion Peak", "Gemini Stream", "Helios Array"].map((nickname, index) => ({
+  id: `related-${index + 1}`,
+  kind: "system",
+  systemId: `related-${nickname.toLowerCase().replaceAll(" ", "-")}`,
+  serial: "System",
+  nickname,
+  model: "—",
+  type: "LCMS",
+  image: "system",
+  users: String(2 + (index % 3)),
+  created: `${10 + index} Jun 2026`,
+  expanded: index < 2,
+  components: miSuggestionComponents(`REL${index + 1}`, nickname.split(" ")[0]),
+}));
+
+const MI_SUGGESTION_INVITE_ITEMS = [
+  { id: "invite-zenith", kind: "system", systemId: "invite-zenith-suite", serial: "System", nickname: "Zenith Suite", model: "—", type: "LCMS", image: "system", users: "2", expanded: true, components: miSuggestionComponents("ZNS", "Zenith") },
+  ...["Apex Detector", "Boreal Column", "Cirrus Sampler", "Dawn Pump", "Eclipse LC", "Fjord Quant", "Garnet Analyzer", "Halo MS", "Iris LC", "Jade Pump", "Kinetic Quant", "Lotus Detector", "Meteor Column", "Nimbus Sampler", "Orbit LC", "Pulse Quant"].map((nickname, index) => ({
+    id: `invite-${index + 1}`,
+    kind: "instrument",
+    serial: `INV-${String(52031 + index * 787).padStart(5, "0")}`,
+    nickname: index % 4 === 0 ? "" : nickname,
+    model: index % 4 === 0 ? "VQF0000DET" : index % 4 === 1 ? "VQH0000VEN" : index % 4 === 2 ? "MSTSQQUANTISPLUS" : "QEXAC00001",
+    type: index % 4 < 2 ? "HPLC" : "Mass Spec Life Science",
+    image: index % 4 === 0 ? "vanquish-detector.png" : index % 4 === 1 ? "vanquish-column.png" : index % 4 === 2 ? "tsq.png" : "q-exactive.png",
+    users: "2",
+  })),
+];
+
+const miSortIcon = '<img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
+const miExpandIcon = '<span class="mi-row-chevron" aria-hidden="true"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></span>';
+const miBranchIcon = '<span class="mi-branch" aria-hidden="true"><img src="assets/icons/general/arrow/size=16px.svg" alt="" /></span>';
+const miAddIcon = '<img class="mi-add-button__icon" src="assets/icons/actions/plus/size=16px, style=mono.svg" alt="" />';
+const miPreviousIcon = '<img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" />';
+const miNextIcon = '<img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" />';
+const miSearchMarkup = (placeholder) => `<label class="mi-secondary-search"><span class="sr-only">${placeholder}</span><input type="search" data-mi-secondary-search placeholder="${placeholder}" /><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" /></label>`;
+const miViewToggleMarkup = (selectedView = "list") => `<div class="mi-view-toggle" aria-label="View"><button class="${selectedView === "grid" ? "is-selected" : ""}" type="button" data-mi-view="grid" aria-label="Grid view" aria-pressed="${selectedView === "grid"}"><img src="assets/icons/navigation/grid view/size=24px, style=mono.svg" alt="" /></button><button class="${selectedView === "list" ? "is-selected" : ""}" type="button" data-mi-view="list" aria-label="List view" aria-pressed="${selectedView === "list"}"><img src="assets/icons/text/list bulleted/size=24px, style=mono.svg" alt="" /></button></div>`;
+const miTitleMarkup = (title, count, description, action = "") => `<div class="mi-secondary-heading"><div><h2>${title} <span>${count}</span></h2><p>${description}</p></div>${action}</div>`;
+const miMoreButton = (label, kind = "", id = "") => `<button class="mi-more" type="button" ${kind ? `data-mi-action-menu-kind="${kind}" data-mi-action-menu-id="${id}" data-mi-action-menu-label="${label}" aria-haspopup="menu" aria-expanded="false"` : `data-mi-toast="${label} actions opened"`} aria-label="Actions for ${label}"><img src="assets/icons/actions/more horizontal/size=16px, style=bold.svg" alt="" /></button>`;
+
+const MI_ACTION_MENU_ICONS = {
+  details: "assets/icons/science/notepad/Size=24px, Style=Mono.svg",
+  request: "assets/icons/navigation/support/size=24px, style=mono.svg",
+  system: "assets/icons/science/new instrument/Size=24px, style=mono, type=system.svg",
+  edit: "assets/icons/actions/edit alt/Size=24px, Style=Mono.svg",
+  group: "assets/icons/science/2 instruments/size=24px, style=mono.svg",
+  share: "assets/icons/actions/share/Size=24px, Style=Mono.svg",
+  cart: "assets/icons/commerce/cart/Size=24px, Style=Mono.svg",
+  restrict: "assets/icons/actions/lock closed/size=24px, style=mono.svg",
+  unrestrict: "assets/icons/actions/lock open/size=24px, style=mono.svg",
+  remove: "assets/icons/actions/bin/size=24px, style=mono.svg",
+  dismantle: "assets/icons/science/system dismantle/size=24px, style=mono.svg",
+};
+
+let miActionPopover;
+let miActionPopoverTrigger;
+let miActionPopoverReposition;
+
+function miActionMenuItem(action, label, icon, description = "") {
+  return `<button class="mi-action-popover__item${description ? " mi-action-popover__item--described" : ""}" type="button" role="menuitem" data-mi-popover-action="${action}"><span class="mi-action-popover__icon"><img src="${icon}" alt="" /></span><span class="mi-action-popover__copy"><span>${label}</span>${description ? `<small>${description}</small>` : ""}</span></button>`;
+}
+
+function miInstrumentDetailActionPopoverMarkup(id) {
+  const target = MY_INSTRUMENTS.find((instrument) => instrument.serial === id);
+  if (!target) return "";
+  const restricted = Boolean(target.locked);
+  const canManage = !restricted || miIsAdmin(target);
+  const favoriteKey = `instrument:${id}`;
+  const shareItem = canManage ? miActionMenuItem("share", "Share", MI_ACTION_MENU_ICONS.share) : "";
+  const accessItem = canManage ? miActionMenuItem(restricted ? "unrestrict" : "restrict", restricted ? "Unrestrict access" : "Restrict access", restricted ? MI_ACTION_MENU_ICONS.unrestrict : MI_ACTION_MENU_ICONS.restrict) : "";
+  return `${miActionMenuItem("add-group", "Add to group", MI_ACTION_MENU_ICONS.group)}${shareItem}${miActionMenuItem("favorite", miIsFavorite(favoriteKey) ? "Remove favorite" : "Favorite", miFavoriteIcon(miIsFavorite(favoriteKey), 24))}${accessItem}<div class="mi-action-popover__divider" role="separator"></div>${miActionMenuItem("remove-instrument", "Remove from account", MI_ACTION_MENU_ICONS.remove)}`;
+}
+
+function miActionPopoverMarkup(kind, id, context = "") {
+  if (context === "detail" && kind === "instrument") return miInstrumentDetailActionPopoverMarkup(id);
+  const isSystem = kind === "system";
+  const isComponent = kind === "component";
+  const target = isSystem ? miFindSystemById(id) : MY_INSTRUMENTS.find((instrument) => instrument.serial === id);
+  const restricted = Boolean(target?.locked);
+  const favoriteKey = `${isSystem ? "system" : "instrument"}:${id}`;
+  const favoriteItem = isComponent ? "" : miActionMenuItem("favorite", miIsFavorite(favoriteKey) ? "Remove favorite" : "Favorite", miFavoriteIcon(miIsFavorite(favoriteKey), 24));
+  const shareItem = isComponent || (restricted && !miIsAdmin(target)) ? "" : miActionMenuItem("share", "Share", MI_ACTION_MENU_ICONS.share);
+  const accessItem = isComponent || (restricted && !miIsAdmin(target)) ? "" : miActionMenuItem(restricted ? "unrestrict" : "restrict", restricted ? "Unrestrict access" : "Restrict access", restricted ? MI_ACTION_MENU_ICONS.unrestrict : MI_ACTION_MENU_ICONS.restrict);
+  const commonStart = `${miActionMenuItem("view-details", "View details", MI_ACTION_MENU_ICONS.details)}${miActionMenuItem("start-request", "Start a request", MI_ACTION_MENU_ICONS.request)}`;
+  if (isSystem) return `${commonStart}${miActionMenuItem("edit-system", "Edit system", MI_ACTION_MENU_ICONS.system)}${miActionMenuItem("edit-nickname", "Edit nickname", MI_ACTION_MENU_ICONS.edit)}${miActionMenuItem("add-group", "Add to group", MI_ACTION_MENU_ICONS.group)}${shareItem}${favoriteItem}${miActionMenuItem("order-consumables", "Order consumables", MI_ACTION_MENU_ICONS.cart)}${accessItem}<div class="mi-action-popover__divider" role="separator"></div>${miActionMenuItem("remove-system", "Remove system", MI_ACTION_MENU_ICONS.remove, "Remove system from my account only")}${miActionMenuItem("dismantle-system", "Dismantle system", MI_ACTION_MENU_ICONS.dismantle, "Dismantling configuration will apply to all users")}`;
+  return `${commonStart}${miActionMenuItem("edit-nickname", "Edit nickname", MI_ACTION_MENU_ICONS.edit)}${miActionMenuItem("add-group", "Add to group", MI_ACTION_MENU_ICONS.group)}${shareItem}${favoriteItem}${accessItem}<div class="mi-action-popover__divider" role="separator"></div>${miActionMenuItem("remove-instrument", "Remove from account", MI_ACTION_MENU_ICONS.remove)}`;
+}
+
+function closeMiActionPopover({ restoreFocus = false } = {}) {
+  if (!miActionPopover) return;
+  const trigger = miActionPopoverTrigger;
+  trigger?.setAttribute("aria-expanded", "false");
+  miActionPopover.remove();
+  miActionPopover = undefined;
+  miActionPopoverTrigger = undefined;
+  if (miActionPopoverReposition) {
+    window.removeEventListener("resize", miActionPopoverReposition);
+    window.removeEventListener("scroll", miActionPopoverReposition, true);
+    miActionPopoverReposition = undefined;
+  }
+  if (restoreFocus) trigger?.focus();
+}
+
+function positionMiActionPopover(trigger, popover) {
+  const rect = trigger.getBoundingClientRect();
+  const icon = trigger.querySelector("img")?.getBoundingClientRect();
+  const anchorCenter = icon ? icon.left + icon.width / 2 : rect.left + rect.width / 2;
+  const menuWidth = 208;
+  const detailMenu = popover.classList.contains("mi-action-popover--detail");
+  const preferredLeft = detailMenu ? rect.right - menuWidth : anchorCenter - 186;
+  const left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, preferredLeft));
+  const arrowLeft = Math.max(7, Math.min(menuWidth - 21, anchorCenter - left - 7));
+  const top = rect.bottom + (detailMenu ? 4 : 8);
+  popover.style.left = `${Math.round(left)}px`;
+  popover.style.top = `${Math.round(top)}px`;
+  popover.style.setProperty("--mi-action-arrow-left", `${Math.round(arrowLeft)}px`);
+  popover.style.maxHeight = `${Math.max(120, window.innerHeight - top - 8)}px`;
+}
+
+function handleMiActionPopoverAction(action, kind, id, label) {
+  const activeTab = app.querySelector(".mi-tabs [role='tab'].is-active")?.dataset.miTab;
+  const mainGridSelected = Boolean(app.querySelector('[data-mi-view="grid"].is-selected'));
+  closeMiActionPopover();
+  if (action === "view-details") {
+    setRoute(kind === "system" ? `system-detail-${id}` : miInstrumentDetailRoute(id));
+  } else if (action === "start-request") setRoute("request-support");
+  else if (action === "order-consumables") setRoute("consumables");
+  else if (action === "favorite") {
+    const favoriteKey = `${kind === "system" ? "system" : "instrument"}:${id}`;
+    const favoriteButton = app.querySelector(`.mi-favorite[data-mi-favorite-key="${favoriteKey}"]`);
+    if (favoriteButton) favoriteButton.click();
+    else app.querySelector("[data-id-favorite]")?.click();
+  } else if (action === "edit-system") {
+    const system = miFindSystemById(id);
+    if (system) {
+      wireMiBuilderDialogs();
+      resetMiSystemBuilder(system);
+      openMiDialog(miCreateSystemDialog);
+    }
+  } else if (action === "edit-nickname" && kind === "system") {
+    const system = miFindSystemById(id);
+    if (system) openSystemEditDialog(system, "nickname");
+  } else if ((action === "remove-system" || action === "dismantle-system") && kind === "system") {
+    const system = miFindSystemById(id);
+    if (system) openSystemConfirmationDialog(system, action === "remove-system" ? "remove" : "dismantle");
+  } else if (action === "restrict" || action === "unrestrict") {
+    const target = kind === "system" ? miFindSystemById(id) : MY_INSTRUMENTS.find((instrument) => instrument.serial === id);
+    if (!target) return;
+    target.locked = action === "restrict";
+    target.admin = action === "restrict";
+    render();
+    if (routeFromHash() === "my-instruments" && activeTab && activeTab !== "instruments") app.querySelector(`[data-mi-tab="${activeTab}"]`)?.click();
+    else if (routeFromHash() === "my-instruments" && mainGridSelected) app.querySelector('[data-mi-view="grid"]')?.click();
+    showToast(`${label} access ${target.locked ? "restricted" : "unrestricted"}`, { variant: "success" });
+  } else {
+    const messages = {
+      "edit-nickname": `Edit nickname for ${label} opened`,
+      "add-group": "Add to group opened",
+      share: "Share opened",
+      "remove-instrument": "Remove from account selected",
+      "remove-system": "Remove system selected",
+      "dismantle-system": "Dismantle system selected",
+    };
+    showToast(messages[action] || `${label} action selected`);
+  }
+}
+
+function openMiActionPopover(trigger, { focusFirst = false } = {}) {
+  if (miActionPopoverTrigger === trigger) {
+    closeMiActionPopover({ restoreFocus: true });
+    return;
+  }
+  closeMiActionPopover();
+  const { miActionMenuKind: kind, miActionMenuId: id, miActionMenuLabel: label, miActionMenuContext: context } = trigger.dataset;
+  const popover = document.createElement("div");
+  popover.className = `mi-action-popover mi-action-popover--${kind === "system" ? "system" : "instrument"}${context ? ` mi-action-popover--${context}` : ""}`;
+  popover.setAttribute("role", "menu");
+  popover.setAttribute("aria-label", `Actions for ${label}`);
+  popover.innerHTML = `<span class="mi-action-popover__arrow" aria-hidden="true"></span><div class="mi-action-popover__surface">${miActionPopoverMarkup(kind, id, context)}</div>`;
+  (trigger.closest("dialog[open]") || document.body).append(popover);
+  miActionPopover = popover;
+  miActionPopoverTrigger = trigger;
+  trigger.setAttribute("aria-expanded", "true");
+  miActionPopoverReposition = () => positionMiActionPopover(trigger, popover);
+  positionMiActionPopover(trigger, popover);
+  window.addEventListener("resize", miActionPopoverReposition);
+  window.addEventListener("scroll", miActionPopoverReposition, true);
+  popover.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-mi-popover-action]");
+    if (item) handleMiActionPopoverAction(item.dataset.miPopoverAction, kind, id, label);
+  });
+  popover.addEventListener("keydown", (event) => {
+    const items = [...popover.querySelectorAll("[role='menuitem']")];
+    const current = items.indexOf(document.activeElement);
+    if (event.key === "Escape") closeMiActionPopover({ restoreFocus: true });
+    else if (event.key === "ArrowDown") { event.preventDefault(); items[(current + 1) % items.length]?.focus(); }
+    else if (event.key === "ArrowUp") { event.preventDefault(); items[(current - 1 + items.length) % items.length]?.focus(); }
+    else if (event.key === "Home") { event.preventDefault(); items[0]?.focus(); }
+    else if (event.key === "End") { event.preventDefault(); items.at(-1)?.focus(); }
+  });
+  if (focusFirst) popover.querySelector("[role='menuitem']")?.focus();
+}
+
+function wireMiActionMenus(scope = app) {
+  scope.querySelectorAll("[data-mi-action-menu-kind]").forEach((trigger) => trigger.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openMiActionPopover(trigger, { focusFirst: event.detail === 0 });
+  }));
+}
+
+document.addEventListener("click", (event) => {
+  if (miActionPopover && !event.target.closest(".mi-action-popover") && !event.target.closest("[data-mi-action-menu-kind]")) closeMiActionPopover();
+});
+const miFavoriteIcon = (pressed, size = 16) => `assets/icons/commerce/rating/Size=${size}px, Style=${pressed ? "Bold" : "Mono"}.svg`;
+const miIsFavorite = (favoriteKey) => MI_FAVORITES.has(favoriteKey);
+const miFavoriteButton = (label, pressed = false, favoriteKey = "") => {
+  const selected = favoriteKey ? miIsFavorite(favoriteKey) : pressed;
+  return `<button class="mi-favorite mi-favorite--blue" type="button" data-mi-favorite-label="${label}"${favoriteKey ? ` data-mi-favorite-key="${favoriteKey}"` : ""} aria-label="${selected ? "Remove" : "Add"} ${label} ${selected ? "from" : "to"} favorites" aria-pressed="${selected}"><img src="${miFavoriteIcon(selected)}" alt="" /></button>`;
+};
+
+function syncMiFavoriteButton(button, pressed) {
+  const label = button.dataset.miFavoriteLabel || "item";
+  button.setAttribute("aria-pressed", String(pressed));
+  button.setAttribute("aria-label", `${pressed ? "Remove" : "Add"} ${label} ${pressed ? "from" : "to"} favorites`);
+  button.querySelector("img").src = miFavoriteIcon(pressed);
+}
+
+function toggleMiFavorite(button) {
+  const favoriteKey = button.dataset.miFavoriteKey;
+  const pressed = button.getAttribute("aria-pressed") !== "true";
+  if (favoriteKey) {
+    if (pressed) MI_FAVORITES.add(favoriteKey);
+    else MI_FAVORITES.delete(favoriteKey);
+    document.querySelectorAll("[data-mi-favorite-key]").forEach((candidate) => {
+      if (candidate.dataset.miFavoriteKey === favoriteKey) syncMiFavoriteButton(candidate, pressed);
+    });
+    if (app.querySelector('[data-mi-tab="favorites"].is-active')) renderMyInstrumentsTab("favorites");
+    return;
+  }
+  syncMiFavoriteButton(button, pressed);
+}
+
+function syncMiDetailFavorite(button, favoriteKey) {
+  const pressed = miIsFavorite(favoriteKey);
+  button.setAttribute("aria-pressed", String(pressed));
+  button.querySelector("img").src = miFavoriteIcon(pressed, 24);
+  button.querySelector("span").textContent = pressed ? "Remove from favorite" : "Add to favorite";
+}
+
+function toggleMiDetailFavorite(button, favoriteKey) {
+  if (miIsFavorite(favoriteKey)) MI_FAVORITES.delete(favoriteKey);
+  else MI_FAVORITES.add(favoriteKey);
+  syncMiDetailFavorite(button, favoriteKey);
+  document.querySelectorAll("[data-mi-favorite-key]").forEach((candidate) => {
+    if (candidate.dataset.miFavoriteKey === favoriteKey) syncMiFavoriteButton(candidate, miIsFavorite(favoriteKey));
+  });
+}
+
+function miUsersPanel() {
+  return `<div class="mi-secondary-top">${miTitleMarkup("Users", 5, "Users who have instruments in common with you in Services Central.", '<button class="mi-button mi-secondary-share" type="button" data-mi-toast="Share users opened">Share</button>')}${miSearchMarkup("Search by user email")}</div>
+    <div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-users-table"><thead><tr><th>Current users ${miSortIcon}</th><th></th></tr></thead><tbody>${MI_USERS.map((user, index) => `<tr data-mi-secondary-row data-search="${user.email}" class="${index === 1 ? "is-new" : ""}"><td><button class="mi-link" type="button" data-route="user-detail-${user.slug}">${user.email}</button></td><td>${index === 1 ? '<span class="mi-new-badge">New</span>' : ""}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function miGroupTable(groups) {
+  return `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-groups-table"><colgroup><col class="mi-group-favorite" /><col class="mi-group-icon" /><col /><col class="mi-group-count" /><col class="mi-group-date" /><col class="mi-group-actions" /></colgroup><thead><tr><th>Favorite ${miSortIcon}</th><th></th><th>Name ${miSortIcon}</th><th>Instruments ${miSortIcon}</th><th>Last modified ${miSortIcon}</th><th>Actions</th></tr></thead><tbody>${groups.map((group) => `<tr data-mi-secondary-row data-search="${group.name} ${group.count} ${group.date}"><td>${miFavoriteButton(group.name, false, `group:${group.id}`)}</td><td><img class="mi-group-mark" src="assets/icons/science/2 instruments/size=24px, style=mono.svg" alt="" /></td><td><button class="mi-link" type="button" data-route="group-detail-${group.id}">${group.name}</button></td><td>${group.count}</td><td>${group.date}</td><td>${miMoreButton(group.name)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function miGroupsPanel() {
+  return `<div class="mi-secondary-top">${miTitleMarkup("Groups", MI_GROUPS.length, "Groups are personal and not shared.", '<button class="mi-button mi-secondary-create" type="button" data-mi-create-group-direct>Create</button>')}<div class="mi-secondary-controls">${miSearchMarkup("Search by group name")}${miViewToggleMarkup(miGroupsView)}</div></div><div data-mi-groups-list ${miGroupsView === "list" ? "" : "hidden"}>${miGroupTable(MI_GROUPS)}</div><div class="mi-groups-grid-view" data-mi-groups-grid ${miGroupsView === "grid" ? "" : "hidden"}><div class="mi-favorite-group-grid mi-groups-card-grid">${MI_GROUPS.map(miFavoriteGroupCardMarkup).join("")}</div>${miPaginationMarkup(MI_GROUPS.length)}</div>`;
+}
+
+function miFavoritesInstrumentTable() {
+  const favoriteSystems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].filter((system) => miIsFavorite(`system:${system.id}`));
+  const favoriteSystemComponents = new Set(favoriteSystems.flatMap((system) => system.components));
+  const favoriteInstruments = MY_INSTRUMENTS.filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const systemRows = favoriteSystems.map((system) => {
+    const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+    const key = `favorite-system-${system.id}`;
+    const groups = MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`)).map((group) => group.name).join(", ") || "—";
+    const parent = `<tr class="mi-system-row" data-mi-secondary-row data-search="System ${system.nickname} ${system.typeCode}"><td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><span class="mi-asset-with-lock"><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />${miLockMarkup(system.locked)}</span></td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>${groups}</td><td>—</td><td>—</td><td>—</td><td>${miMoreButton(`System ${system.nickname}`, "system", system.id)}</td></tr>`;
+    const children = components.map((instrument, index) => {
+      const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
+      return `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell"></td><td>${instrument.group}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td><td>${miMoreButton(instrument.serial, "component", instrument.serial)}</td></tr>`;
+    }).join("");
+    return parent + children;
+  }).join("");
+  const instrumentRows = favoriteInstruments.map((instrument) => {
+    const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
+    return `<tr data-mi-secondary-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td>${miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`)}</td><td>${miLockMarkup(instrument.locked)}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td><td>${instrument.group}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td><td>${miMoreButton(instrument.serial, "instrument", instrument.serial)}</td></tr>`;
+  }).join("");
+  return `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-favorites-table"><thead><tr><th>Favorite ${miSortIcon}</th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th><button class="mi-header-select" type="button">Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Coverage end ${miSortIcon}</th><th>Actions</th></tr></thead><tbody>${systemRows}${instrumentRows}</tbody></table></div>`;
+}
+
+function miFavoriteGroupCardMarkup(group) {
+  return `<article class="mi-group-card" data-mi-group-card data-search="${group.name} ${group.count}">
+    <span class="mi-group-card__stack mi-group-card__stack--back" aria-hidden="true"></span>
+    <span class="mi-group-card__stack mi-group-card__stack--middle" aria-hidden="true"></span>
+    <div class="mi-group-card__surface">
+      ${miFavoriteButton(group.name, false, `group:${group.id}`)}
+      <button class="mi-group-card__title" type="button" data-route="group-detail-${group.id}">${group.name}</button>
+      <span class="mi-group-card__count">${group.count} instruments</span>
+      <button class="mi-group-card__more" type="button" data-mi-toast="${group.name} actions opened" aria-label="Actions for ${group.name}"><img src="assets/icons/actions/more horizontal/size=16px, style=bold.svg" alt="" /></button>
+    </div>
+  </article>`;
+}
+
+function miFavoritesGridMarkup(favoriteSystems, favoriteInstruments, favoriteGroups, favoriteInstrumentCount) {
+  const instrumentCards = favoriteSystems.map(miCreatedSystemCardMarkup).join("") + favoriteInstruments.map((instrument) => miGridCardMarkup(instrument)).join("");
+  return `<div class="mi-favorites-grid-view" data-mi-favorites-grid ${miFavoritesView === "grid" ? "" : "hidden"}>
+    <section class="mi-favorites-section mi-favorites-grid-section"><h3>Instruments <span>${favoriteInstrumentCount}</span></h3><div class="mi-grid-cards mi-favorites-instrument-grid">${instrumentCards}</div></section>
+    <section class="mi-favorites-section mi-favorites-grid-section"><h3>Groups <span>${favoriteGroups.length}</span></h3><div class="mi-favorite-group-grid">${favoriteGroups.map(miFavoriteGroupCardMarkup).join("")}</div></section>
+  </div>`;
+}
+
+function miFavoritesPanel() {
+  const favoriteSystems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].filter((system) => miIsFavorite(`system:${system.id}`));
+  const favoriteSystemComponents = new Set(favoriteSystems.flatMap((system) => system.components));
+  const favoriteInstruments = MY_INSTRUMENTS.filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const favoriteStandaloneCount = favoriteInstruments.length;
+  const favoriteInstrumentCount = favoriteSystems.reduce((total, system) => total + 1 + system.components.filter((serial) => !MI_REMOVED_INSTRUMENTS.has(serial)).length, 0) + favoriteStandaloneCount;
+  const favoriteGroups = MI_GROUPS.filter((group) => miIsFavorite(`group:${group.id}`));
+  const favoriteCount = favoriteInstrumentCount + favoriteGroups.length;
+  return `<div class="mi-secondary-top mi-favorites-top">${miTitleMarkup("Favorites", favoriteCount, "Favorites are personal to you and not visible to others.")}<div class="mi-secondary-controls">${miSearchMarkup("Search by instrument serial number, nickname, or group")}${miViewToggleMarkup(miFavoritesView)}</div></div><div data-mi-favorites-list ${miFavoritesView === "list" ? "" : "hidden"}><section class="mi-favorites-section"><h3>Instruments <span>${favoriteInstrumentCount}</span></h3>${miFavoritesInstrumentTable()}</section><section class="mi-favorites-section"><h3>Groups <span>${favoriteGroups.length}</span></h3>${miGroupTable(favoriteGroups)}</section></div>${miFavoritesGridMarkup(favoriteSystems, favoriteInstruments, favoriteGroups, favoriteInstrumentCount)}`;
+}
+
+function miSegmentedMarkup(items, selectedKey) {
+  return `<div class="mi-segmented" role="group">${items.map(([key, label, hasAlert]) => `<button class="${key === selectedKey ? "is-selected" : ""}" type="button" data-mi-segment="${key}" aria-pressed="${key === selectedKey}">${hasAlert ? '<i aria-hidden="true"></i>' : ""}${label}</button>`).join("")}</div>`;
+}
+
+const MI_PENDING_SHARED_ITEMS = [
+  { id: "shared-orion", kind: "system", systemId: "orion-vista", serial: "System", nickname: "Orion Vista", type: "LCMS", model: "—", sharedBy: "carl.wilson@company.com", expires: "14 Sep 2026", locked: true, components: [
+    { serial: "OVD-48271", nickname: "IonGate Detector", type: "HPLC", model: "VQF0000DET", image: "vanquish-detector.png" },
+    { serial: "OVC-73108", nickname: "Solstice Column", type: "HPLC", model: "VQH0000VEN", image: "vanquish-column.png" },
+    { serial: "OVS-26549", nickname: "Arcadia Sampler", type: "HPLC", model: "VQF00SAMPL", image: "vanquish-sampler.png" },
+    { serial: "OVP-90436", nickname: "Meridian Pump", type: "HPLC", model: "VQF000PUMP", image: "vanquish-pump.png" },
+  ] },
+  { id: "shared-nimbus", kind: "instrument", serial: "CRYO-78421", nickname: "Nimbus Freezer", type: "Mass Spec Life Science", model: "QEXAC00001", sharedBy: "sue.scott@company.com", expires: "03 Oct 2026", image: "q-exactive.png", locked: true },
+  { id: "shared-aurora", kind: "instrument", serial: "MS-640238", nickname: "Aurora MS", type: "Mass Spec Life Science", model: "QEXAC00001", sharedBy: "ira.wilson@company.com", expires: "21 Oct 2026", image: "q-exactive.png", locked: true },
+  { id: "shared-cascade", kind: "instrument", serial: "HPLC-51290", nickname: "Cascade LC", type: "HPLC", model: "VQH0000VEN", sharedBy: "oliver.taylor@company.com", expires: "08 Nov 2026", image: "vanquish-column.png" },
+  { id: "shared-helix", kind: "instrument", serial: "ORB-93317", nickname: "Helix Analyzer", type: "Mass Spec Life Science", model: "QEXAC00001", sharedBy: "kim.mitchell@company.com", expires: "27 Nov 2026", image: "q-exactive.png" },
+];
+
+const MI_PENDING_AWAITING_ITEMS = [
+  { id: "awaiting-atlas", kind: "system", nickname: "Atlas Prime", user: "carla.flores@company.com", type: "LCMS", model: "—", expires: "30 Sep 2026", expanded: false, components: [
+    { serial: "ATP-18420", nickname: "Atlas Detector", type: "HPLC", model: "VQF0000DET", image: "vanquish-detector.png" },
+    { serial: "ATP-39174", nickname: "Atlas Column", type: "HPLC", model: "VQH0000VEN", image: "vanquish-column.png" },
+  ] },
+  { id: "awaiting-nova", kind: "system", nickname: "Nova Stream", user: "sergio.sanchez@company.com", type: "LCMS", model: "—", expires: "12 Oct 2026", expanded: true, components: [
+    { serial: "NVS-43018", nickname: "Nova Detector", type: "HPLC", model: "VQF0000DET", image: "vanquish-detector.png" },
+    { serial: "NVS-77204", nickname: "Nova Column", type: "HPLC", model: "VQH000OVEN", image: "vanquish-column.png" },
+    { serial: "NVS-61593", nickname: "Nova Sampler", type: "HPLC", model: "VQF00SAMPL", image: "vanquish-sampler.png" },
+    { serial: "NVS-20847", nickname: "Nova Pump", type: "HPLC", model: "VQF000PUMP", image: "vanquish-pump.png" },
+    { serial: "NVS-94631", nickname: "Nova Quantis", type: "Mass Spec Life Science", model: "MSTSQQUANTISPLUS", image: "tsq.png" },
+  ] },
+  { id: "awaiting-polaris", kind: "instrument", user: "tammy.hall@company.com", serial: "QNT-45821", nickname: "Polaris Quant", type: "Mass Spec Life Science", model: "MSTSQQUANTISPLUS", expires: "18 Oct 2026", image: "tsq.png" },
+  { id: "awaiting-ember", kind: "instrument", user: "leo.mitchell@company.com", serial: "QNT-76309", nickname: "Ember Quant", type: "Mass Spec Life Science", model: "MSTSQQUANTISPLUS", expires: "22 Oct 2026", image: "tsq.png" },
+  { id: "awaiting-vertex", kind: "instrument", user: "iris.thomas@company.com", serial: "QNT-29164", nickname: "Vertex Quant", type: "Mass Spec Life Science", model: "MSTSQQUANTISPLUS", expires: "04 Nov 2026", image: "tsq.png" },
+  { id: "awaiting-lumen", kind: "instrument", user: "oliver.clark@company.com", serial: "QNT-83572", nickname: "Lumen Quant", type: "Mass Spec Life Science", model: "MSTSQQUANTISPLUS", expires: "19 Nov 2026", image: "tsq.png" },
+];
+
+const MI_PENDING_ACCESS_REQUEST_COUNT = 3;
+
+function miPendingCount() {
+  return MI_PENDING_SHARED_ITEMS.length + MI_PENDING_AWAITING_ITEMS.length + MI_PENDING_ACCESS_REQUEST_COUNT;
+}
+
+function miPendingSegments() {
+  return [
+    ["shared", `${MI_PENDING_SHARED_ITEMS.length} shared with me`, false],
+    ["awaiting", `${MI_PENDING_AWAITING_ITEMS.length} awaiting my approval`, MI_PENDING_AWAITING_ITEMS.length > 0],
+    ["access", `${MI_PENDING_ACCESS_REQUEST_COUNT} access requested`, MI_PENDING_ACCESS_REQUEST_COUNT > 0],
+  ];
+}
+
+function miPendingActionBarMarkup(mode) {
+  const shared = mode === "shared";
+  return `<div class="mi-pending-actionbar" data-mi-pending-actionbar><div class="mi-pending-actionbar__buttons"><button type="button" data-mi-pending-bulk="${shared ? "ignore" : "deny"}" disabled>${shared ? "Ignore selected" : "Deny selected"}</button><button class="mi-pending-actionbar__primary" type="button" data-mi-pending-bulk="${shared ? "add" : "approve"}" disabled>${shared ? "Add selected to My Instruments" : "Approve selected"}</button></div></div>`;
+}
+
+function miZeroStateArtMarkup() {
+  return `<div class="mi-pending-zero__art" aria-hidden="true">${Array.from({ length: 10 }, (_, index) => `<img class="mi-pending-zero__layer mi-pending-zero__layer--${index + 1}" src="assets/instruments/pending-empty-state/layer-${String(index + 1).padStart(2, "0")}.svg" alt="" />`).join("")}</div>`;
+}
+
+function miPendingZeroStateMarkup() {
+  return `<section class="mi-pending-zero" aria-labelledby="mi-pending-zero-title">${miZeroStateArtMarkup()}<h3 id="mi-pending-zero-title">There are no instruments shared</h3><p>To view all of the instruments associated with your account please visit the My Instruments tab.</p><button type="button" data-mi-view-instruments>View My instruments</button></section>`;
+}
+
+function miPendingSharedPanel() {
+  const rows = MI_PENDING_SHARED_ITEMS.map((item) => {
+    const key = `pending-${item.id}`;
+    const hierarchy = item.kind === "system" ? `<button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${item.nickname}" aria-expanded="true" aria-label="Collapse ${item.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>` : "";
+    const image = item.kind === "system" ? '<img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />' : `<img class="mi-product" src="assets/instruments/${item.image}" alt="" />`;
+    const parent = `<tr class="${item.kind === "system" ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-pending-item-id="${item.id}" data-search="${item.serial} ${item.nickname} ${item.sharedBy}"><td><input type="checkbox" data-mi-pending-select value="${item.id}" aria-label="Select ${item.nickname}" /></td><td>${hierarchy}</td><td>${image}</td><td>${item.locked ? '<img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" />' : ""}</td><td>${item.serial}</td><td>${item.nickname}</td><td>${item.type}</td><td>${item.model}</td><td>${item.sharedBy}</td><td>${item.expires}</td><td><button class="mi-add-button" type="button" data-mi-pending-row-action="add" data-mi-pending-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-pending-row-action="ignore" data-mi-pending-id="${item.id}" aria-label="Ignore ${item.nickname}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
+    if (item.kind !== "system") return parent;
+    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname} ${item.sharedBy}"><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td></td><td>${component.serial}</td><td>${component.nickname}</td><td>${component.type}</td><td>${component.model}</td><td>${item.sharedBy}</td><td>${item.expires}</td><td></td><td></td></tr>`).join("");
+    return parent + children;
+  }).join("");
+  const content = MI_PENDING_SHARED_ITEMS.length ? `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-pending-table"><thead><tr><th><input type="checkbox" data-mi-pending-select-all aria-label="Select all shared instruments and systems" /></th><th></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Shared by ${miSortIcon}</th><th>Sharing expires ${miSortIcon}</th><th>Actions</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${miPendingActionBarMarkup("shared")}` : miPendingZeroStateMarkup();
+  return `<div class="mi-secondary-top mi-pending-top">${miTitleMarkup("Shared with me", MI_PENDING_SHARED_ITEMS.length, "Instruments and systems shared with you.", miSegmentedMarkup(miPendingSegments(), "shared"))}${miSearchMarkup("Search by instrument serial number, nickname or user")}</div>${content}`;
+}
+
+function miPendingAwaitingPanel() {
+  const rows = MI_PENDING_AWAITING_ITEMS.map((item) => {
+    const key = `pending-${item.id}`;
+    const isSystem = item.kind === "system";
+    const hierarchy = isSystem ? `<button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${item.nickname}" aria-expanded="${item.expanded}" aria-label="${item.expanded ? "Collapse" : "Expand"} ${item.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>` : "";
+    const image = isSystem ? '<img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />' : `<img class="mi-product" src="assets/instruments/${item.image}" alt="" />`;
+    const parent = `<tr class="${isSystem ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-pending-item-id="${item.id}" data-search="${item.user} ${item.nickname} ${item.serial || "System"}"><td><input type="checkbox" data-mi-pending-select value="${item.id}" aria-label="Select ${item.nickname}" /></td><td>${item.user}</td><td>${hierarchy}</td><td>${image}</td><td>${item.nickname}</td><td>${item.serial || '<span class="mi-link">System</span>'}</td><td>${item.type}</td><td>${item.model}</td><td>${item.expires}</td><td><button class="mi-link" type="button" data-mi-pending-row-action="approve" data-mi-pending-id="${item.id}">Approve</button></td><td><button class="mi-link" type="button" data-mi-pending-row-action="deny" data-mi-pending-id="${item.id}">Deny</button></td></tr>`;
+    if (!isSystem) return parent;
+    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${item.user} ${component.nickname} ${component.serial}"${item.expanded ? "" : " hidden"}><td></td><td>${item.user}</td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td>${component.nickname}</td><td>${component.serial}</td><td>${component.type}</td><td>${component.model}</td><td>${item.expires}</td><td></td><td></td></tr>`).join("");
+    return parent + children;
+  }).join("");
+  const content = MI_PENDING_AWAITING_ITEMS.length ? `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-awaiting-table"><thead><tr><th><input type="checkbox" data-mi-pending-select-all aria-label="Select all users awaiting approval" /></th><th>User ${miSortIcon}</th><th></th><th></th><th>Nickname ${miSortIcon}</th><th>Serial number ${miSortIcon}</th><th>Type ${miSortIcon}</th><th>Model ${miSortIcon}</th><th>Request expires ${miSortIcon}</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${miPendingActionBarMarkup("awaiting")}` : "";
+  return `<div class="mi-secondary-top mi-pending-top">${miTitleMarkup("Awaiting my approval", MI_PENDING_AWAITING_ITEMS.length, "Instrument access requests awaiting your approval. Requests expire after 30 days.", miSegmentedMarkup(miPendingSegments(), "awaiting"))}${miSearchMarkup("Search by instrument serial number, nickname or user")}</div>${content}`;
+}
+
+function miPendingAccessPanel() {
+  const children = [["WD1009986", "Detector-2B", "VQF0000DET", "vanquish-detector.png"], ["WD1009989", "Column-2B", "VQH000OVEN", "vanquish-column.png"], ["WD1009988", "Sampler-2B", "VQF00SAMPL", "vanquish-sampler.png"], ["GG200008", "Pump-2B", "VQF000PUMP", "vanquish-pump.png"]].map((row, index) => `<tr class="mi-child-row ${index === 3 ? "mi-child-row--last" : ""}" data-mi-system-component="access-alpine" data-mi-secondary-row data-search="${row.join(" ")}"><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${row[3]}" alt="" /></td><td></td><td>${row[0]}</td><td>${row[1]}</td><td>${row[1]}</td><td>HPLC</td><td>${row[2]}</td><td></td><td class="mi-users-cell"></td></tr>`).join("");
+  return `<div class="mi-secondary-top mi-pending-top">${miTitleMarkup("Access requested", MI_PENDING_ACCESS_REQUEST_COUNT, "Instrument access requests made by you. Requests expire after 30 days.", miSegmentedMarkup(miPendingSegments(), "access"))}${miSearchMarkup("Search by instrument serial number, nickname or user")}</div><div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-access-table"><thead><tr><th></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Current nickname ${miSortIcon}</th><th>Entered nickname ${miSortIcon}</th><th>Type ${miSortIcon}</th><th>Model ${miSortIcon}</th><th>Status ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th></tr></thead><tbody><tr data-mi-secondary-row data-search="888-1234 Freezer 1 Denied"><td></td><td><img class="mi-product" src="assets/instruments/q-exactive.png" alt="" /></td><td><img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" /></td><td>888-1234</td><td>–</td><td>Freezer 1</td><td>Mass Spec Life Science</td><td>MSTSQQUANTISPLUS</td><td>Denied</td><td class="mi-users-cell">${miUserCountMarkup(5)}</td></tr><tr data-mi-secondary-row data-search="889-1234 Freezer 2 Pending approval"><td></td><td><img class="mi-product" src="assets/instruments/q-exactive.png" alt="" /></td><td><img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" /></td><td>889-1234</td><td>Freezer 2</td><td>Freezer 2</td><td>Mass Spec Life Science</td><td>MSTSQQUANTISPLUS</td><td>Pending approval (expires in ## days)</td><td class="mi-users-cell">${miUserCountMarkup(5)}</td></tr><tr class="mi-system-row" data-mi-secondary-row data-search="System Alpine A"><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="access-alpine" data-mi-system-label="Alpine A" aria-expanded="true" aria-label="Collapse Alpine A system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td><img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" /></td><td>System</td><td>Alpine A</td><td></td><td>LCMS</td><td>—</td><td>Pending approval (expires in ## days)</td><td class="mi-users-cell">${miUserCountMarkup(3)}</td></tr>${children}</tbody></table></div>`;
+}
+
+function miPendingPanel(state = "shared") {
+  return state === "awaiting" ? miPendingAwaitingPanel() : state === "access" ? miPendingAccessPanel() : miPendingSharedPanel();
+}
+
+function miRemovePendingItems(items, ids) {
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    if (ids.includes(items[index].id)) items.splice(index, 1);
+  }
+}
+
+function miAddPendingSharedItems(ids) {
+  const selected = MI_PENDING_SHARED_ITEMS.filter((item) => ids.includes(item.id));
+  selected.forEach((item) => {
+    if (item.kind === "system") {
+      item.components.forEach((component) => {
+        if (MY_INSTRUMENTS.some((instrument) => instrument.serial === component.serial)) return;
+        MY_INSTRUMENTS.push({ ...component, users: "1", group: "—", coverage: "Under contract", end: item.expires, locked: item.locked, pendingNew: true });
+      });
+      if (!miFindSystemById(item.systemId)) MI_CREATED_SYSTEMS.push({ id: item.systemId, nickname: item.nickname, notes: "", typeCode: item.type, users: "1", locked: item.locked, admin: false, components: item.components.map((component) => component.serial), pendingNew: true });
+      return;
+    }
+    if (MY_INSTRUMENTS.some((instrument) => instrument.serial === item.serial)) return;
+    MY_INSTRUMENTS.push({ image: item.image, serial: item.serial, nickname: item.nickname, users: "1", group: "—", model: item.model, coverage: "Under contract", end: item.expires, locked: item.locked, pendingNew: true });
+  });
+  miRemovePendingItems(MI_PENDING_SHARED_ITEMS, ids);
+  return selected.length;
+}
+
+function miRunPendingAction(action, ids) {
+  if (!ids.length) return;
+  let toastMessage = "";
+  let segment = "shared";
+  if (action === "add") {
+    const count = miAddPendingSharedItems(ids);
+    toastMessage = `${count} instrument${count === 1 ? "" : "s"} ${count === 1 ? "has" : "have"} been added to My Instruments.`;
+  } else if (action === "ignore") miRemovePendingItems(MI_PENDING_SHARED_ITEMS, ids);
+  else {
+    segment = "awaiting";
+    miRemovePendingItems(MI_PENDING_AWAITING_ITEMS, ids);
+    toastMessage = `${ids.length} instrument(s) ${action === "approve" ? "approved" : "denied"}.`;
+  }
+  render();
+  app.querySelector('[data-mi-tab="pending"]')?.click();
+  if (segment !== "shared") app.querySelector(`[data-mi-segment="${segment}"]`)?.click();
+  if (toastMessage) showToast(toastMessage, { title: "Success:", variant: "success" });
+}
+
+function wireMiPendingPanel(panel, segmentState = "shared") {
+  const actionbar = panel.querySelector("[data-mi-pending-actionbar]");
+  panel.classList.toggle("mi-secondary-content--has-actionbar", Boolean(actionbar));
+  panel.querySelector("[data-mi-view-instruments]")?.addEventListener("click", () => app.querySelector('[data-mi-tab="instruments"]')?.click());
+  if (!actionbar) return;
+  const checkboxes = [...panel.querySelectorAll("[data-mi-pending-select]")];
+  const selectAll = panel.querySelector("[data-mi-pending-select-all]");
+  const actionButtons = [...actionbar.querySelectorAll("[data-mi-pending-bulk]")];
+  const selectedIds = () => checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+  const sync = () => {
+    const selected = selectedIds().length;
+    actionButtons.forEach((button) => { button.disabled = selected === 0; });
+    if (selectAll) {
+      selectAll.checked = selected === checkboxes.length;
+      selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+    }
+  };
+  selectAll?.addEventListener("change", () => {
+    checkboxes.forEach((checkbox) => { checkbox.checked = selectAll.checked; });
+    sync();
+  });
+  checkboxes.forEach((checkbox) => checkbox.addEventListener("change", sync));
+  actionButtons.forEach((button) => button.addEventListener("click", () => miRunPendingAction(button.dataset.miPendingBulk, selectedIds())));
+  panel.querySelectorAll("[data-mi-pending-row-action]").forEach((button) => button.addEventListener("click", () => miRunPendingAction(button.dataset.miPendingRowAction, [button.dataset.miPendingId])));
+  sync();
+}
+
+function miSuggestionItems(segment) {
+  return segment === "related" ? MI_SUGGESTION_RELATED_ITEMS : segment === "invites" ? MI_SUGGESTION_INVITE_ITEMS : MI_SUGGESTION_SUPPORT_ITEMS;
+}
+
+function miSuggestionDisplayCount(items) {
+  return items.reduce((count, item) => count + 1 + (item.components?.length || 0), 0);
+}
+
+function miSuggestionsCount() {
+  return miSuggestionDisplayCount(MI_SUGGESTION_SUPPORT_ITEMS) + MI_SUGGESTION_RELATED_ITEMS.length + miSuggestionDisplayCount(MI_SUGGESTION_INVITE_ITEMS);
+}
+
+function syncMiTabCounts() {
+  const pendingCount = app.querySelector("[data-mi-pending-count]");
+  const suggestionsCount = app.querySelector("[data-mi-suggestions-count]");
+  if (pendingCount) pendingCount.textContent = String(miPendingCount());
+  if (suggestionsCount) {
+    const total = miSuggestionsCount();
+    suggestionsCount.textContent = String(total);
+    suggestionsCount.hidden = total === 0;
+  }
+}
+
+function miSuggestionSegments() {
+  return [
+    ["support", `${miSuggestionDisplayCount(MI_SUGGESTION_SUPPORT_ITEMS)} from support history`, false],
+    ["related", `${MI_SUGGESTION_RELATED_ITEMS.length} related systems`, MI_SUGGESTION_RELATED_ITEMS.length > 0],
+    ["invites", `${miSuggestionDisplayCount(MI_SUGGESTION_INVITE_ITEMS)} from installation invites`, MI_SUGGESTION_INVITE_ITEMS.length > 0],
+  ];
+}
+
+function miSuggestionNicknameMarkup(item) {
+  return item.nickname ? item.nickname : `<input class="mi-nickname-input" type="text" data-mi-suggestion-nickname="${item.id}" value="" placeholder="Example Asset ID or Instrument name" aria-label="Nickname for ${item.serial}" />`;
+}
+
+function miSuggestionActionBarMarkup(segment) {
+  return `<div class="mi-pending-actionbar mi-suggestion-actionbar" data-mi-suggestion-actionbar><div class="mi-pending-actionbar__buttons"><button type="button" data-mi-suggestion-bulk="ignore" disabled>Ignore selected</button><button class="mi-pending-actionbar__primary" type="button" data-mi-suggestion-bulk="add" disabled>Add selected to My Instruments</button></div></div>`;
+}
+
+function miSuggestionIgnoreDialogMarkup() {
+  return `<dialog class="mi-suggestion-ignore-dialog" data-mi-suggestion-ignore-dialog aria-labelledby="mi-suggestion-ignore-title" aria-describedby="mi-suggestion-ignore-copy"><form method="dialog"><header><h2 id="mi-suggestion-ignore-title" data-mi-suggestion-ignore-title>Ignore instrument(s)</h2><button type="button" data-mi-suggestion-ignore-close aria-label="Close"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><p id="mi-suggestion-ignore-copy">Are you sure you want to ignore? You can always add them manually on the "Add instruments" page.</p><footer><button type="button" data-mi-suggestion-ignore-close>No, close</button><button class="mi-suggestion-ignore-dialog__primary" type="button" data-mi-suggestion-ignore-confirm>Yes, ignore</button></footer></form></dialog>`;
+}
+
+function miSuggestionZeroStateMarkup(segment) {
+  const copy = segment === "related"
+    ? ["There are no related systems", "There are currently no related systems to review."]
+    : segment === "invites"
+      ? ["There are no installation invites", "There are currently no instruments from installation invites to review."]
+      : ["There are no instruments from support history", "There are currently no instruments or systems from support history to review."];
+  return `<section class="mi-pending-zero mi-suggestion-zero" aria-labelledby="mi-suggestion-zero-title">${miZeroStateArtMarkup()}<h3 id="mi-suggestion-zero-title">${copy[0]}</h3><p>${copy[1]}</p><button type="button" data-mi-view-instruments>View My instruments</button></section>`;
+}
+
+function miSuggestionCommonRows(items, segment) {
+  const showUsers = segment === "invites";
+  return items.map((item) => {
+    const key = `suggestion-${segment}-${item.id}`;
+    const isSystem = item.kind === "system";
+    const hierarchy = isSystem ? `<button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${item.nickname || "Suggested system"}" aria-expanded="${item.expanded !== false}" aria-label="${item.expanded === false ? "Expand" : "Collapse"} ${item.nickname || "suggested"} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>` : "";
+    const image = isSystem ? '<img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />' : `<img class="mi-product" src="assets/instruments/${item.image}" alt="" />`;
+    const parent = `<tr class="${isSystem ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-suggestion-item-id="${item.id}" data-search="${item.serial} ${item.nickname} ${item.model}"><td><input type="checkbox" data-mi-suggestion-select value="${item.id}" aria-label="Select ${item.nickname || item.serial}" /></td><td>${hierarchy}</td><td>${image}</td><td>${item.serial}</td><td>${miSuggestionNicknameMarkup(item)}</td>${showUsers ? `<td class="mi-users-cell">${miUserCountMarkup(item.users || 2)}</td>` : ""}<td>${item.model}</td><td>${item.type}</td><td><button class="mi-add-button" type="button" data-mi-suggestion-row-action="add" data-mi-suggestion-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-suggestion-row-action="ignore" data-mi-suggestion-id="${item.id}" aria-label="Ignore ${item.nickname || item.serial}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
+    if (!isSystem) return parent;
+    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname}"${item.expanded === false ? " hidden" : ""}><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td>${component.serial}</td><td>${component.nickname}</td>${showUsers ? '<td class="mi-users-cell"></td>' : ""}<td>${component.model}</td><td>${component.type}</td><td></td><td></td></tr>`).join("");
+    return parent + children;
+  }).join("");
+}
+
+function miSuggestionsSupportPanel() {
+  const items = MI_SUGGESTION_SUPPORT_ITEMS;
+  const content = items.length ? `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-suggestions-table"><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all support history suggestions" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname</th><th><button class="mi-header-select" type="button">Model <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Actions</th><th></th></tr></thead><tbody>${miSuggestionCommonRows(items, "support")}</tbody></table></div>${miPaginationMarkup(miSuggestionDisplayCount(items))}${miSuggestionActionBarMarkup("support")}` : miSuggestionZeroStateMarkup("support");
+  return `<div class="mi-secondary-top mi-suggestions-top">${miTitleMarkup("From support history", miSuggestionDisplayCount(items), "Instruments(s) and/or system(s) below have support history associated with your email address, but are not yet added to your account. &nbsp;Add if relevant to you, or ignore.", miSegmentedMarkup(miSuggestionSegments(), "support"))}${miSearchMarkup("Search by instrument serial number or nickname")}</div>${content}${miSuggestionIgnoreDialogMarkup()}`;
+}
+
+function miPaginationMarkup(total = 24) {
+  return `<div class="mi-pagination"><span>Results per page</span><button class="mi-pagination__page-size" type="button">20<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><span>of&nbsp;&nbsp;${total}</span><nav aria-label="Pagination"><button type="button" disabled aria-label="Previous page">${miPreviousIcon}</button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button" aria-label="Next page">${miNextIcon}</button><span>Go to:</span><button type="button">#</button></nav></div>`;
+}
+
+function miSuggestionsRelatedPanel() {
+  const items = MI_SUGGESTION_RELATED_ITEMS;
+  const rows = items.map((item) => {
+    const key = `suggestion-related-${item.id}`;
+    const parent = `<tr class="mi-system-row" data-mi-secondary-row data-mi-suggestion-item-id="${item.id}" data-search="System ${item.nickname} ${item.type}"><td><input type="checkbox" data-mi-suggestion-select value="${item.id}" aria-label="Select ${item.nickname}" /></td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${item.nickname}" aria-expanded="${item.expanded}" aria-label="${item.expanded ? "Collapse" : "Expand"} ${item.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>System</td><td>${item.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(item.users)}</td><td>${item.model}</td><td>${item.type}</td><td>${item.created}</td><td><button class="mi-add-button" type="button" data-mi-suggestion-row-action="add" data-mi-suggestion-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-suggestion-row-action="ignore" data-mi-suggestion-id="${item.id}" aria-label="Ignore ${item.nickname}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
+    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname}"${item.expanded ? "" : " hidden"}><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td>${component.serial}</td><td>${component.nickname}</td><td class="mi-users-cell"></td><td>${component.model}</td><td>${component.type}</td><td></td><td></td><td></td></tr>`).join("");
+    return parent + children;
+  }).join("");
+  const content = items.length ? `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-related-table"><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all related systems" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th>Model ${miSortIcon}</th><th>Type ${miSortIcon}</th><th>Created date ${miSortIcon}</th><th>Actions</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${miSuggestionActionBarMarkup("related")}` : miSuggestionZeroStateMarkup("related");
+  return `<div class="mi-secondary-top mi-suggestions-top">${miTitleMarkup("Related systems", items.length, "System(s) below exist within Services Central, but are not added to your account. &nbsp;Add if relevant to you, or ignore. &nbsp;Hyperlinked items are already in your account.", miSegmentedMarkup(miSuggestionSegments(), "related"))}${miSearchMarkup("Search by instrument serial number or nickname")}</div>${content}${miSuggestionIgnoreDialogMarkup()}`;
+}
+
+function miSuggestionsInvitesPanel() {
+  const items = MI_SUGGESTION_INVITE_ITEMS;
+  const count = miSuggestionDisplayCount(items);
+  const content = items.length ? `<button class="mi-select-all-link" type="button" data-mi-select-all-visible>Select all ${count} instruments</button><div class="mi-secondary-table-wrap mi-invites-table-wrap"><table class="mi-secondary-table mi-invites-table"><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all installation invite suggestions" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th><button class="mi-header-select" type="button">Catalog no. <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Actions</th><th></th></tr></thead><tbody>${miSuggestionCommonRows(items, "invites")}</tbody></table></div>${miPaginationMarkup(count)}${miSuggestionActionBarMarkup("invites")}` : miSuggestionZeroStateMarkup("invites");
+  return `<div class="mi-secondary-top mi-suggestions-top mi-invites-top">${miTitleMarkup("From installation invites", count, "The instrument(s) listed below were recently installed, and a member of your organization added you to the installation order while it was open.", miSegmentedMarkup(miSuggestionSegments(), "invites"))}</div>${content}${miSuggestionIgnoreDialogMarkup()}`;
+}
+
+function miSuggestionsPanel(state = "support") {
+  return state === "related" ? miSuggestionsRelatedPanel() : state === "invites" ? miSuggestionsInvitesPanel() : miSuggestionsSupportPanel();
+}
+
+function miRemoveSuggestionItems(items, ids) {
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    if (ids.includes(items[index].id)) items.splice(index, 1);
+  }
+}
+
+function miAddSuggestionItems(segment, ids) {
+  const items = miSuggestionItems(segment);
+  const selected = items.filter((item) => ids.includes(item.id));
+  selected.forEach((item) => {
+    if (item.kind === "system") {
+      item.components.forEach((component) => {
+        if (MY_INSTRUMENTS.some((instrument) => instrument.serial === component.serial)) return;
+        MY_INSTRUMENTS.push({ ...component, users: "1", group: "—", coverage: "Under contract", end: "30 Jun 2027", locked: false, pendingNew: true });
+      });
+      if (!miFindSystemById(item.systemId)) {
+        MI_CREATED_SYSTEMS.push({
+          id: item.systemId,
+          nickname: item.nickname || "Suggested system",
+          notes: "",
+          typeCode: item.type,
+          users: item.users || "1",
+          locked: false,
+          admin: false,
+          components: item.components.map((component) => component.serial),
+          pendingNew: true,
+        });
+      }
+      return;
+    }
+    if (MY_INSTRUMENTS.some((instrument) => instrument.serial === item.serial)) return;
+    MY_INSTRUMENTS.push({
+      image: item.image,
+      serial: item.serial,
+      nickname: item.nickname || "—",
+      users: item.users || "1",
+      group: "—",
+      model: item.model,
+      coverage: "Under contract",
+      end: "30 Jun 2027",
+      locked: false,
+      pendingNew: true,
+    });
+  });
+  miRemoveSuggestionItems(items, ids);
+  return selected.length;
+}
+
+function miRefreshSuggestions(segment) {
+  render();
+  app.querySelector('[data-mi-tab="suggestions"]')?.click();
+  if (segment !== "support") app.querySelector(`[data-mi-segment="${segment}"]`)?.click();
+}
+
+function miRunSuggestionAction(segment, action, ids) {
+  if (!ids.length) return;
+  const objectLabel = segment === "related" ? "system(s)" : "instrument(s)";
+  let count = ids.length;
+  if (action === "add") count = miAddSuggestionItems(segment, ids);
+  else miRemoveSuggestionItems(miSuggestionItems(segment), ids);
+  miRefreshSuggestions(segment);
+  showToast(`${count} ${objectLabel} ${action === "add" ? "added to My Instruments" : "ignored."}`, { title: "Success:", variant: "success" });
+}
+
+function wireMiSuggestionPanel(panel, segment = "support") {
+  const actionbar = panel.querySelector("[data-mi-suggestion-actionbar]");
+  const dialog = panel.querySelector("[data-mi-suggestion-ignore-dialog]");
+  const items = miSuggestionItems(segment);
+  let pendingIgnoreIds = [];
+  panel.classList.toggle("mi-secondary-content--has-actionbar", Boolean(actionbar));
+  panel.querySelector("[data-mi-view-instruments]")?.addEventListener("click", () => app.querySelector('[data-mi-tab="instruments"]')?.click());
+  panel.querySelectorAll("[data-mi-suggestion-nickname]").forEach((input) => input.addEventListener("input", () => {
+    const item = items.find((candidate) => candidate.id === input.dataset.miSuggestionNickname);
+    if (item) item.nickname = input.value;
+  }));
+
+  const openIgnoreDialog = (ids) => {
+    if (!ids.length || !dialog) return;
+    pendingIgnoreIds = [...ids];
+    dialog.querySelector("[data-mi-suggestion-ignore-title]").textContent = `Ignore ${ids.length} instrument(s)`;
+    dialog.showModal();
+    dialog.querySelector("[data-mi-suggestion-ignore-close]")?.focus();
+  };
+  dialog?.querySelectorAll("[data-mi-suggestion-ignore-close]").forEach((button) => button.addEventListener("click", () => dialog.close()));
+  dialog?.querySelector("[data-mi-suggestion-ignore-confirm]")?.addEventListener("click", () => {
+    dialog.close();
+    miRunSuggestionAction(segment, "ignore", pendingIgnoreIds);
+  });
+  dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+
+  panel.querySelectorAll("[data-mi-suggestion-row-action]").forEach((button) => button.addEventListener("click", () => {
+    const ids = [button.dataset.miSuggestionId];
+    const action = button.dataset.miSuggestionRowAction;
+    if (action === "ignore" && segment !== "related") openIgnoreDialog(ids);
+    else miRunSuggestionAction(segment, action, ids);
+  }));
+  if (!actionbar) return;
+
+  const checkboxes = [...panel.querySelectorAll("[data-mi-suggestion-select]")];
+  const selectAll = panel.querySelector("[data-mi-suggestion-select-all]");
+  const actionButtons = [...actionbar.querySelectorAll("[data-mi-suggestion-bulk]")];
+  const selectedIds = () => checkboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value);
+  const sync = () => {
+    const selected = selectedIds().length;
+    actionButtons.forEach((button) => { button.disabled = selected === 0; });
+    if (selectAll) {
+      selectAll.checked = selected === checkboxes.length;
+      selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+    }
+  };
+  selectAll?.addEventListener("change", () => {
+    checkboxes.forEach((checkbox) => { checkbox.checked = selectAll.checked; });
+    sync();
+  });
+  checkboxes.forEach((checkbox) => checkbox.addEventListener("change", sync));
+  actionButtons.forEach((button) => button.addEventListener("click", () => {
+    const action = button.dataset.miSuggestionBulk;
+    if (action === "ignore" && segment !== "related") openIgnoreDialog(selectedIds());
+    else miRunSuggestionAction(segment, action, selectedIds());
+  }));
+  sync();
+}
+
+function wireMiTableSelection(table) {
+  const selectAll = table?.querySelector("thead input[type='checkbox']");
+  const rowCheckboxes = [...(table?.querySelectorAll("tbody input[type='checkbox']") || [])];
+  if (!selectAll || rowCheckboxes.length === 0) return;
+  const syncSelectAll = () => {
+    const checkedCount = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
+    selectAll.checked = checkedCount === rowCheckboxes.length;
+    selectAll.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+  };
+  selectAll.addEventListener("change", () => {
+    rowCheckboxes.forEach((checkbox) => { checkbox.checked = selectAll.checked; });
+    syncSelectAll();
+  });
+  rowCheckboxes.forEach((checkbox) => checkbox.addEventListener("change", syncSelectAll));
+  syncSelectAll();
+}
+
+function renderMyInstrumentsTab(tabName, segmentState) {
+  syncMiTabCounts();
+  const instrumentsPanel = app.querySelector("[data-mi-instruments-panel]");
+  const secondaryPanel = app.querySelector("[data-mi-secondary-panel]");
+  const isInstruments = tabName === "instruments";
+  instrumentsPanel.hidden = !isInstruments;
+  secondaryPanel.hidden = isInstruments;
+  if (isInstruments) return;
+  const panels = { users: miUsersPanel, groups: miGroupsPanel, favorites: miFavoritesPanel, pending: miPendingPanel, suggestions: miSuggestionsPanel };
+  secondaryPanel.innerHTML = panels[tabName](segmentState);
+  secondaryPanel.classList.remove("mi-secondary-content--has-actionbar");
+  secondaryPanel.setAttribute("aria-labelledby", `mi-${tabName}-tab`);
+  secondaryPanel.querySelectorAll(".mi-secondary-table").forEach(wireMiTableSelection);
+  secondaryPanel.querySelectorAll("[data-mi-system-toggle]").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      const systemLabel = toggle.dataset.miSystemLabel || "System";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${systemLabel} system components`);
+      secondaryPanel.querySelector("[data-mi-secondary-search]")?.dispatchEvent(new Event("input"));
+    });
+  });
+  secondaryPanel.querySelector("[data-mi-secondary-search]")?.addEventListener("input", (event) => {
+    const query = event.currentTarget.value.trim().toLowerCase();
+    const collapsedSystems = new Set([...secondaryPanel.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
+    secondaryPanel.querySelectorAll("[data-mi-secondary-row]").forEach((row) => {
+      const hiddenBySearch = query !== "" && !row.dataset.search.toLowerCase().includes(query);
+      row.hidden = hiddenBySearch || collapsedSystems.has(row.dataset.miSystemComponent);
+    });
+    secondaryPanel.querySelectorAll("[data-mi-grid-card], [data-mi-group-card]").forEach((card) => {
+      card.hidden = query !== "" && !card.dataset.search.toLowerCase().includes(query);
+    });
+  });
+  secondaryPanel.querySelectorAll(".mi-favorite").forEach((button) => button.addEventListener("click", () => toggleMiFavorite(button)));
+  secondaryPanel.querySelectorAll(".mi-view-toggle button").forEach((button) => button.addEventListener("click", () => {
+    button.parentElement.querySelectorAll("button").forEach((candidate) => {
+      const selected = candidate === button;
+      candidate.classList.toggle("is-selected", selected);
+      candidate.setAttribute("aria-pressed", String(selected));
+    });
+    if (tabName === "favorites") {
+      miFavoritesView = button.dataset.miView || "list";
+      secondaryPanel.querySelector("[data-mi-favorites-list]").hidden = miFavoritesView === "grid";
+      secondaryPanel.querySelector("[data-mi-favorites-grid]").hidden = miFavoritesView !== "grid";
+    } else if (tabName === "groups") {
+      miGroupsView = button.dataset.miView || "list";
+      secondaryPanel.querySelector("[data-mi-groups-list]").hidden = miGroupsView === "grid";
+      secondaryPanel.querySelector("[data-mi-groups-grid]").hidden = miGroupsView !== "grid";
+    }
+  }));
+  secondaryPanel.querySelectorAll("[data-mi-system-quickview]").forEach((button) => button.addEventListener("click", () => {
+    const system = miFindSystemById(button.dataset.miSystemQuickview);
+    if (system) openMiSystemQuickview(system);
+  }));
+  secondaryPanel.querySelector("[data-mi-create-group-direct]")?.addEventListener("click", () => { resetMiGroupBuilder(); openMiDialog(miCreateGroupDialog); });
+  secondaryPanel.querySelectorAll("[data-mi-segment]").forEach((button) => button.addEventListener("click", () => renderMyInstrumentsTab(tabName, button.dataset.miSegment)));
+  if (tabName === "pending") wireMiPendingPanel(secondaryPanel, segmentState || "shared");
+  if (tabName === "suggestions") wireMiSuggestionPanel(secondaryPanel, segmentState || "support");
+  secondaryPanel.querySelector("[data-mi-select-all-visible]")?.addEventListener("click", () => {
+    const selectAll = secondaryPanel.querySelector("thead input[type='checkbox']");
+    if (!selectAll) return;
+    selectAll.checked = true;
+    selectAll.dispatchEvent(new Event("change"));
+  });
+  wireMiActionMenus(secondaryPanel);
+  secondaryPanel.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  wireRouteControls();
+}
+
+function syncMiColumnDialog() {
+  miEditColumnsDialog.querySelectorAll("[data-mi-column]").forEach((checkbox) => {
+    checkbox.checked = checkbox.disabled || miVisibleColumns.has(checkbox.dataset.miColumn);
+  });
+}
+
+function applyMiColumnVisibility() {
+  const table = app.querySelector(".mi-table");
+  if (!table) return;
+  table.querySelectorAll("[data-mi-table-column]").forEach((element) => {
+    const visible = miVisibleColumns.has(element.dataset.miTableColumn);
+    element.hidden = !visible;
+    if (element.tagName === "COL") element.style.display = visible ? "" : "none";
+  });
+  table.style.width = "100%";
+}
+
 function wireMyInstruments() {
+  syncMiTabCounts();
   const rowsContainer = app.querySelector("[data-mi-rows]");
-  rowsContainer.innerHTML = MY_INSTRUMENTS.map(instrumentRowMarkup).join("");
+  const systems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS];
+  const systemComponents = new Set(systems.flatMap((system) => system.components));
+  rowsContainer.innerHTML = systems.map(miCreatedSystemRowsMarkup).join("") + MY_INSTRUMENTS.filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map(instrumentRowMarkup).join("");
+  const gridCards = app.querySelector("[data-mi-grid-cards]");
+  gridCards.innerHTML = systems.map(miCreatedSystemCardMarkup).join("") + MY_INSTRUMENTS.filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map((instrument) => miGridCardMarkup(instrument)).join("");
   const updateCount = () => {
     const visible = [...app.querySelectorAll("[data-mi-row]")].filter((row) => !row.hidden).length;
     app.querySelector("[data-mi-count]").textContent = String(visible);
   };
+  updateCount();
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelector("[data-mi-edit-columns]").addEventListener("click", () => {
+    syncMiColumnDialog();
+    miEditColumnsDialog.querySelector("[data-mi-column-search]").value = "";
+    miEditColumnsDialog.querySelectorAll("[data-mi-column-row]").forEach((row) => { row.hidden = false; });
+    miEditColumnsDialog.querySelector(".mi-edit-columns-modal__table-wrap").scrollTop = 0;
+    miEditColumnsDialog.showModal();
+    miEditColumnsDialog.querySelector("[data-mi-column-search]").focus({ preventScroll: true });
+  });
+  applyMiColumnVisibility();
   app.querySelector("[data-mi-search]").addEventListener("input", (event) => {
     const query = event.currentTarget.value.trim().toLowerCase();
     app.querySelectorAll("[data-mi-row]").forEach((row) => {
       row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query);
     });
+    const collapsedSystems = new Set([...app.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
+    app.querySelectorAll("[data-mi-system-component]").forEach((row) => {
+      const hiddenBySearch = query !== "" && !row.dataset.search.toLowerCase().includes(query);
+      row.hidden = hiddenBySearch || collapsedSystems.has(row.dataset.miSystemComponent);
+    });
+    app.querySelectorAll("[data-mi-grid-card]").forEach((card) => {
+      card.hidden = query !== "" && !card.dataset.search.toLowerCase().includes(query);
+    });
     updateCount();
   });
-  app.querySelector("[data-mi-select-all]").addEventListener("change", (event) => {
-    app.querySelectorAll("[data-mi-checkbox]").forEach((checkbox) => { checkbox.checked = event.currentTarget.checked; });
-  });
+  wireMiTableSelection(app.querySelector(".mi-table"));
+  app.querySelectorAll("[data-mi-system-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${toggle.dataset.miSystemLabel} system components`);
+    app.querySelector("[data-mi-search]").dispatchEvent(new Event("input"));
+  }));
+  app.querySelectorAll("[data-mi-system-quickview]").forEach((button) => button.addEventListener("click", () => {
+    const system = miFindSystemById(button.dataset.miSystemQuickview);
+    if (system) openMiSystemQuickview(system);
+  }));
   app.querySelectorAll(".mi-favorite").forEach((button) => {
-    button.addEventListener("click", () => {
-      const pressed = button.getAttribute("aria-pressed") !== "true";
-      button.setAttribute("aria-pressed", String(pressed));
-    });
+    button.addEventListener("click", () => toggleMiFavorite(button));
   });
   app.querySelectorAll(".mi-tabs [role='tab']").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -1715,15 +3263,20 @@ function wireMyInstruments() {
         candidate.classList.toggle("is-active", selected);
         candidate.setAttribute("aria-selected", String(selected));
       });
-      if (!tab.textContent.trim().startsWith("My Instruments")) showToast(`${tab.textContent.trim()} selected`);
+      renderMyInstrumentsTab(tab.dataset.miTab);
     });
   });
   app.querySelectorAll(".mi-view-toggle button").forEach((button) => {
     button.addEventListener("click", () => {
       app.querySelectorAll(".mi-view-toggle button").forEach((candidate) => candidate.classList.toggle("is-selected", candidate === button));
-      showToast(`${button.getAttribute("aria-label")} selected`);
+      const gridSelected = button.dataset.miView === "grid";
+      app.querySelector(".mi-table-scroll").hidden = gridSelected;
+      app.querySelector("[data-mi-grid-view]").hidden = !gridSelected;
     });
   });
+  app.querySelectorAll(".mi-grid-filters button").forEach((button) => button.addEventListener("click", () => showToast(`${button.textContent.trim()} filter opened`)));
+  wireMiActionMenus(app);
+  wireMyInstrumentActions();
   app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1737,6 +3290,777 @@ function renderMyInstruments() {
   mountFooter();
   wireMyInstruments();
   document.title = "My instruments — Services Central";
+}
+
+function miUserDetailMarkup(user) {
+  const instruments = user.instruments.map((index) => MY_INSTRUMENTS[index]).filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const system = MI_CREATED_SYSTEMS[0] || MI_REFERENCE_SYSTEMS[0];
+  const systemKey = system ? `user-system-${system.id}` : "";
+  const systemComponents = system ? system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)) : [];
+  const systemGroups = system ? MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`)).map((group) => group.name).join(", ") : "";
+  const systemAccessKey = system ? `system:${system.id}` : "";
+  const systemRole = system ? miRoleForAsset(systemAccessKey, user.email, system) : "User";
+  const systemRow = system ? `<tr class="mi-system-row" data-mi-user-instrument data-search="System ${system.nickname} ${system.typeCode}">
+    <td>${miRoleBadge(systemRole === "Admin", { accessKey: systemAccessKey, email: user.email, editable: miIsAdmin(system) })}</td>
+    <td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-user-system-toggle="${systemKey}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td>
+    <td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td>
+    <td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td>${systemGroups}</td>
+    <td><button class="mi-icon-action" type="button" data-mi-remove-user-instrument data-mi-user-system-remove="${systemKey}" aria-label="Remove ${system.nickname}"><img src="assets/icons/actions/delete/size=16px, style=bold.svg" alt="" /></button></td>
+  </tr>` : "";
+  const systemChildren = systemComponents.map((instrument, index) => `<tr class="mi-child-row ${index === systemComponents.length - 1 ? "mi-child-row--last" : ""}" data-mi-user-system-component="${systemKey}" data-search="${instrument.serial} ${instrument.nickname}">
+    <td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td></td>
+    <td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td>${instrument.group === "—" ? "" : instrument.group}</td><td></td>
+  </tr>`).join("");
+  const rows = instruments.map((instrument) => {
+    const accessKey = `instrument:${instrument.serial}`;
+    const role = miRoleForAsset(accessKey, user.email, instrument);
+    return `<tr data-mi-user-instrument data-search="${instrument.serial} ${instrument.nickname}">
+    <td>${miRoleBadge(role === "Admin", { accessKey, email: user.email, editable: miIsAdmin(instrument) })}</td>
+    <td></td>
+    <td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td>
+    <td>${miLockMarkup(instrument.locked)}</td>
+    <td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td>
+    <td>${instrument.nickname}</td>
+    <td>${instrument.group === "—" ? "" : instrument.group}</td>
+    <td><button class="mi-icon-action" type="button" data-mi-remove-user-instrument aria-label="Remove ${instrument.serial}"><img src="assets/icons/actions/delete/size=16px, style=bold.svg" alt="" /></button></td>
+  </tr>`;
+  }).join("");
+  return `<div class="mi-user-detail">
+    <header class="mi-user-detail__top">
+      <div class="mi-user-detail__heading"><div class="mi-user-detail__title"><button type="button" data-mi-user-back>Users</button><img src="assets/icons/directions/caret right/right caret.svg" alt="" /><h2>${user.email}</h2><span data-mi-user-count>${instruments.length + (system ? 1 : 0)} instruments</span></div><p>Instruments that are common between you and ${user.email}</p></div>
+      <div class="mi-user-detail__actions"><button class="mi-button mi-user-detail__more" type="button" data-mi-toast="More user actions opened">More actions<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><button class="mi-button" type="button" data-mi-toast="Share with ${user.email} opened">Share</button></div>
+      ${miSearchMarkup("Search by instrument serial number or nickname")}
+    </header>
+    <div class="mi-secondary-table-wrap mi-user-detail__table-wrap"><table class="mi-secondary-table mi-user-detail__table"><thead><tr><th><span class="mi-user-role-header"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />User’s role</span> ${miSortIcon}</th><th></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th></th><th>Remove</th></tr></thead><tbody>${systemRow}${systemChildren}${rows}</tbody></table></div>
+  </div>`;
+}
+
+function renderMiUserDetail(route) {
+  const slug = route.replace(/^user-detail-/, "");
+  const user = MI_USERS.find((candidate) => candidate.slug === slug);
+  if (!user) {
+    setRoute("my-instruments");
+    return;
+  }
+  const template = document.querySelector("#my-instruments-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
+  mountPlatformSidebar("my-instruments");
+  mountFooter();
+  app.querySelector("[data-mi-instruments-panel]").hidden = true;
+  const secondaryPanel = app.querySelector("[data-mi-secondary-panel]");
+  secondaryPanel.hidden = false;
+  secondaryPanel.setAttribute("aria-labelledby", "mi-users-tab");
+  secondaryPanel.innerHTML = miUserDetailMarkup(user);
+  app.querySelectorAll(".mi-tabs [role='tab']").forEach((tab) => {
+    const selected = tab.dataset.miTab === "users";
+    tab.classList.toggle("is-active", selected);
+    tab.setAttribute("aria-selected", String(selected));
+    tab.addEventListener("click", () => {
+      const targetTab = tab.dataset.miTab;
+      setRoute("my-instruments");
+      if (targetTab !== "instruments") app.querySelector(`[data-mi-tab="${targetTab}"]`)?.click();
+    });
+  });
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("my-instruments"));
+  app.querySelector("[data-mi-user-back]").addEventListener("click", () => {
+    setRoute("my-instruments");
+    app.querySelector('[data-mi-tab="users"]')?.click();
+  });
+  app.querySelector("[data-mi-secondary-search]").addEventListener("input", (event) => {
+    const query = event.currentTarget.value.trim().toLowerCase();
+    const collapsedSystems = new Set([...app.querySelectorAll('[data-mi-user-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miUserSystemToggle));
+    app.querySelectorAll("[data-mi-user-instrument]").forEach((row) => { row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query); });
+    app.querySelectorAll("[data-mi-user-system-component]").forEach((row) => { row.hidden = collapsedSystems.has(row.dataset.miUserSystemComponent) || (query !== "" && !row.dataset.search.toLowerCase().includes(query)); });
+  });
+  app.querySelectorAll("[data-mi-user-system-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} system components`);
+    app.querySelector("[data-mi-secondary-search]").dispatchEvent(new Event("input"));
+  }));
+  app.querySelectorAll("[data-mi-remove-user-instrument]").forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.miUserSystemRemove) app.querySelectorAll(`[data-mi-user-system-component="${button.dataset.miUserSystemRemove}"]`).forEach((row) => row.remove());
+    button.closest("tr").remove();
+    const count = app.querySelectorAll("[data-mi-user-instrument]").length;
+    app.querySelector("[data-mi-user-count]").textContent = `${count} instrument${count === 1 ? "" : "s"}`;
+    showToast("Instrument access removed");
+  }));
+  app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  wireMiRoleSelectors(secondaryPanel, () => renderMiUserDetail(routeFromHash()));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${user.email} — Services Central`;
+}
+
+function miGroupInstruments(group) {
+  if (group.id === 0) return MY_INSTRUMENTS.slice(0, 4);
+  const size = 3 + (group.id % 5);
+  const start = (group.id * 4) % MY_INSTRUMENTS.length;
+  return Array.from({ length: size }, (_, offset) => MY_INSTRUMENTS[(start + (offset * 2)) % MY_INSTRUMENTS.length]);
+}
+
+function miGroupDetailMarkup(group) {
+  const instruments = miGroupInstruments(group);
+  const instrumentRow = (instrument, extra = "", removable = true, favoritable = true) => `<tr ${extra} data-mi-group-instrument data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}">
+    <td>${favoritable ? miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`) : ""}</td>
+    <td>${favoritable ? "" : miBranchIcon}</td>
+    <td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td>
+    <td>${favoritable ? miLockMarkup(instrument.locked) : ""}</td>
+    <td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td>
+    <td>${instrument.nickname}</td>
+    <td class="mi-users-cell">${favoritable ? miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`) : ""}</td>
+    <td>${miInstrumentType(instrument)}</td>
+    <td>${instrument.model}</td>
+    <td>${removable ? `<button class="mi-icon-action" type="button" data-mi-remove-group-instrument aria-label="Remove ${instrument.serial} from ${group.name}"><img src="assets/icons/actions/delete/size=16px, style=bold.svg" alt="" /></button>` : ""}</td>
+  </tr>`;
+  const rows = group.members ? group.members.map((member) => {
+    if (member.startsWith("instrument:")) {
+      const instrument = MY_INSTRUMENTS.find((candidate) => candidate.serial === member.replace("instrument:", ""));
+      return instrument ? instrumentRow(instrument) : "";
+    }
+    const system = miFindSystemById(member.replace("system:", ""));
+    if (!system) return "";
+    const key = `group-system-${system.id}`;
+    const components = system.components.map((serial) => MY_INSTRUMENTS.find((candidate) => candidate.serial === serial)).filter(Boolean);
+    const parent = `<tr class="mi-system-row" data-mi-group-instrument data-search="System ${system.nickname} ${system.typeCode}"><td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>${system.typeCode}</td><td>—</td><td><button class="mi-icon-action" type="button" data-mi-remove-group-instrument aria-label="Remove ${system.nickname} from ${group.name}"><img src="assets/icons/actions/delete/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
+    const children = components.map((instrument, index) => instrumentRow(instrument, `class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}"`, false, false)).join("");
+    return parent + children;
+  }).join("") : instruments.map((instrument) => instrumentRow(instrument)).join("");
+  const itemCount = group.members ? group.members.length : instruments.length;
+  return `<div class="mi-group-detail">
+    <header class="mi-group-detail__top">
+      <div class="mi-group-detail__heading"><div class="mi-group-detail__title"><button type="button" data-mi-group-back>Groups</button><img src="assets/icons/directions/caret right/right caret.svg" alt="" /><h2>${group.name}</h2><span data-mi-group-count>${itemCount} items</span></div><p>${group.description || "Groups are personal and not shared."}</p></div>
+      <div class="mi-group-detail__actions"><button class="mi-button mi-group-detail__more" type="button" data-mi-toast="More group actions opened">More actions<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><button class="mi-button" type="button" data-mi-toast="Edit ${group.name} opened">Edit group</button></div>
+      ${miSearchMarkup("Search by instrument serial number or nickname")}
+    </header>
+    <div class="mi-secondary-table-wrap mi-group-detail__table-wrap"><table class="mi-secondary-table mi-group-detail__table"><thead><tr><th>Favorite ${miSortIcon}</th><th></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th>Type ${miSortIcon}</th><th>Model ${miSortIcon}</th><th>Remove</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+}
+
+function renderMiGroupDetail(route) {
+  const groupId = Number(route.replace(/^group-detail-/, ""));
+  const group = MI_GROUPS.find((candidate) => candidate.id === groupId);
+  if (!group) {
+    setRoute("my-instruments");
+    return;
+  }
+  const template = document.querySelector("#my-instruments-native-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountTopbarSc();
+  mountPlatformSidebar("my-instruments");
+  mountFooter();
+  app.querySelector("[data-mi-instruments-panel]").hidden = true;
+  const secondaryPanel = app.querySelector("[data-mi-secondary-panel]");
+  secondaryPanel.hidden = false;
+  secondaryPanel.setAttribute("aria-labelledby", "mi-groups-tab");
+  secondaryPanel.innerHTML = miGroupDetailMarkup(group);
+  app.querySelectorAll(".mi-tabs [role='tab']").forEach((tab) => {
+    const selected = tab.dataset.miTab === "groups";
+    tab.classList.toggle("is-active", selected);
+    tab.setAttribute("aria-selected", String(selected));
+    tab.addEventListener("click", () => {
+      const targetTab = tab.dataset.miTab;
+      setRoute("my-instruments");
+      if (targetTab !== "instruments") app.querySelector(`[data-mi-tab="${targetTab}"]`)?.click();
+    });
+  });
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("my-instruments"));
+  app.querySelector("[data-mi-group-back]").addEventListener("click", () => {
+    setRoute("my-instruments");
+    app.querySelector('[data-mi-tab="groups"]')?.click();
+  });
+  app.querySelector("[data-mi-secondary-search]").addEventListener("input", (event) => {
+    const query = event.currentTarget.value.trim().toLowerCase();
+    const collapsedSystems = new Set([...app.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
+    app.querySelectorAll("[data-mi-group-instrument]").forEach((row) => {
+      const hiddenBySearch = query !== "" && !row.dataset.search.toLowerCase().includes(query);
+      row.hidden = hiddenBySearch || collapsedSystems.has(row.dataset.miSystemComponent);
+    });
+  });
+  app.querySelectorAll("[data-mi-system-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${toggle.dataset.miSystemLabel} system components`);
+    app.querySelector("[data-mi-secondary-search]").dispatchEvent(new Event("input"));
+  }));
+  app.querySelectorAll("[data-mi-remove-group-instrument]").forEach((button) => button.addEventListener("click", () => {
+    const row = button.closest("tr");
+    const systemKey = row.querySelector("[data-mi-system-toggle]")?.dataset.miSystemToggle;
+    row.remove();
+    if (systemKey) app.querySelectorAll(`[data-mi-system-component="${systemKey}"]`).forEach((child) => child.remove());
+    const count = app.querySelectorAll("[data-mi-group-instrument]:not([data-mi-system-component])").length;
+    app.querySelector("[data-mi-group-count]").textContent = `${count} item${count === 1 ? "" : "s"}`;
+    showToast("Instrument removed from group");
+  }));
+  app.querySelectorAll(".mi-favorite").forEach((button) => button.addEventListener("click", () => toggleMiFavorite(button)));
+  app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${group.name} — Services Central`;
+}
+
+const INSTRUMENT_1009996_TICKETS = [
+  ["open", "Open", "5551726344", "Service Request", "18 Oct 2020", "---", "Won’t turn on", "Alma Malmbe"],
+  ["progress", "In progress", "46521863", "Service Request", "18 Oct 2020", "---", "Repair 0000123459 instrument parts", "Alma Malmbe", true],
+  ["progress", "In progress", "46927364", "PM (Contract)", "18 Oct 2020", "---", "Preventive Maintenance - 0012345L", "Alma Malmbe"],
+  ["progress", "In progress", "46521888", "Inquiry", "18 Oct 2020", "---", "Repair 0000123459 instrument parts", "Alma Malmbe"],
+  ["progress", "In progress", "46927364", "Service Request", "18 Oct 2020", "---", "Repair 0000123459 instrument parts", "Alma Malmbe"],
+  ["progress", "In progress", "46719836", "Inquiry", "12 May 2020", "---", "Need support for unknown instrument…", "Alma Malmbe"],
+  ["progress", "In progress", "46075402", "Inquiry", "12 May 2020", "---", "Need support for unknown instrument…", "Alma Malmbe"],
+  ["progress", "In progress", "46917372", "Inquiry", "12 May 2020", "---", "Need support for unknown instrument…", "Alma Malmbe"],
+  ["progress", "In progress", "46003524", "Depot Repair", "12 May 2020", "---", "Need support for unknown instrument…", "Tyler Durden"],
+  ["closed", "Closed", "46195527", "PM (Contract)", "23 Jan 2019", "23 Jan 2019", "Preventive Maintenance 00000", "Tyler Durden"],
+  ["testing", "Customer testing", "46939573", "Inquiry", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["testing", "Customer not ready", "46074658", "Service Request", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46884635", "Service Request", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46626384", "Inquiry", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46977462", "Tech Support", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46118377", "PM (Contract)", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46000283", "PM (Contract)", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46993746", "Inquiry", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46296730", "Inquiry", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+  ["closed", "Closed", "46434295", "Installation", "23 Jan 2019", "23 Jan 2019", "Need calibration", "Tyler Durden"],
+];
+
+function renderMiSystemDetail(route) {
+  const systemId = route.replace(/^system-detail-/, "");
+  const system = miFindSystemById(systemId);
+  if (!system) {
+    setRoute("my-instruments");
+    return;
+  }
+  const systemFavoriteKey = `system:${system.id}`;
+  const systemIsFavorite = miIsFavorite(systemFavoriteKey);
+  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const systemGroups = MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`));
+  app.innerHTML = `<section class="screen screen--system-detail" aria-label="${system.nickname} system details">
+    <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>${system.nickname}</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
+    <div class="id-stage"><div class="mi-shell sd-shell">
+      <div data-topbar-sc-mount></div><div data-platform-sidebar-mount></div>
+      <main class="platform-page-body sd-main">
+        <section class="sd-hero" aria-label="System summary">
+          <div class="sd-actions"><button type="button" data-route="consumables">Order consumables</button><div class="sd-action-menu-wrap"><button type="button" data-sd-more-actions aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="sd-action-menu" role="menu" data-sd-action-menu hidden>
+            <button type="button" role="menuitem" data-sd-action="edit-system"><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /><span>Edit system</span></button>
+            <button type="button" role="menuitem" data-sd-action="edit-nickname"><img src="assets/icons/actions/edit/size=24px, style=mono.svg" alt="" /><span>Edit nickname</span></button>
+            <button type="button" role="menuitem" data-sd-action="add-group"><img src="assets/icons/science/2 instruments/size=24px, style=mono.svg" alt="" /><span>Add to group</span></button>
+            ${!system.locked || miIsAdmin(system) ? '<button type="button" role="menuitem" data-sd-action="share"><img src="assets/icons/actions/share/Size=24px, Style=Mono.svg" alt="" /><span>Share</span></button>' : ""}
+            <button type="button" role="menuitem" data-sd-action="favorite"><img src="${miFavoriteIcon(systemIsFavorite, 24)}" alt="" /><span>${systemIsFavorite ? "Remove favorite" : "Favorite"}</span></button>
+            ${!system.locked || miIsAdmin(system) ? `<button type="button" role="menuitem" data-sd-action="access"><img src="assets/icons/actions/lock ${system.locked ? "open" : "closed"}/size=24px, style=mono.svg" alt="" /><span>${system.locked ? "Unrestrict access" : "Restrict access"}</span></button>` : ""}
+            <hr />
+            <button class="sd-action-menu__destructive" type="button" role="menuitem" data-sd-action="remove"><img src="assets/icons/actions/bin/size=24px, style=mono.svg" alt="" /><span><b>Remove system</b><small>Remove system from my account only</small></span></button>
+            <button class="sd-action-menu__destructive" type="button" role="menuitem" data-sd-action="dismantle"><img src="assets/icons/science/system dismantle/size=24px, style=mono.svg" alt="" /><span><b>Dismantle system</b><small>Dismantling configuration will apply to all users</small></span></button>
+          </div></div><button class="sd-primary" type="button" data-route="request-support">Start a request</button></div>
+          <div class="sd-summary"><h1><span data-sd-nickname>${system.nickname}</span><button type="button" data-sd-edit="nickname" aria-label="Edit system nickname"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" /></button></h1><div class="sd-facts"><div><strong>System type <button type="button" data-sd-edit="type" aria-label="Edit system type"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" /></button></strong><span data-sd-type>${system.typeCode}</span></div><div><strong>Groups</strong><span class="sd-system-groups">${systemGroups.length ? systemGroups.map((group) => `<button type="button" data-route="group-detail-${group.id}">${group.name}</button>`).join(", ") : "—"}</span></div><div><strong>Notes <button type="button" data-sd-edit="notes" aria-label="Edit system notes"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" /></button></strong><span data-sd-notes>${system.notes || "—"}</span></div></div></div>
+        </section>
+        <nav class="sd-tabs" aria-label="System detail sections" role="tablist"><button class="is-active" type="button" role="tab" aria-selected="true" data-sd-tab="components">Components</button><button type="button" role="tab" aria-selected="false" data-sd-tab="support">Support history</button><button type="button" role="tab" aria-selected="false" data-sd-tab="coverage">Coverage</button><button type="button" role="tab" aria-selected="false" data-sd-tab="knowledge">Knowledge</button><button type="button" role="tab" aria-selected="false" data-sd-tab="users">Users</button><button type="button" role="tab" aria-selected="false" data-sd-tab="activity">Activity log <span>9</span></button><button class="sd-favorite" type="button" aria-pressed="${systemIsFavorite}" data-sd-favorite><img src="${miFavoriteIcon(systemIsFavorite, 24)}" alt="" /><span>${systemIsFavorite ? "Remove from favorite" : "Add to favorite"}</span></button></nav>
+        <div class="sd-tab-content" role="tabpanel">${systemDetailTabMarkup("components", components, system)}</div>
+      </main>
+      <div data-footer-mount></div>
+    </div></div><dialog class="mi-action-dialog sd-edit-dialog" data-sd-edit-dialog aria-labelledby="sd-edit-title"></dialog><dialog class="sd-confirm-dialog" data-sd-confirm-dialog aria-labelledby="sd-confirm-title" aria-describedby="sd-confirm-description"></dialog>
+  </section>`;
+  mountTopbarSc();
+  mountPlatformSidebar("my-instruments");
+  mountFooter();
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("my-instruments"));
+  app.querySelector("[data-sd-favorite]").addEventListener("click", (event) => {
+    toggleMiDetailFavorite(event.currentTarget, systemFavoriteKey);
+    const menuFavorite = app.querySelector('[data-sd-action="favorite"]');
+    menuFavorite.querySelector("img").src = miFavoriteIcon(miIsFavorite(systemFavoriteKey), 24);
+    menuFavorite.querySelector("span").textContent = miIsFavorite(systemFavoriteKey) ? "Remove favorite" : "Favorite";
+  });
+  app.querySelectorAll("[data-sd-edit]").forEach((button) => button.addEventListener("click", () => openSystemEditDialog(system, button.dataset.sdEdit)));
+  const moreActions = app.querySelector("[data-sd-more-actions]");
+  const actionMenu = app.querySelector("[data-sd-action-menu]");
+  const closeActionMenu = () => { moreActions.setAttribute("aria-expanded", "false"); actionMenu.hidden = true; };
+  moreActions.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const expanded = moreActions.getAttribute("aria-expanded") === "true";
+    moreActions.setAttribute("aria-expanded", String(!expanded));
+    actionMenu.hidden = expanded;
+    if (!expanded) actionMenu.querySelector("[role='menuitem']")?.focus();
+  });
+  app.querySelector(".screen--system-detail").addEventListener("click", (event) => {
+    if (!event.target.closest(".sd-action-menu-wrap")) closeActionMenu();
+  });
+  actionMenu.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeActionMenu(); moreActions.focus(); } });
+  actionMenu.querySelectorAll("[data-sd-action]").forEach((button) => button.addEventListener("click", () => {
+    const action = button.dataset.sdAction;
+    closeActionMenu();
+    if (action === "edit-system") {
+      wireMiBuilderDialogs();
+      resetMiSystemBuilder(system);
+      openMiDialog(miCreateSystemDialog);
+    } else if (action === "edit-nickname") openSystemEditDialog(system, "nickname");
+    else if (action === "favorite") app.querySelector("[data-sd-favorite]").click();
+    else if (action === "remove" || action === "dismantle") openSystemConfirmationDialog(system, action);
+    else if (action === "access") {
+      system.locked = !system.locked;
+      system.admin = system.locked;
+      render();
+      showToast(`${system.nickname} access ${system.locked ? "restricted" : "unrestricted"}`, { variant: "success" });
+    } else showToast(action === "add-group" ? "Add to group opened" : "Share system opened");
+  }));
+  const showSystemTab = (tab) => {
+    app.querySelectorAll("[data-sd-tab]").forEach((button) => {
+      const selected = button.dataset.sdTab === tab;
+      button.classList.toggle("is-active", selected);
+      button.setAttribute("aria-selected", String(selected));
+    });
+    app.querySelector(".sd-tab-content").innerHTML = systemDetailTabMarkup(tab, components, system);
+    wireSystemTabContent(tab, system);
+  };
+  app.querySelectorAll("[data-sd-tab]").forEach((button) => button.addEventListener("click", () => showSystemTab(button.dataset.sdTab)));
+  app.querySelectorAll(".mi-favorite").forEach((button) => button.addEventListener("click", () => toggleMiFavorite(button)));
+  app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${system.nickname} — Services Central`;
+}
+
+function systemConfirmationMarkup(action) {
+  const isRemove = action === "remove";
+  const title = isRemove ? "Remove system from my account" : "Dismantle system configuration";
+  const description = isRemove ? "This action will not impact other users of the system." : "By dismantling this system, its components will remain in your account as individual instruments. This change will be applied for all users of the system.";
+  return `<form class="sd-confirm-modal" data-sd-confirm-form data-sd-confirm-action="${action}"><header><h2 id="sd-confirm-title">${title}</h2><button type="button" data-sd-confirm-close aria-label="Close ${title}"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><div class="sd-confirm-content"><p id="sd-confirm-description">${description}</p>${isRemove ? "" : '<button type="button" data-mi-toast="System users opened"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" />3 users</button>'}</div><footer><button type="button" class="sd-confirm-cancel" data-sd-confirm-cancel>Cancel</button><button type="submit" class="sd-confirm-submit">Confirm</button></footer></form>`;
+}
+
+function openSystemConfirmationDialog(system, action) {
+  const dialog = app.querySelector("[data-sd-confirm-dialog]") || document.querySelector("#mi-system-confirm-dialog");
+  dialog.innerHTML = systemConfirmationMarkup(action);
+  const close = () => dialog.close();
+  dialog.querySelector("[data-sd-confirm-close]").onclick = close;
+  dialog.querySelector("[data-sd-confirm-cancel]").onclick = close;
+  dialog.onclick = (event) => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) close();
+  };
+  dialog.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  dialog.querySelector("[data-sd-confirm-form]").onsubmit = (event) => {
+    event.preventDefault();
+    miRemoveSystem(system, action === "remove");
+    close();
+    setRoute("my-instruments");
+    showToast(action === "remove" ? "System removed." : "System dismantled.", { title: "Success:", variant: "system-success" });
+  };
+  openMiDialog(dialog);
+}
+
+function systemEditDialogMarkup(system, field) {
+  const isNickname = field === "nickname";
+  const isNotes = field === "notes";
+  const title = isNickname ? "Edit system nickname" : isNotes ? "Edit system notes" : "System type";
+  const description = field === "type" ? "Choose the appropriate system type." : "Changes will apply to all users of the system.";
+  let control = "";
+  if (isNickname) control = `<label class="sd-edit-field"><span>Nickname <small data-sd-edit-count>${system.nickname.length} / 128</small></span><input type="text" maxlength="128" value="${system.nickname}" data-sd-edit-input autocomplete="off" /></label>`;
+  if (isNotes) control = `<label class="sd-edit-field"><span>Notes <em>(Optional)</em><small data-sd-edit-count>${system.notes.length} / 150</small></span><textarea maxlength="150" data-sd-edit-input>${system.notes}</textarea></label>`;
+  if (field === "type") {
+    const current = MI_SYSTEM_TYPES.find((type) => type[0] === system.typeCode) || MI_SYSTEM_TYPES[0];
+    control = `<div class="sd-edit-field sd-edit-type"><span>System type</span><input type="hidden" value="${current[0]}" data-sd-edit-input /><button type="button" class="sd-edit-type__trigger" data-sd-type-trigger aria-expanded="false"><span data-sd-type-label>${miSystemTypeLabel(current)}</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="sd-edit-type__menu" role="listbox" data-sd-type-menu hidden>${MI_SYSTEM_TYPES.map((type) => `<button type="button" role="option" data-sd-type-option="${type[0]}" aria-selected="${type[0] === current[0]}">${miSystemTypeLabel(type)}</button>`).join("")}</div></div>`;
+  }
+  return `<form class="sd-edit-modal" data-sd-edit-form data-sd-edit-field="${field}"><header><div><h2 id="sd-edit-title">${title}</h2><p>${description}</p><button class="sd-edit-users" type="button" data-mi-toast="System users opened"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" />3 users</button></div><button type="button" data-sd-edit-close aria-label="Close ${title}"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><div class="sd-edit-body">${control}</div><footer><button class="mi-dialog-button mi-dialog-button--secondary" type="button" data-sd-edit-cancel>Cancel</button><button class="mi-dialog-button mi-dialog-button--primary" type="submit" data-sd-edit-save disabled>Save</button></footer></form>`;
+}
+
+function openSystemEditDialog(system, field) {
+  const dialog = app.querySelector("[data-sd-edit-dialog]") || document.querySelector("#mi-system-edit-dialog");
+  dialog.innerHTML = systemEditDialogMarkup(system, field);
+  const form = dialog.querySelector("[data-sd-edit-form]");
+  const input = form.querySelector("[data-sd-edit-input]");
+  const save = form.querySelector("[data-sd-edit-save]");
+  const original = field === "nickname" ? system.nickname : field === "notes" ? system.notes : system.typeCode;
+  const update = () => {
+    const value = input.value;
+    const count = form.querySelector("[data-sd-edit-count]");
+    if (count) count.textContent = `${value.length} / ${field === "notes" ? 150 : 128}`;
+    save.disabled = value === original || (field === "nickname" && value.trim() === "");
+  };
+  input.addEventListener("input", update);
+  form.querySelector("[data-sd-edit-close]").onclick = () => dialog.close();
+  form.querySelector("[data-sd-edit-cancel]").onclick = () => dialog.close();
+  dialog.onclick = (event) => {
+    if (event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+  };
+  if (field === "type") {
+    const trigger = form.querySelector("[data-sd-type-trigger]");
+    const menu = form.querySelector("[data-sd-type-menu]");
+    trigger.onclick = () => {
+      const expanded = trigger.getAttribute("aria-expanded") === "true";
+      trigger.setAttribute("aria-expanded", String(!expanded));
+      menu.hidden = expanded;
+    };
+    menu.querySelectorAll("[data-sd-type-option]").forEach((option) => {
+      option.onclick = () => {
+        const type = MI_SYSTEM_TYPES.find((candidate) => candidate[0] === option.dataset.sdTypeOption);
+        input.value = type[0];
+        form.querySelector("[data-sd-type-label]").innerHTML = miSystemTypeLabel(type);
+        menu.querySelectorAll("[role='option']").forEach((candidate) => candidate.setAttribute("aria-selected", String(candidate === option)));
+        trigger.setAttribute("aria-expanded", "false");
+        menu.hidden = true;
+        update();
+      };
+    });
+  }
+  form.onsubmit = (event) => {
+    event.preventDefault();
+    if (save.disabled) return;
+    if (field === "nickname") {
+      system.nickname = input.value.trim();
+      const detailNickname = app.querySelector("[data-sd-nickname]");
+      const detailToolbarTitle = app.querySelector(".flow-toolbar > strong");
+      if (detailNickname) detailNickname.textContent = system.nickname;
+      if (detailToolbarTitle) detailToolbarTitle.textContent = system.nickname;
+      if (detailNickname) document.title = `${system.nickname} — Services Central`;
+    } else if (field === "notes") {
+      system.notes = input.value.trim();
+      const detailNotes = app.querySelector("[data-sd-notes]");
+      if (detailNotes) detailNotes.textContent = system.notes || "—";
+    } else {
+      system.typeCode = input.value;
+      const detailType = app.querySelector("[data-sd-type]");
+      if (detailType) detailType.textContent = system.typeCode;
+    }
+    dialog.close();
+    if (!app.querySelector(".screen--system-detail")) setRoute(routeFromHash());
+    showToast(`${field === "type" ? "System type" : `System ${field}`} updated`, { variant: "success" });
+  };
+  form.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  update();
+  openMiDialog(dialog);
+  if (field !== "type") input.focus();
+}
+
+const SYSTEM_SUPPORT_ROWS = [
+  ["Submitted", "submitted", "5551726344", "PM (Contract)", "18 Oct 2020", "---", "1009996", "VQF0000DET", "Won’t turn on", "Alma Malmberg"],
+  ["Open", "open", "46521863", "Service Request", "18 Oct 2020", "---", "1009999", "VQH0000VEN", "Repair 0000123459 instrument parts", "Alma Malmberg"],
+  ["Open", "open", "46927364", "Inquiry", "18 Oct 2020", "---", "1009998", "VQF00SAMPL", "Preventive Maintenance - 0012345L", "Alma Malmberg"],
+  ["In progress", "progress", "465218988", "PM (Contract)", "18 Oct 2020", "---", "1009997", "VQF000PUMP", "Repair 0000123459 instrument parts", "Alma Malmberg"],
+  ["In progress", "progress", "46927364", "Tech Support", "18 Oct 2020", "---", "TSQ-Z-12345", "MSTSQQUANTIS", "Repair 0000123459 instrument parts", "Alma Malmberg"],
+  ["In progress", "progress", "46719836", "Inquiry", "12 May 2020", "---", "TSQ-Z-12346", "MSTSQQUANTIS", "Need support for unknown instrument", "Alma Malmberg"],
+  ["In progress", "progress", "46075402", "Inquiry", "12 May 2020", "---", "TSQ-Z-12347", "MSTSQQUANTIS", "Need support for unknown instrument", "Alma Malmberg"],
+  ["In progress", "progress", "46917372", "Inquiry", "12 May 2020", "---", "TSQ-Z-12348", "QEXAC00001", "Need support for unknown instrument", "Alma Malmberg"],
+  ["In progress", "progress", "46003524", "Depot Repair", "12 May 2020", "---", "SN98355W", "QEXAC00001", "Need support for unknown instrument", "Tyler Durden"],
+  ["Closed", "closed", "46195527", "Depot Repair", "23 Jan 2019", "23 Jan 2019", "SN98356W", "VQF0000DET", "Preventive Maintenance 00000", "Tyler Durden"],
+  ["Closed", "closed", "46939573", "Inquiry", "23 Jan 2019", "23 Jan 2019", "1009996", "VQH0000VEN", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46074658", "Tech Support", "23 Jan 2019", "23 Jan 2019", "1009999", "VQF00SAMPL", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46884635", "Tech Support", "23 Jan 2019", "23 Jan 2019", "1009998", "VQF000PUMP", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46626384", "Inquiry", "23 Jan 2019", "23 Jan 2019", "1009997", "MSTSQQUANTIS", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46977462", "Tech Support", "23 Jan 2019", "23 Jan 2019", "TSQ-Z-12345", "MSTSQQUANTIS", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46118377", "PM (Contract)", "23 Jan 2019", "23 Jan 2019", "TSQ-Z-12346", "MSTSQQUANTIS", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46000283", "PM (Contract)", "23 Jan 2019", "23 Jan 2019", "TSQ-Z-12347", "VQF0000DET", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46993746", "Inquiry", "23 Jan 2019", "23 Jan 2019", "TSQ-Z-12348", "VQH0000VEN", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46296730", "Inquiry", "23 Jan 2019", "23 Jan 2019", "SN98355W", "VQF00SAMPL", "Need calibration", "Tyler Durden"],
+  ["Closed", "closed", "46434295", "Installation", "23 Jan 2019", "23 Jan 2019", "SN98356W", "VQF000PUMP", "Need calibration", "Tyler Durden"],
+];
+
+const SYSTEM_MANUALS = [
+  ["vanquish-detector.png", "4820.8401-EN - Rev. 2.1 - Vanquish Charged Aerosol Detectors Operating Manual"],
+  ["vanquish-column.png", "4827.3201-EN - Rev 3.0 - Vanquish Column Compartments (VC-C10, VH-C10) Operating Manual"],
+  ["vanquish-sampler.png", "4820.3601-EN - Rev. 4.0 - Vanquish UHPLC System Operating Manual"],
+  ["vanquish-detector.png", "4828.5001-EN - Rev 4.0 - Vanquish Split Samplers Operating Manual"],
+  ["vanquish-pump.png", "4820.4405-EN - Rev 4.0 - Vanquish Pumps C, F Operating Manual"],
+  ["tsq.png", "80111-97047 - Rev A - TSQ Series II Mass Spectrometers Hardware Manual"],
+];
+
+function systemDetailSupportMarkup() {
+  const sort = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
+  const rows = SYSTEM_SUPPORT_ROWS.map(([status, tone, ticket, type, created, closed, serial, model, subject, contact], index) => `<tr><td>${index === 1 ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket" />' : ""}</td><td><span class="sd-ticket-status sd-ticket-status--${tone}">${status}</span></td><td><button type="button" data-mi-toast="Ticket ${ticket} opened">${ticket}</button></td><td>${type}</td><td>${created}</td><td>${closed}</td><td><button type="button" data-route="${miInstrumentDetailRoute(serial)}">${serial}</button></td><td title="${model}">${model}</td><td title="${subject}">${subject}</td><td>${contact}</td></tr>`).join("");
+  return `<section class="sd-panel sd-support-panel" aria-labelledby="sd-support-title"><header><h2 id="sd-support-title">Components support history</h2><div class="sd-filters"><strong>Filter by:</strong><select aria-label="Ticket status"><option>Ticket status</option><option>Open</option><option>In progress</option><option>Closed</option></select><select aria-label="Ticket type"><option>Ticket type</option><option>Service Request</option><option>PM (Contract)</option></select><select aria-label="Ticket contact"><option>Ticket contact</option><option>Alma Malmberg</option><option>Tyler Durden</option></select></div></header><div class="sd-support-table"><table><colgroup><col class="sd-col-icon"><col class="sd-col-status"><col class="sd-col-ticket"><col class="sd-col-type"><col class="sd-col-date"><col class="sd-col-date"><col class="sd-col-serial"><col class="sd-col-model"><col class="sd-col-subject"><col class="sd-col-contact"></colgroup><thead><tr><th></th><th>Status ${sort}</th><th>Ticket no. ${sort}</th><th>Ticket type ${sort}</th><th>Created ${sort}</th><th>Closed ${sort}</th><th>Serial no. ${sort}</th><th>Model no. ${sort}</th><th>Subject ${sort}</th><th>Ticket contact ${sort}</th></tr></thead><tbody>${rows}</tbody></table></div>${systemPaginationMarkup()}</section>`;
+}
+
+function systemPaginationMarkup() {
+  return `<div class="id-pagination sd-pagination"><div>Results per page <button type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> of <strong>267</strong></div><nav aria-label="Pagination"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><span>…</span><button type="button">9</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button><label>Go to: <input type="text" inputmode="numeric" aria-label="Go to page" placeholder="#" /></label></nav></div>`;
+}
+
+function systemDetailCoverageMarkup(components) {
+  const cards = components.slice(0, 2).map((instrument, index) => `<article class="sd-coverage-card"><header><h2>Instrument coverage</h2><span>Under contract</span></header><dl><div><dt>Service Plan Number</dt><dd>${index ? "MAN68668686868" : "MANIS3333333333"}</dd></div><div><dt>Service Plan Type</dt><dd>Essential Service Plan</dd></div><div><dt>Coverage Start</dt><dd>22 Jul 2020</dd></div><div><dt>Coverage End</dt><dd>22 Jul 2024</dd></div></dl><button type="button" data-mi-toast="Coverage instruments opened">›&nbsp; Show ${Math.min(3, components.length)} instrument(s)</button><footer><button type="button" data-mi-toast="Service plan details opened">›&nbsp; What’s included in the Essential Service Plan</button></footer></article>`).join("");
+  return `<section class="sd-panel sd-coverage-panel"><div class="sd-coverage-list">${cards || '<p>No coverage information available.</p>'}</div><article class="sd-contact-card"><header><h2><img src="assets/icons/general/coverage contact/ size=24px, style=mono.svg" alt="" />Service plan contact</h2><button type="button" data-mi-toast="Edit contact opened">Edit contact</button></header><div class="sd-contact-row"><dl><div><dt>Name</dt><dd>Molly Hartman</dd></div><div><dt>Email</dt><dd>molly.hartman@company.com</dd></div></dl><button type="button" data-mi-toast="Contact instruments opened">›&nbsp; Show 3 instrument(s)</button></div><div class="sd-contact-row"><dl><div><dt>Name</dt><dd>Sebastien Martin</dd></div><div><dt>Email</dt><dd>sebastien.martin@company.com</dd></div></dl><button type="button" data-mi-toast="Contact instruments opened">›&nbsp; Show 1 instrument(s)</button></div><footer><button type="button" data-mi-toast="Unassigned instruments opened">›&nbsp; Show 2 instrument(s) with no service plan contact</button></footer></article></section>`;
+}
+
+function systemDetailKnowledgeMarkup(hasSearch = false) {
+  const resultCards = Array.from({ length: 6 }, () => `<article class="sd-article-card"><div><button type="button" data-mi-toast="Knowledge article opened"><strong>Error 2022</strong> Vanquish detector F</button><p>Aenean facilisis porta nibh et vestibulum. Integer commodo, lectus eget lacinia aliquet, augue erat placerat massa, quis mattis ipsum diam sit...</p><b>120 views</b></div><span><img src="assets/icons/actions/link/Size=24px, Style=Mono.svg" alt="Copy link" /><img src="assets/icons/actions/copy/Size=24px, Style=Mono.svg" alt="Copy article" /></span></article>`).join("");
+  const manuals = SYSTEM_MANUALS.map(([image, title]) => `<article class="sd-manual-card"><img src="assets/instruments/${image}" alt="" /><button type="button" data-mi-toast="Manual opened">${title}</button><span><img src="assets/icons/actions/link/Size=24px, Style=Mono.svg" alt="Copy link" /><img src="assets/icons/actions/copy/Size=24px, Style=Mono.svg" alt="Copy manual" /></span></article>`).join("");
+  return `<section class="sd-knowledge"><div class="sd-knowledge-search"><div><h2>Expand your knowledge</h2><p>Search documents and topics related to your instrument or <button type="button" data-mi-toast="Knowledge base opened">browse knowledge base</button> to access more resources and articles.</p></div><label>Search<div><input type="search" value="${hasSearch ? "Error 202" : ""}" placeholder="Search knowledge articles" data-sd-knowledge-search /><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" /></div></label></div>${hasSearch ? `<section class="sd-search-results"><h2>Top search results</h2><div>${resultCards}</div><button type="button" data-mi-toast="More results loaded">See more...</button></section>` : ""}<section class="sd-manuals"><h2>Manuals <span>6</span></h2><div>${manuals}</div></section><aside class="sd-appslab"><img src="assets/instruments/appslab-library.svg" alt="" /><strong>Find your Methods, eWorkflows and more</strong><p>The AppsLab Library of Analytical Applications is a fully searchable online, analytical method repository where you can find applications with detailed method information, chromatograms and related compound information.</p><button type="button" data-mi-toast="AppsLab library opened">Go to AppsLab library</button></aside></section>`;
+}
+
+function systemDetailUsersMarkup(target) {
+  const accessKey = `system:${target.id}`;
+  const users = [
+    [MI_CURRENT_USER_EMAIL, "10 May 2024", ""],
+    ["sebastien.martin@company.com", "10 May 2022", "sebastien-martin"],
+    ["holly.hartman@company.com", "Invitation sent (expires in 5 days)", "holly-hartman"],
+  ];
+  return `<section class="sd-panel sd-users-panel"><header><div><h2>Instrument users <span>3</span></h2><p>Users who have added this instrument in Services Central.</p></div><button type="button" data-mi-toast="Share users opened">Share</button></header><table><thead><tr><th></th><th>Role</th><th>Current users</th><th>Added date</th><th>Remove</th></tr></thead><tbody>${users.map(([email, date, slug]) => { const role = miRoleForAsset(accessKey, email, target); return `<tr><td>${role === "Admin" ? '<img class="sd-admin-icon" src="assets/icons/general/admin/size=24px, style=mono.svg" alt="Administrator" />' : ""}</td><td>${miRoleBadge(role === "Admin", { accessKey, email, editable: miIsAdmin(target) })}</td><td>${slug ? `<button type="button" data-route="user-detail-${slug}">${email}</button>` : email}</td><td>${date}</td><td><button type="button" data-mi-toast="${email} removed" aria-label="Remove ${email}"><img src="assets/icons/actions/bin/size=16px, style=mono.svg" alt="" /></button></td></tr>`; }).join("")}</tbody></table></section>`;
+}
+
+function systemDetailActivityMarkup() {
+  const rows = [
+    ["10 Jun 2023", "Submitted instrument support request for 1009997 (Pump 2B)", "sebastien.martin@company.com", true],
+    ["30 Jun 2023", "holly.hartman@company.com became the service plan contact for 1009987", "holly.hartman@company.com", true],
+    ["30 Jun 2023", "holly.hartman@company.com became the service plan contact for 1009988", "holly.hartman@company.com", true],
+    ["10 Jun 2023", "Nickname change for TSQ-Z-12346 from TSQZ to TSQ-0", "sebastien.martin@company.com", true],
+    ["10 Jun 2023", "holly.hartman@company.com is no longer an Admin", "holly.hartman@company.com", true],
+    ["28 Apr 2023", "holly.hartman@company.com became an Admin", "holly.hartman@company.com"],
+    ["25 Apr 2023", "System is under access control", "holly.hartman@company.com"],
+    ["25 Apr 2023", "Added 1009996 (Detector-2B)", "patty.jones@company.com"],
+    ["18 Apr 2023", "System nickname change from Alpine 2B to Alpine", "sebastien.martin@company.com"],
+    ["18 Mar 2023", "System Notes changed", "patty.jones@company.com"],
+    ["18 Feb 2023", "System Nickname System A changed to System B", "ines.mitchell@company.com"],
+    ["18 Feb 2023", "Nickname Detector-3B removed for 1009986", "sebastien.martin@company.com"],
+    ["18 Feb 2023", "Nickname Detector-A changed for 1009986 to Detector-3B", "sebastien.martin@company.com"],
+    ["18 Feb 2023", "Nickname Detector-A added for 1009986", "patty.jones@company.com"],
+    ["18 Feb 2023", "Added 1009988 (Pump-3B)", "patty.jones@company.com"],
+    ["18 Feb 2023", "Created system", "holly.hartman@company.com"],
+  ];
+  return `<section class="sd-panel sd-activity-panel"><header><h2>Activity log</h2><p>Activity related to this instrument by users within Services Central over prior 6 months.</p></header><table><thead><tr><th>Date</th><th></th><th>Action</th><th>Users</th></tr></thead><tbody>${rows.map(([date, action, user, fresh]) => `<tr class="${fresh ? "is-new" : ""}"><td>${date}</td><td>${fresh ? "<span>New</span>" : ""}</td><td>${action}</td><td>${user}</td></tr>`).join("")}</tbody></table></section>`;
+}
+
+function systemDetailTabMarkup(tab, components, system) {
+  if (tab === "support") return systemDetailSupportMarkup();
+  if (tab === "coverage") return systemDetailCoverageMarkup(components);
+  if (tab === "knowledge") return systemDetailKnowledgeMarkup(false);
+  if (tab === "users") return systemDetailUsersMarkup(system);
+  if (tab === "activity") return systemDetailActivityMarkup();
+  return `<section class="sd-components" aria-labelledby="sd-components-title"><h2 id="sd-components-title">Components <span>${components.length}</span></h2><div class="sd-components__grid">${components.map((instrument) => miGridCardMarkup(instrument, { favoritable: false })).join("")}</div></section>`;
+}
+
+function wireSystemTabContent(tab, system) {
+  if (tab === "knowledge") {
+    const input = app.querySelector("[data-sd-knowledge-search]");
+    input?.addEventListener("change", () => {
+      app.querySelector(".sd-tab-content").innerHTML = systemDetailKnowledgeMarkup(Boolean(input.value.trim()));
+      wireSystemTabContent("knowledge", system);
+    });
+    input?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        input.dispatchEvent(new Event("change"));
+      }
+    });
+  }
+  const content = app.querySelector(".sd-tab-content");
+  if (tab === "users") wireMiRoleSelectors(content, (role, email) => {
+    if (email === MI_CURRENT_USER_EMAIL) {
+      renderMiSystemDetail(routeFromHash());
+      app.querySelector('[data-sd-tab="users"]')?.click();
+      return;
+    }
+    content.innerHTML = systemDetailUsersMarkup(system);
+    wireSystemTabContent("users", system);
+  });
+  content.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
+  wireRouteControls(content);
+}
+
+function instrument1009996TicketRows() {
+  return INSTRUMENT_1009996_TICKETS.map(([tone, status, ticket, type, created, closed, subject, contact, hasIcon]) => `<tr>
+    <td>${hasIcon ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket document" />' : ""}</td>
+    <td><span class="id-status id-status--${tone}">${status}</span></td>
+    <td><button type="button" data-route="ticket-detail">${ticket}</button></td>
+    <td>${type}</td><td>${created}</td><td>${closed}</td><td title="${subject}">${subject}</td><td>${contact}</td>
+  </tr>`).join("");
+}
+
+function instrumentCoverageStatusClass(instrument) {
+  if (instrument.coverage === "Coverage expired") return "id-status--expired";
+  if (instrument.coverage === "Expiring soon") return "id-status--testing";
+  return "id-status--contract";
+}
+
+function instrumentCatalogName(instrument) {
+  const names = {
+    "vanquish-detector.png": "Vanquish™ Variable Wavelength Detector F",
+    "vanquish-column.png": "Vanquish™ Column Compartment",
+    "vanquish-sampler.png": "Vanquish™ Split Sampler",
+    "vanquish-pump.png": "Vanquish™ Pump",
+    "tsq.png": "TSQ™ Quantis Mass Spectrometer",
+    "q-exactive.png": "Q Exactive™ Mass Spectrometer",
+  };
+  return names[instrument.image] || instrument.model;
+}
+
+function instrumentDetailCoverageMarkup(instrument) {
+  const planNumber = `MAIN${instrument.serial.replace(/\D/g, "").slice(-6).padStart(6, "0")}`;
+  return `<section class="id-coverage-tab">
+    <aside class="id-coverage-promo"><div><h2>Get up to 20% off <strong>in service Plans</strong></h2><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.</p><small>Promo expires 30 Jun 2024. Restrictions may apply.</small></div><button type="button" data-mi-toast="Request quote opened">Request quote</button></aside>
+    <div class="id-coverage-grid">
+      <article class="id-coverage-card">
+        <header><h2>Instrument coverage</h2><span class="${instrumentCoverageStatusClass(instrument)}">${instrument.coverage}</span></header>
+        <dl><div><dt>Service Plan Number</dt><dd>${planNumber}</dd></div><div><dt>Service Plan Type</dt><dd>Essential Service Plan</dd></div><div><dt>Coverage Start</dt><dd>22 Jul 2020</dd></div><div><dt>Coverage End</dt><dd>${instrument.end}</dd></div></dl>
+        <div class="id-plan-details"><h3><img src="assets/icons/directions/chevron up/size=16px, style=mono.svg" alt="" />What's included in the Essential Service Plan</h3><ul><li>2 business day on-site response</li><li>Immediate Tech support <img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></li><li>Annual preventive maintenance</li><li>Highest Priority parts/support/service</li><li>Unlimited Remote Diagnosis/Repair</li><li>On-site corrective maintenance fully covered</li></ul></div>
+      </article>
+      <article class="id-contact-card"><header><h2><img src="assets/icons/general/coverage contact/ size=24px, style=mono.svg" alt="" />Service plan contact</h2><button type="button" data-mi-toast="Edit contact opened"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" />Edit contact</button></header><dl><div><dt>Name</dt><dd>Molly Hartman</dd></div><div><dt>Email</dt><dd>molly.hartman@company.com</dd></div></dl></article>
+    </div>
+  </section>`;
+}
+
+function instrumentDetailKnowledgeMarkup(instrument, hasSearch = false) {
+  const resultCards = Array.from({ length: 6 }, () => `<article class="sd-article-card"><div><button type="button" data-mi-toast="Knowledge article opened"><strong>Error 2022</strong> Vanquish detector F</button><p>Aenean facilisis porta nibh et vestibulum. Integer commodo, lectus eget lacinia aliquet, augue erat placerat massa, quis mattis ipsum diam sit...</p><b>120 views</b></div><span><img src="assets/icons/actions/link/Size=24px, Style=Mono.svg" alt="Copy link" /><img src="assets/icons/actions/copy/Size=24px, Style=Mono.svg" alt="Copy article" /></span></article>`).join("");
+  const manuals = [
+    [instrument.image, `${instrument.model} - ${instrumentCatalogName(instrument)} Operating Manual`],
+    [instrument.image.startsWith("vanquish") ? "vanquish-column.png" : instrument.image, `${miInstrumentType(instrument)} System Operating Manual`],
+  ].map(([image, title]) => `<article class="sd-manual-card"><img src="assets/instruments/${image}" alt="" /><button type="button" data-mi-toast="Manual opened">${title}</button><span><img src="assets/icons/actions/link/Size=24px, Style=Mono.svg" alt="Copy link" /><img src="assets/icons/actions/copy/Size=24px, Style=Mono.svg" alt="Copy manual" /></span></article>`).join("");
+  return `<section class="sd-knowledge id-knowledge-tab"><div class="sd-knowledge-search"><div><h2>Expand your knowledge</h2><p>Search documents and topics related to your instrument or <button type="button" data-id-browse-knowledge>browse knowledge base</button> to access more resources and articles.</p></div><label>Search<div><input type="search" value="${hasSearch ? "Error 202" : ""}" placeholder="Search knowledge articles" data-id-knowledge-search /><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" /></div></label></div>${hasSearch ? `<section class="sd-search-results"><h2>Top search results</h2><div>${resultCards}</div><button type="button" data-mi-toast="More results loaded">See more...</button></section>` : ""}<section class="sd-manuals"><h2>Manuals <span>2</span></h2><div>${manuals}</div></section><aside class="sd-appslab"><img src="assets/instruments/appslab-library.svg" alt="" /><strong>Find your Methods, eWorkflows and more</strong><p>The AppsLab Library of Analytical Applications is a fully searchable online, analytical method repository where you can find applications with detailed method information, chromatograms and related compound information.</p><button type="button" data-mi-toast="AppsLab library opened">Go to AppsLab library</button></aside></section>`;
+}
+
+function instrumentDetailUsersMarkup(target) {
+  const accessKey = `instrument:${target.serial}`;
+  const allUsers = [
+    [MI_CURRENT_USER_EMAIL, "10 May 2024", ""],
+    ["sebastien.martin@company.com", "10 May 2022", "sebastien-martin"],
+    ["holly.hartman@company.com", "Invitation sent (expires in 5 days)", "holly-hartman"],
+    ["ines.mitchell@company.com", "10 May 2022", "ines-mitchell"],
+    ["patty.jones@company.com", "10 May 2022", "patty-jones"],
+  ];
+  const count = Math.max(1, Math.min(allUsers.length, Number.parseInt(target?.users, 10) || 1));
+  const users = allUsers.slice(0, count);
+  return `<section class="sd-panel sd-users-panel id-users-panel"><header><div><h2>Instrument users <span>${count}</span></h2><p>Users who have added this instrument in Services Central.</p></div><button type="button" data-mi-toast="Share users opened">Share</button></header><table><thead><tr><th></th><th>Role ${miSortIcon}</th><th>Current users ${miSortIcon}</th><th>Added date ${miSortIcon}</th><th>Remove</th></tr></thead><tbody>${users.map(([email, date, slug]) => { const role = miRoleForAsset(accessKey, email, target); return `<tr><td>${role === "Admin" ? '<img class="sd-admin-icon" src="assets/icons/general/admin/size=24px, style=mono.svg" alt="Administrator" />' : ""}</td><td>${miRoleBadge(role === "Admin", { accessKey, email, editable: miIsAdmin(target) })}</td><td>${slug ? `<button type="button" data-route="user-detail-${slug}">${email}</button>` : email}</td><td>${date}</td><td><button type="button" data-mi-toast="${email} removed" aria-label="Remove ${email}"><img src="assets/icons/actions/bin/size=16px, style=mono.svg" alt="" /></button></td></tr>`; }).join("")}</tbody></table></section>`;
+}
+
+function instrumentDetailActivityMarkup(instrument) {
+  const rows = [
+    ["10 Jun 2024", "Submitted instrument support request", "holly.hartman@company.com", true],
+    ["10 Jun 2023", "holly.hartman@company.com became the service plan contact.", "holly.hartman@company.com", true],
+    ["25 May 2024", "my_name.lastname@company.com became an Admin", "sebastien.martin@company.com"],
+    ["28 Apr 2024", "sebastien.martin@company.com became an Admin", "sebastien.martin@company.com"],
+    ["25 Apr 2024", "Instrument is under access control", "sebastien.martin@company.com"],
+    ["25 Apr 2024", "Notes changed", "ines.mitchell@company.com"],
+    ["18 Apr 2024", `Nickname changed to ${instrument.nickname}`, "ines.mitchell@company.com"],
+  ];
+  return `<section class="sd-panel sd-activity-panel id-activity-panel"><header><h2>Activity log</h2><p>Activity related to this instrument by users within Services Central over prior 6 months.</p></header><table><thead><tr><th>Date ${miSortIcon}</th><th></th><th>Action ${miSortIcon}</th><th>Users ${miSortIcon}</th></tr></thead><tbody>${rows.map(([date, action, user, fresh]) => `<tr class="${fresh ? "is-new" : ""}"><td>${date}</td><td>${fresh ? "<span>New</span>" : ""}</td><td>${action}</td><td>${user}</td></tr>`).join("")}</tbody></table></section>`;
+}
+
+function instrumentDetailTabMarkup(tab, instrument) {
+  if (tab === "coverage") return instrumentDetailCoverageMarkup(instrument);
+  if (tab === "knowledge") return instrumentDetailKnowledgeMarkup(instrument, false);
+  if (tab === "users") return instrumentDetailUsersMarkup(instrument);
+  if (tab === "activity") return instrumentDetailActivityMarkup(instrument);
+  return "";
+}
+
+function wireInstrumentDetailTabContent(tab, instrument) {
+  const content = app.querySelector("[data-id-dynamic-tab]");
+  if (tab === "knowledge") {
+    const input = content.querySelector("[data-id-knowledge-search]");
+    input?.addEventListener("change", () => {
+      content.innerHTML = instrumentDetailKnowledgeMarkup(instrument, Boolean(input.value.trim()));
+      wireInstrumentDetailTabContent("knowledge", instrument);
+    });
+    input?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        input.dispatchEvent(new Event("change"));
+      }
+    });
+    content.querySelector("[data-id-browse-knowledge]")?.addEventListener("click", () => window.open("https://knowledge1.thermofisher.com/", "_blank", "noopener"));
+  }
+  if (tab === "users") wireMiRoleSelectors(content, () => {
+    content.innerHTML = instrumentDetailUsersMarkup(instrument);
+    wireInstrumentDetailTabContent("users", instrument);
+  });
+  content.querySelectorAll("[data-mi-toast]").forEach((control) => control.addEventListener("click", () => showToast(control.dataset.miToast)));
+  wireRouteControls(content);
+}
+
+function renderInstrumentDetail(serial) {
+  const instrument = MY_INSTRUMENTS.find((candidate) => candidate.serial === serial);
+  if (!instrument || MI_REMOVED_INSTRUMENTS.has(instrument.serial)) {
+    setRoute("my-instruments");
+    return;
+  }
+  const displayName = instrument.nickname === "—" ? instrument.serial : instrument.nickname;
+  const owningSystem = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].find((system) => system.components.includes(instrument.serial));
+  const instrumentFavoriteKey = `instrument:${instrument.serial}`;
+  const instrumentIsFavorite = miIsFavorite(instrumentFavoriteKey);
+  app.innerHTML = `<section class="screen screen--instrument-detail" aria-label="Instrument ${instrument.serial} details">
+    <div class="flow-toolbar">
+      <button type="button" data-go-back>Back</button>
+      <strong>${displayName}</strong>
+      <div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div>
+    </div>
+    <div class="id-stage"><div class="mi-shell id-shell">
+      <div data-topbar-sc-mount></div>
+      <div data-platform-sidebar-mount></div>
+      <main class="platform-page-body id-main">
+        <section class="id-hero" aria-label="Instrument summary">
+          <div class="id-hero__actions">
+            <div class="id-actions"><button class="id-more-actions" type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" data-mi-action-menu-context="detail" aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div>
+            <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
+          </div>
+          <div class="id-product"><img src="assets/instruments/${instrument.image}" alt="${instrumentCatalogName(instrument)}" /></div>
+          <dl class="id-facts">
+            <div><dt>Nickname <button type="button" data-id-toast="Edit nickname" aria-label="Edit nickname"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" /></button></dt><dd>${instrument.nickname}</dd></div>
+            <div><dt>Model Number</dt><dd>${instrument.model}</dd></div>
+            <div><dt>Coverage</dt><dd><span class="id-status ${instrumentCoverageStatusClass(instrument)}">${instrument.coverage}</span></dd></div>
+            <div class="id-fact--wide"><dt>Catalog Name</dt><dd>${instrumentCatalogName(instrument)}</dd></div>
+            <div><dt>Serial Number</dt><dd>${instrument.serial}</dd></div>
+            <div><dt>Type</dt><dd>${miInstrumentType(instrument)}</dd></div>
+            <div><dt>Groups</dt><dd>${instrument.group === "—" ? "—" : `<button type="button" data-id-toast="${instrument.group} opened">${instrument.group}</button>`}</dd></div>
+            <div class="id-fact--wide id-knowledge"><dt>Knowledge</dt><dd><button type="button" data-id-browse-knowledge-external><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" />Browse for manuals and troubleshooting articles</button><button type="button" data-id-open-knowledge><img src="assets/icons/media/document/size=16px, style=mono.svg" alt="" />View operating manual</button><button type="button" data-id-open-knowledge><img src="assets/icons/media/document/size=16px, style=mono.svg" alt="" />View system operating manual</button></dd></div>
+            <div><dt>System</dt><dd>${owningSystem ? `<button type="button" data-route="system-detail-${owningSystem.id}">${owningSystem.nickname}</button>` : '<button type="button" data-id-toast="Create a system selected">Create a system</button>'}</dd></div>
+            <div class="id-notes"><dt>Notes <button type="button" data-id-toast="Edit notes" aria-label="Edit notes"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" /></button></dt><dd><button type="button" data-id-toast="Add instrument note selected">Add instrument note</button></dd></div>
+          </dl>
+        </section>
+
+        <nav class="id-tabs" aria-label="Instrument detail sections" role="tablist">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-id-tab="support">Support</button>
+          <button type="button" role="tab" aria-selected="false" data-id-tab="coverage">Coverage</button>
+          <button type="button" role="tab" aria-selected="false" data-id-tab="knowledge">Knowledge</button>
+          <button type="button" role="tab" aria-selected="false" data-id-tab="users">Users</button>
+          <button type="button" role="tab" aria-selected="false" data-id-tab="activity">Activity log <span>1</span></button>
+          <button class="id-favorite" type="button" aria-pressed="${instrumentIsFavorite}" data-id-favorite><img src="${miFavoriteIcon(instrumentIsFavorite, 24)}" alt="" /><span>${instrumentIsFavorite ? "Remove from favorite" : "Add to favorite"}</span></button>
+        </nav>
+
+        <div class="id-dynamic-tab" role="tabpanel" data-id-dynamic-tab hidden></div>
+
+        <aside class="id-pm" aria-labelledby="id-pm-title">
+          <img class="id-pm__art" src="assets/instruments/preventive-maintenance.svg" alt="" />
+          <div><h2 id="id-pm-title">Preventive Maintenance</h2><p>Thermo Fisher will schedule your next preventive maintenance on ticket <button type="button" data-route="ticket-detail">46927364</button>.<br />This information will be updated when the scheduling timeframe approaches.</p></div>
+          <button class="id-secondary" type="button" data-route="request-support">Request PM Scheduling</button>
+        </aside>
+
+        <section class="id-support" aria-labelledby="id-support-title">
+          <header><h1 id="id-support-title">Support history</h1><div class="id-filters"><strong>Filter by:</strong><label><span class="sr-only">Ticket status</span><select><option>Ticket status</option><option>Open</option><option>In progress</option><option>Closed</option></select></label><label><span class="sr-only">Ticket type</span><select><option>Ticket type</option><option>Service Request</option><option>PM (Contract)</option><option>Inquiry</option></select></label><label><span class="sr-only">Ticket contact</span><select><option>Ticket contact</option><option>Alma Malmbe</option><option>Tyler Durden</option></select></label></div></header>
+          <div class="id-table-wrap"><table aria-label="Support history"><colgroup><col class="id-col-icon" /><col class="id-col-status" /><col class="id-col-ticket" /><col class="id-col-type" /><col class="id-col-created" /><col class="id-col-closed" /><col class="id-col-subject" /><col class="id-col-contact" /></colgroup><thead><tr><th></th><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Closed <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket contact <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>${instrument1009996TicketRows()}</tbody></table></div>
+          <div class="id-pagination"><div>Results per page <button type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> of <strong>267</strong></div><nav aria-label="Support history pagination"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><span>…</span><button type="button">9</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button><label>Go to: <input type="text" inputmode="numeric" aria-label="Go to page" placeholder="#" /></label></nav></div>
+        </section>
+      </main>
+      <div data-footer-mount></div>
+    </div></div>
+  </section>`;
+  mountTopbarSc();
+  mountPlatformSidebar("my-instruments");
+  mountFooter();
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("my-instruments"));
+  app.querySelectorAll("[data-id-toast]").forEach((control) => control.addEventListener("click", () => showToast(control.dataset.idToast)));
+  app.querySelector("[data-id-favorite]").addEventListener("click", (event) => toggleMiDetailFavorite(event.currentTarget, instrumentFavoriteKey));
+  const showInstrumentTab = (tab) => {
+    const showSupport = tab === "support";
+    app.querySelectorAll(".id-tabs > button:not(.id-favorite)").forEach((candidate) => {
+      const selected = candidate.dataset.idTab === tab;
+      candidate.classList.toggle("is-active", selected);
+      candidate.setAttribute("aria-selected", String(selected));
+    });
+    app.querySelector(".id-pm").hidden = !showSupport;
+    app.querySelector(".id-support").hidden = !showSupport;
+    const dynamicTab = app.querySelector("[data-id-dynamic-tab]");
+    dynamicTab.hidden = showSupport;
+    if (!showSupport) {
+      dynamicTab.innerHTML = instrumentDetailTabMarkup(tab, instrument);
+      wireInstrumentDetailTabContent(tab, instrument);
+    }
+  };
+  app.querySelectorAll("[data-id-tab]").forEach((button) => button.addEventListener("click", () => showInstrumentTab(button.dataset.idTab)));
+  app.querySelectorAll("[data-id-open-knowledge]").forEach((button) => button.addEventListener("click", () => {
+    showInstrumentTab("knowledge");
+  }));
+  app.querySelector("[data-id-browse-knowledge-external]")?.addEventListener("click", () => window.open("https://knowledge1.thermofisher.com/", "_blank", "noopener"));
+  wireMiActionMenus(app);
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${displayName} — Services Central`;
 }
 
 function addInstrumentEntryRows(count = 1) {
@@ -3743,6 +6067,16 @@ function render() {
     renderEditSpc();
   } else if (route === "my-instruments") {
     renderMyInstruments();
+  } else if (isMiUserDetailRoute(route)) {
+    renderMiUserDetail(route);
+  } else if (isMiGroupDetailRoute(route)) {
+    renderMiGroupDetail(route);
+  } else if (isMiSystemDetailRoute(route)) {
+    renderMiSystemDetail(route);
+  } else if (route === "instrument-1009996") {
+    renderInstrumentDetail("1009996");
+  } else if (isMiInstrumentDetailRoute(route)) {
+    renderInstrumentDetail(route.replace(/^instrument-detail-/, ""));
   } else if (route === "add-instruments") {
     renderAddInstruments();
   } else if (isInstallationsPage) {
@@ -3805,6 +6139,26 @@ FLOW_MENU.forEach(([label, route]) => {
 
 document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   button.addEventListener("click", () => helpDialog.close());
+});
+miEditColumnsDialog.querySelectorAll("[data-mi-edit-columns-close], [data-mi-edit-columns-cancel]").forEach((button) => button.addEventListener("click", () => {
+  syncMiColumnDialog();
+  miEditColumnsDialog.close();
+}));
+miEditColumnsDialog.querySelector("[data-mi-column-search]").addEventListener("input", (event) => {
+  const query = event.currentTarget.value.trim().toLowerCase();
+  miEditColumnsDialog.querySelectorAll("[data-mi-column-row]").forEach((row) => { row.hidden = query !== "" && !row.dataset.search.includes(query); });
+});
+miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListener("submit", () => {
+  miVisibleColumns.clear();
+  miEditColumnsDialog.querySelectorAll("[data-mi-column]:not(:disabled):checked").forEach((checkbox) => miVisibleColumns.add(checkbox.dataset.miColumn));
+  applyMiColumnVisibility();
+  showToast("Column preferences updated");
+});
+miEditColumnsDialog.addEventListener("click", (event) => {
+  if (event.target === miEditColumnsDialog) {
+    syncMiColumnDialog();
+    miEditColumnsDialog.close();
+  }
 });
 document.querySelector("[data-close-flows]").addEventListener("click", () => flowsDialog.close());
 document.querySelectorAll("[data-installation-pending-close], [data-installation-pending-continue]").forEach((button) => button.addEventListener("click", () => installationPendingDialog.close()));

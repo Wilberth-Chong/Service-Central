@@ -123,4 +123,3 @@ Retain and rerun the existing Support History search, date-range, fidelity, quot
 - No new package or design-system dependency.
 - No changes to ticket data, date-range semantics, search fields, routing, sidebar, header, footer, pagination, or tooltip features.
 - No staging or commit of the existing dirty production worktree unless separately authorized. The design document itself may be committed as the brainstorming record.
-
