@@ -10,6 +10,6 @@ rg -q 'mountNativePageChrome\("support-history", \{ title: ticket\.title, backRo
 request_support_calls=$(rg -c 'mountNativePageChrome\("request-support", \{ title:' "$app_file")
 test "$request_support_calls" -eq 8
 
-rg -q 'app\.js\?v=20260819-shared-page-chrome' index.html
+rg -q 'app\.js\?v=20260819-submitted-summary-close-action' index.html
 
 printf 'PASS: shared page chrome mounts all approved routes\n'

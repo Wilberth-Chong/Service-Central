@@ -11,6 +11,6 @@ fi
 rg -q '\.screen--ticket-summary,' "$css_file"
 rg -q '\.screen--request-installation \{' "$css_file"
 rg -q 'overflow-x: hidden;' "$css_file"
-rg -q 'styles\.css\?v=20260819-native-page-main-viewport' index.html
+rg -q 'styles\.css\?v=20260819-step-four-layout-alignment' index.html
 
 printf 'PASS: native main ends at the footer without page-level horizontal overflow\n'

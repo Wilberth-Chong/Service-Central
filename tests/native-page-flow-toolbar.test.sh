@@ -11,6 +11,6 @@ rg -q '\.mi-shell--native-flow > \.topbar-sc \{' styles.css
 rg -q 'top: var\(--platform-flow-toolbar-height\);' styles.css
 rg -q '\.mi-shell--native-flow > \.platform-sidebar \{' styles.css
 rg -q 'top: calc\(var\(--platform-flow-toolbar-height\) \+ var\(--platform-topbar-height\)\);' styles.css
-rg -q 'styles\.css\?v=20260819-native-page-main-viewport' index.html
+rg -q 'styles\.css\?v=20260819-step-four-layout-alignment' index.html
 
 printf 'PASS: native flow pages mount the standard toolbar and fixed header\n'
