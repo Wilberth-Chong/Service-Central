@@ -2184,7 +2184,21 @@ button {
 .db-titlebar .mi-button { width: 180px; }
 .db-titlebar .mi-button--primary { color: #fff !important; background: var(--mi-red); }
 .db-titlebar .mi-button--primary:hover { background: #c81016; }
-.db-banner__button { width: 128px; }
+.db-banner__button {
+  display: inline-flex;
+  width: 154px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 3px;
+  padding: 0 16px !important;
+  color: #0071d0 !important;
+  background: #fff !important;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 22px;
+}
 
 .db-top { width: 1320px; margin-left: 32px; }
 .db-search { position: relative; display: block; width: 1082px; height: 60px; margin: 64px auto 0; }
@@ -2281,7 +2295,7 @@ button {
 
 .db-favorites { height: 494px; margin-top: 40px; }
 .db-favorites .db-section__rule { margin-top: 15px; }
-.db-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; margin-top: 56px; }
+.db-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: 32px; margin-top: 56px; }
 .db-card { position: relative; height: 378px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
 .db-card > header { position: relative; display: flex; height: 140px; align-items: flex-start; border-bottom: 1px solid #e5e5e5; padding: 24px 16px; }
 .db-card__product { display: block; width: 64px; height: 80px; flex: 0 0 64px; margin-right: 16px; object-fit: contain; }
@@ -2298,28 +2312,34 @@ button {
 .db-card dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .db-card__text-link { color: var(--mi-blue); }
 .db-coverage { position: absolute; bottom: 54px; left: 16px; display: inline-flex; min-height: 24px; align-items: center; border-radius: 12px; padding: 1px 12px; color: #007a30; background: #d6f8df; font-size: 14px; line-height: 22px; }
+.db-coverage--expired { color: #8a0000; background: #ffe1e1; }
 .db-card > footer { position: absolute; right: 0; bottom: 0; left: 0; display: flex; height: 48px; align-items: center; justify-content: space-between; border-top: 1px solid #e5e5e5; padding: 0 16px; background: #f7f7f7; }
 .db-card > footer button { display: inline-flex; align-items: center; gap: 8px; color: var(--mi-blue) !important; font-size: 14px; font-weight: 700; }
 .db-card > footer img { width: 16px; height: 16px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
+.db-card > footer img.db-card__more-icon { width: 24px; height: 24px; }
 .db-card__users { position: absolute; top: 16px; right: 16px; display: inline-flex; min-width: 27px; height: 16px; align-items: center; gap: 1px; color: var(--mi-blue); font-size: 13px; line-height: 16px; }
 .db-card__users img { flex: 0 0 16px; }
-.db-card--group { width: 234px; height: 279px; align-self: start; }
+.db-card-stack { display: flex; height: 379px; flex: 1 0 0; flex-direction: column; align-items: center; }
+.db-card-stack__backs { display: flex; width: 275px; height: 45px; flex-direction: column; align-items: center; flex-shrink: 0; margin-bottom: -29px; }
+.db-card-stack__back { display: block; flex-shrink: 0; border: 1px solid var(--Base-Colors-Grayscale-Gray-10, #ccc); border-radius: 4px; background: #fff; }
+.db-card-stack__back--last { width: 243px; height: 30px; }
+.db-card-stack__back--second { width: 275px; height: 37px; margin-top: -22px; }
+.db-card--group { z-index: 1; width: 307px; flex: 1 0 0; align-self: center; border: 1px solid var(--Global-Colors-Grayscale-Gray-10, #ccc); border-radius: 4px; background: #fff; }
 .db-card--group::before,
-.db-card--group::after { position: absolute; z-index: -1; top: -7px; right: 12px; left: 12px; height: 7px; border: 1px solid #ccc; border-bottom: 0; border-radius: 4px 4px 0 0; background: #fff; content: ""; }
-.db-card--group::after { top: -13px; right: 24px; left: 24px; height: 6px; }
-.db-card--group > header { display: block; height: 101px; padding: 20px 18px; }
-.db-card--group > header > span:first-child { display: inline-flex; height: 20px; align-items: center; border-radius: 10px; padding: 0 8px; color: #54545c; background: #e5e5e5; font-size: 12px; font-weight: 700; line-height: 18px; }
+.db-card--group::after { content: none; }
+.db-card--group > header { display: block; height: 140px; padding: 24px 24px 20px; }
+.db-card--group > header > span:first-child { display: inline-flex; height: 22px; align-items: center; border-radius: 11px; padding: 0 10px; color: #54545c; background: #e5e5e5; font-size: 14px; font-weight: 700; line-height: 22px; }
 .db-card--group > header button { position: absolute; top: 16px; right: 58px; }
 .db-card--group > header > img { position: absolute; top: 16px; right: 36px; width: 16px; height: 16px; }
 .db-card--group .db-card__users { top: 16px; right: 12px; min-width: 24px; font-size: 12px; }
-.db-card--group > header a { margin-top: 8px; font-size: 16px; line-height: 20px; }
-.db-card--group dl { grid-template-columns: 68px minmax(0, 1fr); gap: 4px 0; margin: 16px 18px 0; font-size: 12px; line-height: 18px; }
+.db-card--group > header a { margin-top: 20px; font-size: 18px; line-height: 23px; }
+.db-card--group dl { grid-template-columns: 88px minmax(0, 1fr); gap: 4px 12px; margin: 24px 24px 0; font-size: 14px; line-height: 22px; }
 .db-card--group dd { display: flex; min-width: 0; align-items: center; gap: 4px; overflow: visible; }
 .db-card--group .db-card__text-link { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.db-card--group dd b { display: inline-grid; min-width: 20px; height: 18px; flex: 0 0 auto; place-items: center; border-radius: 9px; color: #fff; background: #54545c; font-size: 10px; }
-.db-card--group > footer { height: 42px; justify-content: flex-end; gap: 14px; padding: 0 18px; }
-.db-card--group > footer button { display: grid; width: 16px; height: 24px; place-items: center; gap: 0; }
-.db-card--group > footer button + button { width: 34px; border-left: 1px solid #ccc; padding-left: 16px; }
+.db-card--group dd b { display: inline-grid; min-width: 24px; height: 22px; flex: 0 0 auto; place-items: center; border-radius: 11px; color: #fff; background: #54545c; font-size: 12px; }
+.db-card--group > footer { height: 55px; justify-content: flex-end; gap: 16px; padding: 0 24px; }
+.db-card--group > footer button { display: grid; width: 24px; height: 24px; place-items: center; gap: 0; }
+.db-card--group > footer button + button { width: 41px; border-left: 1px solid #ccc; padding-left: 16px; }
 
 @media (max-width: 1439px) {
   .mi-stage { justify-content: flex-start; }
@@ -2391,6 +2411,7 @@ button {
 .modal--sm { --modal-width: 600px; }
 .modal--md { --modal-width: 824px; }
 .modal--lg { --modal-width: 1080px; }
+.modal--xl { --modal-width: 1248px; }
 
 .modal[open] {
   display: flex;
