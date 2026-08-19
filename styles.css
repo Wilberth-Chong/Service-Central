@@ -760,6 +760,37 @@ button {
   top: 112px;
 }
 
+/* Keep the shared footer visible while legacy native-flow content scrolls. */
+.screen--ticket-summary [data-footer-mount] .footer,
+.screen--request-support [data-footer-mount] .footer,
+.screen--open-support-ticket [data-footer-mount] .footer,
+.screen--open-support-ticket-details [data-footer-mount] .footer,
+.screen--request-pm [data-footer-mount] .footer,
+.screen--request-serviceplan [data-footer-mount] .footer,
+.screen--request-qualification [data-footer-mount] .footer,
+.screen--request-calibration [data-footer-mount] .footer,
+.screen--request-installation [data-footer-mount] .footer {
+  position: fixed;
+  z-index: 20;
+  right: max(0px, calc((100vw - 1440px) / 2));
+  bottom: 0;
+  left: max(58px, calc((100vw - 1440px) / 2 + 58px));
+  width: auto;
+}
+
+.screen--ticket-summary .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-support .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--open-support-ticket .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--open-support-ticket-details .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-pm .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-serviceplan .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-qualification .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-calibration .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer,
+.screen--request-installation .platform-sidebar:not(.is-collapsed) ~ [data-footer-mount] .footer {
+  left: max(256px, calc((100vw - 1440px) / 2 + 256px));
+  width: auto;
+}
+
 /* Request support — native implementation of Figma frame 8026:173099. */
 .screen--request-support { min-height: 100vh; background: #ececef; }
 .rs-shell { min-height: 1460px; }
