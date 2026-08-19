@@ -959,6 +959,136 @@ const DASHBOARD_SORT_ICON = '<img src="assets/icons/actions/arrows/Size=16px, St
 const DASHBOARD_SYSTEM_ICON = "assets/icons/science/system/size=24px,%20style=mono.svg";
 const DASHBOARD_VISIT_ICON = "assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg";
 const DASHBOARD_DOWNLOAD_ICON = "assets/icons/actions/download/Size=16px, Style=Mono.svg";
+const DASHBOARD_BANNERS = [
+  {
+    title: "We found 24 instrument(s) associated with your email address",
+    body: "Review and add the suggested instruments to your account.",
+    action: "Go to suggestions",
+    image: "assets/instruments/add-instruments-suggestion.svg",
+  },
+  {
+    title: "6 related system(s) suggested",
+    body: "Review the system(s) and add or ignore.",
+    action: "Go to suggestions",
+    image: "assets/dashboard/related-systems-suggestion.svg",
+  },
+  {
+    title: "3 instrument(s) access requests awaiting your approval",
+    body: "Review the instrument(s) and approve or deny.",
+    action: "Go to pending",
+    image: "assets/instruments/add-instruments-suggestion.svg",
+  },
+  {
+    title: "5 instrument(s) shared with you",
+    body: "Review and add instruments to your account.",
+    action: "Go to pending",
+    image: "assets/instruments/add-instruments-suggestion.svg",
+  },
+];
+
+const DASHBOARD_CARD_ICONS = {
+  favorite: "assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg",
+  close: "assets/icons/actions/close/size=32px,%20style=bold.svg",
+  lock: "assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg",
+  users: "assets/icons/general/2%20users/size=16px,%20style=mono.svg",
+  support: "assets/icons/navigation/support/size=16px, style=bold.svg",
+  expand: "assets/icons/tools/resize%20large/size=16px,%20style=bold.svg",
+  more: "assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg",
+};
+
+const DASHBOARD_FAVORITE_INSTRUMENTS = [
+  {
+    serial: "TSQ-Z-12346",
+    name: "Triple Quadrupole LC-MS",
+    nickname: "TSQ-0",
+    model: "MSTSQQUANTISPLUS",
+    type: "LC",
+    groups: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    userCount: 3,
+  },
+  {
+    serial: "TSQ-Z-12347",
+    name: "Triple Quadrupole LC-MS",
+    nickname: "TSQ-1",
+    model: "MSTSQQUANTISPLUS",
+    type: "Cold Chromatograph",
+    groups: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    userCount: 4,
+  },
+  {
+    serial: "TSQ-Z-12348",
+    name: "Triple Quadrupole LC-MS",
+    nickname: "TSQ-2",
+    model: "MSTSQQUANTISPLUS",
+    type: "Mass Spec Life Science",
+    groups: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    userCount: 5,
+  },
+];
+
+const DASHBOARD_QUICK_VIEW_INSTRUMENTS = [
+  {
+    serial: "1009996",
+    name: "Vanquish&trade; Detector F",
+    nickname: "Detector-2B",
+    model: "VQF0000DET",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-detector.png",
+    coverage: "Under contract",
+    coverageTone: "contract",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+  {
+    serial: "1009999",
+    name: "Vanquish&trade; Column",
+    nickname: "Column-2B",
+    model: "VQH000OVEN",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-column.png",
+    coverage: "Contract expired",
+    coverageTone: "expired",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+  {
+    serial: "1009998",
+    name: "Vanquish&trade; Sampler",
+    nickname: "Sampler-2B",
+    model: "VQF00SAMPL",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-sampler.png",
+    coverage: "Contract expired",
+    coverageTone: "expired",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+  {
+    serial: "1009997",
+    name: "Vanquish&trade; Binary Pump H",
+    nickname: "Pump-2B",
+    model: "VQF000PUMP",
+    type: "HPLC",
+    groups: "Biotherapeutics Discovery...",
+    image: "vanquish-pump.png",
+    coverage: "Contract expired",
+    coverageTone: "expired",
+    groupsAsLink: true,
+    userCount: 3,
+  },
+];
 
 const DASHBOARD_CLOSED_TICKETS = [
   { ticket: "446532405", closed: "30 Jan 2019", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12346", model: "VQF0000DET", image: "tsq.png", highlighted: true, report: true, download: true },
@@ -1011,11 +1141,105 @@ function renderDashboardVisitsTable() {
   return `<table class="db-table db-table--visits"><colgroup><col class="db-col-visit-date" /><col class="db-col-visit-status" /><col class="db-col-visit-ticket" /><col class="db-col-visit-type" /><col class="db-col-visit-subject" /><col class="db-col-system" /><col class="db-col-visit-serial" /><col class="db-col-visit-model" /></colgroup><thead><tr>${dashboardTableHeader("Scheduled date")}${dashboardTableHeader("Status")}${dashboardTableHeader("Ticket no.")}${dashboardTableHeader("Ticket type")}${dashboardTableHeader("Subject")}<th class="db-ticket-system-heading"></th>${dashboardTableHeader("Serial no.")}${dashboardTableHeader("Model no.")}</tr></thead><tbody>${DASHBOARD_ONSITE_VISITS.map(dashboardVisitRow).join("")}</tbody></table>`;
 }
 
+function dashboardInstrumentCard(instrument) {
+  const userCount = instrument.userCount ?? 3;
+  const coverageToneClass = instrument.coverageTone ? ` db-coverage--${instrument.coverageTone}` : "";
+  const groups = instrument.groupsAsLink ? `<span class="db-card__text-link">${instrument.groups}</span>` : instrument.groups;
+
+  return `<article class="db-card">
+    <header>
+      <img class="db-card__product" src="assets/instruments/${instrument.image}" alt="" />
+      <div>
+        <small>Serial no.</small>
+        <a href="#instrument-access">${instrument.serial}</a>
+        <p>${instrument.name}</p>
+      </div>
+      <button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="${DASHBOARD_CARD_ICONS.favorite}" alt="" /></button>
+      <span class="db-card__users" aria-label="${userCount} users"><img src="${DASHBOARD_CARD_ICONS.users}" alt="" />${userCount}</span>
+    </header>
+    <dl>
+      <dt>Nickname</dt><dd>${instrument.nickname}</dd>
+      <dt>Model no.</dt><dd>${instrument.model}</dd>
+      <dt>Type</dt><dd>${instrument.type}</dd>
+      <dt>Groups</dt><dd>${groups}</dd>
+    </dl>
+    <span class="db-coverage${coverageToneClass}">${instrument.coverage}</span>
+    <footer>
+      <button type="button" data-route="request-support"><img src="${DASHBOARD_CARD_ICONS.support}" alt="" />Request support</button>
+      <button type="button" aria-label="More options"><img class="db-card__more-icon" src="${DASHBOARD_CARD_ICONS.more}" alt="" /></button>
+    </footer>
+  </article>`;
+}
+
+function dashboardSystemFavoriteCard() {
+  return `<div class="db-card-stack">
+    <div class="db-card-stack__backs" aria-hidden="true">
+      <span class="db-card-stack__back db-card-stack__back--last"></span>
+      <span class="db-card-stack__back db-card-stack__back--second"></span>
+    </div>
+    <article class="db-card db-card--group">
+      <header>
+        <span>LC/MS</span>
+        <button type="button" aria-label="Favorite group"><img src="${DASHBOARD_CARD_ICONS.favorite}" alt="" /></button>
+        <img src="${DASHBOARD_CARD_ICONS.lock}" alt="" />
+        <span class="db-card__users" aria-label="3 users"><img src="${DASHBOARD_CARD_ICONS.users}" alt="" />3</span>
+        <a href="#instrument-access">Alpine</a>
+      </header>
+      <dl>
+        <dt>Components</dt><dd>total components</dd>
+        <dt>Groups</dt><dd><span class="db-card__text-link">Department of Medical...</span> <b>+3</b></dd>
+        <dt>Tickets</dt><dd><span class="db-card__text-link">16 total support tickets</span></dd>
+      </dl>
+      <footer>
+        <button type="button" data-open-system-quick-view aria-label="Expand group"><img src="${DASHBOARD_CARD_ICONS.expand}" alt="" /></button>
+        <button type="button" aria-label="More options"><img class="db-card__more-icon" src="${DASHBOARD_CARD_ICONS.more}" alt="" /></button>
+      </footer>
+    </article>
+  </div>`;
+}
+
+function renderDashboardFavoriteCards() {
+  const target = app.querySelector("[data-dashboard-favorite-cards]");
+  if (!target) return;
+  target.innerHTML = `${dashboardSystemFavoriteCard()}${DASHBOARD_FAVORITE_INSTRUMENTS.map(dashboardInstrumentCard).join("")}`;
+}
+
+function dashboardSystemQuickViewContent() {
+  return `<section class="system-quick-view" aria-label="Alpine system quick view">
+    <header class="system-quick-view__hero">
+      <div class="system-quick-view__meta">
+        <img class="system-quick-view__favorite" src="${DASHBOARD_CARD_ICONS.favorite}" alt="" />
+        <span>LC</span>
+      </div>
+      <h2>Alpine</h2>
+    </header>
+    <div class="system-quick-view__cards">
+      ${DASHBOARD_QUICK_VIEW_INSTRUMENTS.map(dashboardInstrumentCard).join("")}
+    </div>
+  </section>`;
+}
+
+function createDashboardSystemQuickViewModal() {
+  return window.PlatformModal?.mount('[data-modal-mount="system-quick-view-modal"]', {
+    id: "system-quick-view-modal",
+    title: "Create a system",
+    size: "xl",
+    className: "system-quick-view-modal",
+    bodyClassName: "system-quick-view-modal__body",
+    closeLabel: "Close system quick view",
+    closeIcon: DASHBOARD_CARD_ICONS.close,
+    content: dashboardSystemQuickViewContent(),
+  });
+}
+
 function wireDashboard() {
   app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
+  renderDashboardFavoriteCards();
+  const systemQuickViewDialog = createDashboardSystemQuickViewModal();
+  app.querySelector("[data-open-system-quick-view]")?.addEventListener("click", () => window.PlatformModal?.open(systemQuickViewDialog));
   const tableWrap = app.querySelector("[data-db-ticket-table]");
   const pagination = app.querySelector("[data-db-ticket-pagination]");
   const filter = app.querySelector("[data-db-ticket-filter]");
@@ -1045,11 +1269,21 @@ function wireDashboard() {
   });
   let bannerIndex = 0;
   const updateBanner = () => {
+    const banner = DASHBOARD_BANNERS[bannerIndex];
+    const bannerArt = app.querySelector("[data-db-banner-art]");
+    if (bannerArt) bannerArt.src = banner.image;
+    const bannerTitle = app.querySelector("[data-db-banner-title]");
+    if (bannerTitle) bannerTitle.textContent = banner.title;
+    const bannerBody = app.querySelector("[data-db-banner-body]");
+    if (bannerBody) bannerBody.textContent = banner.body;
+    const bannerAction = app.querySelector("[data-db-banner-action]");
+    if (bannerAction) bannerAction.textContent = banner.action;
     app.querySelectorAll(".db-banner .ai-banner__dots span").forEach((dot, index) => dot.classList.toggle("is-active", index === bannerIndex));
-    app.querySelector(".db-banner .ai-banner__dots")?.setAttribute("aria-label", `Notification ${bannerIndex + 1} of 3`);
+    app.querySelector(".db-banner .ai-banner__dots")?.setAttribute("aria-label", `Notification ${bannerIndex + 1} of ${DASHBOARD_BANNERS.length}`);
   };
-  app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 2) % 3; updateBanner(); });
-  app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBanner(); });
+  updateBanner();
+  app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + DASHBOARD_BANNERS.length - 1) % DASHBOARD_BANNERS.length; updateBanner(); });
+  app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % DASHBOARD_BANNERS.length; updateBanner(); });
   app.querySelector(".db-promo__close")?.addEventListener("click", (event) => event.currentTarget.closest(".db-promo")?.remove());
   window.PlatformSidebar?.wire(app);
   wireRouteControls();

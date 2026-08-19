@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260818-dashboard-system-card-compact" />
+    <link rel="stylesheet" href="styles.css?v=20260819-shared-dashboard-cards" />
   </head>
   <body>
     <main id="app" aria-live="polite"></main>
@@ -93,7 +93,16 @@
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main db-main">
             <section class="mi-titlebar db-titlebar"><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
-            <section class="ai-banner db-banner" aria-label="Instrument access request notification"><button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__content"><div class="ai-banner__art"><img src="assets/instruments/add-instruments-suggestion.svg" alt="" /><span>New</span></div><div class="ai-banner__copy"><h2>3 instrument(s) access requests awaiting your approval</h2><p>Review the instrument(s) and approve or deny.</p></div><button class="ai-small-button db-banner__button" type="button" data-route="approval-email">Go to pending</button></div><button class="ai-banner__arrow" type="button" data-db-banner-next aria-label="Next notification"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><div class="ai-banner__dots" aria-label="Notification 1 of 3"><span class="is-active"></span><span></span><span></span></div></section>
+            <section class="ai-banner db-banner" aria-label="Dashboard notifications">
+              <button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button>
+              <div class="ai-banner__content">
+                <div class="ai-banner__art"><img data-db-banner-art src="assets/instruments/add-instruments-suggestion.svg" alt="" /><span>New</span></div>
+                <div class="ai-banner__copy"><h2 data-db-banner-title>We found 24 instrument(s) associated with your email address</h2><p data-db-banner-body>Review and add the suggested instruments to your account.</p></div>
+                <button class="ai-small-button db-banner__button" type="button" data-db-banner-action>Go to suggestions</button>
+              </div>
+              <button class="ai-banner__arrow" type="button" data-db-banner-next aria-label="Next notification"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button>
+              <div class="ai-banner__dots" aria-label="Notification 1 of 4"><span class="is-active"></span><span></span><span></span><span></span></div>
+            </section>
             <section class="db-top" aria-label="Dashboard quick actions">
               <label class="db-search"><span class="sr-only">Search for instruments, groups and tickets</span><input data-dashboard-search type="search" placeholder="Search for instruments, groups and tickets" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label>
               <div class="db-shortcuts"><button type="button" data-route="consumables"><img src="assets/dashboard/shortcut-consumables.svg" alt="" /><strong>Order<br />consumables</strong></button><button type="button" data-route="education"><img src="assets/dashboard/shortcut-education.svg" alt="" /><strong>Browse<br />education</strong></button><button type="button"><img src="assets/dashboard/shortcut-plan.svg" alt="" /><strong>Request<br />service plan</strong></button><button type="button" data-route="request-support"><img src="assets/dashboard/shortcut-support.svg" alt="" /><strong>Request maintenance<br />or support</strong></button></div>
@@ -115,14 +124,10 @@
                 <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">11800931</a></td><td>6 Jan 2024</td><td>Need calibration</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/q-exactive.png" alt="" /><a href="#instrument-access">SN98356W</a></span></td><td>QEXAC00001</td></tr>
               </tbody></table></div><nav class="db-pagination" data-db-ticket-pagination aria-label="Ticket pages"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button></nav>
             </section>
-            <section class="db-section db-favorites" aria-labelledby="db-favorites-title"><header class="db-section__header"><h2 id="db-favorites-title">My favorite instruments</h2><button type="button" data-route="my-instruments">View all my instruments</button></header><div class="db-section__rule"></div><div class="db-cards">
-              <article class="db-card db-card--group"><header><span>LC/MS</span><button type="button" aria-label="Favorite group"><img src="assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg" alt="" /></button><img src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /><span class="db-card__users" aria-label="3 users"><img src="assets/icons/general/2%20users/size=16px,%20style=mono.svg" alt="" />3</span><a href="#instrument-access">Alpine</a></header><dl><dt>Components</dt><dd>total components</dd><dt>Groups</dt><dd><span class="db-card__text-link">Department of Medical...</span> <b>+3</b></dd><dt>Tickets</dt><dd><span class="db-card__text-link">16 total support tickets</span></dd></dl><footer><button type="button" aria-label="Expand group"><img src="assets/icons/tools/enlarge/size=16px, style=mono.svg" alt="" /></button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
-              <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#instrument-access">TSQ-Z-12346</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg" alt="" /></button><span class="db-card__users" aria-label="3 users"><img src="assets/icons/general/2%20users/size=16px,%20style=mono.svg" alt="" />3</span></header><dl><dt>Nickname</dt><dd>TSQ-0</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>LC</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
-              <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#instrument-access">TSQ-Z-12347</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg" alt="" /></button><span class="db-card__users" aria-label="4 users"><img src="assets/icons/general/2%20users/size=16px,%20style=mono.svg" alt="" />4</span></header><dl><dt>Nickname</dt><dd>TSQ-1</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Cold Chromatograph</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
-              <article class="db-card"><header><img class="db-card__product" src="assets/instruments/tsq.png" alt="" /><div><small>Serial no.</small><a href="#instrument-access">TSQ-Z-12348</a><p>Triple Quadrupole LC-MS</p></div><button class="db-card__star" type="button" aria-label="Favorite instrument"><img src="assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg" alt="" /></button><span class="db-card__users" aria-label="5 users"><img src="assets/icons/general/2%20users/size=16px,%20style=mono.svg" alt="" />5</span></header><dl><dt>Nickname</dt><dd>TSQ-2</dd><dt>Model no.</dt><dd>MSTSQQUANTISPLUS</dd><dt>Type</dt><dd>Mass Spec Life Science</dd><dt>Groups</dt><dd>—</dd></dl><span class="db-coverage">Under contract</span><footer><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><button type="button" aria-label="More options"><img src="assets/icons/actions/more horizontal/size=16px, style=mono.svg" alt="" /></button></footer></article>
-            </div></section>
+            <section class="db-section db-favorites" aria-labelledby="db-favorites-title"><header class="db-section__header"><h2 id="db-favorites-title">My favorite instruments</h2><button type="button" data-route="my-instruments">View all my instruments</button></header><div class="db-section__rule"></div><div class="db-cards" data-dashboard-favorite-cards></div></section>
           </main>
           <div data-footer-mount></div>
+          <div data-modal-mount="system-quick-view-modal"></div>
         </div></div>
       </section>
     </template>
@@ -1175,7 +1180,7 @@
     <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
     <script src="platform-action-bar.js?v=20260814-cancel-origin-v2"></script>
     <script src="footer.js?v=20260812-footer"></script>
-    <script src="modal.js?v=20260817-consumables-support-portal"></script>
-    <script src="app.js?v=20260818-dashboard-cell-height-columns-v3"></script>
+    <script src="modal.js?v=20260819-shared-dashboard-cards"></script>
+    <script src="app.js?v=20260819-shared-dashboard-cards"></script>
   </body>
 </html>
