@@ -1091,6 +1091,27 @@ function mountFooter(options = {}) {
   window.Footer?.mount(app.querySelector("[data-footer-mount]"), options);
 }
 
+function mountNativePageChrome(activeRoute) {
+  const legacyHeader = app.querySelector(".mi-header");
+  const legacyFooter = app.querySelector(".mi-footer");
+
+  if (legacyHeader && !app.querySelector("[data-topbar-sc-mount]")) {
+    const topbarMount = document.createElement("div");
+    topbarMount.dataset.topbarScMount = "";
+    legacyHeader.replaceWith(topbarMount);
+  }
+
+  if (legacyFooter && !app.querySelector("[data-footer-mount]")) {
+    const footerMount = document.createElement("div");
+    footerMount.dataset.footerMount = "";
+    legacyFooter.replaceWith(footerMount);
+  }
+
+  mountTopbarSc();
+  mountPlatformSidebar(activeRoute);
+  mountFooter();
+}
+
 function wireEditSpc() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
@@ -1636,7 +1657,7 @@ function renderTicketSummary(route) {
   app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
     <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
     <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div><h1>${ticket.title}${usesReferenceLayout ? ` <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>` : ""}</h1>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
-  mountPlatformSidebar("support-history");
+  mountNativePageChrome("support-history");
   app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute("support-history"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -1655,7 +1676,7 @@ function wireRequestSupport() {
 function renderRequestSupport() {
   const template = document.querySelector("#request-support-native-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireRequestSupport();
   document.title = "Request support — Services Central";
 }
@@ -1803,7 +1824,7 @@ function wireInstrumentSupportSelection() {
 function renderOpenSupportTicket() {
   const template = document.querySelector("#open-support-ticket-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireInstrumentSupportSelection();
   document.title = "Open a support ticket — Services Central";
 }
@@ -1874,7 +1895,7 @@ function wireOpenSupportTicketDetails() {
 function renderOpenSupportTicketDetails() {
   const template = document.querySelector("#open-support-ticket-details-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireOpenSupportTicketDetails();
   document.title = "Open a support ticket — add request details";
 }
@@ -1922,7 +1943,7 @@ function wireRequestPm() {
 function renderRequestPm() {
   const template = document.querySelector("#request-pm-native-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireRequestPm();
   document.title = "Request PM scheduling — Services Central";
 }
@@ -1970,7 +1991,7 @@ function wireRequestServicePlan() {
 function renderRequestServicePlan() {
   const template = document.querySelector("#request-serviceplan-native-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireRequestServicePlan();
   document.title = "Request a service plan quote — Services Central";
 }
@@ -1987,7 +2008,7 @@ function renderRequestQualification() {
   app.querySelector(".sp-steps").setAttribute("aria-label", "Qualification service request progress");
   app.querySelector(".pm-select-all span").textContent = "Select all 267 instruments";
   app.querySelector(".pm-pagination strong").textContent = "267";
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireRequestServicePlan();
   document.title = "Request qualification service — Services Central";
 }
@@ -2022,7 +2043,7 @@ function wireRequestCalibration() {
 function renderRequestCalibration() {
   const template = document.querySelector("#request-calibration-native-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireRequestCalibration();
   document.title = "Request a calibration service — Services Central";
 }
@@ -2063,7 +2084,7 @@ function wireRequestInstallation() {
 function renderRequestInstallation() {
   const template = document.querySelector("#request-installation-native-template");
   app.replaceChildren(template.content.cloneNode(true));
-  mountPlatformSidebar("request-support");
+  mountNativePageChrome("request-support");
   wireRequestInstallation();
   document.title = "Installation support — Services Central";
 }
