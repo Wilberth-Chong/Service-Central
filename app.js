@@ -3219,9 +3219,12 @@ function wireMyInstruments() {
   const rowsContainer = app.querySelector("[data-mi-rows]");
   const systems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS];
   const systemComponents = new Set(systems.flatMap((system) => system.components));
-  rowsContainer.innerHTML = systems.map(miCreatedSystemRowsMarkup).join("") + MY_INSTRUMENTS.filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map(instrumentRowMarkup).join("");
+  const standaloneInstruments = MY_INSTRUMENTS.filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const newStandaloneInstruments = standaloneInstruments.filter((instrument) => instrument.pendingNew);
+  const existingStandaloneInstruments = standaloneInstruments.filter((instrument) => !instrument.pendingNew);
+  rowsContainer.innerHTML = newStandaloneInstruments.map(instrumentRowMarkup).join("") + systems.map(miCreatedSystemRowsMarkup).join("") + existingStandaloneInstruments.map(instrumentRowMarkup).join("");
   const gridCards = app.querySelector("[data-mi-grid-cards]");
-  gridCards.innerHTML = systems.map(miCreatedSystemCardMarkup).join("") + MY_INSTRUMENTS.filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map((instrument) => miGridCardMarkup(instrument)).join("");
+  gridCards.innerHTML = newStandaloneInstruments.map((instrument) => miGridCardMarkup(instrument)).join("") + systems.map(miCreatedSystemCardMarkup).join("") + existingStandaloneInstruments.map((instrument) => miGridCardMarkup(instrument)).join("");
   const updateCount = () => {
     const visible = [...app.querySelectorAll("[data-mi-row]")].filter((row) => !row.hidden).length;
     app.querySelector("[data-mi-count]").textContent = String(visible);
@@ -4073,28 +4076,523 @@ function renderInstrumentDetail(serial) {
   document.title = `${displayName} — Services Central`;
 }
 
-function addInstrumentEntryRows(count = 1) {
+const ADD_INSTRUMENT_PROFILES = [
+  { image: "vanquish-detector.png", model: "VQF0000DET", coverage: "Under contract", end: "24 Dec 2027" },
+  { image: "vanquish-sampler.png", model: "VQF00SAMPL", coverage: "Under contract", end: "24 Dec 2027" },
+  { image: "vanquish-pump.png", model: "VQF000PUMP", coverage: "Under contract", end: "29 Dec 2027" },
+  { image: "q-exactive.png", model: "QEXAC00001", coverage: "Under contract", end: "28 Apr 2028" },
+  { image: "tsq.png", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2028" },
+];
+
+let addInstrumentDraft = [];
+let bulkInstrumentDraft = [];
+let addInstrumentSystemsDraft = [];
+
+function aiEscapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+}
+
+function aiWorkbookCellValue(cell, sharedStrings) {
+  if (!cell) return "";
+  const type = cell.getAttribute("t");
+  if (type === "inlineStr") return [...cell.querySelectorAll("t")].map((node) => node.textContent || "").join("");
+  const raw = cell.querySelector("v")?.textContent || "";
+  if (type === "s") return sharedStrings[Number(raw)] || "";
+  return raw;
+}
+
+function aiNormalizeWorkbookPath(target) {
+  const parts = target.replace(/^\//, "").split("/");
+  const normalized = [];
+  parts.forEach((part) => {
+    if (part === "..") normalized.pop();
+    else if (part && part !== ".") normalized.push(part);
+  });
+  return normalized.join("/");
+}
+
+async function parseBulkInstrumentWorkbook(file) {
+  const errors = [];
+  if (!file?.name.toLowerCase().endsWith(".xlsx")) return { valid: false, errors: ["Only .xlsx files are supported."] };
+  try {
+    const zip = await window.JSZip.loadAsync(file);
+    const parser = new DOMParser();
+    const parseXml = async (path) => {
+      const entry = zip.file(path);
+      if (!entry) throw new Error(`Missing workbook part: ${path}`);
+      return parser.parseFromString(await entry.async("text"), "application/xml");
+    };
+    const sharedStrings = [];
+    if (zip.file("xl/sharedStrings.xml")) {
+      const sharedXml = await parseXml("xl/sharedStrings.xml");
+      sharedXml.querySelectorAll("si").forEach((item) => sharedStrings.push([...item.querySelectorAll("t")].map((node) => node.textContent || "").join("")));
+    }
+    const workbookXml = await parseXml("xl/workbook.xml");
+    const relationshipsXml = await parseXml("xl/_rels/workbook.xml.rels");
+    const firstSheet = workbookXml.querySelector("sheet");
+    const relationshipId = firstSheet?.getAttribute("r:id") || firstSheet?.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
+    const relationship = [...relationshipsXml.querySelectorAll("Relationship")].find((item) => item.getAttribute("Id") === relationshipId);
+    const relationshipTarget = relationship?.getAttribute("Target") || "";
+    const sheetPath = relationship ? aiNormalizeWorkbookPath(relationshipTarget.startsWith("/") ? relationshipTarget : `xl/${relationshipTarget}`) : "xl/worksheets/sheet1.xml";
+    const sheetXml = await parseXml(sheetPath);
+    const values = new Map();
+    sheetXml.querySelectorAll("c").forEach((cell) => values.set(cell.getAttribute("r"), aiWorkbookCellValue(cell, sharedStrings).trim()));
+    const expectedHeaders = ["Item* (required)", "Serial Number* (required)", "Nickname (optional)"];
+    expectedHeaders.forEach((header, index) => {
+      const column = String.fromCharCode(65 + index);
+      if (values.get(`${column}1`) !== header) errors.push(`Column ${column} must be titled “${header}”.`);
+    });
+    const numberingValid = Array.from({ length: 50 }, (_, index) => values.get(`A${index + 2}`) === String(index + 1)).every(Boolean);
+    if (!numberingValid) errors.push("The first column must contain the item numbers 1 through 50 in order.");
+    const entries = [];
+    for (let row = 2; row <= 51; row += 1) {
+      const serial = values.get(`B${row}`) || "";
+      const nickname = values.get(`C${row}`) || "";
+      if (nickname.length > 90) errors.push(`Item ${row - 1} has a nickname longer than 90 characters.`);
+      if (!serial) continue;
+      const profile = ADD_INSTRUMENT_PROFILES[(row - 2) % ADD_INSTRUMENT_PROFILES.length];
+      entries.push({ ...profile, item: row - 1, serial, nickname, users: String((row % 3) + 1), group: "—", locked: false, pendingNew: true, selected: true });
+    }
+    const extraSerial = [...values.entries()].find(([reference, value]) => /^B(?:5[2-9]|[6-9]\d|\d{3,})$/.test(reference) && value);
+    if (extraSerial) errors.push("The maximum amount of instruments per upload is 50.");
+    if (!entries.length) errors.push("Add at least one serial number in the “Serial Number* (required)” column.");
+    return { valid: errors.length === 0, errors, entries };
+  } catch (error) {
+    return { valid: false, errors: ["This file could not be read as a valid .xlsx workbook."] };
+  }
+}
+
+function aiStableHash(value) {
+  return [...String(value)].reduce((hash, character) => ((hash * 31) + character.charCodeAt(0)) >>> 0, 2166136261);
+}
+
+function aiBulkSectionCounts(total) {
+  if (total === 22) return [10, 2, 4, 2, 2, 2];
+  const weights = [0.4, 0.1, 0.1, 0.1, 0.1, 0.2];
+  const raw = weights.map((weight) => total * weight);
+  const counts = raw.map(Math.floor);
+  let remaining = total - counts.reduce((sum, count) => sum + count, 0);
+  raw.map((value, index) => ({ index, remainder: value - counts[index] })).sort((a, b) => b.remainder - a.remainder || a.index - b.index).forEach(({ index }) => {
+    if (remaining > 0) { counts[index] += 1; remaining -= 1; }
+  });
+  return counts;
+}
+
+function assignBulkInstrumentSections(entries) {
+  const sectionIds = ["ready", "nickname", "approval", "suggestions", "unrecognized", "unsupported"];
+  const shuffled = entries.map((entry) => ({ ...entry }));
+  let randomState = entries.reduce((seed, entry) => seed ^ aiStableHash(`${entry.serial}:${entry.nickname}:${entry.item}`), 0x9e3779b9) >>> 0;
+  const nextRandom = () => {
+    randomState = (randomState + 0x6d2b79f5) >>> 0;
+    let value = randomState;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(nextRandom() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  const counts = aiBulkSectionCounts(shuffled.length);
+  const nicknameCandidates = shuffled.filter((instrument) => instrument.nickname);
+  const nicknameInstruments = nicknameCandidates.slice(0, counts[1]);
+  const nicknameItems = new Set(nicknameInstruments.map((instrument) => instrument.item));
+  const remaining = shuffled.filter((instrument) => !nicknameItems.has(instrument.item));
+  const sectionInstruments = { nickname: nicknameInstruments };
+  let cursor = 0;
+  ["approval", "suggestions", "unrecognized", "unsupported"].forEach((id, offset) => {
+    const count = counts[offset + 2];
+    sectionInstruments[id] = remaining.slice(cursor, cursor + count);
+    cursor += count;
+  });
+  sectionInstruments.ready = remaining.slice(cursor);
+  return sectionIds.map((id) => ({
+    id,
+    instruments: (sectionInstruments[id] || []).map((instrument) => ({
+      ...instrument,
+      bulkSection: id,
+      currentNickname: id === "nickname" ? `Registered ${instrument.item}` : instrument.nickname || "—",
+      selected: ["ready", "nickname", "approval"].includes(id),
+    })),
+  }));
+}
+
+function aiBulkReviewTable(section, total) {
+  if (!section.instruments.length) return "";
+  const selectable = ["ready", "nickname", "approval"].includes(section.id);
+  const titleMap = {
+    ready: `${section.instruments.length} out of ${total} instrument(s) ready to add`,
+    nickname: `${section.instruments.length} out of ${total} instrument(s) ready to add, but with a different nickname`,
+    approval: `${section.instruments.length} out of ${total} instrument(s) need approval`,
+    suggestions: `${section.instruments.length} instrument(s) with suggestions found`,
+    unrecognized: `${section.instruments.length} instrument(s) not recognized`,
+    unsupported: `${section.instruments.length} instrument(s) not supported`,
+  };
+  const descriptionMap = {
+    ready: "Please review the recognized instrument(s) below. Continue to the next step to add the selected instruments.",
+    nickname: "Instrument(s) below exist in Services Central but with a nickname that is different from what you entered. The current nickname will remain. Nicknames can be changed at any time.",
+    approval: "Instrument(s) selected below require approval before they can be added to your account. An access request will be automatically sent if you continue.",
+    suggestions: "Review the suggestion(s) and select the correct match or continue to the next step. Instrument(s) without a selected match will not be added to your account.",
+    unrecognized: "Confirm serial number errors and search again, or continue to the next step to add any recognized instruments.",
+    unsupported: 'Services Central currently supports <a href="#supported-instrument-families" data-ai-specific-families>specific instrument families</a> installed on 01 January 2010 or later in the United States, Canada, Europe and South Korea.',
+  };
+  const selectableColgroup = section.id === "ready"
+    ? '<colgroup><col class="ai-bulk-col-check" /><col class="ai-bulk-col-item" /><col class="ai-bulk-col-image" /><col class="ai-bulk-col-serial" /><col class="ai-bulk-col-nickname-wide" /><col class="ai-bulk-col-type" /><col class="ai-bulk-col-catalog" /><col class="ai-bulk-col-users" /></colgroup>'
+    : '<colgroup><col class="ai-bulk-col-check" /><col class="ai-bulk-col-item" /><col class="ai-bulk-col-image" /><col class="ai-bulk-col-serial" /><col class="ai-bulk-col-nickname" /><col class="ai-bulk-col-nickname" /><col class="ai-bulk-col-type" /><col class="ai-bulk-col-catalog" /><col class="ai-bulk-col-users" /></colgroup>';
+  const statusColgroup = '<colgroup><col class="ai-bulk-col-status" /><col class="ai-bulk-col-item" /><col class="ai-bulk-col-status-serial" /><col class="ai-bulk-col-nickname-wide" /><col class="ai-bulk-col-status-action" /></colgroup>';
+  const usersHeader = '<span class="ai-bulk-users-header"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />Users</span>';
+  const header = selectable
+    ? `<tr><th><input type="checkbox" data-ai-bulk-select-all="${section.id}" checked aria-label="Select all ${aiEscapeHtml(titleMap[section.id])}" /></th><th>Item</th><th></th><th>Serial number</th>${section.id === "ready" ? "<th>Nickname (optional)</th>" : "<th>Current nickname</th><th>Entered nickname</th>"}<th>Type</th><th>Catalog no.</th><th>${usersHeader}</th></tr>`
+    : `<tr><th aria-label="Status"></th><th>Item</th><th>Serial number</th><th>Nickname</th><th>${section.id === "unsupported" ? "Notes" : "Actions"}</th></tr>`;
+  const rows = section.instruments.map((instrument) => {
+    const profileImage = `<img class="ai-instrument-image" src="assets/instruments/${instrument.image}" alt="" />`;
+    if (selectable) {
+      const currentNickname = instrument.currentNickname;
+      const enteredNickname = instrument.nickname || "—";
+      return `<tr><td><input type="checkbox" data-ai-bulk-review-select data-ai-bulk-id="${instrument.item}" checked aria-label="Select ${aiEscapeHtml(instrument.serial)}" /></td><td>${instrument.item}</td><td>${profileImage}</td><td>${aiEscapeHtml(instrument.serial)}</td>${section.id === "ready" ? `<td><input class="ai-bulk-review-nickname" type="text" value="${aiEscapeHtml(instrument.nickname)}" placeholder="Example Asset ID or Instrument name" data-ai-bulk-nickname="${instrument.item}" /></td>` : `<td>${aiEscapeHtml(currentNickname)}</td><td>${aiEscapeHtml(enteredNickname)}</td>`}<td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td class="mi-users-cell">${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td></tr>`;
+    }
+    if (section.id === "suggestions") return `<tr><td class="ai-bulk-status-cell"><img class="ai-bulk-status-icon is-warning" src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="Warning" /></td><td>${instrument.item}</td><td><label class="ai-bulk-validation"><input class="ai-bulk-review-serial is-warning" value="${aiEscapeHtml(instrument.serial)}" aria-label="Serial number for item ${instrument.item}" /><small>Multiple records found.</small></label></td><td>${aiEscapeHtml(instrument.nickname || "—")}</td><td><button class="mi-button" type="button">Review suggestions</button></td></tr>`;
+    if (section.id === "unrecognized") return `<tr><td class="ai-bulk-status-cell"><img class="ai-bulk-status-icon is-error" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="Error" /></td><td>${instrument.item}</td><td><label class="ai-bulk-validation"><input class="ai-bulk-review-serial is-error" value="${aiEscapeHtml(instrument.serial)}" aria-label="Unrecognized serial number for item ${instrument.item}" /><small>Serial number not recognized</small></label></td><td>${aiEscapeHtml(instrument.nickname || "—")}</td><td><button class="mi-button" type="button" disabled>Search again</button></td></tr>`;
+    return `<tr><td class="ai-bulk-status-cell"><img class="ai-bulk-status-icon is-unsupported" src="assets/icons/notifications/prohibited/size=24px, style=bold.svg" alt="Not supported" /></td><td>${instrument.item}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "—")}</td><td>Instrument installed in a country currently not supported</td></tr>`;
+  }).join("");
+  const contentId = `ai-bulk-section-${section.id}`;
+  const expanded = section.id !== "ready";
+  const sectionAction = section.id === "suggestions" ? '<button class="ai-bulk-review-all" type="button">Review all suggestions</button>' : "";
+  return `<section class="ai-bulk-review-section" data-ai-bulk-review-section="${section.id}"><div class="ai-bulk-review-section__header"><button class="ai-bulk-review-section__toggle" type="button" aria-expanded="${expanded}" aria-controls="${contentId}" aria-label="${expanded ? "Collapse" : "Expand"} ${aiEscapeHtml(titleMap[section.id])}"><img src="assets/icons/directions/chevron ${expanded ? "up" : "down"}/size=24px, style=mono.svg" alt="" /></button><span class="ai-bulk-review-section__copy"><strong>${titleMap[section.id]}</strong><small>${descriptionMap[section.id]}</small></span>${sectionAction}</div><div class="ai-bulk-review-section__content" id="${contentId}" ${expanded ? "" : "hidden"}><div class="ai-bulk-review-table-wrap"><table class="ai-bulk-review-table ai-bulk-review-table--${section.id}">${selectable ? selectableColgroup : statusColgroup}<thead>${header}</thead><tbody>${rows}</tbody></table></div></div></section>`;
+}
+
+function showBulkInstrumentReviewStep() {
+  const form = app.querySelector(".ai-form");
+  const inputContent = form.querySelector(".ai-columns");
+  const main = app.querySelector(".ai-main");
+  const actionBar = app.querySelector("[data-platform-actionbar]");
+  const actionBarLeading = actionBar.querySelector(".platform-actionbar__leading");
+  const actionBarBack = actionBar.querySelector('[data-actionbar-action="back"]');
+  const actionBarPrimary = actionBar.querySelector('[data-actionbar-action="primary"]');
+  const sections = assignBulkInstrumentSections(bulkInstrumentDraft);
+  const assigned = sections.flatMap((section) => section.instruments);
+  bulkInstrumentDraft = assigned;
+  form.querySelector("[data-ai-step-content]")?.remove();
+  inputContent.hidden = true;
+  actionBar.hidden = false;
+  actionBarLeading.hidden = true;
+  actionBarBack.hidden = false;
+  actionBarPrimary.textContent = "Continue";
+  main.classList.add("platform-page-body--has-actionbar");
+  updateAddInstrumentStepper(2);
+  main.scrollTop = 0;
+  form.insertAdjacentHTML("beforeend", `<section class="ai-bulk-review" data-ai-step-content="2" aria-labelledby="ai-bulk-review-title"><h2 id="ai-bulk-review-title">Instrument(s) need review</h2><div class="ai-bulk-review-sections">${sections.map((section) => aiBulkReviewTable(section, assigned.length)).join("")}</div></section>`);
+  const updateSelection = () => {
+    const selectedItems = new Set([...form.querySelectorAll("[data-ai-bulk-review-select]:checked")].map((checkbox) => Number(checkbox.dataset.aiBulkId)));
+    bulkInstrumentDraft.forEach((instrument) => { instrument.selected = selectedItems.has(instrument.item); });
+    form.querySelectorAll("[data-ai-bulk-select-all]").forEach((selectAll) => {
+      const section = selectAll.dataset.aiBulkSelectAll;
+      const checkboxes = [...form.querySelectorAll(`[data-ai-bulk-review-section="${section}"] [data-ai-bulk-review-select]`)];
+      const checked = checkboxes.filter((checkbox) => checkbox.checked).length;
+      selectAll.checked = checked === checkboxes.length && checkboxes.length > 0;
+      selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
+    });
+    window.PlatformActionBar?.setPrimaryDisabled(actionBar, selectedItems.size === 0);
+  };
+  form.querySelectorAll("[data-ai-bulk-review-select]").forEach((checkbox) => checkbox.addEventListener("change", updateSelection));
+  form.querySelectorAll("[data-ai-bulk-select-all]").forEach((selectAll) => selectAll.addEventListener("change", () => {
+    form.querySelectorAll(`[data-ai-bulk-review-section="${selectAll.dataset.aiBulkSelectAll}"] [data-ai-bulk-review-select]`).forEach((checkbox) => { checkbox.checked = selectAll.checked; });
+    updateSelection();
+  }));
+  form.querySelectorAll("[data-ai-bulk-nickname]").forEach((input) => input.addEventListener("input", () => {
+    const instrument = bulkInstrumentDraft.find((candidate) => candidate.item === Number(input.dataset.aiBulkNickname));
+    if (instrument) instrument.nickname = input.value;
+  }));
+  form.querySelectorAll(".ai-bulk-review-section__toggle").forEach((toggle) => toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${toggle.closest(".ai-bulk-review-section__header").querySelector("strong").textContent}`);
+    form.querySelector(`#${toggle.getAttribute("aria-controls")}`).hidden = expanded;
+    toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "up"}/size=24px, style=mono.svg`;
+  }));
+  form.querySelectorAll("[data-ai-specific-families]").forEach((link) => link.addEventListener("click", (event) => event.preventDefault()));
+  updateSelection();
+  actionBarBack.onclick = () => showAddInstrumentStep(1);
+  actionBarPrimary.onclick = () => {
+    if (!form.querySelector("[data-ai-bulk-review-select]:checked")) {
+      window.PlatformActionBar?.setPrimaryDisabled(actionBar, true);
+      return;
+    }
+    const approvalUsers = ["carla.flores@company.com", "sergio.sanchez@company.com", "tammy.hall@company.com", "oliver.clark@company.com"];
+    const approvalBatch = bulkInstrumentDraft.filter((instrument) => instrument.bulkSection === "approval" && instrument.selected);
+    const approvalUser = approvalUsers[aiStableHash(bulkInstrumentDraft.map((instrument) => instrument.serial).join("|")) % approvalUsers.length];
+    approvalBatch.forEach((instrument) => {
+      const id = `bulk-approval-${instrument.serial}`;
+      if (MI_PENDING_AWAITING_ITEMS.some((item) => item.id === id)) return;
+      MI_PENDING_AWAITING_ITEMS.unshift({
+        id,
+        kind: "instrument",
+        user: approvalUser,
+        serial: instrument.serial,
+        nickname: instrument.nickname || "—",
+        type: miInstrumentType(instrument),
+        model: instrument.model,
+        expires: "19 Sep 2026",
+        image: instrument.image,
+      });
+    });
+    addInstrumentDraft = bulkInstrumentDraft.map((instrument) => ({
+      ...instrument,
+      nickname: instrument.bulkSection === "nickname" ? instrument.currentNickname : instrument.nickname,
+      reviewSelected: instrument.selected,
+      selected: instrument.selected && ["ready", "nickname"].includes(instrument.bulkSection),
+    }));
+    aiPrepareAddedSystems();
+    addInstrumentDraft.filter((instrument) => instrument.selected).forEach((instrument) => {
+      const existing = MY_INSTRUMENTS.find((candidate) => candidate.serial === instrument.serial);
+      if (existing) Object.assign(existing, instrument, { nickname: instrument.nickname || "—", pendingNew: true });
+      else MY_INSTRUMENTS.push({ ...instrument, nickname: instrument.nickname || "—" });
+    });
+    showAddInstrumentStep(3);
+  };
+  wireMiUserCountTooltips(form);
+}
+
+function addInstrumentEntryRows(count = 1, entries = []) {
   const container = app.querySelector("[data-ai-rows]");
   const startIndex = container.children.length;
   const fragment = document.createDocumentFragment();
   for (let offset = 0; offset < count; offset += 1) {
     const rowNumber = startIndex + offset + 1;
+    const entry = entries[offset] || {};
     const row = document.createElement("div");
     row.className = "ai-entry-row";
-    row.innerHTML = `<label><span class="sr-only">Serial number ${rowNumber}</span><input type="text" data-ai-serial autocomplete="off" /></label><label><span class="sr-only">Nickname ${rowNumber}</span><input type="text" data-ai-nickname placeholder="Example Asset ID or Instrument name" autocomplete="off" /></label><button type="button" data-ai-remove aria-label="Remove instrument row ${rowNumber}"><img src="assets/icons/actions/bin/size=24px, style=mono.svg" alt="" /></button>`;
+    row.innerHTML = `<label><span class="sr-only">Serial number ${rowNumber}</span><input type="text" data-ai-serial value="${aiEscapeHtml(entry.serial || "")}" autocomplete="off" /></label><label><span class="sr-only">Nickname ${rowNumber}</span><input type="text" data-ai-nickname value="${aiEscapeHtml(entry.nickname || "")}" placeholder="Example Asset ID or Instrument name" autocomplete="off" /></label><button type="button" data-ai-remove aria-label="Remove instrument row ${rowNumber}" ${entry.serial ? "" : "disabled"}><img src="assets/icons/actions/bin/size=24px, style=mono.svg" alt="" /></button>`;
     fragment.append(row);
   }
   container.append(fragment);
 }
 
 function updateAddInstrumentsContinueState() {
-  const hasSerial = [...app.querySelectorAll("[data-ai-serial]")].some((input) => input.value.trim() !== "");
+  const rows = [...app.querySelectorAll(".ai-entry-row")];
+  rows.forEach((row) => {
+    const hasSerial = row.querySelector("[data-ai-serial]").value.trim() !== "";
+    row.querySelector("[data-ai-remove]").disabled = !hasSerial;
+  });
+  const hasSerial = rows.some((row) => row.querySelector("[data-ai-serial]").value.trim() !== "");
   const continueButton = app.querySelector("[data-ai-continue]");
   continueButton.disabled = !hasSerial;
 }
 
+function collectAddInstrumentDraft() {
+  const seen = new Set();
+  addInstrumentDraft = [...app.querySelectorAll(".ai-entry-row")].flatMap((row, index) => {
+    const serial = row.querySelector("[data-ai-serial]").value.trim();
+    if (!serial || seen.has(serial)) return [];
+    seen.add(serial);
+    const nickname = row.querySelector("[data-ai-nickname]").value.trim();
+    const profile = ADD_INSTRUMENT_PROFILES[index % ADD_INSTRUMENT_PROFILES.length];
+    return [{ ...profile, serial, nickname, users: "1", group: "—", locked: false, pendingNew: true, selected: true }];
+  });
+}
+
+function aiPrepareAddedSystems() {
+  const eligible = addInstrumentDraft.filter((instrument) => instrument.selected);
+  addInstrumentSystemsDraft = [];
+  if (!bulkInstrumentDraft.length || !eligible.length) return;
+  const names = ["Alpine", "Vanquish Core", "Chromeleon Lab"];
+  const systemCount = Math.min(3, Math.max(1, Math.ceil(eligible.length / 5)));
+  const usedSerials = new Set(MY_INSTRUMENTS.map((instrument) => instrument.serial));
+  for (let index = 0; index < systemCount; index += 1) {
+    const enteredComponents = eligible.slice(index * 2, (index * 2) + 2);
+    const enteredComponent = enteredComponents[0];
+    if (!enteredComponent) break;
+    const systemId = `onboarding-system-${aiStableHash(`${enteredComponent.serial}:${index}`).toString(36)}`;
+    enteredComponents.forEach((component) => { component.summarySystemId = systemId; });
+    const components = enteredComponents.map((component) => ({ ...component, includedWithSystem: false }));
+    for (let componentIndex = 0; components.length < 4; componentIndex += 1) {
+      const profile = ADD_INSTRUMENT_PROFILES[(index + componentIndex + 1) % ADD_INSTRUMENT_PROFILES.length];
+      let serial = `SYS-${String(index + 1).padStart(2, "0")}-${String(componentIndex + 1).padStart(2, "0")}-${enteredComponent.serial}`;
+      while (usedSerials.has(serial)) serial = `${serial}-A`;
+      usedSerials.add(serial);
+      components.push({
+        ...profile,
+        item: null,
+        serial,
+        nickname: ["Column module", "Pump module", "Sampler module"][(index + componentIndex) % 3],
+        users: "3",
+        group: "—",
+        locked: false,
+        pendingNew: true,
+        selected: true,
+        includedWithSystem: true,
+        summarySystemId: systemId,
+      });
+    }
+    const system = {
+      id: systemId,
+      nickname: names[index],
+      notes: "",
+      typeCode: "HPLC",
+      users: "3",
+      locked: false,
+      admin: false,
+      pendingNew: true,
+      components,
+    };
+    addInstrumentSystemsDraft.push(system);
+    components.forEach((component) => {
+      const existing = MY_INSTRUMENTS.find((instrument) => instrument.serial === component.serial);
+      if (existing) Object.assign(existing, component, { nickname: component.nickname || "—", pendingNew: true });
+      else MY_INSTRUMENTS.push({ ...component, nickname: component.nickname || "—" });
+    });
+    if (!miFindSystemById(systemId)) MI_CREATED_SYSTEMS.unshift({ ...system, components: components.map((component) => component.serial) });
+  }
+}
+
+function aiSummaryNotAddedNote(instrument) {
+  if (instrument.reviewSelected === false && ["ready", "nickname", "approval"].includes(instrument.bulkSection)) return "Instrument not selected in previous step";
+  return ({
+    approval: "Access request awaiting approval",
+    suggestions: "Instrument suggestion requires review",
+    unrecognized: "Instrument not found for your organization",
+    unsupported: "Instrument installed in a country currently not supported",
+  })[instrument.bulkSection] || "Instrument not selected in previous step";
+}
+
+function aiSummaryInstrumentTable(instruments) {
+  return `<div class="ai-summary-table-wrap"><table class="ai-summary-table"><colgroup><col class="ai-summary-col-item" /><col class="ai-summary-col-image" /><col /><col /><col /><col /><col /><col /><col class="ai-summary-col-users" /></colgroup><thead><tr><th>Item</th><th></th><th>Serial number</th><th>Nickname</th><th>Type</th><th>Model</th><th>Coverage</th><th>Coverage end</th><th>Users</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td><img class="ai-instrument-image" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${aiEscapeHtml(instrument.serial)}</button></td><td>${instrument.nickname ? aiEscapeHtml(instrument.nickname) : "—"}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td class="mi-users-cell">${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function aiSummarySystemsMarkup() {
+  if (!addInstrumentSystemsDraft.length) return "";
+  const rows = addInstrumentSystemsDraft.map((system) => {
+    const key = `ai-summary-system-${system.id}`;
+    const parent = `<tr class="ai-summary-system-row"><td><button class="ai-summary-system-toggle" type="button" data-ai-summary-system-toggle="${key}" aria-expanded="true" aria-label="Collapse ${aiEscapeHtml(system.nickname)} components"><img src="assets/icons/directions/chevron up/size=16px, style=mono.svg" alt="" /></button></td><td></td><td><img class="ai-summary-system-icon" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td></td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${aiEscapeHtml(system.nickname)}</td><td>${system.typeCode}</td><td>—</td><td>—</td><td>—</td><td class="mi-users-cell">${miUserCountMarkup(system.users, `system:${system.id}`)}</td></tr>`;
+    const children = system.components.map((instrument) => `<tr class="ai-summary-system-component" data-ai-summary-system-component="${key}"><td>${instrument.includedWithSystem ? '<img class="ai-summary-auto-icon" src="assets/icons/science/new instrument/Size=24px, style=mono, type=Instrument.svg" alt="Automatically added with system" />' : ""}</td><td>${instrument.item ?? ""}</td><td>${miBranchIcon}</td><td><img class="ai-instrument-image" src="assets/instruments/${instrument.image}" alt="" /></td><td class="${instrument.includedWithSystem ? "is-auto-added" : ""}"><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${aiEscapeHtml(instrument.serial)}</button></td><td class="${instrument.includedWithSystem ? "is-auto-added" : ""}">${aiEscapeHtml(instrument.nickname || "—")}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td></td></tr>`).join("");
+    return parent + children;
+  }).join("");
+  return `<section class="ai-summary-section ai-summary-section--systems"><div class="ai-summary__description"><h2>System(s) found and added successfully</h2><p>Instrument(s) you entered exist within System(s) in Services Central. The entire System(s) have been added to your account.</p></div><div class="ai-summary-system-table-wrap"><table class="ai-summary-system-table"><colgroup><col class="ai-summary-system-col-status" /><col class="ai-summary-system-col-item" /><col class="ai-summary-system-col-branch" /><col class="ai-summary-system-col-image" /><col /><col class="ai-summary-system-col-nickname" /><col class="ai-summary-system-col-type" /><col class="ai-summary-system-col-model" /><col class="ai-summary-system-col-coverage" /><col class="ai-summary-system-col-end" /><col class="ai-summary-system-col-users" /></colgroup><thead><tr><th></th><th>Item</th><th></th><th></th><th>Serial number</th><th>Nickname</th><th>Type</th><th>Catalog no.</th><th>Coverage</th><th>Coverage end</th><th><span class="ai-bulk-users-header"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />Users</span></th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+
+function aiSummaryNotAddedMarkup(instruments) {
+  if (!instruments.length) return "";
+  return `<section class="ai-summary-section ai-summary-section--not-added"><h2>Instrument(s) not added</h2><div class="ai-summary-not-added-wrap"><table class="ai-summary-not-added"><colgroup><col class="ai-summary-not-added-item" /><col class="ai-summary-not-added-serial" /><col class="ai-summary-not-added-nickname" /><col /></colgroup><thead><tr><th>Item</th><th>Serial number</th><th>Nickname</th><th>Notes</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "")}</td><td>${aiEscapeHtml(aiSummaryNotAddedNote(instrument))}</td></tr>`).join("")}</tbody></table></div></section>`;
+}
+
+function addInstrumentStepMarkup(step) {
+  const selected = addInstrumentDraft.filter((instrument) => instrument.selected);
+  if (step === 2) {
+    return `<section class="ai-review" data-ai-step-content="2" aria-labelledby="ai-review-title">
+      <header class="ai-review__intro"><button type="button" data-ai-review-toggle aria-expanded="true" aria-controls="ai-recognized-content"><img src="assets/icons/directions/chevron up/size=24px, style=mono.svg" alt="" /><h2 id="ai-review-title">All instrument(s) recognized</h2></button></header>
+      <section class="ai-review__ready" id="ai-recognized-content">
+        <div class="ai-review__ready-title"><div><h3><span data-ai-ready-count>${selected.length}</span> out of ${addInstrumentDraft.length} instrument(s) ready to add</h3><p>Please review the recognized instrument(s) below. Continue to the next step to add the selected instruments.</p></div></div>
+        <div class="ai-review-table-wrap"><table class="ai-review-table"><colgroup><col class="ai-review-col-check" /><col class="ai-review-col-item" /><col class="ai-review-col-image" /><col class="ai-review-col-serial" /><col class="ai-review-col-nickname" /><col class="ai-review-col-type" /><col class="ai-review-col-model" /><col class="ai-review-col-users" /></colgroup><thead><tr><th><input type="checkbox" data-ai-review-select-all checked aria-label="Select all recognized instruments" /></th><th>Item</th><th></th><th>Serial number</th><th>Nickname (optional)</th><th>Type</th><th>Model</th><th>Users</th></tr></thead><tbody>${addInstrumentDraft.map((instrument, index) => `<tr data-ai-review-row="${index}"><td><input type="checkbox" data-ai-review-select ${instrument.selected ? "checked" : ""} aria-label="Select ${aiEscapeHtml(instrument.serial)}" /></td><td>${index + 1}</td><td><img class="ai-instrument-image" src="assets/instruments/${instrument.image}" alt="" /></td><td>${aiEscapeHtml(instrument.serial)}</td><td><input type="text" data-ai-review-nickname value="${aiEscapeHtml(instrument.nickname)}" placeholder="Example Asset ID or Instrument name" aria-label="Nickname for ${aiEscapeHtml(instrument.serial)}" /></td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td></tr>`).join("")}</tbody></table></div>
+      </section>
+    </section>`;
+  }
+  const standaloneSelected = selected.filter((instrument) => !instrument.summarySystemId);
+  const notAdded = addInstrumentDraft.filter((instrument) => !instrument.selected);
+  const systemComponentCount = addInstrumentSystemsDraft.reduce((count, system) => count + system.components.length, 0);
+  return `<section class="ai-summary" data-ai-step-content="3" aria-labelledby="ai-summary-title">
+    <div class="ai-summary-cards">${addInstrumentSystemsDraft.length ? `<div class="ai-summary-card"><strong>${addInstrumentSystemsDraft.length}</strong><span><b>System(s) added</b><small>${systemComponentCount} components inside ${addInstrumentSystemsDraft.length} system${addInstrumentSystemsDraft.length === 1 ? "" : "s"}</small></span></div>` : ""}<div class="ai-summary-card"><strong>${standaloneSelected.length}</strong><span><b>Instrument(s) added</b><small>Go to <button type="button" data-route="my-instruments">My Instruments</button></small></span></div><div class="ai-summary-card"><strong>${notAdded.length}</strong><span><b>Instrument(s) not added</b><small>Get help</small></span></div></div>
+    ${aiSummarySystemsMarkup()}
+    ${standaloneSelected.length ? `<section class="ai-summary-section"><div class="ai-summary__description"><h2 id="ai-summary-title">Instrument(s) added successfully</h2><p>Click a serial number for instrument support details, or visit <button type="button" data-route="my-instruments">My Instruments</button> to view all within Services Central.</p></div>${aiSummaryInstrumentTable(standaloneSelected)}</section>` : ""}
+    ${aiSummaryNotAddedMarkup(notAdded)}
+  </section>`;
+}
+
+function updateAddInstrumentStepper(step) {
+  app.querySelectorAll(".ai-stepper li").forEach((item, index) => {
+    const itemStep = index + 1;
+    item.classList.toggle("is-current", itemStep === step);
+    item.classList.toggle("is-complete", itemStep < step);
+    item.toggleAttribute("aria-current", itemStep === step);
+    const marker = item.querySelector("span");
+    if (itemStep < step) marker.innerHTML = '<img src="assets/icons/actions/checkmark/size=24px, style=mono.svg" alt="" />';
+    else marker.textContent = String(itemStep);
+  });
+}
+
+function showAddInstrumentStep(step) {
+  const form = app.querySelector(".ai-form");
+  const inputContent = form.querySelector(".ai-columns");
+  const main = app.querySelector(".ai-main");
+  const actionBar = app.querySelector("[data-platform-actionbar]");
+  const actionBarLeading = actionBar.querySelector(".platform-actionbar__leading");
+  const actionBarBack = actionBar.querySelector('[data-actionbar-action="back"]');
+  const actionBarPrimary = actionBar.querySelector('[data-actionbar-action="primary"]');
+  form.querySelector("[data-ai-step-content]")?.remove();
+  inputContent.hidden = step !== 1;
+  actionBar.hidden = step === 1;
+  actionBarLeading.hidden = true;
+  main.classList.toggle("platform-page-body--has-actionbar", step > 1);
+  updateAddInstrumentStepper(step);
+  app.querySelector(".platform-page-body").scrollTop = 0;
+  if (step === 1) return;
+  actionBarBack.hidden = step === 3;
+  actionBarPrimary.textContent = step === 3 ? "Go to My instruments" : "Continue";
+  actionBarPrimary.disabled = false;
+  actionBarBack.onclick = () => showAddInstrumentStep(1);
+  actionBarPrimary.onclick = step === 3 ? () => setRoute("my-instruments") : null;
+  form.insertAdjacentHTML("beforeend", addInstrumentStepMarkup(step));
+  if (step === 2) {
+    const updateReview = () => {
+      const checkboxes = [...form.querySelectorAll("[data-ai-review-select]")];
+      const selectedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
+      form.querySelector("[data-ai-ready-count]").textContent = String(selectedCount);
+      form.querySelector("[data-ai-review-select-all]").checked = selectedCount === checkboxes.length;
+      form.querySelector("[data-ai-review-select-all]").indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+      window.PlatformActionBar?.setPrimaryDisabled(actionBar, selectedCount === 0);
+    };
+    form.querySelectorAll("[data-ai-review-select]").forEach((checkbox, index) => checkbox.addEventListener("change", () => {
+      addInstrumentDraft[index].selected = checkbox.checked;
+      updateReview();
+    }));
+    form.querySelector("[data-ai-review-select-all]").addEventListener("change", (event) => {
+      form.querySelectorAll("[data-ai-review-select]").forEach((checkbox, index) => {
+        checkbox.checked = event.currentTarget.checked;
+        addInstrumentDraft[index].selected = checkbox.checked;
+      });
+      updateReview();
+    });
+    form.querySelectorAll("[data-ai-review-nickname]").forEach((input, index) => input.addEventListener("input", () => { addInstrumentDraft[index].nickname = input.value; }));
+    form.querySelector("[data-ai-review-toggle]").addEventListener("click", (event) => {
+      const button = event.currentTarget;
+      const expanded = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", String(!expanded));
+      form.querySelector("#ai-recognized-content").hidden = expanded;
+      button.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "up"}/size=24px, style=mono.svg`;
+    });
+    actionBarPrimary.onclick = () => {
+      if (!form.querySelector("[data-ai-review-select]:checked")) {
+        window.PlatformActionBar?.setPrimaryDisabled(actionBar, true);
+        return;
+      }
+      addInstrumentSystemsDraft = [];
+      addInstrumentDraft.forEach((instrument) => { instrument.reviewSelected = instrument.selected; });
+      addInstrumentDraft.filter((instrument) => instrument.selected).forEach((instrument) => {
+        const existing = MY_INSTRUMENTS.find((candidate) => candidate.serial === instrument.serial);
+        if (existing) Object.assign(existing, instrument, { nickname: instrument.nickname || "—", pendingNew: true });
+        else MY_INSTRUMENTS.push({ ...instrument, nickname: instrument.nickname || "—" });
+      });
+      showAddInstrumentStep(3);
+    };
+    wireMiUserCountTooltips(form);
+  } else {
+    form.querySelectorAll("[data-ai-summary-system-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      const key = toggle.dataset.aiSummarySystemToggle;
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} system components`);
+      toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "up"}/size=16px, style=mono.svg`;
+      form.querySelectorAll(`[data-ai-summary-system-component="${key}"]`).forEach((row) => { row.hidden = expanded; });
+    }));
+    wireMiUserCountTooltips(form);
+    wireRouteControls(form);
+  }
+}
+
 function wireAddInstruments() {
   addInstrumentEntryRows(5);
+  const actionBar = window.PlatformActionBar?.mount(app.querySelector("[data-ai-actionbar-mount]"), { primaryDisabled: true });
+  actionBar?.classList.add("platform-actionbar--native-flow", "ai-platform-actionbar");
+  if (actionBar) actionBar.hidden = true;
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("my-instruments"));
   const rows = app.querySelector("[data-ai-rows]");
   rows.addEventListener("input", updateAddInstrumentsContinueState);
@@ -4118,7 +4616,12 @@ function wireAddInstruments() {
     app.querySelectorAll("[data-ai-rows] input").forEach((input) => { input.value = ""; });
     updateAddInstrumentsContinueState();
   });
-  app.querySelector("[data-ai-continue]").addEventListener("click", () => setRoute("instrument-access"));
+  app.querySelector("[data-ai-continue]").addEventListener("click", () => {
+    bulkInstrumentDraft = [];
+    addInstrumentSystemsDraft = [];
+    collectAddInstrumentDraft();
+    showAddInstrumentStep(2);
+  });
 
   app.querySelectorAll("[data-ai-mode]").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -4131,11 +4634,93 @@ function wireAddInstruments() {
       app.querySelectorAll("[data-ai-panel]").forEach((panel) => { panel.hidden = panel.dataset.aiPanel !== mode; });
     });
   });
-  app.querySelector("[data-ai-file]").addEventListener("change", (event) => {
-    app.querySelector("[data-ai-bulk-continue]").disabled = !event.currentTarget.files.length;
+  const bulkFileInput = app.querySelector("[data-ai-file]");
+  const bulkUploadArea = app.querySelector(".ai-bulk-upload");
+  const bulkUploadInstructions = app.querySelector("[data-ai-bulk-upload-instructions]");
+  const bulkUploadStatus = app.querySelector("[data-ai-bulk-upload-status]");
+  const bulkFileRow = app.querySelector("[data-ai-bulk-file-row]");
+  let bulkUploadRequest = 0;
+  const resetBulkUpload = () => {
+    bulkUploadRequest += 1;
+    bulkInstrumentDraft = [];
+    bulkFileInput.value = "";
+    bulkUploadInstructions.hidden = false;
+    bulkUploadStatus.hidden = true;
+    bulkUploadStatus.className = "ai-bulk-upload__status";
+    bulkUploadStatus.replaceChildren();
+    bulkFileRow.hidden = true;
+    bulkFileRow.className = "ai-bulk-file-row";
+    bulkFileRow.replaceChildren();
+  };
+  const renderBulkProgress = (file, progress) => {
+    bulkUploadInstructions.hidden = true;
+    bulkUploadStatus.hidden = false;
+    bulkUploadStatus.className = "ai-bulk-upload__status is-uploading";
+    bulkUploadStatus.innerHTML = `<i class="ai-bulk-upload__progress" style="--ai-upload-progress:${progress}%"></i><div><p>Uploading files…</p><span><strong data-ai-upload-progress>${progress}</strong><small>%</small></span><button class="mi-button" type="button" data-ai-bulk-cancel>Cancel</button></div>`;
+    bulkFileRow.hidden = false;
+    bulkFileRow.className = "ai-bulk-file-row is-uploading";
+    bulkFileRow.innerHTML = `<img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><div><span>${aiEscapeHtml(file.name)}</span><i><b style="width:${progress}%"></b></i></div><small>${progress}%</small><button class="mi-button ai-continue" type="button" data-ai-bulk-continue disabled>Continue</button>`;
+  };
+  const renderBulkValid = (file, entries) => {
+    bulkInstrumentDraft = entries;
+    bulkUploadStatus.className = "ai-bulk-upload__status is-complete";
+    bulkUploadStatus.innerHTML = `<img src="assets/icons/actions/cloud upload/Size=32px, Style=Mono.svg" alt="" /><h3>File upload complete</h3><p>Only one file may be uploaded at a time.<br />Click the button below to continue</p>`;
+    const sizeMb = Math.max(0.1, file.size / 1000000).toFixed(file.size >= 1000000 ? 0 : 1);
+    bulkFileRow.className = "ai-bulk-file-row is-valid";
+    bulkFileRow.innerHTML = `<img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><img class="ai-bulk-file-row__state" src="assets/icons/actions/checkmark/size=16px, style=mono.svg" alt="Valid file" /><span>${aiEscapeHtml(file.name)}</span><small>${sizeMb} mb</small><button class="mi-button" type="button" data-ai-bulk-remove>Remove file</button><button class="mi-button ai-continue" type="button" data-ai-bulk-continue>Continue</button>`;
+  };
+  const renderBulkError = (file, errors) => {
+    bulkInstrumentDraft = [];
+    bulkUploadStatus.className = "ai-bulk-upload__status is-error";
+    bulkUploadStatus.innerHTML = `<img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" /><h3>File upload failed</h3><p>Correct the following issues and upload the file again:</p><ul>${errors.map((error) => `<li>${aiEscapeHtml(error)}</li>`).join("")}</ul>`;
+    bulkFileRow.className = "ai-bulk-file-row is-error";
+    bulkFileRow.innerHTML = `<img src="assets/icons/media/document/size=24px, style=mono.svg" alt="" /><img class="ai-bulk-file-row__state" src="assets/icons/notifications/alert/size=16px, style=mono.svg" alt="Invalid file" /><span>${aiEscapeHtml(file.name)}</span><small>Failed</small><button class="mi-button" type="button" data-ai-bulk-remove>Remove file</button><button class="mi-button ai-continue" type="button" data-ai-bulk-continue disabled>Continue</button>`;
+  };
+  const processBulkFile = async (file) => {
+    if (!file) return;
+    const request = ++bulkUploadRequest;
+    let progress = 10;
+    renderBulkProgress(file, progress);
+    const progressTimer = window.setInterval(() => {
+      progress = Math.min(90, progress + 8);
+      const progressNumber = bulkUploadStatus.querySelector("[data-ai-upload-progress]");
+      if (progressNumber) progressNumber.textContent = String(progress);
+      bulkUploadStatus.querySelector(".ai-bulk-upload__progress")?.style.setProperty("--ai-upload-progress", `${progress}%`);
+      const fileProgress = bulkFileRow.querySelector("i b");
+      if (fileProgress) fileProgress.style.width = `${progress}%`;
+      const filePercent = bulkFileRow.querySelector("small");
+      if (filePercent) filePercent.textContent = `${progress}%`;
+    }, 90);
+    const [result] = await Promise.all([parseBulkInstrumentWorkbook(file), new Promise((resolve) => window.setTimeout(resolve, 720))]);
+    window.clearInterval(progressTimer);
+    if (request !== bulkUploadRequest) return;
+    if (result.valid) renderBulkValid(file, result.entries);
+    else renderBulkError(file, result.errors);
+  };
+  bulkFileInput.addEventListener("change", (event) => processBulkFile(event.currentTarget.files[0]));
+  ["dragenter", "dragover"].forEach((type) => bulkUploadArea.addEventListener(type, (event) => {
+    event.preventDefault();
+    bulkUploadArea.classList.add("is-dragging");
+  }));
+  ["dragleave", "drop"].forEach((type) => bulkUploadArea.addEventListener(type, (event) => {
+    event.preventDefault();
+    bulkUploadArea.classList.remove("is-dragging");
+  }));
+  bulkUploadArea.addEventListener("drop", (event) => {
+    processBulkFile(event.dataTransfer.files[0]);
   });
-  app.querySelector("[data-ai-bulk-continue]").addEventListener("click", () => showToast("Instrument file ready for review"));
-  app.querySelector("[data-ai-template]").addEventListener("click", () => showToast("Instrument upload template downloaded"));
+  const bulkPanel = app.querySelector(".ai-bulk-panel");
+  bulkPanel.addEventListener("click", (event) => {
+    if (event.target.closest("[data-ai-bulk-cancel], [data-ai-bulk-remove]")) resetBulkUpload();
+    if (event.target.closest("[data-ai-bulk-continue]:not(:disabled)")) showBulkInstrumentReviewStep();
+  });
+  const bulkInstructionsDialog = app.querySelector("[data-ai-bulk-instructions-dialog]");
+  app.querySelector("[data-ai-bulk-instructions]").addEventListener("click", () => {
+    bulkInstructionsDialog.showModal();
+    bulkInstructionsDialog.scrollTop = 0;
+    bulkInstructionsDialog.querySelector("#ai-bulk-instructions-title").focus();
+  });
+  bulkInstructionsDialog.querySelectorAll("[data-ai-bulk-instructions-close]").forEach((button) => button.addEventListener("click", () => bulkInstructionsDialog.close()));
 
   let bannerIndex = 0;
   const updateBannerDots = () => {

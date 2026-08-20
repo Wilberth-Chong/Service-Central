@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260819-step-four-layout-alignment-instruments" />
+    <link rel="stylesheet" href="styles.css?v=20260820-summary-system-card" />
     <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
@@ -271,8 +271,29 @@
                       <div class="ai-form-actions"><button class="mi-button" type="button" data-ai-add-rows>Add 5 more rows</button><div><button class="mi-button" type="button" data-ai-clear>Clear all</button><button class="mi-button ai-continue" type="button" data-ai-continue disabled>Continue</button></div></div>
                     </div>
                     <div class="ai-bulk-panel" data-ai-panel="bulk" hidden>
-                      <label class="ai-dropzone"><img src="assets/icons/actions/upload/Size=32px, Style=Mono.svg" alt="" /><strong>Upload an instrument list</strong><span>Choose a CSV or XLSX file containing up to 50 instruments.</span><input type="file" accept=".csv,.xlsx" data-ai-file /></label>
-                      <div class="ai-form-actions"><button class="mi-button" type="button" data-ai-template>Download template</button><div><button class="mi-button ai-continue" type="button" data-ai-bulk-continue disabled>Continue</button></div></div>
+                      <section class="ai-bulk-upload" aria-label="Bulk upload file preparation">
+                        <div class="ai-bulk-upload__instructions" data-ai-bulk-upload-instructions>
+                          <article class="ai-bulk-upload__step">
+                            <img src="assets/icons/actions/cloud download/Size=32px, Style=Mono.svg" alt="" />
+                            <div><strong>1.</strong><span><a href="assets/instruments/TF_Services_Central_Upload_Template.xlsx" download="TF_Services_Central_Upload_Template.xlsx">Download .xlsx template</a><br />(required)</span></div>
+                          </article>
+                          <article class="ai-bulk-upload__step">
+                            <img src="assets/icons/actions/edit/size=32px, style=mono.svg" alt="" />
+                            <div><strong>2.</strong><span>Follow <button type="button" data-ai-bulk-instructions>instructions</button> to enter<br />and format data</span></div>
+                          </article>
+                          <article class="ai-bulk-upload__step">
+                            <img src="assets/icons/actions/cloud upload/Size=32px, Style=Mono.svg" alt="" />
+                            <div><strong>3.</strong><span><label><span>Choose file</span><input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-ai-file /></label> or drag and drop<br />to upload</span></div>
+                          </article>
+                        </div>
+                        <div class="ai-bulk-upload__status" data-ai-bulk-upload-status hidden></div>
+                      </section>
+                      <div class="ai-bulk-file-row" data-ai-bulk-file-row hidden></div>
+                      <ul class="ai-bulk-restrictions">
+                        <li><strong>Only .xlsx files are supported.</strong></li>
+                        <li>The maximum amount of instruments per upload is 50.</li>
+                        <li>Instrument nicknames should not exceed 90 characters.</li>
+                      </ul>
                     </div>
                   </div>
                   <aside class="ai-support-card">
@@ -282,9 +303,27 @@
                 </div>
               </section>
             </main>
+            <div data-ai-actionbar-mount></div>
             <div data-footer-mount></div>
 
             <dialog class="ai-supported-dialog" data-ai-supported-dialog aria-labelledby="supported-dialog-title"><button type="button" data-ai-supported-close aria-label="Close supported instruments"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button><h2 id="supported-dialog-title">Supported instruments</h2><p>Services Central supports eligible Thermo Fisher Scientific instrument families installed in supported regions on or after 01 January 2010.</p><button class="mi-button" type="button" data-ai-supported-close>Close</button></dialog>
+            <dialog class="ai-bulk-instructions-dialog" data-ai-bulk-instructions-dialog aria-labelledby="ai-bulk-instructions-title">
+              <article class="ai-bulk-instructions-modal">
+                <header>
+                  <h2 id="ai-bulk-instructions-title" tabindex="-1">Bulk upload file preparation instructions</h2>
+                  <button type="button" data-ai-bulk-instructions-close aria-label="Close bulk upload instructions"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+                </header>
+                <div class="ai-bulk-instructions-modal__content">
+                  <section><h3>Step 1</h3><p>Open the downloaded template. Enter all serial numbers (required) and nicknames (optional) to upload.</p></section>
+                  <section><h3>Step 2</h3><p>After entering your data, click on the column B header to select the full Serial Number column in the template. Select the “Data” tab, then click “Text to columns”.</p><img class="ai-bulk-instructions-modal__wide-image" src="assets/instruments/bulk-upload-step-2.png" alt="Excel Data tab and Serial Number column selected" /></section>
+                  <section><h3>Step 3</h3><p>In the Convert Text to Columns Wizard, select “Delimited”, then click “Next”.</p><img src="assets/instruments/bulk-upload-step-3.png" alt="Delimited option selected in the Convert Text to Columns Wizard" /></section>
+                  <section><h3>Step 4</h3><p>Deselect all Delimiters so that nothing is checked. Then click “Next”.</p><img src="assets/instruments/bulk-upload-step-4.png" alt="All delimiter options cleared in the Convert Text to Columns Wizard" /></section>
+                  <section><h3>Step 5</h3><p>Select the “Text” radio button under Column data format. Then click “Finish”.</p><img src="assets/instruments/bulk-upload-step-5.png" alt="Text column data format selected in the Convert Text to Columns Wizard" /></section>
+                  <section><h3>Step 6</h3><p>Review your data and ensure the serial numbers are visible in plain text and not scientific notation. Also ensure any leading 0’s or trailing 0’s in serial numbers are present or corrected as needed.</p></section>
+                  <section><h3>Step 7</h3><p>Save as an .XLSX file and upload it in the bulk upload panel.</p></section>
+                </div>
+              </article>
+            </dialog>
           </div>
         </div>
       </section>
@@ -2003,6 +2042,7 @@
     <script src="modal.js?v=20260818-modal-component"></script>
     <script src="date-range-picker.js?v=20260814-support-history"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
-    <script src="app.js?v=20260819-instruments-test-merge"></script>
+    <script src="vendor/jszip.min.js?v=3.10.1"></script>
+    <script src="app.js?v=20260820-summary-system-card"></script>
   </body>
 </html>
