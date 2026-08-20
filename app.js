@@ -56,9 +56,15 @@ const PREINSTALL_CHECKLISTS = [
 let preInstallTooltipCloseTimer;
 let selectedSupportHistoryTicket = null;
 let selectedOpenSupportTicketInstrument = null;
+let installationSupportReturnRoute = "request-support";
 const openSupportTicketDraft = { instrument: null, request: {}, files: [], contact: {} };
 const qualificationRequestDraft = { instruments: [], additionalDetails: "", contact: {} };
-const calibrationRequestDraft = { instruments: [], additionalDetails: "", contact: {} };
+const calibrationRequestDraft = { instruments: [], additionalDetails: "", serviceNeeds: { level: "", interval: "" }, contact: {} };
+const servicePlanRequestDraft = { instruments: [], additionalDetails: "", coverageNeeds: { downtime: "", priorities: [] }, contact: {} };
+const CALIBRATION_EUROPEAN_COUNTRIES = ["Austria", "Belgium", "Denmark", "Finland", "France", "Germany", "Ireland", "Italy", "Netherlands", "Norway", "Poland", "Portugal", "Spain", "Sweden", "Switzerland", "United Kingdom"];
+const CALIBRATION_SUPPORTED_COUNTRIES = ["USA", "Canada", ...CALIBRATION_EUROPEAN_COUNTRIES];
+const CALIBRATION_US_STATES = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"];
+const CALIBRATION_CANADIAN_PROVINCES = ["Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon"];
 
 class ChecklistUploadNote extends HTMLElement {
   connectedCallback() {
@@ -203,6 +209,10 @@ function isInstallationShellDetailRoute(route) {
   return /^installation-shell-\d+$/.test(route);
 }
 
+function isInstallationsSectionRoute(route) {
+  return route === "installations" || route === "installations-expanded" || route === "installations-progress" || route === "installation-faqs" || isInstallationShellDetailRoute(route);
+}
+
 let spcResizeObserver;
 
 const ROUTES = {
@@ -215,6 +225,10 @@ const ROUTES = {
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
   "request-pm": { title: "Request PM scheduling", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
   "request-serviceplan": { title: "Request a service plan quote", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-serviceplan-details": { title: "Request a service plan quote — add request details", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-serviceplan-contact": { title: "Request a service plan quote — confirm contact information", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "request-serviceplan-review": { title: "Request a service plan quote — review and submit", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
+  "serviceplan-summary": { title: "Request a service plan quote — submitted", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-qualification": { title: "Request qualification service", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-qualification-details": { title: "Request qualification service — add request details", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-qualification-contact": { title: "Request qualification service — confirm contact information", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
@@ -956,10 +970,14 @@ function routeFromHash() {
 }
 
 function setRoute(route, summaryTicket = null) {
+  const fromRoute = routeFromHash();
+  if (route === "installation-support" && fromRoute !== "installation-support") {
+    installationSupportReturnRoute = isInstallationsSectionRoute(fromRoute) ? "installations" : "request-support";
+  }
   selectedSupportHistoryTicket = summaryTicket;
   const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
-  if (window.location.hash !== nextHash) window.history.pushState({ fromRoute: routeFromHash() }, "", nextHash);
+  if (window.location.hash !== nextHash) window.history.pushState({ fromRoute }, "", nextHash);
   render();
 }
 
@@ -5037,19 +5055,43 @@ function renderRequestPm() {
 function wireRequestServicePlan() {
   const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-sp-search]");
-  const selectAll = app.querySelector("[data-sp-select-all]");
+  const selectAll = app.querySelector("[data-serviceplan-select-all]");
+  const tableSelectAll = app.querySelector("[data-serviceplan-select-all-table]");
+  const systemRow = app.querySelector(".serviceplan-system");
+  const systemToggle = app.querySelector("[data-serviceplan-system-toggle]");
   const system = app.querySelector("[data-sp-system]");
+  const rows = [...app.querySelectorAll("[data-sp-row]")];
   const instruments = [...app.querySelectorAll("[data-sp-instrument]")];
+  const collapsibleRows = rows.slice(0, 5);
+  let expanded = true;
+
+  rows.forEach((row) => {
+    const cells = row.cells;
+    row.classList.add("iss-system-child");
+    row.dataset.group = cells[5].textContent.trim() || "—";
+    row.dataset.type = cells[6].textContent.trim() || "—";
+    row.dataset.model = cells[7].textContent.trim() || "—";
+    row.dataset.coverage = cells[8].textContent.trim() || "—";
+    row.querySelectorAll('img[src="assets/icons/actions/return/Size=16px, Style=Mono.svg"]').forEach((icon) => {
+      icon.src = "assets/icons/actions/system-return/Size=16px, Style=Mono.svg";
+    });
+  });
+  rows.slice(5).forEach((row) => {
+    const image = row.cells[2]?.querySelector("img");
+    if (!image) return;
+    image.classList.add("iss-indent-instrument");
+    row.cells[1].replaceChildren(image);
+  });
 
   const updateSelection = () => {
     const selected = instruments.filter((input) => input.checked).length;
-    system.checked = selected > 0 && selected === instruments.length;
-    system.indeterminate = selected > 0 && selected < instruments.length;
-    selectAll.checked = system.checked;
-    selectAll.indeterminate = system.indeterminate;
+    const selectedSystemRows = collapsibleRows.filter((row) => row.querySelector("[data-sp-instrument]").checked);
+    system.checked = selectedSystemRows.length === collapsibleRows.length;
+    system.indeterminate = selectedSystemRows.length > 0 && selectedSystemRows.length < collapsibleRows.length;
+    tableSelectAll.checked = selected === instruments.length;
+    tableSelectAll.indeterminate = selected > 0 && selected < instruments.length;
+    selectAll.setAttribute("aria-pressed", String(tableSelectAll.checked));
     continueButton.disabled = selected === 0;
-    const spSelectedCount = app.querySelector("[data-sp-selected-count]");
-    if (spSelectedCount) spSelectedCount.textContent = String(selected);
   };
 
   const setAll = (checked) => {
@@ -5057,31 +5099,331 @@ function wireRequestServicePlan() {
     updateSelection();
   };
 
-  system.addEventListener("change", () => setAll(system.checked));
-  selectAll.addEventListener("change", () => setAll(selectAll.checked));
+  const setAllSystemRows = (checked) => {
+    collapsibleRows.forEach((row) => { row.querySelector("[data-sp-instrument]").checked = checked; });
+    updateSelection();
+  };
+  system.addEventListener("change", () => setAllSystemRows(system.checked));
+  selectAll.addEventListener("click", () => setAll(!tableSelectAll.checked));
+  tableSelectAll.addEventListener("change", () => setAll(tableSelectAll.checked));
   instruments.forEach((input) => input.addEventListener("change", updateSelection));
-  search.addEventListener("input", () => {
-    const query = search.value.trim().toLowerCase();
-    app.querySelectorAll("[data-sp-row]").forEach((row) => {
-      row.hidden = Boolean(query) && !row.dataset.search.includes(query);
-    });
+  const appliedFilters = app.querySelector("[data-serviceplan-applied-filters]");
+  const appliedBadges = app.querySelector("[data-serviceplan-applied-badges]");
+  const clearFilters = app.querySelector("[data-serviceplan-clear-filters]");
+  const filters = [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].map(([key, label]) => {
+    const host = document.createElement("div");
+    appliedBadges.append(host);
+    const controlHost = app.querySelector(`[data-serviceplan-filter-host="${key}"]`);
+    const options = [...new Set(rows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], controlHost, menuStyle: "figma-column" }) };
   });
-  continueButton.addEventListener("click", () => showToast("Continue to Add request details"));
-  app.querySelectorAll("[data-sp-filter], [data-sp-instrument-link]").forEach((button) => {
+  const filterRows = () => {
+    const query = search.value.trim().toLowerCase();
+    let visibleSystemInstrument = false;
+    rows.forEach((row) => {
+      const matchesFilters = filters.every(({ key, filter }) => !filter.values.length || filter.values.includes(row.dataset[key]));
+      row.hidden = (!expanded && collapsibleRows.includes(row)) || (Boolean(query) && !row.dataset.search.includes(query)) || !matchesFilters;
+      if (collapsibleRows.includes(row) && !row.hidden) visibleSystemInstrument = true;
+    });
+    systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
+  };
+  const updateAppliedFilters = () => {
+    const active = filters.some(({ filter }) => filter.values.length);
+    appliedFilters.hidden = !active;
+    clearFilters.hidden = !active;
+  };
+  filters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", () => { filterRows(); updateAppliedFilters(); }));
+  clearFilters.addEventListener("click", () => { filters.forEach(({ filter }) => filter.clear()); updateAppliedFilters(); });
+  search.addEventListener("input", () => {
+    filterRows();
+  });
+  systemToggle.addEventListener("click", () => {
+    expanded = !expanded;
+    systemToggle.setAttribute("aria-expanded", String(expanded));
+    systemToggle.setAttribute("aria-label", `${expanded ? "Collapse" : "Expand"} system`);
+    systemToggle.querySelector("img").style.transform = expanded ? "" : "rotate(-90deg)";
+    filterRows();
+  });
+  const pageSizeButton = app.querySelector("[data-serviceplan-page-size]");
+  const pageSizeMenu = app.querySelector("[data-serviceplan-page-size-menu]");
+  const closePageSizeMenu = () => { pageSizeMenu.hidden = true; pageSizeButton.setAttribute("aria-expanded", "false"); };
+  pageSizeButton.addEventListener("click", () => {
+    pageSizeMenu.hidden = !pageSizeMenu.hidden;
+    pageSizeButton.setAttribute("aria-expanded", String(!pageSizeMenu.hidden));
+  });
+  pageSizeMenu.querySelectorAll("[data-serviceplan-page-size-option]").forEach((option) => option.addEventListener("click", () => {
+    const caret = pageSizeButton.querySelector("img");
+    pageSizeButton.replaceChildren(document.createTextNode(`${option.dataset.serviceplanPageSizeOption} `), caret);
+    pageSizeMenu.querySelectorAll("[data-serviceplan-page-size-option]").forEach((item) => item.setAttribute("aria-selected", String(item === option)));
+    closePageSizeMenu();
+  }));
+  document.addEventListener("mousedown", (event) => { if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu(); });
+  continueButton.addEventListener("click", () => {
+    servicePlanRequestDraft.instruments = rows.filter((row) => row.querySelector("[data-sp-instrument]")?.checked).map((row) => {
+      const cells = row.cells;
+      return {
+        serial: cells[3]?.textContent.trim() || "—",
+        nickname: cells[4]?.textContent.trim() || "—",
+        image: cells[2]?.querySelector("img")?.getAttribute("src") || "assets/instruments/tsq.png",
+        system: collapsibleRows.includes(row),
+      };
+    });
+    setRoute("request-serviceplan-details");
+  });
+  app.querySelectorAll("[data-sp-instrument-link]").forEach((button) => {
     button.addEventListener("click", () => showToast("Instrument details opened"));
   });
   updateSelection();
+  filterRows();
+  updateAppliedFilters();
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
+}
+
+function prepareServicePlanStepOne() {
+  const selectAll = app.querySelector(".pm-select-all");
+  selectAll.outerHTML = '<button class="pm-select-all qualification-select-all" type="button" data-serviceplan-select-all aria-pressed="false">Select all 240 instruments</button>';
+  const applied = document.createElement("div");
+  applied.className = "sh-applied-filters iss-applied-filters";
+  applied.dataset.serviceplanAppliedFilters = "";
+  applied.hidden = true;
+  applied.innerHTML = '<div class="iss-applied-filters__badges" data-serviceplan-applied-badges></div><button class="sh-clear-filters" type="button" data-serviceplan-clear-filters hidden>Clear filter(s)</button>';
+  app.querySelector("[data-serviceplan-select-all]").after(applied);
+  const tableWrap = app.querySelector(".pm-table-wrap");
+  tableWrap.className = "iss-table-wrap serviceplan-table-wrap";
+  const table = tableWrap.querySelector(".pm-table");
+  table.className = "iss-table serviceplan-table";
+  const systemRow = table.querySelector(".pm-system");
+  systemRow.className = "iss-system serviceplan-system";
+  table.tHead.rows[0].cells[0].innerHTML = '<input type="checkbox" data-serviceplan-select-all-table aria-label="Select all instruments" />';
+  systemRow.cells[1].innerHTML = '<button class="iss-system-toggle" type="button" data-serviceplan-system-toggle aria-expanded="true" aria-label="Collapse system"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>';
+  systemRow.cells[2].innerHTML = '<img src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" />';
+  [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].forEach(([key, label], index) => {
+    table.tHead.rows[0].cells[index + 5].innerHTML = `<div data-serviceplan-filter-host="${key}" aria-label="${label} filter"></div>`;
+  });
+  const pagination = app.querySelector(".pm-pagination");
+  pagination.className = "iss-pagination serviceplan-pagination";
+  const pageSize = pagination.querySelector(".pm-page-size");
+  pageSize.className = "iss-page-size";
+  pageSize.dataset.serviceplanPageSize = "";
+  pageSize.setAttribute("aria-expanded", "false");
+  const pageSizeControl = document.createElement("span");
+  pageSizeControl.className = "iss-page-size-control";
+  pageSize.replaceWith(pageSizeControl);
+  pageSizeControl.append(pageSize);
+  const pageSizeMenu = document.createElement("div");
+  pageSizeMenu.className = "iss-page-size-menu";
+  pageSizeMenu.dataset.serviceplanPageSizeMenu = "";
+  pageSizeMenu.hidden = true;
+  pageSizeMenu.innerHTML = [10, 20, 30, 40, 50].map((value) => `<button type="button" data-serviceplan-page-size-option="${value}" aria-selected="${value === 20}">${value}</button>`).join("");
+  pageSizeControl.append(pageSizeMenu);
+  pagination.querySelectorAll(".pm-page-arrow").forEach((button) => { button.className = "iss-page-arrow"; });
+  pagination.querySelectorAll(".pm-page-number").forEach((button) => { button.className = button.classList.contains("is-current") ? "iss-page-number is-current" : "iss-page-number"; });
+  pagination.querySelector("strong").textContent = "267";
+  pagination.querySelector("strong").className = "iss-results-total";
+  pagination.querySelector("span:last-of-type").className = "iss-go-to";
 }
 
 function renderRequestServicePlan() {
   const template = document.querySelector("#request-serviceplan-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Request a service plan quote", backRoute: "request-support" });
+  const legacySteps = app.querySelector(".sp-steps");
+  const stepMount = document.createElement("div");
+  stepMount.dataset.ticketStepViewer = "";
+  legacySteps.replaceWith(stepMount);
+  mountTicketStepViewer(1, { labels: ["Select instrument", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Service plan quote request progress" });
+  prepareServicePlanStepOne();
   mountNativeFlowActionBar();
   wireRequestServicePlan();
   document.title = "Request a service plan quote — Services Central";
+}
+
+function renderServicePlanSelectedInstruments(host) {
+  const table = document.createElement("table");
+  table.className = "qualification-selected-table";
+  table.innerHTML = '<colgroup><col class="qualification-selected-table__image" /><col /><col /></colgroup><thead><tr><th></th><th>Serial number</th><th>Nickname</th></tr></thead>';
+  const body = document.createElement("tbody");
+  servicePlanRequestDraft.instruments.forEach((instrument) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td><img src="${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td>`;
+    body.append(row);
+  });
+  table.append(body);
+  host.replaceChildren(table);
+}
+
+function mountServicePlanFlowTemplate(templateId, screenClass, currentStep, backRoute, primaryDisabled = true) {
+  const template = document.querySelector(templateId);
+  app.replaceChildren(template.content.cloneNode(true));
+  const screen = app.querySelector(".screen");
+  screen.classList.add(screenClass);
+  screen.setAttribute("aria-label", `Request a service plan quote: step ${currentStep}`);
+  app.querySelector(".iss-titlebar h1").textContent = "Request a service plan quote";
+  mountNativePageChrome("request-support", { title: "Request a service plan quote", backRoute });
+  mountTicketStepViewer(currentStep, { labels: ["Select instrument", "Add request details", "Confirm contact information", "Review and submit"], ariaLabel: "Service plan quote request progress" });
+  return mountNativeFlowActionBar({ backRoute, primaryDisabled });
+}
+
+function wireServicePlanDetails() {
+  const textarea = app.querySelector("[data-qualification-details]");
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  const requestDetailsCard = app.querySelector(".qualification-flow-card");
+  requestDetailsCard.querySelector("header p").textContent = "Please provide any additional details you would like to share with us to help us process your request.";
+  textarea.placeholder = "Provide additional details about your service plan request.";
+  const needs = document.createElement("article");
+  needs.className = "service-plan-coverage-needs";
+  needs.innerHTML = `<header><h2>Service coverage needs</h2><p>Please answer the question(s) below to identify the service coverage needed.</p></header>
+    <div class="service-plan-coverage-needs__options">
+      <fieldset><legend>How significant is a day of downtime for your business?<b>*</b></legend><div class="service-plan-coverage-needs__choices">
+        <label><input type="radio" name="serviceplan-downtime" value="Minor" data-serviceplan-downtime />Minor</label>
+        <label><input type="radio" name="serviceplan-downtime" value="Moderate" data-serviceplan-downtime />Moderate</label>
+        <label><input type="radio" name="serviceplan-downtime" value="Severe" data-serviceplan-downtime />Severe</label>
+      </div></fieldset>
+      <fieldset><legend>What else is important for your staff?</legend><div class="service-plan-coverage-needs__choices service-plan-coverage-needs__choices--priorities">
+        ${["Software / firmware updates", "Preventive Maintenance", "Same day, remote technical support", "Calibration services", "Corrective Maintenance / Repair", "Factory training onsite"].map((value) => `<label><input type="checkbox" value="${value}" data-serviceplan-priority />${value}</label>`).join("")}
+      </div></fieldset>
+    </div>`;
+  requestDetailsCard.after(needs);
+  const downtimeChoices = [...needs.querySelectorAll("[data-serviceplan-downtime]")];
+  const priorityChoices = [...needs.querySelectorAll("[data-serviceplan-priority]")];
+  downtimeChoices.find((input) => input.value === servicePlanRequestDraft.coverageNeeds.downtime)?.setAttribute("checked", "");
+  priorityChoices.filter((input) => servicePlanRequestDraft.coverageNeeds.priorities.includes(input.value)).forEach((input) => input.setAttribute("checked", ""));
+  renderServicePlanSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  textarea.value = servicePlanRequestDraft.additionalDetails;
+  const update = () => {
+    servicePlanRequestDraft.additionalDetails = textarea.value;
+    servicePlanRequestDraft.coverageNeeds.downtime = downtimeChoices.find((input) => input.checked)?.value || "";
+    servicePlanRequestDraft.coverageNeeds.priorities = priorityChoices.filter((input) => input.checked).map((input) => input.value);
+    primary.disabled = !servicePlanRequestDraft.additionalDetails.trim() || !servicePlanRequestDraft.coverageNeeds.downtime;
+  };
+  textarea.addEventListener("input", update);
+  [...downtimeChoices, ...priorityChoices].forEach((input) => input.addEventListener("change", update));
+  primary.addEventListener("click", () => setRoute("request-serviceplan-contact"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestServicePlanDetails() {
+  mountServicePlanFlowTemplate("#request-qualification-details-template", "screen--request-serviceplan-details", 2, "request-serviceplan");
+  wireServicePlanDetails();
+  document.title = "Request a service plan quote — add request details";
+}
+
+function wireServicePlanContact() {
+  const defaults = { firstName: "Molly", lastName: "Hartman", phone: "123-456-7890", email: "molly.hartman@thermofisher.com", company: "Thermo Fisher", serviceAddress: "123 Blueberry Lane", country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
+  const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const country = fields.find((field) => field.dataset.qualificationContactField === "country");
+  const state = fields.find((field) => field.dataset.qualificationContactField === "state");
+  const update = () => {
+    fields.forEach((field) => { servicePlanRequestDraft.contact[field.dataset.qualificationContactField] = field.value; });
+    primary.disabled = !fields.filter((field) => field.required).every((field) => field.validity.valid && field.value.trim());
+  };
+  country.replaceChildren(...CALIBRATION_SUPPORTED_COUNTRIES.map((value) => new Option(value, value)));
+  let countryDropdown;
+  let stateDropdown;
+  const updateStates = () => {
+    const options = country.value === "USA" ? CALIBRATION_US_STATES : country.value === "Canada" ? CALIBRATION_CANADIAN_PROVINCES : ["Not applicable"];
+    const previous = servicePlanRequestDraft.contact.state || state.value;
+    state.replaceChildren(...options.map((value) => new Option(value, value)));
+    state.value = options.includes(previous) ? previous : options.includes(defaults.state) ? defaults.state : options[0];
+    stateDropdown?.refresh();
+    update();
+  };
+  fields.forEach((field) => {
+    const key = field.dataset.qualificationContactField;
+    const value = servicePlanRequestDraft.contact[key] || defaults[key] || field.value;
+    field.defaultValue = value;
+    field.value = value;
+    field.addEventListener("input", () => { if (field.dataset.qualificationContactField === "phone") field.value = field.value.replace(/[^0-9 -]/g, ""); update(); });
+    field.addEventListener("change", update);
+  });
+  country.addEventListener("change", updateStates);
+  updateStates();
+  countryDropdown = new KomodoSingleSelect(country);
+  stateDropdown = new KomodoSingleSelect(state);
+  stateDropdown.refresh();
+  primary.addEventListener("click", () => setRoute("request-serviceplan-review"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestServicePlanContact() {
+  mountServicePlanFlowTemplate("#request-qualification-contact-template", "screen--request-serviceplan-contact", 3, "request-serviceplan-details");
+  wireServicePlanContact();
+  document.title = "Request a service plan quote — confirm contact information";
+}
+
+function servicePlanServiceAddress() {
+  const contact = servicePlanRequestDraft.contact;
+  return [[contact.serviceAddress, contact.additionalAddress].filter(Boolean).join(", "), [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", ")].filter(Boolean).join("\n") || "—";
+}
+
+function fillServicePlanReview(scope, prefix) {
+  const contact = servicePlanRequestDraft.contact;
+  scope.querySelector(`[data-${prefix}-details]`).textContent = servicePlanRequestDraft.additionalDetails || "—";
+  scope.querySelector(`[data-${prefix}-name]`).textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  scope.querySelector(`[data-${prefix}-service-address]`).textContent = servicePlanServiceAddress();
+  Object.entries({ phone: contact.phone || "—", email: contact.email || "—", company: contact.company || "—" }).forEach(([key, value]) => {
+    const output = scope.querySelector(`[data-${prefix}-contact="${key}"]`);
+    if (output) output.textContent = value;
+  });
+}
+
+function insertServicePlanCoverageNeeds(scope, prefix) {
+  const contactCard = scope.querySelector(".qualification-review-card + .qualification-review-card") || scope.querySelector(".qualification-summary-card + .qualification-summary-card");
+  const needsCard = document.createElement("article");
+  needsCard.className = "qualification-flow-card qualification-review-card service-plan-review-needs";
+  needsCard.innerHTML = `<h2>Service coverage needs</h2><dl class="qualification-review-details service-plan-review-needs__details"><div><dt>Significant downtime</dt><dd data-${prefix}-downtime></dd></div><div><dt>Other important things</dt><dd data-${prefix}-priorities></dd></div></dl>`;
+  needsCard.querySelector(`[data-${prefix}-downtime]`).textContent = servicePlanRequestDraft.coverageNeeds.downtime || "—";
+  needsCard.querySelector(`[data-${prefix}-priorities]`).textContent = servicePlanRequestDraft.coverageNeeds.priorities.join("\n") || "—";
+  contactCard.before(needsCard);
+}
+
+function renderRequestServicePlanReview() {
+  const actionBar = mountServicePlanFlowTemplate("#request-qualification-review-template", "screen--request-serviceplan-review", 4, "request-serviceplan-contact", false);
+  actionBar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit";
+  fillServicePlanReview(app, "qualification-review");
+  insertServicePlanCoverageNeeds(app, "serviceplan-review");
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderServicePlanSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  actionBar.querySelector('[data-actionbar-action="primary"]').addEventListener("click", () => setRoute("serviceplan-summary"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request a service plan quote — review and submit";
+}
+
+function renderServicePlanSummary() {
+  const template = document.querySelector("#qualification-summary-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  const screen = app.querySelector(".screen");
+  screen.classList.add("screen--serviceplan-summary");
+  screen.setAttribute("aria-label", "Request a service plan quote: submitted summary");
+  app.querySelector(".iss-titlebar h1").textContent = "Request a service plan quote";
+  mountNativePageChrome("request-support", { title: "Request a service plan quote", backRoute: "request-support" });
+  const submittedNotice = app.querySelector(".ts-notice--submitted");
+  const contactNote = document.createElement("section");
+  contactNote.className = "serviceplan-summary-contact-note";
+  contactNote.setAttribute("data-serviceplan-summary-contact-note", "");
+  contactNote.setAttribute("role", "status");
+  contactNote.innerHTML = `<img src="assets/icons/notifications/info/size=24px, style=bold.svg" alt="" /><div><p><strong>Note:</strong> The information provided in this request did not change your <a href="#service-plan-contacts" data-route="service-plan-contacts">service plan contacts</a> in Services Central.</p><button class="mi-button mi-button--secondary" type="button" data-route="service-plan-contacts">Review service plan contacts</button></div>`;
+  submittedNotice.after(contactNote);
+  fillServicePlanReview(app, "qualification-summary");
+  insertServicePlanCoverageNeeds(app, "serviceplan-summary");
+  const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  renderServicePlanSelectedInstruments(selectedPanel);
+  wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
+  const closeBar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), { closeOnly: true, closeRoute: "request-support" });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request a service plan quote — submitted";
 }
 
 function wireRequestQualification() {
@@ -5293,6 +5635,7 @@ function renderRequestQualification() {
   const systemCell = systemRow.cells[1];
   table.tHead.rows[0].cells[0].innerHTML = '<input type="checkbox" data-qualification-select-all-table aria-label="Select all instruments" />';
   systemCell.innerHTML = '<button class="iss-system-toggle" type="button" data-qualification-system-toggle aria-expanded="true" aria-label="Collapse system"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>';
+  systemRow.cells[2].innerHTML = '<img src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" />';
   [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].forEach(([key, label], index) => {
     table.tHead.rows[0].cells[index + 5].innerHTML = `<div data-qualification-filter-host="${key}" aria-label="${label} filter"></div>`;
   });
@@ -5417,9 +5760,21 @@ function wireRequestQualificationContact() {
   const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
   const requiredFields = fields.filter((field) => field.required);
   const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const country = fields.find((field) => field.dataset.qualificationContactField === "country");
+  const state = fields.find((field) => field.dataset.qualificationContactField === "state");
   const update = () => {
     fields.forEach((field) => { qualificationRequestDraft.contact[field.dataset.qualificationContactField] = field.value; });
     primary.disabled = !requiredFields.every((field) => field.validity.valid && field.value.trim());
+  };
+  country.replaceChildren(...CALIBRATION_SUPPORTED_COUNTRIES.map((value) => new Option(value, value)));
+  let stateDropdown;
+  const updateQualificationStates = () => {
+    const options = country.value === "USA" ? CALIBRATION_US_STATES : country.value === "Canada" ? CALIBRATION_CANADIAN_PROVINCES : ["Not applicable"];
+    const previous = qualificationRequestDraft.contact.state || state.value;
+    state.replaceChildren(...options.map((value) => new Option(value, value)));
+    state.value = options.includes(previous) ? previous : options.includes(defaultQualificationContact.state) ? defaultQualificationContact.state : options[0];
+    stateDropdown?.refresh();
+    update();
   };
   fields.forEach((field) => {
     field.value = qualificationRequestDraft.contact[field.dataset.qualificationContactField]
@@ -5431,6 +5786,10 @@ function wireRequestQualificationContact() {
     });
     field.addEventListener("change", update);
   });
+  country.addEventListener("change", updateQualificationStates);
+  updateQualificationStates();
+  new KomodoSingleSelect(country);
+  stateDropdown = new KomodoSingleSelect(state);
   primary.addEventListener("click", () => setRoute("request-qualification-review"));
   update();
   window.PlatformSidebar?.wire(app);
@@ -5486,12 +5845,12 @@ function renderQualificationSummary() {
     [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", "),
   ].filter(Boolean).join("\n") || "—";
   app.querySelector("[data-qualification-summary-details]").textContent = qualificationRequestDraft.additionalDetails || "—";
+  app.querySelector("[data-qualification-summary-name]").textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  app.querySelector("[data-qualification-summary-service-address]").textContent = serviceAddress;
   const contactValues = {
-    name: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—",
     phone: contact.phone || "—",
     email: contact.email || "—",
     company: contact.company || "—",
-    serviceAddress,
   };
   Object.entries(contactValues).forEach(([key, value]) => {
     app.querySelector(`[data-qualification-summary-contact="${key}"]`).textContent = value;
@@ -5564,6 +5923,25 @@ function wireRequestCalibration() {
   search.addEventListener("input", () => {
     filterRows();
   });
+  const pageSizeButton = app.querySelector("[data-calibration-page-size]");
+  const pageSizeMenu = app.querySelector("[data-calibration-page-size-menu]");
+  const closePageSizeMenu = () => {
+    pageSizeMenu.hidden = true;
+    pageSizeButton.setAttribute("aria-expanded", "false");
+  };
+  pageSizeButton.addEventListener("click", () => {
+    pageSizeMenu.hidden = !pageSizeMenu.hidden;
+    pageSizeButton.setAttribute("aria-expanded", String(!pageSizeMenu.hidden));
+  });
+  pageSizeMenu.querySelectorAll("[data-calibration-page-size-option]").forEach((option) => option.addEventListener("click", () => {
+    const caret = pageSizeButton.querySelector("img");
+    pageSizeButton.replaceChildren(document.createTextNode(`${option.dataset.calibrationPageSizeOption} `), caret);
+    pageSizeMenu.querySelectorAll("[data-calibration-page-size-option]").forEach((item) => item.setAttribute("aria-selected", String(item === option)));
+    closePageSizeMenu();
+  }));
+  document.addEventListener("mousedown", (event) => {
+    if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu();
+  });
   continueButton.addEventListener("click", () => {
     calibrationRequestDraft.instruments = instruments.filter((input) => input.checked).map((input) => {
       const cells = input.closest("tr").cells;
@@ -5609,6 +5987,20 @@ function prepareCalibrationStepOne() {
   });
   const pagination = app.querySelector(".pm-pagination");
   pagination.className = "iss-pagination calibration-pagination";
+  const pageSize = pagination.querySelector(".pm-page-size");
+  pageSize.className = "iss-page-size";
+  pageSize.dataset.calibrationPageSize = "";
+  pageSize.setAttribute("aria-expanded", "false");
+  const pageSizeControl = document.createElement("span");
+  pageSizeControl.className = "iss-page-size-control";
+  pageSize.replaceWith(pageSizeControl);
+  pageSizeControl.append(pageSize);
+  const pageSizeMenu = document.createElement("div");
+  pageSizeMenu.className = "iss-page-size-menu";
+  pageSizeMenu.dataset.calibrationPageSizeMenu = "";
+  pageSizeMenu.hidden = true;
+  pageSizeMenu.innerHTML = [10, 20, 30, 40, 50].map((value) => `<button type="button" data-calibration-page-size-option="${value}" aria-selected="${value === 20}">${value}</button>`).join("");
+  pageSizeControl.append(pageSizeMenu);
   pagination.querySelectorAll(".pm-page-arrow").forEach((button) => { button.className = "iss-page-arrow"; });
   pagination.querySelectorAll(".pm-page-number").forEach((button) => { button.className = button.classList.contains("is-current") ? "iss-page-number is-current" : "iss-page-number"; });
   pagination.querySelector("strong").className = "iss-results-total";
@@ -5660,13 +6052,42 @@ function wireCalibrationDetails() {
   const textarea = app.querySelector("[data-qualification-details]");
   const primary = app.querySelector('[data-actionbar-action="primary"]');
   const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
+  const requestDetailsCard = app.querySelector(".qualification-flow-card");
   app.querySelector(".qualification-flow-card header p").textContent = "Please provide any additional details you would like to share with us about your calibration request.";
   textarea.placeholder = "Provide additional details about your calibration service request.";
+  const needs = document.createElement("article");
+  needs.className = "calibration-service-needs";
+  needs.innerHTML = `<header><h2>Calibration service needs</h2><p>Please answer the question(s) below to identify the calibration service needed.</p></header>
+    <div class="calibration-service-needs__options">
+      <fieldset><legend>What is your calibration service level?<b>*</b></legend><div class="calibration-service-needs__choices">
+        <label><input type="radio" name="calibration-service-level" value="ISO 17025 - certification with uncertainties" data-calibration-service-level />ISO 17025 - certification with uncertainties</label>
+        <label><input type="radio" name="calibration-service-level" value="ISO 9001 - certification with pass/fail" data-calibration-service-level />ISO 9001 - certification with pass/fail</label>
+        <label><input type="radio" name="calibration-service-level" value="Unknown" data-calibration-service-level />Unknown</label>
+      </div></fieldset>
+      <fieldset><legend>What is your desired calibration interval?<b>*</b></legend><div class="calibration-service-needs__choices calibration-service-needs__choices--interval">
+        <label><input type="radio" name="calibration-interval" value="3 months" data-calibration-interval />3 months</label>
+        <label><input type="radio" name="calibration-interval" value="No interval" data-calibration-interval />No interval</label>
+        <label><input type="radio" name="calibration-interval" value="6 months" data-calibration-interval />6 months</label>
+        <label><input type="radio" name="calibration-interval" value="Unknown" data-calibration-interval />Unknown</label>
+        <label><input type="radio" name="calibration-interval" value="12 months" data-calibration-interval />12 months</label>
+      </div></fieldset>
+    </div>`;
+  requestDetailsCard.after(needs);
+  const serviceLevels = [...needs.querySelectorAll("[data-calibration-service-level]")];
+  const intervals = [...needs.querySelectorAll("[data-calibration-interval]")];
+  serviceLevels.find((input) => input.value === calibrationRequestDraft.serviceNeeds.level)?.setAttribute("checked", "");
+  intervals.find((input) => input.value === calibrationRequestDraft.serviceNeeds.interval)?.setAttribute("checked", "");
   renderCalibrationSelectedInstruments(selectedPanel);
   wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
   textarea.value = calibrationRequestDraft.additionalDetails;
-  const update = () => { calibrationRequestDraft.additionalDetails = textarea.value; primary.disabled = !textarea.value.trim(); };
+  const update = () => {
+    calibrationRequestDraft.additionalDetails = textarea.value;
+    calibrationRequestDraft.serviceNeeds.level = serviceLevels.find((input) => input.checked)?.value || "";
+    calibrationRequestDraft.serviceNeeds.interval = intervals.find((input) => input.checked)?.value || "";
+    primary.disabled = !textarea.value.trim() || !calibrationRequestDraft.serviceNeeds.level || !calibrationRequestDraft.serviceNeeds.interval;
+  };
   textarea.addEventListener("input", update);
+  [...serviceLevels, ...intervals].forEach((input) => input.addEventListener("change", update));
   primary.addEventListener("click", () => setRoute("request-calibration-contact"));
   update();
   window.PlatformSidebar?.wire(app);
@@ -5679,19 +6100,102 @@ function renderRequestCalibrationDetails() {
   document.title = "Request a calibration service — add request details";
 }
 
+class KomodoSingleSelect {
+  constructor(select) {
+    this.select = select;
+    this.host = document.createElement("div");
+    this.host.className = "komodo-single-select";
+    this.button = document.createElement("button");
+    this.button.className = "komodo-single-select__trigger";
+    this.button.type = "button";
+    this.button.setAttribute("aria-haspopup", "listbox");
+    this.button.setAttribute("aria-expanded", "false");
+    this.menu = document.createElement("div");
+    this.menu.className = "komodo-single-select__menu";
+    this.menu.setAttribute("role", "listbox");
+    this.menu.hidden = true;
+    select.classList.add("komodo-single-select__native");
+    select.after(this.host);
+    this.host.append(this.button, this.menu);
+    this.button.addEventListener("click", () => this.setOpen(this.menu.hidden));
+    this.button.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        this.setOpen(true);
+        const options = this.menu.querySelectorAll("button");
+        options[event.key === "ArrowDown" ? 0 : options.length - 1]?.focus();
+      }
+    });
+    this.menu.addEventListener("keydown", (event) => {
+      const options = [...this.menu.querySelectorAll("button")];
+      const current = options.indexOf(document.activeElement);
+      if (event.key === "Escape") { this.setOpen(false); this.button.focus(); }
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        options[(current + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length]?.focus();
+      }
+    });
+    this.select.addEventListener("change", () => this.refresh());
+    document.addEventListener("click", (event) => { if (!this.host.contains(event.target)) this.setOpen(false); });
+    this.refresh();
+  }
+
+  refresh() {
+    const selected = this.select.options[this.select.selectedIndex];
+    this.button.replaceChildren(document.createTextNode(selected?.textContent || "Please select"), Object.assign(document.createElement("img"), { src: "assets/icons/directions/caret down/Down caret.svg", alt: "" }));
+    this.menu.replaceChildren(...[...this.select.options].map((option) => {
+      const choice = document.createElement("button");
+      choice.type = "button";
+      choice.setAttribute("role", "option");
+      choice.setAttribute("aria-selected", String(option.selected));
+      choice.append(document.createTextNode(option.textContent));
+      choice.addEventListener("click", () => {
+        this.select.value = option.value;
+        this.select.dispatchEvent(new Event("change", { bubbles: true }));
+        this.setOpen(false);
+        this.button.focus();
+      });
+      return choice;
+    }));
+  }
+
+  setOpen(open) {
+    this.menu.hidden = !open;
+    this.button.setAttribute("aria-expanded", String(open));
+  }
+}
+
 function wireCalibrationContact() {
   const defaults = { firstName: "Molly", lastName: "Hartman", phone: "555-555-5555", email: "molly.hartman@thermofisher.com", country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
   const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
   const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const country = fields.find((field) => field.dataset.qualificationContactField === "country");
+  const state = fields.find((field) => field.dataset.qualificationContactField === "state");
   const update = () => {
     fields.forEach((field) => { calibrationRequestDraft.contact[field.dataset.qualificationContactField] = field.value; });
     primary.disabled = !fields.filter((field) => field.required).every((field) => field.validity.valid && field.value.trim());
+  };
+  country.replaceChildren(...CALIBRATION_SUPPORTED_COUNTRIES.map((value) => new Option(value, value)));
+  let countryDropdown;
+  let stateDropdown;
+  const updateStates = () => {
+    const options = country.value === "USA" ? CALIBRATION_US_STATES : country.value === "Canada" ? CALIBRATION_CANADIAN_PROVINCES : ["Not applicable"];
+    const previous = calibrationRequestDraft.contact.state || state.value;
+    state.replaceChildren(...options.map((value) => new Option(value, value)));
+    state.value = options.includes(previous) ? previous : options.includes(defaults.state) ? defaults.state : options[0];
+    stateDropdown?.refresh();
+    update();
   };
   fields.forEach((field) => {
     field.value = calibrationRequestDraft.contact[field.dataset.qualificationContactField] || defaults[field.dataset.qualificationContactField] || field.value;
     field.addEventListener("input", () => { if (field.dataset.qualificationContactField === "phone") field.value = field.value.replace(/[^0-9 -]/g, ""); update(); });
     field.addEventListener("change", update);
   });
+  country.addEventListener("change", updateStates);
+  updateStates();
+  countryDropdown = new KomodoSingleSelect(country);
+  stateDropdown = new KomodoSingleSelect(state);
+  stateDropdown.refresh();
   primary.addEventListener("click", () => setRoute("request-calibration-review"));
   update();
   window.PlatformSidebar?.wire(app);
@@ -5712,17 +6216,40 @@ function calibrationServiceAddress() {
 function fillCalibrationReview(scope, prefix) {
   const contact = calibrationRequestDraft.contact;
   scope.querySelector(`[data-${prefix}-details]`).textContent = calibrationRequestDraft.additionalDetails || "—";
-  const values = { name: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—", phone: contact.phone || "—", email: contact.email || "—", company: contact.company || "—", serviceAddress: calibrationServiceAddress() };
+  scope.querySelector(`[data-${prefix}-name]`).textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  scope.querySelector(`[data-${prefix}-service-address]`).textContent = calibrationServiceAddress();
+  const values = { phone: contact.phone || "—", email: contact.email || "—", company: contact.company || "—" };
   Object.entries(values).forEach(([key, value]) => {
     const output = scope.querySelector(`[data-${prefix}-contact="${key}"]`);
     if (output) output.textContent = value;
   });
 }
 
+function insertCalibrationReviewServiceNeeds(scope) {
+  const contactCard = scope.querySelector(".qualification-review-card + .qualification-review-card");
+  const needsCard = document.createElement("article");
+  needsCard.className = "qualification-flow-card qualification-review-card calibration-review-service-needs";
+  needsCard.innerHTML = `<h2>Calibration service needs</h2><dl class="qualification-review-details calibration-review-details--needs"><div><dt>Calibration service level</dt><dd data-calibration-review-service-level></dd></div><div><dt>Calibration interval</dt><dd data-calibration-review-interval></dd></div></dl>`;
+  needsCard.querySelector("[data-calibration-review-service-level]").textContent = calibrationRequestDraft.serviceNeeds.level || "—";
+  needsCard.querySelector("[data-calibration-review-interval]").textContent = calibrationRequestDraft.serviceNeeds.interval || "—";
+  contactCard.before(needsCard);
+}
+
+function insertCalibrationSummaryServiceNeeds(scope) {
+  const contactCard = scope.querySelector(".qualification-summary-card + .qualification-summary-card");
+  const needsCard = document.createElement("article");
+  needsCard.className = "qualification-flow-card qualification-summary-card calibration-review-service-needs";
+  needsCard.innerHTML = `<h2>Calibration service needs</h2><dl class="qualification-review-details calibration-review-details--needs"><div><dt>Calibration service level</dt><dd data-calibration-summary-service-level></dd></div><div><dt>Calibration interval</dt><dd data-calibration-summary-interval></dd></div></dl>`;
+  needsCard.querySelector("[data-calibration-summary-service-level]").textContent = calibrationRequestDraft.serviceNeeds.level || "—";
+  needsCard.querySelector("[data-calibration-summary-interval]").textContent = calibrationRequestDraft.serviceNeeds.interval || "—";
+  contactCard.before(needsCard);
+}
+
 function renderRequestCalibrationReview() {
   const actionBar = mountCalibrationFlowTemplate("#request-qualification-review-template", "screen--request-calibration-review", 4, "request-calibration-contact", false);
   actionBar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit";
   fillCalibrationReview(app, "qualification-review");
+  insertCalibrationReviewServiceNeeds(app);
   const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
   renderCalibrationSelectedInstruments(selectedPanel);
   wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
@@ -5736,9 +6263,10 @@ function renderCalibrationSummary() {
   const template = document.querySelector("#qualification-summary-template");
   app.replaceChildren(template.content.cloneNode(true));
   app.querySelector(".screen").classList.add("screen--calibration-summary");
-  app.querySelector(".iss-titlebar h1").textContent = "Request a calibration service";
-  mountNativePageChrome("request-support", { title: "Request a calibration service", backRoute: "request-support" });
+  app.querySelector(".iss-titlebar h1").textContent = "Request calibration service";
+  mountNativePageChrome("request-support", { title: "Request calibration service", backRoute: "request-support" });
   fillCalibrationReview(app, "qualification-summary");
+  insertCalibrationSummaryServiceNeeds(app);
   const selectedPanel = app.querySelector("[data-qualification-selected-panel]");
   renderCalibrationSelectedInstruments(selectedPanel);
   wireQualificationInstrumentDisclosure(app.querySelector("[data-qualification-selected-toggle]"), selectedPanel);
@@ -6627,13 +7155,13 @@ function renderInstallationSupport() {
   });
   fields.forEach((field) => field.addEventListener("input", updateFormState));
   contactFields.forEach((field) => field.addEventListener("input", updateFormState));
-  cancelButton.addEventListener("click", () => setRoute("installations"));
+  cancelButton.addEventListener("click", () => setRoute(installationSupportReturnRoute));
   auxiliaryButton.addEventListener("click", () => setRoute("request-support"));
   backButton.addEventListener("click", () => {
-    if (currentStep === 4) setRoute("installations");
+    if (currentStep === 4) setRoute(installationSupportReturnRoute);
     else if (currentStep === 3) setStep(2);
     else if (currentStep === 2) setStep(1);
-    else setRoute("installations");
+    else setRoute(installationSupportReturnRoute);
   });
   continueButton.addEventListener("click", () => {
     if (currentStep === 1 && !continueButton.disabled) setStep(2);
@@ -6644,7 +7172,7 @@ function renderInstallationSupport() {
     app.querySelector("[data-isup-submitted-notice]").hidden = true;
     updateSupportScrollClearance();
   });
-  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("installations"));
+  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute(installationSupportReturnRoute));
   wireRouteControls();
   setStep(1);
   document.title = "Installation support — Services Central";
@@ -6736,6 +7264,14 @@ function render() {
     renderRequestPm();
   } else if (route === "request-serviceplan") {
     renderRequestServicePlan();
+  } else if (route === "request-serviceplan-details") {
+    renderRequestServicePlanDetails();
+  } else if (route === "request-serviceplan-contact") {
+    renderRequestServicePlanContact();
+  } else if (route === "request-serviceplan-review") {
+    renderRequestServicePlanReview();
+  } else if (route === "serviceplan-summary") {
+    renderServicePlanSummary();
   } else if (route === "request-qualification") {
     renderRequestQualification();
   } else if (route === "request-qualification-details") {

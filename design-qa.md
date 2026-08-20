@@ -104,6 +104,123 @@ final result: blocked
 
 final result: passed
 
+---
+
+# Service Plan Step 1 parity QA
+
+**Comparison target**
+
+- Source visual truth: Service Plan selection reference supplied by the user, including the active first-step viewer, instrument-selection card, multi-select table, and pagination.
+- Implementation: `http://localhost:4173/?servicePlanStepOne=1#request-serviceplan`, captured in the in-app browser at the 1440 × 1600 reference viewport.
+- State: unselected Step 1, then a single instrument selected with the Model filter menu opened and closed before continuing.
+
+**Findings and resolution**
+
+- [P1 resolved] Service Plan's legacy selection controls used a different table, standalone filters, and pagination treatment. Its Step 1 now uses the same Komodo-style selection controls as Calibration while retaining Service Plan's 240-instrument copy, title, route, thumbnails, system row, and downstream draft data.
+- Fonts and typography: the existing application title, four-step viewer, table labels, and 14px dense-table copy are retained.
+- Spacing and layout rhythm: the search field, blue select-all action, applied-filter region, table columns, 12px pagination separation, fixed action bar, and footer reuse the existing native selection patterns.
+- Colors and visual tokens: active red step, blue action/link color, neutral borders, status badges, and selected-row state come from the existing shared CSS.
+- Image quality and copy: existing repository instrument thumbnails and mono navigation/filter assets are retained; no generated or placeholder assets were added.
+
+**Interaction verification**
+
+- Header checkbox and the blue **Select all 240 instruments** action select the Service Plan instruments; a single selection enables Continue.
+- Groups, Type, Model, and Coverage use the reusable multi-select filter treatment and applied-filter state.
+- Page-size options 10, 20, 30, 40, and 50 use the same popover pattern as Calibration.
+- Continuing with a selected row reaches `#request-serviceplan-details` and renders that selected instrument in Step 2.
+- Browser console: no errors in the checked Step 1 and continuation states.
+
+final result: passed
+
+---
+
+# Request Service Plan four-step flow QA
+
+**Comparison target**
+
+- Step 1: user-supplied `Selected.png` reference for the selected-instruments state.
+- Step 2: Figma frame `8085:187356`, captured in the in-app browser before later Figma loading failures.
+- Step 3: user-supplied `Filled.png` reference.
+- Step 4: user-supplied `Review and Submit.png` reference.
+- Summary: the approved Calibration submitted-summary pattern, retitled and populated for Service Plan.
+
+**Verified interaction path**
+
+- Selecting an instrument enables Continue and opens `#request-serviceplan-details`.
+- Required additional details and a selected downtime level enable Continue; optional service priorities persist.
+- The contact screen uses the existing Country and State/Province Komodo single-select controls.
+- Review displays the selected instruments disclosure, request details, Service coverage needs, and combined service address.
+- Submit opens `#serviceplan-summary`; its selected-instrument disclosure expands; Close returns to `#request-support`.
+
+**Scope check**
+
+- Service Plan uses a dedicated draft and dedicated routes. Calibration routes, drafts, templates, and CSS selectors were not changed.
+
+**Known visual limitation**
+
+- The supplied Service Plan summary Figma frame could not be captured because Figma remained on its loading screen. The summary follows the explicitly approved Calibration summary pattern, but a source-to-rendered visual comparison for that final state is still unavailable.
+
+final result: blocked
+
+---
+
+# Calibration submitted summary design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `13191:285215`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?node-id=13191-285215), captured in the in-app browser at its 28% canvas zoom.
+- Implementation: `http://localhost:4174/#calibration-summary`, captured in the in-app browser at 1280 × 720 CSS px after submitting the four-step calibration flow.
+- State: one selected instrument, populated additional details, selected calibration service level and interval, and populated contact/service-address fields.
+
+**Findings and resolution**
+
+- [P1 resolved] The submitted calibration route did not display the calibration service needs captured in Step 2. The summary now places that card between Request details and Contact information, matching the Figma hierarchy.
+- [P1 resolved] The summary template used different name and service-address data hooks than the calibration binding helper. The submitted screen now renders the combined name and complete multi-line service address captured in Step 3.
+- [P2 resolved] The submitted title was "Request a calibration service" while the reference title is "Request calibration service". The summary title and native header now match the reference copy.
+
+**Fidelity surfaces**
+
+- Typography and layout: the existing native 1200px content region, summary heading, card order, and fixed Close action match the source hierarchy; the existing Komodo type and card rhythm are retained.
+- Colors and tokens: the submitted notice uses the existing neutral `#f7f7f7` panel, green status edge/icon treatment, and neutral card borders used by the reference.
+- Assets and copy: the repository success icon remains in use; no generated or placeholder assets were introduced. Copy matches the reference submitted notice and calibration summary labels.
+- Focused comparison: notice, request-details, service-needs, and contact cards were inspected from the source canvas and populated implementation state. No actionable P0/P1/P2 differences remain.
+
+**Interaction verification**
+
+- The UI journey Step 1 → Step 2 → Step 3 → Step 4 → Submit routes to `#calibration-summary`.
+- The populated summary renders selected instrument `1141529637`, request details, ISO 17025 service level, 12-month interval, full contact name, phone, email, company, and service address.
+- The summary includes the Close action and no browser-rendered errors.
+
+final result: passed
+
+---
+
+# Calibration Step 4 review QA
+
+**Comparison target**
+
+- Source visual truth: [Figma frame `8279:229598`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?m=auto&node-id=8279-229598&t=jIBL8eK3P1BoX9qZ-1), captured in the in-app browser.
+- Implementation: `http://localhost:4174/#request-calibration-review`, captured in the in-app browser at the 1280px desktop viewport with request details, service needs, and contact fields populated.
+- State: ISO 17025 selected; 12-month interval selected; Molly Hartman; service address with an additional-address line.
+
+**Findings and resolution**
+
+- [P1 resolved] The shared review template did not target its separate Name and Service address nodes for Calibration. Step 4 now renders the combined first/last name and a two-line, combined service address from Step 3.
+- [P1 resolved] The Figma frame places a Calibration service needs card between Request details and Contact information. Calibration now inserts that card only in its own review route and displays the selected service level and interval in two review columns.
+- Fonts and typography: the new card uses the existing 24px review-card heading and 14px label/value treatment.
+- Spacing and layout rhythm: the card uses the existing review-card border, padding, and 32px two-column rhythm, preserving the requested placement.
+- Colors and tokens: repository neutral borders, dark headings, and muted value text are reused.
+- Image quality and assets: no imagery or custom icon treatment was added.
+- Copy and content: card and field labels match the referenced Figma frame.
+
+**Validation**
+
+- Full review path tested: instrument selection → details and calibration needs → contact → review.
+- Rendered review evidence: `Molly Hartman`, `123 Blueberry Lane, Building 2` with locality line, ISO 17025, and `12 months` appear in their corresponding review regions.
+- Browser console: no errors.
+
+final result: passed
+
 ## Calibration four-step flow
 
 **Implementation and verification**

@@ -13,17 +13,29 @@ rg -Fq 'data-qualification-selected-toggle' index.html
 rg -Fq 'data-qualification-contact-field="phone"' index.html
 rg -Fq 'data-qualification-contact-field="country"' index.html
 rg -Fq 'data-qualification-contact-field="state"' index.html
+rg -Fq 'data-qualification-contact-field="city"' index.html
+rg -Fq 'data-qualification-contact-field="city" type="text"' index.html
+awk '/function wireRequestQualificationContact\(\)/,/^function renderRequestQualificationContact/' app.js | rg -Fq 'new KomodoSingleSelect(country)'
+awk '/function wireRequestQualificationContact\(\)/,/^function renderRequestQualificationContact/' app.js | rg -Fq 'new KomodoSingleSelect(state)'
+rg -Fq 'const CALIBRATION_SUPPORTED_COUNTRIES' app.js
+awk '/function wireRequestQualificationContact\(\)/,/^function renderRequestQualificationContact/' app.js | rg -Fq 'CALIBRATION_SUPPORTED_COUNTRIES'
+awk '/function wireRequestQualificationContact\(\)/,/^function renderRequestQualificationContact/' app.js | rg -Fq 'CALIBRATION_US_STATES'
+awk '/function wireRequestQualificationContact\(\)/,/^function renderRequestQualificationContact/' app.js | rg -Fq 'CALIBRATION_CANADIAN_PROVINCES'
 rg -Fq 'value="Molly"' index.html
 rg -Fq 'value="molly.hartman@thermofisher.com"' index.html
 rg -Fq 'qualification-contact-grid__identity' styles.css
 rg -Fq 'const defaultQualificationContact' app.js
 rg -Fq 'data-qualification-review-details' index.html
 rg -Fq 'data-qualification-review-service-address' index.html
+awk '/function renderQualificationSummary\(\)/,/^function wireRequestCalibration/' app.js | rg -Fq 'data-qualification-summary-name'
+awk '/function renderQualificationSummary\(\)/,/^function wireRequestCalibration/' app.js | rg -Fq 'data-qualification-summary-service-address'
+awk '/function renderQualificationSummary\(\)/,/^function wireRequestCalibration/' app.js | rg -Fq 'closeOnly: true'
 rg -Fq 'qualification-review-details--contact' styles.css
 rg -Fq 'formatQualificationServiceAddress' app.js
 rg -Fq '.screen--request-qualification-contact .platform-sidebar' styles.css
 rg -Fq '.screen--request-qualification-review .platform-sidebar' styles.css
 rg -Fq 'screen--request-qualification-details' styles.css
+awk '/function prepareQualificationStepOne\(\)/,/^function renderRequestQualification/' app.js | rg -Fq 'assets/icons/general/in systems/size=24px, style=mono.svg'
 rg -Fq 'qualification-selected-table' app.js
 rg -Fq 'Hide selected instrument(s)' app.js
 rg -Fq 'qualification-selected-table__system-icon' app.js
