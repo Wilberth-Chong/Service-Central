@@ -49,6 +49,43 @@ final result: blocked
 
 ---
 
+# Request qualification table design QA
+
+**Comparison target**
+
+- Source visual truth: [Figma node `8094:190356`](https://www.figma.com/design/jUFmLXXT8tPFy0yq6SUCqJ/CSC-CR4.0--Prototype?node-id=8094-190356), captured in the in-app browser. The visible Figma canvas includes the selected instrument-selection frame and its request-detail sibling at 28% canvas zoom.
+- Implementation: `http://localhost:4173/?qualificationTable=visual#request-qualification`, captured in the in-app browser at the desktop viewport.
+- State: first step, no selected instruments, system expanded, filters and page-size menus closed.
+
+**Findings and resolution**
+
+- [P1 resolved] Qualification used a separate PM stepper. It now mounts the shared `TicketStepViewer` component with the four qualification labels and current-step semantics.
+- [P1 resolved] The top Select all control included a checkbox that is absent from the source. It is now a text action; the selectable instrument rows retain 20px Komodo-style checkbox states.
+- [P1 resolved] The table used PM-only controls. Qualification now uses the Open support ticket table treatment for its system expansion control, instrument imagery, overflow tooltips, four column multi-select menus, selected rows, and raised menus.
+- [P1 resolved] Pagination now uses the Open support ticket result-count, page-size, page-number, and Go to styling. The page-size menu offers 10, 20, 30, 40, and 50.
+
+**Focused interaction evidence**
+
+- The four shared viewer labels render as Select instrument(s), Add request details, Confirm contact information, and Review and submit; the accessibility label is Qualification service request progress.
+- The top Select all action has no nested checkbox. It selects all 15 visible fixture instruments and enables Continue.
+- Collapse hides the five system children; Model opens the multi-select list above table content; Results per page opens the five-option list.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: existing Helvetica/Komodo-compatible table, control, and step-viewer typography are reused.
+- Spacing and layout rhythm: the 1200px instrument-selection card and shared table/pagination dimensions remain aligned with the native ticket-selection implementation.
+- Colors and tokens: primary red, Komodo blue selection, neutral borders, and coverage-status colors reuse existing page tokens.
+- Image quality and asset fidelity: existing repository instrument images and mono navigation/filter assets are reused; no generated or replacement assets were introduced.
+- Copy and content: Qualification copy, 267-instrument count, and four request steps match the captured frame.
+
+**Comparison limitation**
+
+- The Figma capture is an editor canvas at 28% zoom and contains adjacent frames rather than an exported node image. A normalized, same-crop side-by-side comparison cannot be produced from that canvas capture alone.
+
+final result: blocked
+
+---
+
 # Request Support design QA
 
 **Comparison target**
@@ -64,6 +101,135 @@ final result: blocked
 - Quote controls display an in-app confirmation toast.
 - At 900px, the right rail follows the request list without document-width overflow.
 - Browser console: no errors.
+
+final result: passed
+
+## Calibration four-step flow
+
+**Implementation and verification**
+
+- Calibration now follows the same shared step-viewer and native action-bar pattern as Qualification across instrument selection, request details, contact confirmation, review, and submitted summary.
+- Calibration retains its own draft state, selected freezer instruments, request details, contact information, and submitted-summary route.
+- Browser verification completed the full user journey from one selected instrument through required details/contact fields to the submitted summary. Step 4 displayed enabled `Submit`; the summary contained the entered request detail, the submitted notice, and Close; console errors: none.
+
+final result: passed
+
+## Qualification submitted summary
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Qual/Submitted.png`.
+- Implementation: `http://localhost:4173/?qualificationSummary=1#qualification-summary`, reached by clicking Submit on the Qualification review route.
+
+**Findings and resolution**
+
+- [P1 resolved] Qualification Submit previously displayed only a toast. It now opens a dedicated submitted-summary screen with the source's title, green submitted notice, Summary heading, request-details card, contact-information card, and bottom Close action.
+- [P1 resolved] The submitted summary derives its additional details, selected instruments, and contact data from the preceding Qualification flow rather than hard-coded review content.
+- [P2 resolved] The existing submitted notice, shared selected-instrument disclosure, shell alignment, and native Close action bar are reused to match the established Services Central treatment.
+
+**Interaction verification**
+
+- Clicking Submit from `#request-qualification-review` navigates to `#qualification-summary`.
+- The rendered screen contains the submitted notice, Summary, Close, and the five expected contact labels; browser console errors: none.
+- A current-page screenshot was captured after navigation; static route coverage, JavaScript syntax, and `git diff --check` passed.
+
+final result: passed
+
+## Request Qualification steps 3–4 sidebar alignment
+
+**Implementation and verification**
+
+- Source convention: Request Qualification uses the same 1440px application-shell alignment as the existing request-flow screens.
+- Applied the shell-origin sidebar calculation only to the Confirm contact information and Review and submit routes.
+- At the default 1280px viewport, both routes compute to `left: 0px`, which is the expected clamped value; at larger viewports the existing `max(0px, calc((100vw - 1440px) / 2))` rule moves the sidebar with the centered shell.
+- Browser navigation through both routes reported no console errors. Static sidebar regression, JavaScript syntax, and `git diff --check` passed.
+
+final result: passed
+
+---
+
+# Request Qualification Step 4 contact summary QA
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/S&S/ReqSupp/QualServ/Review and Submit.png` (attached desktop reference).
+- Implementation: `http://localhost:4173/?qualificationReviewContact=1#request-qualification-review`, rendered after completing the Step 3 required fields.
+- State: Step 4 Review and submit with a populated company and service address.
+
+**Findings and resolution**
+
+- [P1 resolved] Step 4 previously listed every address field independently. The contact summary now has the reference's five fields: Name, Phone number, Email, Company, and a combined Service address.
+- [P1 resolved] The Service address displays its street and optional second line first, then city, state, country, and postal code as the second line.
+- [P2 resolved] The review introduction copy and contact grid now use the source's two-row hierarchy, without changing the request-details disclosure.
+
+**Interaction verification**
+
+- Completing Step 3 with `123 Blueberry Lane` and `Thermo Fisher` routes to Step 4.
+- The review contains only the five expected labels and produces `123 Blueberry Lane` plus `Carlsbad, California, USA, CP: 93047` in the combined address.
+- Browser console errors: none.
+
+final result: passed
+
+---
+
+# Request Qualification Step 3 contact form QA
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/S&S/ReqSupp/QualServ/ContactInfo.png` (attached 1,440 × 1,620 desktop reference).
+- Implementation: `http://localhost:4173/?qualificationContactPrefill=2#request-qualification-contact`, rendered in the in-app browser at the desktop flow state.
+- State: initial contact form with reference prefilled identity/contact/location values, empty required service address and company fields, and disabled Continue.
+
+**Findings and resolution**
+
+- [P1 resolved] The previous generic two-column grid interleaved unrelated fields. The form now uses the reference's two fixed 524px columns with a 72px gutter, grouping identity/company fields at left and address/location fields at right.
+- [P1 resolved] Country and State/Province are now native select controls; email and telephone retain their appropriate semantic types and existing validation.
+- [P2 resolved] Initial values and placeholders now match the reference intent. Continue remains disabled until the empty required Service address and Company fields are valid, then routes to Step 4.
+
+**Fidelity review**
+
+- Typography: 14px label/input treatment, with required indicators aligned in the label.
+- Spacing and layout: 32px row rhythm within columns; split rows use 246px controls separated by 32px.
+- Colors and tokens: existing Komodo-style neutral controls, red required markers, and standard focus treatment are retained.
+- Copy and input types: labels, optional address wording, and placeholder copy follow the supplied reference; `tel`, `email`, text, and select controls are used where appropriate.
+
+**Interaction verification**
+
+- Initial Continue disabled; entering `Street and number` and `Company name` enables it, with existing required fields prefilled.
+- Continue routes to `#request-qualification-review` and renders `Review and submit`.
+- Browser console errors: none.
+
+final result: passed
+
+---
+
+# Request Qualification selected-instruments disclosure QA
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Screenshot 2026-08-20 at 12.57.49 AM.png` (attached 1,780 × 445 reference).
+- Implementation: `http://localhost:4173/?qualificationSelectedTable=2#request-qualification-details`, captured in the in-app browser at the matching expanded disclosure state (1,280 × 720 CSS viewport; browser capture retained in the active verification tab).
+- State: one selected system instrument, expanded selected-instruments disclosure.
+
+**Findings and resolution**
+
+- [P1 resolved] The disclosure previously used free-form detail cards. It now renders a compact three-column table with the reference's blank icon column, `Serial number`, and `Nickname` headers.
+- [P1 resolved] The original extraction read the return-arrow table cell rather than the instrument-thumbnail cell. The summary now uses the actual instrument asset and adds a single system-context row using the repository’s mono system icon.
+- [P2 resolved] The disclosure control now changes between `Show selected instrument(s)` and `Hide selected instrument(s)` as its accessible expanded state changes.
+
+**Fidelity review**
+
+- Typography: headers use 16px bold; selected values use 16px / 24px with the existing Helvetica-based application stack.
+- Spacing and layout: table width is capped at 856px, header height is 68px, body rows are 62px, and the disclosure-to-table gap is 16px.
+- Colors and tokens: white table surface, neutral `#ddd` dividers, `#29292e` content, and the existing `#0071d0` disclosure action are retained.
+- Assets and copy: the existing instrument thumbnail and 24px mono system icon are used; all labels match the supplied reference pattern.
+
+**Interaction verification**
+
+- Selecting an instrument enables Continue and routes to Step 2.
+- Expanding yields `Hide selected instrument(s)`, `aria-expanded="true"`, the three expected headers, one instrument row plus one system row, and two rendered icons.
+- Browser console errors: none.
+- Static flow and table regression checks, JavaScript syntax check, and `git diff --check`: passed.
 
 final result: passed
 
