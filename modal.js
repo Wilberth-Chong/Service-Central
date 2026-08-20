@@ -4,6 +4,7 @@
     sm: "600px",
     md: "824px",
     lg: "1080px",
+    xl: "1248px",
   });
   const DEFAULT_SIZE = "sm";
 
@@ -77,6 +78,7 @@
     content,
     actions = [],
     closeLabel,
+    closeIcon = CLOSE_ICON,
     closeButton = true,
     closeOnBackdrop = true,
     closeDataset = {},
@@ -134,7 +136,7 @@
       applyDataset(close, closeDataset);
 
       const icon = document.createElement("img");
-      icon.src = CLOSE_ICON;
+      icon.src = closeIcon;
       icon.alt = "";
       icon.setAttribute("aria-hidden", "true");
       close.append(icon);
