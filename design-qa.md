@@ -106,6 +106,172 @@ final result: passed
 
 ---
 
+# PM direct-review route regression QA
+
+**Scope**
+
+- Step 1 serial action: `TSQ-Z-12347` on `#request-pm`.
+- Expected destination: `#request-pm-direct-review`, not `#request-pm-status`.
+
+**Verification**
+
+- Fresh browser navigation loaded the cache-busted application script, clicked the exact serial button, and reached `#request-pm-direct-review`.
+- The confirmed-PM notice was present and the legacy PM-status route was absent.
+- The trigger is now an explicit `data-pm-direct-review-trigger`, preventing it from relying on display-text matching or the generic instrument handler.
+- Focused route regression, JavaScript syntax check, and `git diff --check` passed.
+
+final result: passed
+
+---
+
+# Direct PM scheduled-instrument review QA
+
+**Comparison target**
+
+- Source: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/MyIns/InsDe/TSQ-2/ReqSupp/PM/Review.png`.
+- Implementation: `http://localhost:4173/#request-pm-direct-review`.
+- Same-state desktop comparison: reference and the 1440px-wide implementation capture at `/private/tmp/pm-direct-review-implementation-1440.png` were reviewed together.
+
+**Fidelity and interaction review**
+
+- The direct route retains the application shell, title bar, two-position red progress line, completed first step, checked Review marker, submitted-style green notice, confirmed-date disclosure heading, and the single TSQ-Z-12347 date row.
+- The table uses the existing TSQ repository thumbnail, blue serial/date links, row treatment, and source-aligned columns.
+- Only the TSQ-Z-12347 serial button from PM Step 1 navigates here; other serial actions retain their existing behavior.
+- Close uses the shared action bar and returns to Request support.
+
+**Validation**
+
+- `bash tests/request-pm-direct-review.test.sh` passes.
+- Browser interaction confirmed Step 1 serial click → `#request-pm-direct-review`; visible notice, two viewer states, confirmed PM row, and Close action all rendered with zero console errors.
+- Close returned to `#request-support`.
+
+final result: passed
+
+---
+
+# PM scheduling submitted summary QA
+
+**Comparison target**
+
+- Source: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Request PM/Submitted.png`.
+- Implementation: `http://localhost:4173/#pm-request-summary`.
+- Same-state comparison: the supplied reference and the browser-rendered implementation were reviewed together after submission; implementation evidence was captured at `/private/tmp/pm-request-summary-implementation.png`.
+
+**Fidelity review**
+
+- Structure: the route uses the existing Services Central header, left navigation, page title bar, submitted notice, three stacked summary cards, fixed Close action bar, and footer.
+- Typography and spacing: title, Summary heading, card headings, labels, disclosure controls, and contact grid use the established PM review scale and card rhythm.
+- Visual treatment: the submitted notice retains the `#00a62c` left success accent and `#f7f7f7` surface; cards retain the source-matched neutral border and white background.
+- Content: scheduling details, PM request details, contact name, phone, email, company, and two-line service address are populated from the preceding PM steps.
+- Interaction: Submit routes from Step 5 to the submitted summary; both instrument disclosures expand/collapse; Close returns to Request support.
+
+**Validation**
+
+- `bash tests/request-pm-summary.test.sh` passes.
+- PM review Submit reached `#pm-request-summary`; the green notice rendered; an instrument disclosure expanded; Close returned to `#request-support`.
+- Browser console returned no errors for the summary flow.
+- JavaScript syntax validation and `git diff --check` pass.
+
+final result: passed
+
+---
+
+# PM scheduling Step 5 review and submit QA
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/S&S/ReqSupp/PM/Revie and Submit.png` (1440 × 1827).
+- Implementation: `http://localhost:4173/?pmReviewFlow=1#request-pm-review`, captured at 1280 × 720 CSS px from the live app.
+- State: populated Scheduling request details, PM request details, and contact information; Step 5 current; both selected-instrument disclosures collapsed.
+
+**Findings and resolution**
+
+- [P1 resolved] The PM flow previously ended at contact information. Step 4 Continue now opens a dedicated Step 5 review route with the active five-step viewer state and Submit action.
+- [P1 resolved] The review cards now retain separate Scheduling request and PM request detail values, with independent expandable selected-instrument tables.
+- [P1 resolved] Contact information is populated from the PM contact draft and formats the full service address in the same review-card treatment as the source.
+- Typography: the review title, card headings, labels, and body copy use the existing Services Central Helvetica stack, matching the surrounding PM flow.
+- Spacing/layout: the 1200px content column, 32px card rhythm, promotion banner, and fixed action bar match the PM request shell. The live shell retains its existing route toolbar above the application header; this is shared shell behavior and not modified by Step 5.
+- Colors/tokens: PM red is retained for Step 5 and Submit, and blue `#0071d0` is used for the promotion accent and terms links.
+- Assets/copy: existing blue information, chevron, and PM shell assets are used; no placeholders or newly generated assets were introduced.
+
+**Interaction verification**
+
+- Step 3 → Step 4 → Step 5 preserves entered detail and contact data.
+- Both selected-instrument disclosures expand correctly.
+- Promotion terms opens the existing Terms and conditions modal.
+- Browser console errors: none.
+
+final result: passed
+
+---
+
+# Request PM scheduling — View PM status design QA
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/S&S/ReqSupp/PM/PM Status.png` (1440 × 1827).
+- Implementation capture: `/Users/niranjan.kumarm/Sc/Service-Central/.tmp-pm-status-implementation.png` (1440 × 1827, CSS viewport 1440 × 1827, density 1×).
+- State: PM flow Step 2, all supplied PM-status rows expanded and selected as in the reference.
+
+**Findings and resolution**
+
+- [P1 resolved] Step 1 previously stopped at a toast. Selecting an instrument and continuing now navigates to a dedicated `#request-pm-status` screen with Step 2 current and Step 1 complete.
+- [P1 resolved] The five-step connector used an incorrect fixed offset for current steps. It now derives the completed segment from the number of labels; the Step 2 segment ends at the left edge of its active circle.
+- [P2 resolved] The reference has three distinct PM-status data groups. The implementation now provides Confirmed PM date(s), Request PM scheduling, and Request PM(s), with matching records, system/instrument icons, selected Komodo-style checkboxes, and semantic status badges.
+- [P2 resolved] The status table began too far left and its header columns drifted from the source. A leading spacing column and reference-aligned table tracks now place scheduled date, image, serial number, nickname, and contact columns in the same visual order.
+
+**Fidelity surfaces**
+
+- Fonts and typography: existing Services Central Helvetica stack, 22px title, 28px section headings, 16px message/body copy, and 14px table copy were compared against the source hierarchy.
+- Spacing and layout rhythm: fixed header begins at 0px; title bar starts at 64px; step viewer starts at 152px; promotion begins at 282px (source: 279px). Section/table left edges, 60px rows, and fixed action/footer treatment follow the source composition.
+- Colors and visual tokens: existing red wizard state, blue promotion rail/link and checkbox treatment, neutral borders, green Under contract badge, blue Open badge, and gray Expired badge are used.
+- Image quality and asset fidelity: repository TSQ/Q Exactive product thumbnails and existing 24px mono system, chevron, and information assets are used. No replacement or generated assets were introduced.
+- Copy and content: headings, promotion copy, dates, serials, nicknames, contacts, and badge labels match the supplied reference.
+
+**Interaction verification**
+
+- Step 1: selecting `1009996` enables Continue; Continue opens `#request-pm-status`.
+- Step 2: Back returns to `#request-pm`; each PM-status disclosure toggles its table.
+- Browser console: no errors or warnings.
+
+**Follow-up polish**
+
+- [P3] The inherited native-flow action bar and scroll container differ slightly from the full-height Figma canvas outside the source’s visible content region; they preserve the repository’s required shared shell behavior.
+
+final result: passed
+
+---
+
+# Request PM Step 1 design QA
+
+**Comparison target**
+
+- Source visual truth: Figma node `8041:199081`, captured in the in-app browser on 2026-08-22. The selected frame is the 1440 × 1827 PM Step 1 selection state.
+- Implementation: `http://localhost:4173/#request-pm`.
+- Intended state: PM Step 1, system expanded, no filters active.
+
+**Implemented alignment**
+
+- Replaced PM's legacy step strip with the reusable five-step `TicketStepViewer` treatment.
+- Reused the Qualification-style instrument selection: search, column multi-select filters, applied-filter badges, clear action, select-all/indeterminate states, collapsible system rows, overflow handling, and page-size/pagination controls.
+- Retained the PM title, promotion, PM-specific 240-instrument copy, and current Continue action.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: shared step viewer and 14px dense-table control typography are reused.
+- Spacing and layout rhythm: the 1320px five-step PM viewer, 188px promotion banner, and Qualification-style table treatment align to the captured PM frame.
+- Colors and visual tokens: existing Komodo-compatible red, blue, neutral borders, and coverage badges are reused.
+- Image quality and assets: existing repository instrument thumbnails and mono system icon are reused.
+- Copy and content: PM-specific headings, promotion, and selection copy are retained.
+
+**Validation limitation**
+
+- The refreshed `localhost:4173` bundle was verified at the 1440 × 1827 target viewport: the five-step viewer, 188px banner, Qualification-style table, and opened Groups menu all render. Figma is available only as an editor-canvas capture in this environment, so a normalized source/implementation pixel-diff remains unavailable.
+
+final result: blocked
+
+---
+
 # Service Plan Step 1 parity QA
 
 **Comparison target**
