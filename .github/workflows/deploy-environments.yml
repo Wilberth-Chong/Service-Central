@@ -1,9 +1,12 @@
-name: Deploy Test and Prod
+name: Deploy Test, Prod, and Releases
 
 on:
   push:
     branches:
       - main
+  release:
+    types:
+      - published
   workflow_run:
     workflows:
       - Test branch changed
@@ -22,7 +25,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Publish both environments
+    name: Publish environments and release archive
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
@@ -35,6 +38,7 @@ jobs:
         with:
           ref: main
           path: prod
+          fetch-depth: 0
 
       - name: Check out Test
         uses: actions/checkout@v4
@@ -44,16 +48,57 @@ jobs:
 
       - name: Assemble the Pages site
         run: |
-          mkdir -p _site/test
+          mkdir -p _site/test _site/versions
           rsync -a --exclude='.git' --exclude='.github' prod/ _site/
           rsync -a --exclude='.git' --exclude='.github' test/ _site/test/
+
+          release_links=""
+          while IFS= read -r release_tag; do
+            release_path="_site/versions/${release_tag}"
+            mkdir -p "${release_path}"
+            git -C prod archive "${release_tag}" -- . ':(exclude).github' | tar -x -C "${release_path}"
+            release_links="${release_links}<li><a href=\"./${release_tag}/\">${release_tag}</a></li>"
+          done < <(git -C prod tag --list 'CR[0-9]*' --sort=-v:refname)
+
+          cat > _site/versions/index.html <<EOF
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Services Central prototype versions</title>
+              <style>
+                body { margin: 0; background: #f5f5f5; color: #222; font-family: Arial, sans-serif; }
+                main { box-sizing: border-box; width: min(720px, calc(100% - 40px)); margin: 64px auto; padding: 40px; background: #fff; border: 1px solid #d8d8d8; }
+                h1 { margin: 0 0 12px; font-size: 28px; line-height: 1.25; }
+                p { margin: 0 0 28px; line-height: 1.5; }
+                ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid #d8d8d8; }
+                li { border-bottom: 1px solid #d8d8d8; }
+                a { display: block; padding: 16px 0; color: #0071d0; font-weight: 600; text-decoration: none; }
+                a:hover, a:focus-visible { text-decoration: underline; }
+              </style>
+            </head>
+            <body>
+              <main>
+                <h1>Services Central prototype versions</h1>
+                <p>Open the current production prototype, the test environment, or a frozen release.</p>
+                <ul>
+                  <li><a href="../">Current production</a></li>
+                  <li><a href="../test/">Test environment</a></li>
+                  ${release_links}
+                </ul>
+              </main>
+            </body>
+          </html>
+          EOF
+
           touch _site/.nojekyll
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload the combined site
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
