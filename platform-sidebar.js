@@ -131,14 +131,16 @@
     return button;
   }
 
-  function createSidebar({ activeRoute = "dashboard", collapsed = true } = {}) {
+  function createSidebar({ activeRoute = "dashboard", collapsed = true, hiddenItemIds = [] } = {}) {
     const sidebar = document.createElement("aside");
     sidebar.className = "platform-sidebar";
     sidebar.dataset.platformSidebar = "";
     sidebar.setAttribute("aria-label", "Services Central navigation");
     if (collapsed) sidebar.classList.add("is-collapsed");
 
+    const hiddenItems = new Set(hiddenItemIds);
     PLATFORM_SIDEBAR_ITEMS.forEach((item) => {
+      if (hiddenItems.has(item.id)) return;
       sidebar.append(createSidebarItem(item, activeRoute));
     });
     sidebar.append(createCollapseButton());
