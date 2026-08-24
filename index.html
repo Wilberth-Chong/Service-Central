@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260820-onboarding-serviceplan-merge" />
+    <link rel="stylesheet" href="styles.css?v=20260822-europe-le-consumables-2" />
     <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
@@ -306,7 +306,13 @@
             <div data-ai-actionbar-mount></div>
             <div data-footer-mount></div>
 
-            <dialog class="ai-supported-dialog" data-ai-supported-dialog aria-labelledby="supported-dialog-title"><button type="button" data-ai-supported-close aria-label="Close supported instruments"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button><h2 id="supported-dialog-title">Supported instruments</h2><p>Services Central supports eligible Thermo Fisher Scientific instrument families installed in supported regions on or after 01 January 2010.</p><button class="mi-button" type="button" data-ai-supported-close>Close</button></dialog>
+            <dialog class="ai-supported-dialog" data-ai-supported-dialog aria-labelledby="supported-dialog-title">
+              <div class="ai-supported-dialog__header">
+                <h2 id="supported-dialog-title" tabindex="-1">Supported instruments</h2>
+                <button type="button" data-ai-supported-close aria-label="Close supported instruments"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
+              </div>
+              <div class="ai-supported-dialog__body" data-ai-supported-content></div>
+            </dialog>
             <dialog class="ai-bulk-instructions-dialog" data-ai-bulk-instructions-dialog aria-labelledby="ai-bulk-instructions-title">
               <article class="ai-bulk-instructions-modal">
                 <header>
@@ -1780,6 +1786,56 @@
 
     <div data-modal-mount="installation-pending"></div>
 
+    <dialog id="service-plan-approval-dialog" class="service-plan-approval-dialog" aria-labelledby="service-plan-approval-title" aria-describedby="service-plan-approval-description">
+      <section class="service-plan-approval-modal">
+        <header><div><h2 id="service-plan-approval-title">Confirm you are the service plan contact</h2><p id="service-plan-approval-description">If you accept, you will receive communications regarding your service plan updates and renewals. Any instruments not yet in your account will be added.</p></div><button type="button" data-service-plan-approval-close aria-label="Close service plan contact confirmation"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header>
+        <div class="service-plan-approval-modal__table-wrap">
+          <table class="service-plan-approval-table" aria-label="Instruments included in the service plan contact request">
+            <colgroup><col class="spca-col-chevron" /><col class="spca-col-coverage" /><col class="spca-col-branch" /><col class="spca-col-image" /><col class="spca-col-lock" /><col class="spca-col-serial" /><col class="spca-col-nickname" /></colgroup>
+            <thead><tr><th></th><th>Coverage</th><th></th><th></th><th></th><th>Serial number</th><th>Nickname</th></tr></thead>
+            <tbody>
+              <tr class="spca-plan"><td><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></td><td colspan="6"><strong>Essential Service Plan - 0040111111</strong></td></tr>
+              <tr class="spca-plan"><td><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></td><td colspan="6"><strong>Essential Service Plan - 0040222222</strong></td></tr>
+              <tr class="spca-plan"><td><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></td><td colspan="6"><strong>Essential Service Plan - 0040333333</strong></td></tr>
+              <tr class="spca-plan"><td><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></td><td colspan="6"><strong>Instruments with no service plan</strong></td></tr>
+              <tr class="spca-system"><td></td><td>—</td><td></td><td><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td><img src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /></td><td>System</td><td>Alpine</td></tr>
+              <tr class="spca-component"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-detector.png" alt="" /></td><td></td><td>1009996</td><td>Detector-2B</td></tr>
+              <tr class="spca-component"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-column.png" alt="" /></td><td></td><td>1009999</td><td>Column-2B</td></tr>
+              <tr class="spca-component"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-sampler.png" alt="" /></td><td></td><td>1009998</td><td>Sampler-2B</td></tr>
+              <tr class="spca-component"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/vanquish-pump.png" alt="" /></td><td></td><td>1009997</td><td>Pump-2B</td></tr>
+              <tr class="spca-component spca-component--last"><td></td><td><span class="splan-status splan-status--ok">Under warranty</span></td><td><img src="assets/icons/general/arrow/size=16px.svg" alt="" /></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td></td><td>TSQ-Z-12346</td><td>TSQ-0</td></tr>
+              <tr><td></td><td><span class="splan-status splan-status--bad">Coverage expired</span></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td></td><td>TSQ-Z-12347</td><td>TSQ-1</td></tr>
+              <tr><td></td><td><span class="splan-status splan-status--bad">Coveragge expired</span></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td></td><td>TSQ-Z-12347</td><td>TSQ-1</td></tr>
+              <tr><td></td><td><span class="splan-status splan-status--bad">Warranty expired</span></td><td></td><td><img src="assets/instruments/tsq.png" alt="" /></td><td><img src="assets/icons/actions/lock%20closed/size=16px,%20style=mono.svg" alt="" /></td><td>TSQ-Z-12348</td><td>TSQ-2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <footer><button type="button" class="service-plan-approval-modal__secondary" data-service-plan-decline>Decline</button><button type="button" class="service-plan-approval-modal__primary" data-service-plan-accept>Accept</button></footer>
+      </section>
+    </dialog>
+
+    <dialog id="service-plan-decline-dialog" class="service-plan-decline-dialog" aria-labelledby="service-plan-decline-title" aria-describedby="service-plan-decline-description">
+      <section class="service-plan-decline-modal">
+        <header><h2 id="service-plan-decline-title">Decline</h2><button type="button" data-service-plan-decline-cancel aria-label="Close decline confirmation"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header>
+        <p id="service-plan-decline-description">Click decline to confirm you do not want to be the service plan contact for the instrument(s).</p>
+        <footer><button type="button" class="service-plan-approval-modal__secondary" data-service-plan-decline-cancel>Cancel</button><button type="button" class="service-plan-approval-modal__primary" data-service-plan-decline-confirm>Decline</button></footer>
+      </section>
+    </dialog>
+
+    <dialog id="installation-welcome-dialog" class="installation-welcome-dialog" aria-labelledby="installation-welcome-title" aria-describedby="installation-welcome-description">
+      <section class="installation-welcome-modal">
+        <div class="installation-welcome-modal__hero">
+          <div class="installation-welcome-modal__copy">
+            <h2 id="installation-welcome-title">Get started with your instrument installation</h2>
+            <p id="installation-welcome-description">To ensure a successful installation, review and complete any actions required.</p>
+          </div>
+          <div class="installation-welcome-modal__illustration" aria-hidden="true"><img src="assets/installations/installation-welcome.svg" alt="" /></div>
+          <button type="button" class="installation-welcome-modal__close" data-installation-welcome-close aria-label="Close installation welcome"><img src="assets/icons/actions/close/size=32px, style=mono.svg" alt="" /></button>
+        </div>
+        <footer class="installation-welcome-modal__footer"><button type="button" data-installation-welcome-continue>Go to installation</button></footer>
+      </section>
+    </dialog>
+
     <dialog id="add-user-order-dialog" class="add-user-order-dialog" aria-labelledby="add-user-order-title" aria-describedby="add-user-order-description">
       <form class="add-user-order-modal" method="dialog" data-add-user-form tabindex="-1">
         <header class="add-user-order-modal__header">
@@ -2035,7 +2091,7 @@
     </div>
     <script src="topbar-sc.js?v=20260811-topbar-sc"></script>
     <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
-    <script src="platform-sidebar.js?v=20260810-across-site-sidebar"></script>
+    <script src="platform-sidebar.js?v=20260821-regional-sidebar"></script>
     <script src="platform-action-bar.js?v=20260819-submitted-summary-close"></script>
     <script src="ticket-step-viewer.js?v=20260819-qualification-step-viewer"></script>
     <script src="footer.js?v=20260812-footer"></script>
@@ -2043,6 +2099,6 @@
     <script src="date-range-picker.js?v=20260814-support-history"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
     <script src="vendor/jszip.min.js?v=3.10.1"></script>
-    <script src="app.js?v=20260820-summary-system-card"></script>
+    <script src="app.js?v=20260822-supported-instrument-modals"></script>
   </body>
 </html>

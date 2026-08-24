@@ -3,6 +3,9 @@ const helpDialog = document.querySelector("#help-dialog");
 const servicesHelpDialog = document.querySelector("#services-help-dialog");
 const flowsDialog = document.querySelector("#flows-dialog");
 const installationPendingDialog = createInstallationPendingDialog();
+const installationWelcomeDialog = document.querySelector("#installation-welcome-dialog");
+const servicePlanApprovalDialog = document.querySelector("#service-plan-approval-dialog");
+const servicePlanDeclineDialog = document.querySelector("#service-plan-decline-dialog");
 const addUserOrderDialog = document.querySelector("#add-user-order-dialog");
 const preferredDeliveryDatesDialog = document.querySelector("#preferred-delivery-dates-dialog");
 const deliveryChecklistUploadDialog = document.querySelector("#delivery-checklist-upload-dialog");
@@ -41,6 +44,10 @@ let draggedPreInstallUploader = null;
 let installationStatusScenario = "in-progress";
 let installationOrderCollapsedByUser = false;
 let installationPendingShownForVisit = false;
+let installationWelcomeFromEmail = false;
+let servicePlanApprovalPending = false;
+let servicePlanApprovalPromptShown = false;
+let servicePlanApprovalAcceptedNotice = false;
 let selectedInstallationShellContext = null;
 const whiteGloveOrderStates = new Map([
   ["1901126245", { expanded: true, status: "default" }],
@@ -247,14 +254,39 @@ const ROUTES = {
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
   education: { title: "Browse education", src: "assets/flows/browser-education.png", width: 2878, height: 1826, kind: "external" },
+  "korea-education": { title: "Browse education", src: "assets/flows/korea-education.png", width: 1291, height: 1309, kind: "external" },
   "ticket-detail": { title: "Support ticket detail", src: "assets/flows/ticket-detail.png", width: 1456, height: 2069, kind: "app" },
   "tech-support-summary": { title: "Tech support summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "service-requests-summary": { title: "Service request summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "pm-summary": { title: "Preventive maintenance summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "closed-summary": { title: "Closed ticket summary", src: "assets/flows/ticket-detail.png", width: 1440, height: 1623, kind: "app" },
   "user-not-mapped": { title: "From sign in — user not mapped", src: "assets/flows/user-not-mapped.png", width: 1440, height: 1090, kind: "signin", cta: { x: 204, y: 452, w: 392, h: 53, route: "add-instruments", label: "Continue user-not-mapped flow" } },
-  "installation-order": { title: "From installation order ready", src: "assets/flows/installation-order.png", width: 600, height: 941, kind: "email", cta: { x: 56, y: 428, w: 198, h: 42, route: "request-support", label: "View installation order" } },
-  "service-plan-approval": { title: "From service plan contact approval", src: "assets/flows/service-plan-approval.png", width: 600, height: 1494, kind: "email", cta: { x: 56, y: 375, w: 184, h: 42, route: "my-instruments", label: "Review and confirm" } },
+  "installation-order": {
+    title: "From installation order ready",
+    src: "assets/flows/installation-order.png",
+    width: 600,
+    height: 941,
+    kind: "email",
+    emailSkin: true,
+    emailLabel: "Installation order notification",
+    emailSubject: "Action required: Initiate your installation in Services Central",
+    emailSender: "Thermo Fisher Scientific <notifications@thermofisher.com>",
+    emailTime: "Today, 9:41 AM",
+    cta: { x: 56, y: 428, w: 198, h: 42, route: "installations", label: "View installation order" },
+  },
+  "service-plan-approval": {
+    title: "From service plan contact approval",
+    src: "assets/flows/service-plan-approval.png",
+    width: 600,
+    height: 1494,
+    kind: "email",
+    emailSkin: true,
+    emailLabel: "Service plan contact notification",
+    emailSubject: "Action required - Confirm you are the service plan contact for your instruments",
+    emailSender: "Thermo Fisher Scientific <notifications@thermofisher.com>",
+    emailTime: "Today, 9:41 AM",
+    cta: { x: 56, y: 375, w: 184, h: 42, route: "service-plan-contacts", label: "Review and confirm" },
+  },
   "ticket-status-email": { title: "From ticket status email", src: "assets/flows/ticket-status-email.png", width: 600, height: 1160, kind: "email", cta: { x: 56, y: 350, w: 178, h: 42, route: "ticket-detail", label: "View support ticket" } },
   "ticket-invite": { title: "From ticket-based onboard invite", src: "assets/flows/ticket-invite.png", width: 600, height: 1457, kind: "email", cta: { x: 56, y: 385, w: 152, h: 42, route: "instrument-access", label: "Add instrument" } },
   "instrument-access": { title: "From instrument access — user tab", src: "assets/flows/instrument-access.png", width: 1440, height: 2000, kind: "app" },
@@ -267,39 +299,130 @@ const ROUTES = {
 };
 
 const FLOW_MENU = [
-  ["From sign In", "signin"],
-  ["From sign in (user not mapped)", "user-not-mapped"],
-  ["From installation order ready", "installation-order"],
-  ["From service plan contact approval", "service-plan-approval"],
-  ["From ticket status email", "ticket-status-email"],
-  ["From ticket-based onboard invite", "ticket-invite"],
-  ["From instrument access (user tab)", "instrument-access"],
-  ["From PM Cycle", "pm-cycle"],
-  ["From multiuse sys (Edit/share)", "multiuse"],
-  ["From approval email", "approval-email"],
-  ["Other — Europe — LE", "europe-le"],
-  ["Other — North America — CMD", "north-america-cmd"],
-  ["Other — Korea — CMD", "korea-cmd"],
-  ["My instruments", "my-instruments"],
-  ["Add instruments", "add-instruments"],
-  ["Installations", "installations"],
-  ["Installations — order 9012611245 expanded", "installations-expanded"],
-  ["Installation support", "installation-support"],
-  ["Support history", "support-history"],
-  ["Service plan contacts", "service-plan-contacts"],
-  ["Service plan contact detail", "contact-page"],
-  ["Edit service plan contact", "edit-spc"],
-  ["Request support", "request-support"],
-  ["Request PM scheduling", "request-pm"],
-  ["Request a service plan quote", "request-serviceplan"],
-  ["Request qualification service", "request-qualification"],
-  ["Request a calibration service", "request-calibration"],
-  ["Installation support", "request-installation"],
-  ["Notification settings", "notifications"],
-  ["Consumables", "consumables"],
-  ["Browse education", "education"],
-  ["Support ticket detail", "ticket-detail"],
+  { label: "From sign in - Main", mode: "main" },
+  { label: "From sign in - User not mapped", mode: "unmapped" },
+  { label: "Other - North America - CMD", region: "north-america-cmd", route: "my-instruments" },
+  { label: "From service plan contact approval", route: "service-plan-approval" },
+  { label: "Other - Europe - LE", region: "europe-le", route: "my-instruments" },
+  { label: "From installation order ready", route: "installation-order" },
+  { label: "Other - Korea - CMD", region: "korea-cmd", route: "my-instruments" },
 ];
+
+function isUnmappedPrototypeUser() {
+  return new URL(window.location.href).searchParams.get("prototype-user") === "unmapped";
+}
+
+function isEuropeLePrototype() {
+  return new URL(window.location.href).searchParams.get("prototype-region") === "europe-le";
+}
+
+function isMainPrototype() {
+  return new URL(window.location.href).searchParams.get("prototype-experience") === "main";
+}
+
+function isNorthAmericaCmdPrototype() {
+  return new URL(window.location.href).searchParams.get("prototype-region") === "north-america-cmd";
+}
+
+function isKoreaCmdPrototype() {
+  return new URL(window.location.href).searchParams.get("prototype-region") === "korea-cmd";
+}
+
+function isInstallationsUnavailablePrototype() {
+  return isUnmappedPrototypeUser() || isEuropeLePrototype();
+}
+
+const FLOW_TOOLBAR_SUFFIX_PATTERN = /\s+-\s+(?:Main flow|User not mapped flow|North America - CMD|Europe - LE|Korea - CMD)$/;
+
+function prototypeFlowToolbarSuffix() {
+  const params = new URL(window.location.href).searchParams;
+  if (params.get("prototype-user") === "unmapped") return "User not mapped flow";
+
+  const region = params.get("prototype-region");
+  if (region === "north-america-cmd") return "North America - CMD";
+  if (region === "europe-le") return "Europe - LE";
+  if (region === "korea-cmd") return "Korea - CMD";
+
+  const namedFlow = params.get("prototype-flow");
+  if (params.get("prototype-experience") === "main" || namedFlow === "service-plan-approval" || namedFlow === "installation-order") {
+    return "Main flow";
+  }
+  return "";
+}
+
+function syncFlowToolbarTitle() {
+  const title = app.querySelector(".flow-toolbar > strong");
+  if (!title) return;
+  const baseTitle = title.textContent.trim().replace(FLOW_TOOLBAR_SUFFIX_PATTERN, "");
+  const suffix = prototypeFlowToolbarSuffix();
+  title.textContent = suffix ? `${baseTitle} - ${suffix}` : baseTitle;
+}
+
+function isMainCmdExperience() {
+  return isMainPrototype() || isNorthAmericaCmdPrototype() || isKoreaCmdPrototype();
+}
+
+function hasOnboardedAccountAssets() {
+  const systems = miCurrentSystems();
+  if (systems.length > 0) return true;
+  return miCurrentInstruments().some((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+}
+
+function shouldShowAccountEmptyState() {
+  return isUnmappedPrototypeUser() || !hasOnboardedAccountAssets();
+}
+
+function startPrototypeFlow(mode) {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.hash = "#signin";
+  nextUrl.searchParams.delete("instruments-tab");
+  nextUrl.searchParams.delete("instruments-section");
+  nextUrl.searchParams.delete("contacts");
+  nextUrl.searchParams.delete("prototype-region");
+  nextUrl.searchParams.delete("prototype-flow");
+  if (mode === "main") nextUrl.searchParams.set("prototype-experience", "main");
+  else nextUrl.searchParams.delete("prototype-experience");
+  if (mode === "unmapped") nextUrl.searchParams.set("prototype-user", "unmapped");
+  else nextUrl.searchParams.delete("prototype-user");
+  window.history.pushState({ flow: mode }, "", nextUrl);
+  render();
+}
+
+function startPrototypeRouteFlow(route) {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.hash = `#${route}`;
+  nextUrl.searchParams.delete("prototype-user");
+  nextUrl.searchParams.delete("instruments-tab");
+  nextUrl.searchParams.delete("instruments-section");
+  nextUrl.searchParams.delete("contacts");
+  nextUrl.searchParams.delete("prototype-region");
+  nextUrl.searchParams.delete("prototype-experience");
+  nextUrl.searchParams.set("prototype-flow", route);
+  if (route === "service-plan-approval") {
+    servicePlanApprovalPending = false;
+    servicePlanApprovalPromptShown = false;
+    servicePlanApprovalAcceptedNotice = false;
+  }
+  window.history.pushState({ flow: route }, "", nextUrl);
+  render();
+}
+
+function startPrototypeRegionalFlow(region, route = "my-instruments") {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.hash = `#${route}`;
+  nextUrl.searchParams.delete("prototype-user");
+  nextUrl.searchParams.delete("instruments-tab");
+  nextUrl.searchParams.delete("instruments-section");
+  nextUrl.searchParams.delete("contacts");
+  nextUrl.searchParams.delete("prototype-experience");
+  nextUrl.searchParams.delete("prototype-flow");
+  nextUrl.searchParams.set("prototype-region", region);
+  if (region === "europe-le") {
+    ["1115281234567121", "BIOS16-847263", "TSX2330-481927", "MCO2-40L-638251"].forEach((serial) => miFavoritesStore().add(`instrument:${serial}`));
+  }
+  window.history.pushState({ flow: region }, "", nextUrl);
+  render();
+}
 
 const APP_NAV = [
   ["Dashboard", "dashboard"],
@@ -971,15 +1094,33 @@ function routeFromHash() {
 
 function setRoute(route, summaryTicket = null) {
   const fromRoute = routeFromHash();
+  if (route === "education" && isKoreaCmdPrototype()) route = "korea-education";
+  if (isInstallationsUnavailablePrototype() && (isInstallationsSectionRoute(route) || route === "installation-support")) {
+    route = isUnmappedPrototypeUser() ? "dashboard" : "request-support";
+  }
   if (route === "installation-support" && fromRoute !== "installation-support") {
     installationSupportReturnRoute = isInstallationsSectionRoute(fromRoute) ? "installations" : "request-support";
   }
   selectedSupportHistoryTicket = summaryTicket;
   const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
-  if (window.location.hash !== nextHash) window.history.pushState({ fromRoute }, "", nextHash);
+  const nextUrl = new URL(window.location.href);
+  nextUrl.hash = nextHash;
+  if (safeRoute !== "my-instruments") {
+    nextUrl.searchParams.delete("instruments-tab");
+    nextUrl.searchParams.delete("instruments-section");
+  }
+  if (window.location.href !== nextUrl.href) window.history.pushState({ fromRoute }, "", nextUrl);
   render();
 }
+
+document.addEventListener("click", (event) => {
+  const backButton = event.target.closest("[data-flow-history-back]");
+  if (!backButton) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  window.history.back();
+}, true);
 
 function addHotspot(canvas, screen, hotspot, extraClass = "") {
   const button = document.createElement("button");
@@ -997,6 +1138,7 @@ function addHotspot(canvas, screen, hotspot, extraClass = "") {
 
 function addAppNavigation(canvas, screen) {
   APP_NAV.forEach(([label, route, action], index) => {
+    if (route === "installations" && isInstallationsUnavailablePrototype()) return;
     addHotspot(canvas, screen, { label, route, action, x: 0, y: 64 + index * 48, w: 56, h: 48 });
   });
 }
@@ -1038,6 +1180,7 @@ function addScreenSpecificHotspots(canvas, route, screen) {
     multiuse: [{ label: "Open first instrument", route: "instrument-access", x: 88, y: 520, w: 304, h: 390 }],
     "ticket-detail": [{ label: "View quote", route: "installation-order", x: 980, y: 575, w: 110, h: 42 }],
     education: [{ label: "Return to dashboard", route: "dashboard", x: 0, y: 0, w: 1440, h: 1460 }],
+    "korea-education": [{ label: "Return to dashboard", route: "dashboard", x: 0, y: 0, w: 1291, h: 1309 }],
   };
 
   (extras[route] || []).forEach((hotspot) => addHotspot(canvas, screen, hotspot));
@@ -1045,8 +1188,16 @@ function addScreenSpecificHotspots(canvas, route, screen) {
 
 function wireRouteControls(scope = app) {
   hideMiUsersTooltip();
+  ensureFlowToolbarHistoryControls(scope);
   scope.querySelectorAll("[data-route]").forEach((control) => {
-    control.addEventListener("click", () => setRoute(control.dataset.route));
+    control.addEventListener("click", () => {
+      if (control.hasAttribute("data-installation-email-entry")) installationWelcomeFromEmail = true;
+      if (control.hasAttribute("data-service-plan-email-entry")) {
+        servicePlanApprovalPending = true;
+        servicePlanApprovalPromptShown = false;
+      }
+      setRoute(control.dataset.route);
+    });
   });
   scope.querySelectorAll("[data-open-flows]").forEach((control) => {
     control.addEventListener("click", () => flowsDialog.showModal());
@@ -1054,6 +1205,24 @@ function wireRouteControls(scope = app) {
   window.TopbarSc?.wire(scope);
   window.ServicesHelpModal.wire(scope);
   wireMiUserCountTooltips(scope);
+}
+
+function ensureFlowToolbarHistoryControls(scope = app) {
+  scope.querySelectorAll(".flow-toolbar").forEach((toolbar) => {
+    if (toolbar.querySelector(".flow-toolbar__history")) return;
+    const backButton = toolbar.querySelector(":scope > button:first-child");
+    if (!backButton) return;
+    backButton.dataset.flowHistoryBack = "";
+    const historyControls = document.createElement("div");
+    historyControls.className = "flow-toolbar__history";
+    const refreshButton = document.createElement("button");
+    refreshButton.type = "button";
+    refreshButton.textContent = "Refresh";
+    refreshButton.dataset.flowRefresh = "";
+    refreshButton.addEventListener("click", () => window.location.reload());
+    backButton.before(historyControls);
+    historyControls.append(backButton, refreshButton);
+  });
 }
 
 function wireSignIn() {
@@ -1310,7 +1479,10 @@ function dashboardSystemFavoriteCard() {
 function renderDashboardFavoriteCards() {
   const target = app.querySelector("[data-dashboard-favorite-cards]");
   if (!target) return;
-  target.innerHTML = `${dashboardSystemFavoriteCard()}${DASHBOARD_FAVORITE_INSTRUMENTS.map(dashboardInstrumentCard).join("")}`;
+  const favoriteSystems = miCurrentSystems().filter((system) => miIsFavorite(`system:${system.id}`));
+  const favoriteSystemComponents = new Set(favoriteSystems.flatMap((system) => system.components));
+  const favoriteInstruments = miCurrentInstruments().filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  target.innerHTML = favoriteSystems.map(miCreatedSystemCardMarkup).join("") + favoriteInstruments.map((instrument) => miGridCardMarkup(instrument)).join("");
 }
 
 function dashboardSystemQuickViewContent() {
@@ -1347,8 +1519,15 @@ function wireDashboard() {
     if (event.key === "Enter") setRoute("my-instruments");
   });
   renderDashboardFavoriteCards();
-  const systemQuickViewDialog = createDashboardSystemQuickViewModal();
-  app.querySelector("[data-open-system-quick-view]")?.addEventListener("click", () => window.PlatformModal?.open(systemQuickViewDialog));
+  app.querySelectorAll("[data-mi-system-quickview]").forEach((button) => button.addEventListener("click", () => {
+    const system = miFindSystemById(button.dataset.miSystemQuickview);
+    if (system) openMiSystemQuickview(system);
+  }));
+  app.querySelectorAll("[data-dashboard-favorite-cards] .mi-favorite").forEach((button) => button.addEventListener("click", () => {
+    toggleMiFavorite(button);
+    if (!miIsFavorite(button.dataset.miFavoriteKey)) button.closest(".mi-instrument-card")?.remove();
+  }));
+  wireMiActionMenus(app.querySelector("[data-dashboard-favorite-cards]"));
   const tableWrap = app.querySelector("[data-db-ticket-table]");
   const pagination = app.querySelector("[data-db-ticket-pagination]");
   const filter = app.querySelector("[data-db-ticket-filter]");
@@ -1425,6 +1604,7 @@ function mountPlatformSidebar(activeRoute) {
   window.PlatformSidebar?.mount(app.querySelector("[data-platform-sidebar-mount]"), {
     activeRoute,
     collapsed: true,
+    hiddenItemIds: isInstallationsUnavailablePrototype() ? ["installations"] : [],
   });
 }
 
@@ -1438,6 +1618,84 @@ function mountTopbarNotifications() {
 
 function mountFooter(options = {}) {
   window.Footer?.mount(app.querySelector("[data-footer-mount]"), options);
+}
+
+const ZERO_STATE_CONTENT = {
+  dashboard: {
+    image: "assets/zero-states/dashboard.png",
+    title: "Welcome to your Dashboard",
+    body: "Services Central Dashboard will give you a concise view on recent and upcoming tickets, access to eLearning and applicable promotions, ordering of consumables, and more.",
+  },
+  instruments: {
+    image: "assets/zero-states/instruments.png",
+    title: "Welcome to your Instruments page",
+    body: "In the Instruments page, you will be able to create groups or systems, add nicknames and notes, view service coverage status and manage instrument access.",
+  },
+  history: {
+    image: "assets/zero-states/support-history.png",
+    title: "Welcome to your support request history",
+    body: "This page will show you current and closed support tickets for all the instruments added to your account",
+  },
+  request: {
+    image: "assets/zero-states/request-support.png",
+    title: "Welcome to Request support",
+    body: "This page will allow you to request various services (such as repair, PM, compliance, calibration) and service plan quotes.",
+  },
+  contacts: {
+    image: "assets/zero-states/service-plan.png",
+    title: "Assign a service plan contact",
+    body: "Tell us who to contact for any service plan questions or to renew your plan. Keeping your details current helps us provide timely notifications, important updates, and offers related to your instrument coverage.",
+  },
+};
+
+function zeroStateMarkup(kind, { contactsAvailable = false } = {}) {
+  const state = ZERO_STATE_CONTENT[kind];
+  const actions = contactsAvailable
+    ? `<div class="prototype-zero-state__actions prototype-zero-state__actions--stacked"><button class="mi-button" type="button" data-route="edit-spc">Assign myself as service plan contact for all</button><button class="mi-button" type="button" data-route="edit-spc">Assign others</button></div>`
+    : `<div class="prototype-zero-state__actions"><button class="mi-button" type="button" data-route="add-instruments">Add instruments to get started</button></div>`;
+  return `<section class="prototype-zero-panel prototype-zero-panel--${kind}" aria-labelledby="prototype-zero-${kind}-title"><div class="prototype-zero-state"><img class="prototype-zero-state__image" src="${state.image}" alt="" /><div class="prototype-zero-state__copy"><h2 id="prototype-zero-${kind}-title">${state.title}</h2><p>${state.body}</p></div>${actions}</div></section>`;
+}
+
+function applyUnmappedDashboard() {
+  const main = app.querySelector(".db-main");
+  const top = app.querySelector(".db-top");
+  if (!main || !top) return;
+  top.querySelector(".db-search")?.remove();
+  top.querySelector(".db-promo")?.remove();
+  app.querySelectorAll(".db-tickets, .db-favorites").forEach((section) => section.remove());
+  top.after(document.createRange().createContextualFragment(zeroStateMarkup("dashboard")));
+}
+
+function applyUnmappedInstruments() {
+  const main = app.querySelector(".mi-main");
+  if (!main) return;
+  app.querySelector(".mi-tabs")?.remove();
+  app.querySelectorAll(".mi-content, .mi-secondary-content").forEach((section) => section.remove());
+  main.append(document.createRange().createContextualFragment(zeroStateMarkup("instruments")));
+}
+
+function applyUnmappedSupportHistory() {
+  const content = app.querySelector(".sh-content");
+  if (content) content.replaceWith(document.createRange().createContextualFragment(zeroStateMarkup("history")));
+}
+
+function applyUnmappedRequestSupport() {
+  const main = app.querySelector(".mi-main");
+  if (!main) return;
+  [...main.children].forEach((child) => {
+    if (!child.classList.contains("mi-titlebar")) child.remove();
+  });
+  main.append(document.createRange().createContextualFragment(zeroStateMarkup("request")));
+}
+
+function applyServicePlanContactsZeroState({ contactsAvailable = false } = {}) {
+  const main = app.querySelector(".splan-main");
+  if (!main) return;
+  main.replaceChildren();
+  const heading = document.createElement("section");
+  heading.className = "mi-titlebar splan-zero-titlebar";
+  heading.innerHTML = `<div><h1>Service plan contacts</h1>${contactsAvailable ? "<p>50 out of 50 instruments without a service plan contact</p>" : ""}</div>`;
+  main.append(heading, document.createRange().createContextualFragment(zeroStateMarkup("contacts", { contactsAvailable })));
 }
 
 function mountNativePageChrome(activeRoute, { title, backRoute = "request-support" } = {}) {
@@ -1695,9 +1953,9 @@ const MY_INSTRUMENTS = [
   { image: "vanquish-sampler.png", serial: "1009998", nickname: "Sampler-2B", users: "3", group: "—", model: "VQF00SAMPL", coverage: "Coverage expired", end: "24 Dec 2022", locked: true },
   { image: "vanquish-pump.png", serial: "1009997", nickname: "Pump-2B", users: "3", group: "—", model: "VQF000PUMP", coverage: "Coverage expired", end: "29 Dec 2022", locked: true },
   { image: "tsq.png", serial: "TSQ-Z-12346", nickname: "TSQ-0", users: "3", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Expiring soon", end: "29 Mar 2024", locked: true },
-  { image: "tsq.png", serial: "TSQ-Z-12347", nickname: "TSQ-1", users: "4", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Coverage expired", end: "29 Mar 2023" },
-  { image: "tsq.png", serial: "TSQ-Z-12348", nickname: "TSQ-2", users: "5", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2025" },
-  { image: "tsq.png", serial: "TSQ-Z-12349", nickname: "TSQ-3", users: "2", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Expiring soon", end: "29 Mar 2024" },
+  { image: "tsq.png", serial: "TSQ-Z-12347", nickname: "TSQ-1", users: "4", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Coverage expired", end: "29 Mar 2023", tickets: 2 },
+  { image: "tsq.png", serial: "TSQ-Z-12348", nickname: "TSQ-2", users: "5", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2025", tickets: 2 },
+  { image: "tsq.png", serial: "TSQ-Z-12349", nickname: "TSQ-3", users: "2", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Expiring soon", end: "29 Mar 2024", tickets: 0 },
   { image: "q-exactive.png", serial: "SN98355W", nickname: "QEXACTIVE_30", users: "4", group: "—", model: "QEXAC00001", coverage: "Under contract", end: "28 Apr 2025" },
   { image: "q-exactive.png", serial: "SN98356W", nickname: "QEXACTIVE_31", users: "2", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
   { image: "q-exactive.png", serial: "SN98358W", nickname: "QEXACTIVE_32", users: "4", group: "Department of Medical Affairs", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
@@ -1706,6 +1964,36 @@ const MY_INSTRUMENTS = [
   { image: "q-exactive.png", serial: "SN98361W", nickname: "—", users: "3", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
   { image: "q-exactive.png", serial: "SN98362W", nickname: "—", users: "3", group: "Global Research and Development", model: "QEXAC00001", coverage: "Under contract", end: "29 Mar 2025", locked: true },
 ];
+
+const LE_INSTRUMENTS = [
+  { image: "le/tsx-40086.png", serial: "1115281234567121", nickname: "ULT Freezers", users: "3", group: "—", type: "ULT Freezers", model: "ULTXX000AV", coverage: "Under contract", end: "24 Dec 2026", tickets: 2 },
+  { image: "le/tsx-40086.png", serial: "1115281234567127", nickname: "Freezer Room A", users: "2", group: "Global Research and Development", type: "ULT Freezers", model: "ULTXX000AV", coverage: "Under contract", end: "12 Mar 2027", tickets: 1, locked: true },
+  { image: "le/tsx-40086.png", serial: "1115281234567134", nickname: "Vaccine Storage", users: "4", group: "—", type: "ULT Freezers", model: "ULTXX000AV", coverage: "Expiring soon", end: "29 Mar 2026", tickets: 0 },
+  { image: "le/bios-16.png", serial: "BIOS16-847263", nickname: "Bioprocess Centrifuge", users: "3", group: "—", type: "Centrifuges", model: "BIOS16", coverage: "Under contract", end: "18 Jul 2027", tickets: 3 },
+  { image: "le/bios-16.png", serial: "BIOS16-593814", nickname: "Centrifuge Lab 2", users: "2", group: "Clinical Operations", type: "Centrifuges", model: "BIOS16", coverage: "Coverage expired", end: "16 Nov 2025", tickets: 1 },
+  { image: "le/bios-16.png", serial: "BIOS16-726405", nickname: "Harvest Centrifuge", users: "5", group: "—", type: "Centrifuges", model: "BIOS16", coverage: "Under contract", end: "22 Sep 2027", tickets: 2 },
+  { image: "le/tsx-2330.png", serial: "TSX2330-481927", nickname: "Sample Freezer 01", users: "4", group: "—", type: "Lab Freezers", model: "TSX2330FA", coverage: "Under contract", end: "08 Jan 2027", tickets: 0 },
+  { image: "le/tsx-2330.png", serial: "TSX2330-735186", nickname: "Research Freezer", users: "3", group: "Global Research and Development", type: "Lab Freezers", model: "TSX2330FA", coverage: "Expiring soon", end: "04 Apr 2026", tickets: 2 },
+  { image: "le/tsx-2330.png", serial: "TSX2330-264809", nickname: "Archive Freezer", users: "2", group: "—", type: "Lab Freezers", model: "TSX2330FA", coverage: "Under contract", end: "30 Jun 2027", tickets: 1 },
+  { image: "le/midi-co2-40l.png", serial: "MCO2-40L-638251", nickname: "Cell Culture 40L", users: "3", group: "—", type: "CO2 Incubators", model: "MIDI40", coverage: "Under contract", end: "15 May 2027", tickets: 1 },
+  { image: "le/midi-co2-40l.png", serial: "MCO2-40L-914673", nickname: "Incubator Suite B", users: "4", group: "Clinical Operations", type: "CO2 Incubators", model: "MIDI40", coverage: "Under contract", end: "09 Aug 2027", tickets: 2, locked: true },
+  { image: "le/midi-co2-40l.png", serial: "MCO2-40L-357824", nickname: "Culture Incubator", users: "2", group: "—", type: "CO2 Incubators", model: "MIDI40", coverage: "Coverage expired", end: "11 Oct 2025", tickets: 0 },
+];
+
+const MAIN_LE_INSTRUMENTS = [
+  { image: "le/tsx-40086.png", serial: "1115281234567142", nickname: "ULT Freezer North", users: "3", group: "Global Research and Development", type: "ULT Freezers", model: "ULTXX000AV", coverage: "Under contract", end: "17 Feb 2027", tickets: 2 },
+  { image: "le/bios-16.png", serial: "BIOS16-638490", nickname: "Bioprocess Suite", users: "4", group: "—", type: "Centrifuges", model: "BIOS16", coverage: "Under contract", end: "28 Jun 2027", tickets: 1 },
+  { image: "le/tsx-2330.png", serial: "TSX2330-817304", nickname: "Clinical Freezer", users: "2", group: "Department of Medical Affairs", type: "Lab Freezers", model: "TSX2330FA", coverage: "Expiring soon", end: "14 Apr 2026", tickets: 0 },
+  { image: "le/midi-co2-40l.png", serial: "MCO2-40L-482916", nickname: "Cell Culture Incubator", users: "3", group: "—", type: "CO2 Incubators", model: "MIDI40", coverage: "Under contract", end: "09 Sep 2027", tickets: 3 },
+  { image: "le/tsx-40086.png", serial: "1115281234567158", nickname: "Long-term Storage", users: "5", group: "Safety Research Unit", type: "ULT Freezers", model: "ULTXX000AV", coverage: "Coverage expired", end: "19 Dec 2025", tickets: 1, locked: true },
+];
+
+const MAIN_INSTRUMENTS = [...MY_INSTRUMENTS, ...MAIN_LE_INSTRUMENTS];
+
+function miCurrentInstruments() {
+  if (isEuropeLePrototype()) return LE_INSTRUMENTS;
+  return isMainPrototype() ? MAIN_INSTRUMENTS : MY_INSTRUMENTS;
+}
 
 const MI_USERS = [
   { email: "holly.hartman@company.com", instruments: [5, 6, 7] },
@@ -1759,22 +2047,22 @@ function instrumentRowMarkup(instrument) {
   </tr>`;
 }
 
-function miCreatedSystemRowsMarkup(system) {
+function miCreatedSystemRowsMarkup(system, expanded = true) {
   const key = `my-system-${system.id}`;
-  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
   const parent = `<tr class="mi-system-row ${system.pendingNew ? "is-new" : ""}" data-mi-row data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
     <td><input type="checkbox" data-mi-checkbox aria-label="Select ${system.nickname} system" /></td>
     <td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td>
-    <td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td>
+    <td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="${expanded}" aria-label="${expanded ? "Collapse" : "Expand"} ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td>
     <td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>—</td><td>${system.typeCode}</td><td>—</td><td>—</td><td>—</td><td>17 Aug 2026</td><td>${miMoreButton(system.nickname, "system", system.id)}</td>
   </tr>`;
-  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td></td><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td>${instrument.group}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td>10 May 2022</td><td></td></tr>`).join("");
+  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"${expanded ? "" : " hidden"}><td></td><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td>${instrument.group}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td>10 May 2022</td><td></td></tr>`).join("");
   return parent + children;
 }
 
 function miInstrumentType(instrument) {
-  return instrument.image.startsWith("vanquish") ? "HPLC" : "Mass Spec Life Science";
+  return instrument.type || (instrument.image.startsWith("vanquish") ? "HPLC" : "Mass Spec Life Science");
 }
 
 function miSystemUserCount(system) {
@@ -1872,37 +2160,59 @@ function miSelectionRowMarkup(instrument, context) {
   return `<tr data-mi-selection-row data-search="${search} ${instrument.coverage}"><td><input type="checkbox" aria-label="Select ${instrument.serial}" /></td><td><img class="mi-dialog-product" src="assets/instruments/${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td></tr>`;
 }
 
+function miCardGroupNames(memberKey, fallbackGroup = "—") {
+  const names = MI_GROUPS.filter((group) => group.members?.includes(memberKey)).map((group) => group.name);
+  if (fallbackGroup && fallbackGroup !== "—" && !names.includes(fallbackGroup)) names.push(fallbackGroup);
+  return names;
+}
+
+function miCardGroupsMarkup(groups) {
+  if (!groups.length) return "—";
+  const firstGroup = MI_GROUPS.find((group) => group.name === groups[0]);
+  const route = firstGroup ? ` data-route="group-detail-${firstGroup.id}"` : ' data-mi-toast="Group opened"';
+  const additional = groups.length > 1 ? `<span class="mi-card-count">+${groups.length - 1}</span>` : "";
+  return `<button type="button"${route}>${groups[0]}</button>${additional}`;
+}
+
+function miInstrumentTicketCount(instrument) {
+  return Number(instrument.tickets ?? 0);
+}
+
 function miGridCardMarkup(instrument, { favoritable = true } = {}) {
   const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "mi-status--contract";
   const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
+  const groups = miCardGroupNames(`instrument:${instrument.serial}`, instrument.group);
+  const ticketCount = miInstrumentTicketCount(instrument);
   return `<article class="mi-instrument-card" data-mi-grid-card data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
     <div class="mi-card-surface">
       <header class="mi-card-top mi-card-top--instrument">
-        <div class="mi-card-icons">${favoritable ? miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`) : ""}${favoritable ? miLockMarkup(instrument.locked) : ""}<button type="button" data-mi-toast="Users opened" aria-label="${instrument.users} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${instrument.users}</span></button></div>
+        <div class="mi-card-icons">${favoritable ? miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`) : ""}${favoritable ? miLockMarkup(instrument.locked) : ""}<button class="mi-card-users" type="button" data-mi-toast="Users opened" aria-label="${instrument.users} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${instrument.users}</span></button></div>
         <div class="mi-card-instrument-summary"><img src="assets/instruments/${instrument.image}" alt="" /><div><span>Serial no.</span><a class="mi-card-title" href="#${instrumentRoute}" data-route="${instrumentRoute}">${instrument.serial}</a><p>${miInstrumentType(instrument)}</p></div></div>
       </header>
-      <dl class="mi-card-details mi-card-details--instrument"><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Model no.</dt><dd>${instrument.model}</dd></div><div><dt>Type</dt><dd>${miInstrumentType(instrument)}</dd></div><div><dt>Groups</dt><dd>${instrument.group === "—" ? "—" : `<button type="button" data-mi-toast="Group opened">${instrument.group}</button>`}</dd></div></dl>
+      <dl class="mi-card-details mi-card-details--instrument"><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Model no.</dt><dd>${instrument.model}</dd></div><div><dt>Type</dt><dd>${miInstrumentType(instrument)}</dd></div><div><dt>Groups</dt><dd>${miCardGroupsMarkup(groups)}</dd></div><div><dt>Tickets</dt><dd><button type="button" data-mi-toast="Support tickets opened">${ticketCount} total support ticket${ticketCount === 1 ? "" : "s"}</button></dd></div></dl>
       <div class="mi-card-coverage"><span class="mi-status ${coverageClass}">${instrument.coverage}</span></div>
-      <footer class="mi-card-footer mi-card-footer--instrument"><button type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><div><button type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${instrument.serial}"><img src="assets/icons/actions/more horizontal/size=16px, style=bold.svg" alt="" /></button></div></footer>
+      <footer class="mi-card-footer mi-card-footer--instrument"><button class="mi-card-support" type="button" data-route="request-support"><img src="assets/icons/navigation/support/size=16px, style=bold.svg" alt="" />Request support</button><div><button class="mi-card-more" type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${instrument.serial}"><img src="assets/icons/actions/more horizontal/size=24px, style=bold.svg" alt="" /></button></div></footer>
     </div>
   </article>`;
 }
 
 function miCreatedSystemCardMarkup(system) {
-  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
+  const groups = miCardGroupNames(`system:${system.id}`);
+  const ticketCount = Number(system.tickets ?? (system.id === "alpine" ? 16 : 0));
   return `<article class="mi-instrument-card mi-system-card" data-mi-grid-card data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
     <span class="mi-card-stack mi-card-stack--back" aria-hidden="true"></span><span class="mi-card-stack mi-card-stack--middle" aria-hidden="true"></span>
     <div class="mi-card-surface">
-      <header class="mi-card-top"><span class="mi-card-badge">${system.typeCode}</span><div class="mi-card-icons">${miFavoriteButton(system.nickname, false, `system:${system.id}`)}${miLockMarkup(system.locked)}<button type="button" data-mi-toast="Users opened" aria-label="${miSystemUserCount(system)} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${miSystemUserCount(system)}</span></button></div><button class="mi-card-title" type="button" data-mi-toast="System opened">${system.nickname}</button></header>
-      <dl class="mi-card-details"><div><dt>Components</dt><dd>${components.length} total components <img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></dd></div><div><dt>Groups</dt><dd>—</dd></div><div><dt>Tickets</dt><dd><button type="button" data-mi-toast="Support tickets opened">0 total support tickets</button></dd></div></dl>
-      <footer class="mi-card-footer"><span></span><div><button type="button" data-mi-system-quickview="${system.id}" aria-label="View all components in ${system.nickname}"><img src="assets/icons/tools/resize large/size=16px, style=bold.svg" alt="" /></button><i></i><button type="button" data-mi-action-menu-kind="system" data-mi-action-menu-id="${system.id}" data-mi-action-menu-label="${system.nickname}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${system.nickname}"><img src="assets/icons/actions/more horizontal/size=16px, style=bold.svg" alt="" /></button></div></footer>
+      <header class="mi-card-top"><span class="mi-card-badge">${system.typeCode}</span><div class="mi-card-icons">${miFavoriteButton(system.nickname, false, `system:${system.id}`)}${miLockMarkup(system.locked)}<button class="mi-card-users" type="button" data-mi-toast="Users opened" aria-label="${miSystemUserCount(system)} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${miSystemUserCount(system)}</span></button></div><button class="mi-card-title" type="button" data-route="system-detail-${system.id}">${system.nickname}</button></header>
+      <dl class="mi-card-details"><div><dt>Components</dt><dd>${components.length} total components <img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></dd></div><div><dt>Groups</dt><dd>${miCardGroupsMarkup(groups)}</dd></div><div><dt>Tickets</dt><dd><button type="button" data-mi-toast="Support tickets opened">${ticketCount} total support ticket${ticketCount === 1 ? "" : "s"}</button></dd></div></dl>
+      <footer class="mi-card-footer"><span></span><div><button class="mi-card-expand" type="button" data-mi-system-quickview="${system.id}" aria-label="View all components in ${system.nickname}"><img src="assets/icons/tools/resize large/size=16px, style=bold.svg" alt="" /></button><i></i><button class="mi-card-more" type="button" data-mi-action-menu-kind="system" data-mi-action-menu-id="${system.id}" data-mi-action-menu-label="${system.nickname}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${system.nickname}"><img src="assets/icons/actions/more horizontal/size=24px, style=bold.svg" alt="" /></button></div></footer>
     </div>
   </article>`;
 }
 
 function openMiSystemQuickview(system) {
-  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-type]").textContent = system.typeCode;
   miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-title]").textContent = system.nickname;
   miSystemQuickviewDialog.querySelector("[data-mi-system-quickview-grid]").innerHTML = components.map((instrument) => miGridCardMarkup(instrument, { favoritable: false })).join("");
@@ -1934,7 +2244,7 @@ function wireMiDialogDismiss(dialog) {
 
 function wireMiSelectionDialog(dialog, context) {
   const rows = dialog.querySelector(`[data-mi-${context}-rows]`);
-  rows.innerHTML = MY_INSTRUMENTS.map((instrument) => miSelectionRowMarkup(instrument, context)).join("");
+  rows.innerHTML = miCurrentInstruments().filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map((instrument) => miSelectionRowMarkup(instrument, context)).join("");
   const checkboxes = [...rows.querySelectorAll("input[type='checkbox']")];
   const confirm = dialog.querySelector(context === "share" ? "[data-mi-share-confirm]" : "[data-mi-coverage-next]");
   const email = dialog.querySelector("[data-mi-share-email]");
@@ -1972,8 +2282,8 @@ function miSystemTypeLabel([code, name, includes]) {
 }
 
 function miAvailableStandaloneInstruments() {
-  const componentSerials = new Set([...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].flatMap((system) => system.components));
-  return MY_INSTRUMENTS.filter((instrument) => !componentSerials.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const componentSerials = new Set(miCurrentSystems().flatMap((system) => system.components));
+  return miCurrentInstruments().filter((instrument) => !componentSerials.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
 }
 
 function miBuilderInstrumentRow(instrument, value, context, extraCells = "") {
@@ -1986,8 +2296,8 @@ function resetMiSystemBuilder(system = null) {
   const form = miCreateSystemDialog.querySelector("[data-mi-system-form]");
   form.reset();
   miEditingSystemId = system?.id || null;
-  const otherSystemComponents = new Set([...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].filter((candidate) => candidate.id !== system?.id).flatMap((candidate) => candidate.components));
-  const available = system ? MY_INSTRUMENTS.filter((instrument) => !otherSystemComponents.has(instrument.serial)) : miAvailableStandaloneInstruments();
+  const otherSystemComponents = new Set(miCurrentSystems().filter((candidate) => candidate.id !== system?.id).flatMap((candidate) => candidate.components));
+  const available = system ? miCurrentInstruments().filter((instrument) => !otherSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)) : miAvailableStandaloneInstruments();
   form.querySelector("[data-mi-system-rows]").innerHTML = available.map((instrument) => miBuilderInstrumentRow(instrument, instrument.serial, "system")).join("");
   form.querySelector("#mi-create-system-title").textContent = system ? "Edit system" : "Create a system";
   form.querySelector(".mi-builder__header p").textContent = system ? "Add or remove instrument components in this system. Changes will apply to all users." : "Create a system for your instruments that have several components and view them as one unit in the My Instruments tab. Systems are visible to all users.";
@@ -2018,10 +2328,10 @@ function updateMiSystemBuilder() {
 function resetMiGroupBuilder() {
   const form = miCreateGroupDialog.querySelector("[data-mi-group-form]");
   form.reset();
-  const systemRows = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].map((system) => {
+  const systemRows = miCurrentSystems().map((system) => {
     const key = `builder-system-${system.id}`;
     const parent = `<tr class="mi-builder-system-row" data-mi-builder-row data-search="System ${system.nickname} ${system.typeCode}"><td><input type="checkbox" value="system:${system.id}" data-mi-builder-choice aria-label="Select ${system.nickname} system" /></td><td><button class="mi-system-toggle" type="button" data-mi-builder-system-toggle="${key}" aria-expanded="true" aria-label="Collapse ${system.nickname} components">${miExpandIcon}</button></td><td>System</td><td>${system.nickname}</td><td>${system.typeCode}</td><td>—</td></tr>`;
-    const children = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean).map((instrument) => `<tr class="mi-builder-child-row" data-mi-builder-component="${key}" data-mi-builder-row data-search="${instrument.serial} ${instrument.nickname}"><td></td><td>${miBranchIcon}</td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td></tr>`).join("");
+    const children = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map((instrument) => `<tr class="mi-builder-child-row" data-mi-builder-component="${key}" data-mi-builder-row data-search="${instrument.serial} ${instrument.nickname}"><td></td><td>${miBranchIcon}</td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td></tr>`).join("");
     return parent + children;
   }).join("");
   const instrumentRows = miAvailableStandaloneInstruments().map((instrument) => miBuilderInstrumentRow(instrument, `instrument:${instrument.serial}`, "group", "<td></td>")).join("");
@@ -2091,7 +2401,7 @@ function wireMiBuilderDialogs() {
     const form = event.currentTarget;
     if (form.querySelector("[data-mi-system-submit]").disabled) return;
     const values = { nickname: form.querySelector("[data-mi-system-name]").value.trim(), notes: form.querySelector("[data-mi-system-notes]").value.trim(), typeCode: form.querySelector("[data-mi-system-type]").value, components: [...form.querySelectorAll("[data-mi-builder-choice]:checked")].map((checkbox) => checkbox.value) };
-    values.components.forEach((serial) => MI_FAVORITES.delete(`instrument:${serial}`));
+    values.components.forEach((serial) => miFavoritesStore().delete(`instrument:${serial}`));
     if (miEditingSystemId) Object.assign(miFindSystemById(miEditingSystemId), values);
     else MI_CREATED_SYSTEMS.push({ id: String(Date.now()), users: "3", locked: false, ...values });
     miCreateSystemDialog.close();
@@ -2123,12 +2433,12 @@ function wireMiBuilderDialogs() {
 }
 
 function miBulkAccessAssets(mode) {
-  const systems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS];
+  const systems = miCurrentSystems();
   const componentSerials = new Set(systems.flatMap((system) => system.components));
   const matchesMode = (asset) => mode === "restrict" ? !asset.locked : miIsAdmin(asset);
   return [
     ...systems.filter(matchesMode).map((system) => ({ kind: "system", key: `system:${system.id}`, target: system })),
-    ...MY_INSTRUMENTS.filter((instrument) => !componentSerials.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial) && matchesMode(instrument)).map((instrument) => ({ kind: "instrument", key: `instrument:${instrument.serial}`, target: instrument })),
+    ...miCurrentInstruments().filter((instrument) => !componentSerials.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial) && matchesMode(instrument)).map((instrument) => ({ kind: "instrument", key: `instrument:${instrument.serial}`, target: instrument })),
   ];
 }
 
@@ -2139,7 +2449,7 @@ function miBulkAccessRowsMarkup(assets) {
       return `<tr data-mi-bulk-row data-search="${search}"><td><input type="checkbox" value="${key}" data-mi-bulk-choice aria-label="Select ${target.serial}" /></td><td></td><td>${target.serial}</td><td>${target.nickname}</td><td class="mi-bulk-users">${target.users}</td><td>${target.model}</td></tr>`;
     }
     const rowKey = `bulk-system-${target.id}`;
-    const components = target.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+    const components = target.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
     const componentSearch = components.map((instrument) => `${instrument.serial} ${instrument.nickname} ${instrument.model}`).join(" ");
     const parent = `<tr class="mi-bulk-system-row" data-mi-bulk-row data-mi-bulk-parent="${rowKey}" data-search="System ${target.nickname} ${target.typeCode} ${componentSearch}"><td><input type="checkbox" value="${key}" data-mi-bulk-choice aria-label="Select ${target.nickname} system" /></td><td><button class="mi-system-toggle" type="button" data-mi-bulk-system-toggle="${rowKey}" aria-expanded="true" aria-label="Collapse ${target.nickname} components">${miExpandIcon}</button></td><td>System</td><td>${target.nickname}</td><td class="mi-bulk-users">${miSystemUserCount(target)}</td><td>—</td></tr>`;
     const children = components.map((instrument) => `<tr class="mi-bulk-child-row" data-mi-bulk-component="${rowKey}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td></td><td>${miBranchIcon}</td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td></td><td>${instrument.model}</td></tr>`).join("");
@@ -2226,7 +2536,10 @@ function wireMyInstrumentActions() {
   wireMiSelectionDialog(miShareDialog, "share");
   wireMiSelectionDialog(miCoverageDialog, "coverage");
 
-  app.querySelector("[data-mi-create]").onclick = () => openMiDialog(miCreateDialog);
+  const createButton = app.querySelector("[data-mi-create]");
+  if (createButton) createButton.onclick = () => openMiDialog(miCreateDialog);
+  const createGroupButton = app.querySelector("[data-mi-create-group-le]");
+  if (createGroupButton) createGroupButton.onclick = () => { resetMiGroupBuilder(); openMiDialog(miCreateGroupDialog); };
   app.querySelector("[data-mi-share]").onclick = () => openMiDialog(miShareDialog);
   app.querySelector("[data-mi-access]").onclick = () => openMiDialog(miAccessDialog);
   app.querySelector("[data-mi-coverage]").onclick = () => openMiDialog(miCoverageDialog);
@@ -2252,22 +2565,43 @@ const MI_GROUPS = [
   ["Dynamics and Metabolism Department", 14, "10 May 2022"], ["Department of Medical Affairs", 54, "6 Jan 2022"], ["Precision Medicine Research Unit", 51, "19 Feb 2022"], ["Rare Disease Research Unit (RDRU)", 13, "4 Mar 2022"],
 ].map(([name, count, date], id) => ({ id, name, count, date }));
 MI_GROUPS[0].members = ["system:alpine", "instrument:TSQ-Z-12347", "instrument:SN98355W", "instrument:SN98356W"];
-const MI_REFERENCE_SYSTEMS = [{ id: "alpine", nickname: "Alpine", notes: "", typeCode: "LCMS", users: "3", locked: true, components: ["1009996", "1009999", "1009998", "1009997", "TSQ-Z-12346"] }];
+const MI_REFERENCE_SYSTEMS = [{ id: "alpine", nickname: "Alpine", notes: "", typeCode: "LCMS", users: "3", tickets: 16, locked: true, components: ["1009996", "1009999", "1009998", "1009997", "TSQ-Z-12346"] }];
+const MI_MAIN_SYSTEMS = [
+  { id: "borealis-lab", nickname: "Borealis Lab", notes: "Main analytical system", typeCode: "LCMS", users: "4", tickets: 7, locked: false, components: ["SN98355W", "SN98356W"] },
+  { id: "cobalt-array", nickname: "Cobalt Array", notes: "Shared research system", typeCode: "MS", users: "3", tickets: 5, locked: true, components: ["SN98358W", "SN98359W", "SN98360W"] },
+];
 const MI_CREATED_SYSTEMS = [];
 const MI_REMOVED_INSTRUMENTS = new Set();
 const MI_FAVORITES = new Set(["system:alpine", "instrument:TSQ-Z-12347", "instrument:TSQ-Z-12348", "instrument:TSQ-Z-12349", "group:0", "group:1", "group:2", "group:9"]);
+const MI_EUROPE_LE_FAVORITES = new Set([
+  "instrument:1115281234567121",
+  "instrument:BIOS16-847263",
+  "instrument:TSX2330-481927",
+  "instrument:MCO2-40L-638251",
+  "group:10",
+  "group:11",
+  "group:12",
+]);
+function miFavoritesStore() {
+  return isEuropeLePrototype() ? MI_EUROPE_LE_FAVORITES : MI_FAVORITES;
+}
 const MI_CURRENT_USER_EMAIL = "my_name.lastname@company.com";
 const MI_USER_ROLES = new Map();
 let miFavoritesView = "list";
 let miGroupsView = "list";
 
+function miCurrentSystems() {
+  if (isEuropeLePrototype()) return [];
+  return [...MI_REFERENCE_SYSTEMS, ...(isMainCmdExperience() ? MI_MAIN_SYSTEMS : []), ...MI_CREATED_SYSTEMS];
+}
+
 function miFindSystemById(id) {
-  return MI_CREATED_SYSTEMS.find((system) => system.id === id) || MI_REFERENCE_SYSTEMS.find((system) => system.id === id);
+  return miCurrentSystems().find((system) => system.id === id);
 }
 
 function miAccessTarget(accessKey) {
   const [kind, id] = String(accessKey || "").split(":");
-  return kind === "system" ? miFindSystemById(id) : kind === "instrument" ? MY_INSTRUMENTS.find((instrument) => instrument.serial === id) : undefined;
+  return kind === "system" ? miFindSystemById(id) : kind === "instrument" ? miCurrentInstruments().find((instrument) => instrument.serial === id) : undefined;
 }
 
 function miIsAdmin(target) {
@@ -2369,7 +2703,7 @@ window.addEventListener("resize", () => { if (miRoleMenu && miRoleMenuTrigger) p
 window.addEventListener("scroll", () => { if (miRoleMenu && miRoleMenuTrigger) positionMiRoleMenu(miRoleMenuTrigger, miRoleMenu); }, true);
 
 function miRemoveSystem(system, removeComponents) {
-  [MI_CREATED_SYSTEMS, MI_REFERENCE_SYSTEMS].forEach((systems) => {
+  [MI_CREATED_SYSTEMS, MI_REFERENCE_SYSTEMS, MI_MAIN_SYSTEMS].forEach((systems) => {
     const index = systems.findIndex((candidate) => candidate.id === system.id);
     if (index !== -1) systems.splice(index, 1);
   });
@@ -2378,10 +2712,10 @@ function miRemoveSystem(system, removeComponents) {
     group.members = group.members.filter((member) => member !== `system:${system.id}`);
     group.count = group.members.length;
   });
-  MI_FAVORITES.delete(`system:${system.id}`);
+  miFavoritesStore().delete(`system:${system.id}`);
   if (removeComponents) system.components.forEach((serial) => {
     MI_REMOVED_INSTRUMENTS.add(serial);
-    MI_FAVORITES.delete(`instrument:${serial}`);
+    miFavoritesStore().delete(`instrument:${serial}`);
   });
 }
 
@@ -2473,7 +2807,7 @@ function miActionMenuItem(action, label, icon, description = "") {
 }
 
 function miInstrumentDetailActionPopoverMarkup(id) {
-  const target = MY_INSTRUMENTS.find((instrument) => instrument.serial === id);
+  const target = miCurrentInstruments().find((instrument) => instrument.serial === id);
   if (!target) return "";
   const restricted = Boolean(target.locked);
   const canManage = !restricted || miIsAdmin(target);
@@ -2487,7 +2821,7 @@ function miActionPopoverMarkup(kind, id, context = "") {
   if (context === "detail" && kind === "instrument") return miInstrumentDetailActionPopoverMarkup(id);
   const isSystem = kind === "system";
   const isComponent = kind === "component";
-  const target = isSystem ? miFindSystemById(id) : MY_INSTRUMENTS.find((instrument) => instrument.serial === id);
+  const target = isSystem ? miFindSystemById(id) : miCurrentInstruments().find((instrument) => instrument.serial === id);
   const restricted = Boolean(target?.locked);
   const favoriteKey = `${isSystem ? "system" : "instrument"}:${id}`;
   const favoriteItem = isComponent ? "" : miActionMenuItem("favorite", miIsFavorite(favoriteKey) ? "Remove favorite" : "Favorite", miFavoriteIcon(miIsFavorite(favoriteKey), 24));
@@ -2542,6 +2876,16 @@ function handleMiActionPopoverAction(action, kind, id, label) {
     const favoriteButton = app.querySelector(`.mi-favorite[data-mi-favorite-key="${favoriteKey}"]`);
     if (favoriteButton) favoriteButton.click();
     else app.querySelector("[data-id-favorite]")?.click();
+  } else if (action === "remove-instrument" && kind !== "system") {
+    if (!miRemoveInstrumentFromAccount(id)) return;
+    const route = routeFromHash();
+    if (isMiInstrumentDetailRoute(route) || route === "instrument-1009996") setRoute("my-instruments");
+    else {
+      render();
+      if (route === "my-instruments" && activeTab && activeTab !== "instruments") app.querySelector(`[data-mi-tab="${activeTab}"]`)?.click();
+      else if (route === "my-instruments" && mainGridSelected) app.querySelector('[data-mi-view="grid"]')?.click();
+    }
+    showToast(`${label} removed from account.`, { variant: "success" });
   } else if (action === "edit-system") {
     const system = miFindSystemById(id);
     if (system) {
@@ -2556,7 +2900,7 @@ function handleMiActionPopoverAction(action, kind, id, label) {
     const system = miFindSystemById(id);
     if (system) openSystemConfirmationDialog(system, action === "remove-system" ? "remove" : "dismantle");
   } else if (action === "restrict" || action === "unrestrict") {
-    const target = kind === "system" ? miFindSystemById(id) : MY_INSTRUMENTS.find((instrument) => instrument.serial === id);
+    const target = kind === "system" ? miFindSystemById(id) : miCurrentInstruments().find((instrument) => instrument.serial === id);
     if (!target) return;
     target.locked = action === "restrict";
     target.admin = action === "restrict";
@@ -2569,12 +2913,27 @@ function handleMiActionPopoverAction(action, kind, id, label) {
       "edit-nickname": `Edit nickname for ${label} opened`,
       "add-group": "Add to group opened",
       share: "Share opened",
-      "remove-instrument": "Remove from account selected",
       "remove-system": "Remove system selected",
       "dismantle-system": "Dismantle system selected",
     };
     showToast(messages[action] || `${label} action selected`);
   }
+}
+
+function miRemoveInstrumentFromAccount(serial) {
+  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial);
+  if (!instrument || MI_REMOVED_INSTRUMENTS.has(serial)) return false;
+  MI_REMOVED_INSTRUMENTS.add(serial);
+  miFavoritesStore().delete(`instrument:${serial}`);
+  [MI_REFERENCE_SYSTEMS, MI_MAIN_SYSTEMS, MI_CREATED_SYSTEMS].forEach((systems) => systems.forEach((system) => {
+    system.components = system.components.filter((componentSerial) => componentSerial !== serial);
+  }));
+  MI_GROUPS.forEach((group) => {
+    if (!group.members) return;
+    group.members = group.members.filter((member) => member !== `instrument:${serial}`);
+    group.count = group.members.length;
+  });
+  return true;
 }
 
 function openMiActionPopover(trigger, { focusFirst = false } = {}) {
@@ -2614,6 +2973,7 @@ function openMiActionPopover(trigger, { focusFirst = false } = {}) {
 }
 
 function wireMiActionMenus(scope = app) {
+  if (!scope) return;
   scope.querySelectorAll("[data-mi-action-menu-kind]").forEach((trigger) => trigger.addEventListener("click", (event) => {
     event.stopPropagation();
     openMiActionPopover(trigger, { focusFirst: event.detail === 0 });
@@ -2624,7 +2984,7 @@ document.addEventListener("click", (event) => {
   if (miActionPopover && !event.target.closest(".mi-action-popover") && !event.target.closest("[data-mi-action-menu-kind]")) closeMiActionPopover();
 });
 const miFavoriteIcon = (pressed, size = 16) => `assets/icons/commerce/rating/Size=${size}px, Style=${pressed ? "Bold" : "Mono"}.svg`;
-const miIsFavorite = (favoriteKey) => MI_FAVORITES.has(favoriteKey);
+const miIsFavorite = (favoriteKey) => miFavoritesStore().has(favoriteKey);
 const miFavoriteButton = (label, pressed = false, favoriteKey = "") => {
   const selected = favoriteKey ? miIsFavorite(favoriteKey) : pressed;
   return `<button class="mi-favorite mi-favorite--blue" type="button" data-mi-favorite-label="${label}"${favoriteKey ? ` data-mi-favorite-key="${favoriteKey}"` : ""} aria-label="${selected ? "Remove" : "Add"} ${label} ${selected ? "from" : "to"} favorites" aria-pressed="${selected}"><img src="${miFavoriteIcon(selected)}" alt="" /></button>`;
@@ -2641,8 +3001,8 @@ function toggleMiFavorite(button) {
   const favoriteKey = button.dataset.miFavoriteKey;
   const pressed = button.getAttribute("aria-pressed") !== "true";
   if (favoriteKey) {
-    if (pressed) MI_FAVORITES.add(favoriteKey);
-    else MI_FAVORITES.delete(favoriteKey);
+    if (pressed) miFavoritesStore().add(favoriteKey);
+    else miFavoritesStore().delete(favoriteKey);
     document.querySelectorAll("[data-mi-favorite-key]").forEach((candidate) => {
       if (candidate.dataset.miFavoriteKey === favoriteKey) syncMiFavoriteButton(candidate, pressed);
     });
@@ -2660,8 +3020,8 @@ function syncMiDetailFavorite(button, favoriteKey) {
 }
 
 function toggleMiDetailFavorite(button, favoriteKey) {
-  if (miIsFavorite(favoriteKey)) MI_FAVORITES.delete(favoriteKey);
-  else MI_FAVORITES.add(favoriteKey);
+  if (miIsFavorite(favoriteKey)) miFavoritesStore().delete(favoriteKey);
+  else miFavoritesStore().add(favoriteKey);
   syncMiDetailFavorite(button, favoriteKey);
   document.querySelectorAll("[data-mi-favorite-key]").forEach((candidate) => {
     if (candidate.dataset.miFavoriteKey === favoriteKey) syncMiFavoriteButton(candidate, miIsFavorite(favoriteKey));
@@ -2678,15 +3038,16 @@ function miGroupTable(groups) {
 }
 
 function miGroupsPanel() {
-  return `<div class="mi-secondary-top">${miTitleMarkup("Groups", MI_GROUPS.length, "Groups are personal and not shared.", '<button class="mi-button mi-secondary-create" type="button" data-mi-create-group-direct>Create</button>')}<div class="mi-secondary-controls">${miSearchMarkup("Search by group name")}${miViewToggleMarkup(miGroupsView)}</div></div><div data-mi-groups-list ${miGroupsView === "list" ? "" : "hidden"}>${miGroupTable(MI_GROUPS)}</div><div class="mi-groups-grid-view" data-mi-groups-grid ${miGroupsView === "grid" ? "" : "hidden"}><div class="mi-favorite-group-grid mi-groups-card-grid">${MI_GROUPS.map(miFavoriteGroupCardMarkup).join("")}</div>${miPaginationMarkup(MI_GROUPS.length)}</div>`;
+  const visibleGroups = isEuropeLePrototype() ? MI_GROUPS.slice(Math.ceil(MI_GROUPS.length / 2)) : MI_GROUPS;
+  return `<div class="mi-secondary-top">${miTitleMarkup("Groups", visibleGroups.length, "Groups are personal and not shared.", '<button class="mi-button mi-secondary-create" type="button" data-mi-create-group-direct>Create</button>')}<div class="mi-secondary-controls">${miSearchMarkup("Search by group name")}${miViewToggleMarkup(miGroupsView)}</div></div><div data-mi-groups-list ${miGroupsView === "list" ? "" : "hidden"}>${miGroupTable(visibleGroups)}</div><div class="mi-groups-grid-view" data-mi-groups-grid ${miGroupsView === "grid" ? "" : "hidden"}><div class="mi-favorite-group-grid mi-groups-card-grid">${visibleGroups.map(miFavoriteGroupCardMarkup).join("")}</div>${miPaginationMarkup(visibleGroups.length)}</div>`;
 }
 
 function miFavoritesInstrumentTable() {
-  const favoriteSystems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].filter((system) => miIsFavorite(`system:${system.id}`));
+  const favoriteSystems = miCurrentSystems().filter((system) => miIsFavorite(`system:${system.id}`));
   const favoriteSystemComponents = new Set(favoriteSystems.flatMap((system) => system.components));
-  const favoriteInstruments = MY_INSTRUMENTS.filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const favoriteInstruments = miCurrentInstruments().filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
   const systemRows = favoriteSystems.map((system) => {
-    const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+    const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
     const key = `favorite-system-${system.id}`;
     const groups = MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`)).map((group) => group.name).join(", ") || "—";
     const parent = `<tr class="mi-system-row" data-mi-secondary-row data-search="System ${system.nickname} ${system.typeCode}"><td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><span class="mi-asset-with-lock"><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />${miLockMarkup(system.locked)}</span></td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>${groups}</td><td>—</td><td>—</td><td>—</td><td>${miMoreButton(`System ${system.nickname}`, "system", system.id)}</td></tr>`;
@@ -2725,9 +3086,9 @@ function miFavoritesGridMarkup(favoriteSystems, favoriteInstruments, favoriteGro
 }
 
 function miFavoritesPanel() {
-  const favoriteSystems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].filter((system) => miIsFavorite(`system:${system.id}`));
+  const favoriteSystems = miCurrentSystems().filter((system) => miIsFavorite(`system:${system.id}`));
   const favoriteSystemComponents = new Set(favoriteSystems.flatMap((system) => system.components));
-  const favoriteInstruments = MY_INSTRUMENTS.filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const favoriteInstruments = miCurrentInstruments().filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
   const favoriteStandaloneCount = favoriteInstruments.length;
   const favoriteInstrumentCount = favoriteSystems.reduce((total, system) => total + 1 + system.components.filter((serial) => !MI_REMOVED_INSTRUMENTS.has(serial)).length, 0) + favoriteStandaloneCount;
   const favoriteGroups = MI_GROUPS.filter((group) => miIsFavorite(`group:${group.id}`));
@@ -2773,10 +3134,16 @@ const MI_PENDING_AWAITING_ITEMS = [
 const MI_PENDING_ACCESS_REQUEST_COUNT = 3;
 
 function miPendingCount() {
+  if (isEuropeLePrototype()) return 0;
   return MI_PENDING_SHARED_ITEMS.length + MI_PENDING_AWAITING_ITEMS.length + MI_PENDING_ACCESS_REQUEST_COUNT;
 }
 
 function miPendingSegments() {
+  if (isEuropeLePrototype()) return [
+    ["shared", "0 shared with me", false],
+    ["awaiting", "0 awaiting my approval", false],
+    ["access", "0 access requested", false],
+  ];
   return [
     ["shared", `${MI_PENDING_SHARED_ITEMS.length} shared with me`, false],
     ["awaiting", `${MI_PENDING_AWAITING_ITEMS.length} awaiting my approval`, MI_PENDING_AWAITING_ITEMS.length > 0],
@@ -2832,6 +3199,15 @@ function miPendingAccessPanel() {
 }
 
 function miPendingPanel(state = "shared") {
+  if (isEuropeLePrototype()) {
+    const titles = { shared: "Shared with me", awaiting: "Awaiting my approval", access: "Access requested" };
+    const descriptions = {
+      shared: "Instruments shared with you.",
+      awaiting: "Instrument access requests awaiting your approval. Requests expire after 30 days.",
+      access: "Instrument access requests made by you. Requests expire after 30 days.",
+    };
+    return `<div class="mi-secondary-top mi-pending-top">${miTitleMarkup(titles[state], 0, descriptions[state], miSegmentedMarkup(miPendingSegments(), state))}${miSearchMarkup("Search by instrument serial number, nickname or user")}</div>${miPendingZeroStateMarkup()}`;
+  }
   return state === "awaiting" ? miPendingAwaitingPanel() : state === "access" ? miPendingAccessPanel() : miPendingSharedPanel();
 }
 
@@ -2846,14 +3222,14 @@ function miAddPendingSharedItems(ids) {
   selected.forEach((item) => {
     if (item.kind === "system") {
       item.components.forEach((component) => {
-        if (MY_INSTRUMENTS.some((instrument) => instrument.serial === component.serial)) return;
-        MY_INSTRUMENTS.push({ ...component, users: "1", group: "—", coverage: "Under contract", end: item.expires, locked: item.locked, pendingNew: true });
+        if (miCurrentInstruments().some((instrument) => instrument.serial === component.serial)) return;
+        miCurrentInstruments().push({ ...component, users: "1", group: "—", coverage: "Under contract", end: item.expires, locked: item.locked, pendingNew: true });
       });
       if (!miFindSystemById(item.systemId)) MI_CREATED_SYSTEMS.push({ id: item.systemId, nickname: item.nickname, notes: "", typeCode: item.type, users: "1", locked: item.locked, admin: false, components: item.components.map((component) => component.serial), pendingNew: true });
       return;
     }
-    if (MY_INSTRUMENTS.some((instrument) => instrument.serial === item.serial)) return;
-    MY_INSTRUMENTS.push({ image: item.image, serial: item.serial, nickname: item.nickname, users: "1", group: "—", model: item.model, coverage: "Under contract", end: item.expires, locked: item.locked, pendingNew: true });
+    if (miCurrentInstruments().some((instrument) => instrument.serial === item.serial)) return;
+    miCurrentInstruments().push({ image: item.image, serial: item.serial, nickname: item.nickname, users: "1", group: "—", model: item.model, coverage: "Under contract", end: item.expires, locked: item.locked, pendingNew: true });
   });
   miRemovePendingItems(MI_PENDING_SHARED_ITEMS, ids);
   return selected.length;
@@ -2914,13 +3290,18 @@ function miSuggestionDisplayCount(items) {
 }
 
 function miSuggestionsCount() {
+  if (isEuropeLePrototype()) return 0;
   return miSuggestionDisplayCount(MI_SUGGESTION_SUPPORT_ITEMS) + MI_SUGGESTION_RELATED_ITEMS.length + miSuggestionDisplayCount(MI_SUGGESTION_INVITE_ITEMS);
 }
 
 function syncMiTabCounts() {
   const pendingCount = app.querySelector("[data-mi-pending-count]");
   const suggestionsCount = app.querySelector("[data-mi-suggestions-count]");
-  if (pendingCount) pendingCount.textContent = String(miPendingCount());
+  if (pendingCount) {
+    const total = miPendingCount();
+    pendingCount.textContent = String(total);
+    pendingCount.hidden = total === 0;
+  }
   if (suggestionsCount) {
     const total = miSuggestionsCount();
     suggestionsCount.textContent = String(total);
@@ -2929,6 +3310,11 @@ function syncMiTabCounts() {
 }
 
 function miSuggestionSegments() {
+  if (isEuropeLePrototype()) return [
+    ["support", "0 from support history", false],
+    ["related", "0 related systems", false],
+    ["invites", "0 from installation invites", false],
+  ];
   return [
     ["support", `${miSuggestionDisplayCount(MI_SUGGESTION_SUPPORT_ITEMS)} from support history`, false],
     ["related", `${MI_SUGGESTION_RELATED_ITEMS.length} related systems`, MI_SUGGESTION_RELATED_ITEMS.length > 0],
@@ -3001,6 +3387,15 @@ function miSuggestionsInvitesPanel() {
 }
 
 function miSuggestionsPanel(state = "support") {
+  if (isEuropeLePrototype()) {
+    const titles = { support: "From support history", related: "Related systems", invites: "From installation invites" };
+    const descriptions = {
+      support: "Instruments below have support history associated with your email address, but are not yet added to your account.",
+      related: "Systems below exist within Services Central, but are not added to your account.",
+      invites: "Instruments listed below were recently installed and shared through an installation order.",
+    };
+    return `<div class="mi-secondary-top mi-suggestions-top">${miTitleMarkup(titles[state], 0, descriptions[state], miSegmentedMarkup(miSuggestionSegments(), state))}${miSearchMarkup("Search by instrument serial number or nickname")}</div>${miSuggestionZeroStateMarkup(state)}`;
+  }
   return state === "related" ? miSuggestionsRelatedPanel() : state === "invites" ? miSuggestionsInvitesPanel() : miSuggestionsSupportPanel();
 }
 
@@ -3016,8 +3411,8 @@ function miAddSuggestionItems(segment, ids) {
   selected.forEach((item) => {
     if (item.kind === "system") {
       item.components.forEach((component) => {
-        if (MY_INSTRUMENTS.some((instrument) => instrument.serial === component.serial)) return;
-        MY_INSTRUMENTS.push({ ...component, users: "1", group: "—", coverage: "Under contract", end: "30 Jun 2027", locked: false, pendingNew: true });
+        if (miCurrentInstruments().some((instrument) => instrument.serial === component.serial)) return;
+        miCurrentInstruments().push({ ...component, users: "1", group: "—", coverage: "Under contract", end: "30 Jun 2027", locked: false, pendingNew: true });
       });
       if (!miFindSystemById(item.systemId)) {
         MI_CREATED_SYSTEMS.push({
@@ -3034,8 +3429,8 @@ function miAddSuggestionItems(segment, ids) {
       }
       return;
     }
-    if (MY_INSTRUMENTS.some((instrument) => instrument.serial === item.serial)) return;
-    MY_INSTRUMENTS.push({
+    if (miCurrentInstruments().some((instrument) => instrument.serial === item.serial)) return;
+    miCurrentInstruments().push({
       image: item.image,
       serial: item.serial,
       nickname: item.nickname || "—",
@@ -3201,7 +3596,7 @@ function renderMyInstrumentsTab(tabName, segmentState) {
     if (system) openMiSystemQuickview(system);
   }));
   secondaryPanel.querySelector("[data-mi-create-group-direct]")?.addEventListener("click", () => { resetMiGroupBuilder(); openMiDialog(miCreateGroupDialog); });
-  secondaryPanel.querySelectorAll("[data-mi-segment]").forEach((button) => button.addEventListener("click", () => renderMyInstrumentsTab(tabName, button.dataset.miSegment)));
+  secondaryPanel.querySelectorAll("[data-mi-segment]").forEach((button) => button.addEventListener("click", () => activateMyInstrumentsSegment(tabName, button.dataset.miSegment, { pushHistory: true })));
   if (tabName === "pending") wireMiPendingPanel(secondaryPanel, segmentState || "shared");
   if (tabName === "suggestions") wireMiSuggestionPanel(secondaryPanel, segmentState || "support");
   secondaryPanel.querySelector("[data-mi-select-all-visible]")?.addEventListener("click", () => {
@@ -3213,6 +3608,53 @@ function renderMyInstrumentsTab(tabName, segmentState) {
   wireMiActionMenus(secondaryPanel);
   secondaryPanel.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
   wireRouteControls();
+}
+
+const MI_HISTORY_TABS = new Set(["instruments", "users", "groups", "favorites", "pending", "suggestions"]);
+const MI_HISTORY_SEGMENTS = {
+  pending: new Set(["shared", "awaiting", "access"]),
+  suggestions: new Set(["support", "related", "invites"]),
+};
+const MI_DEFAULT_SEGMENTS = { pending: "shared", suggestions: "support" };
+
+function miHistoryTab() {
+  const tab = new URL(window.location.href).searchParams.get("instruments-tab") || "instruments";
+  return MI_HISTORY_TABS.has(tab) ? tab : "instruments";
+}
+
+function miHistorySegment(tabName) {
+  const fallback = MI_DEFAULT_SEGMENTS[tabName];
+  if (!fallback) return undefined;
+  const segment = new URL(window.location.href).searchParams.get("instruments-section") || fallback;
+  return MI_HISTORY_SEGMENTS[tabName].has(segment) ? segment : fallback;
+}
+
+function activateMyInstrumentsSegment(tabName, segment, { pushHistory = false } = {}) {
+  const validSegments = MI_HISTORY_SEGMENTS[tabName];
+  if (!validSegments) return;
+  const safeSegment = validSegments.has(segment) ? segment : MI_DEFAULT_SEGMENTS[tabName];
+  renderMyInstrumentsTab(tabName, safeSegment);
+  if (!pushHistory || miHistorySegment(tabName) === safeSegment) return;
+  const nextUrl = new URL(window.location.href);
+  if (safeSegment === MI_DEFAULT_SEGMENTS[tabName]) nextUrl.searchParams.delete("instruments-section");
+  else nextUrl.searchParams.set("instruments-section", safeSegment);
+  window.history.pushState({ fromRoute: "my-instruments", instrumentsTab: tabName, instrumentsSection: safeSegment }, "", nextUrl);
+}
+
+function activateMyInstrumentsTab(tabName, { pushHistory = false } = {}) {
+  const safeTab = MI_HISTORY_TABS.has(tabName) ? tabName : "instruments";
+  app.querySelectorAll(".mi-tabs [role='tab']").forEach((candidate) => {
+    const selected = candidate.dataset.miTab === safeTab;
+    candidate.classList.toggle("is-active", selected);
+    candidate.setAttribute("aria-selected", String(selected));
+  });
+  renderMyInstrumentsTab(safeTab, miHistorySegment(safeTab));
+  if (!pushHistory || miHistoryTab() === safeTab) return;
+  const nextUrl = new URL(window.location.href);
+  if (safeTab === "instruments") nextUrl.searchParams.delete("instruments-tab");
+  else nextUrl.searchParams.set("instruments-tab", safeTab);
+  nextUrl.searchParams.delete("instruments-section");
+  window.history.pushState({ fromRoute: "my-instruments", instrumentsTab: safeTab }, "", nextUrl);
 }
 
 function syncMiColumnDialog() {
@@ -3235,14 +3677,28 @@ function applyMiColumnVisibility() {
 function wireMyInstruments() {
   syncMiTabCounts();
   const rowsContainer = app.querySelector("[data-mi-rows]");
-  const systems = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS];
+  const systems = miCurrentSystems();
   const systemComponents = new Set(systems.flatMap((system) => system.components));
-  const standaloneInstruments = MY_INSTRUMENTS.filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const standaloneInstruments = miCurrentInstruments().filter((instrument) => !systemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
   const newStandaloneInstruments = standaloneInstruments.filter((instrument) => instrument.pendingNew);
   const existingStandaloneInstruments = standaloneInstruments.filter((instrument) => !instrument.pendingNew);
-  rowsContainer.innerHTML = newStandaloneInstruments.map(instrumentRowMarkup).join("") + systems.map(miCreatedSystemRowsMarkup).join("") + existingStandaloneInstruments.map(instrumentRowMarkup).join("");
   const gridCards = app.querySelector("[data-mi-grid-cards]");
-  gridCards.innerHTML = newStandaloneInstruments.map((instrument) => miGridCardMarkup(instrument)).join("") + systems.map(miCreatedSystemCardMarkup).join("") + existingStandaloneInstruments.map((instrument) => miGridCardMarkup(instrument)).join("");
+  if (isMainCmdExperience()) {
+    const standardInstruments = existingStandaloneInstruments.filter((instrument) => !instrument.image.startsWith("le/"));
+    const leInstruments = existingStandaloneInstruments.filter((instrument) => instrument.image.startsWith("le/"));
+    const orderedAssets = newStandaloneInstruments.map((instrument) => ({ kind: "instrument", value: instrument }));
+    const length = Math.max(standardInstruments.length, systems.length, leInstruments.length);
+    for (let index = 0; index < length; index += 1) {
+      if (standardInstruments[index]) orderedAssets.push({ kind: "instrument", value: standardInstruments[index] });
+      if (systems[index]) orderedAssets.push({ kind: "system", value: systems[index] });
+      if (leInstruments[index]) orderedAssets.push({ kind: "instrument", value: leInstruments[index] });
+    }
+    rowsContainer.innerHTML = orderedAssets.map(({ kind, value }) => kind === "system" ? miCreatedSystemRowsMarkup(value, false) : instrumentRowMarkup(value)).join("");
+    gridCards.innerHTML = orderedAssets.map(({ kind, value }) => kind === "system" ? miCreatedSystemCardMarkup(value) : miGridCardMarkup(value)).join("");
+  } else {
+    rowsContainer.innerHTML = newStandaloneInstruments.map(instrumentRowMarkup).join("") + systems.map((system) => miCreatedSystemRowsMarkup(system)).join("") + existingStandaloneInstruments.map(instrumentRowMarkup).join("");
+    gridCards.innerHTML = newStandaloneInstruments.map((instrument) => miGridCardMarkup(instrument)).join("") + systems.map(miCreatedSystemCardMarkup).join("") + existingStandaloneInstruments.map((instrument) => miGridCardMarkup(instrument)).join("");
+  }
   const updateCount = () => {
     const visible = [...app.querySelectorAll("[data-mi-row]")].filter((row) => !row.hidden).length;
     app.querySelector("[data-mi-count]").textContent = String(visible);
@@ -3288,14 +3744,7 @@ function wireMyInstruments() {
     button.addEventListener("click", () => toggleMiFavorite(button));
   });
   app.querySelectorAll(".mi-tabs [role='tab']").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      app.querySelectorAll(".mi-tabs [role='tab']").forEach((candidate) => {
-        const selected = candidate === tab;
-        candidate.classList.toggle("is-active", selected);
-        candidate.setAttribute("aria-selected", String(selected));
-      });
-      renderMyInstrumentsTab(tab.dataset.miTab);
-    });
+    tab.addEventListener("click", () => activateMyInstrumentsTab(tab.dataset.miTab, { pushHistory: true }));
   });
   app.querySelectorAll(".mi-view-toggle button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -3311,6 +3760,7 @@ function wireMyInstruments() {
   app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
+  activateMyInstrumentsTab(miHistoryTab());
 }
 
 function renderMyInstruments() {
@@ -3319,15 +3769,32 @@ function renderMyInstruments() {
   mountTopbarSc();
   mountPlatformSidebar("my-instruments");
   mountFooter();
-  wireMyInstruments();
+  if (isEuropeLePrototype()) {
+    const createControl = app.querySelector(".mi-create");
+    if (createControl) {
+      const createGroupButton = document.createElement("button");
+      createGroupButton.type = "button";
+      createGroupButton.className = "mi-button";
+      createGroupButton.dataset.miCreateGroupLe = "";
+      createGroupButton.textContent = "Create group";
+      createControl.replaceWith(createGroupButton);
+    }
+  }
+  if (shouldShowAccountEmptyState()) {
+    applyUnmappedInstruments();
+    window.PlatformSidebar?.wire(app);
+    wireRouteControls();
+  } else {
+    wireMyInstruments();
+  }
   document.title = "My instruments — Services Central";
 }
 
 function miUserDetailMarkup(user) {
-  const instruments = user.instruments.map((index) => MY_INSTRUMENTS[index]).filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
-  const system = MI_CREATED_SYSTEMS[0] || MI_REFERENCE_SYSTEMS[0];
+  const instruments = user.instruments.map((index) => miCurrentInstruments()[index]).filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
+  const system = miCurrentSystems()[0];
   const systemKey = system ? `user-system-${system.id}` : "";
-  const systemComponents = system ? system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)) : [];
+  const systemComponents = system ? system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial)) : [];
   const systemGroups = system ? MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`)).map((group) => group.name).join(", ") : "";
   const systemAccessKey = system ? `system:${system.id}` : "";
   const systemRole = system ? miRoleForAsset(systemAccessKey, user.email, system) : "User";
@@ -3425,10 +3892,12 @@ function renderMiUserDetail(route) {
 }
 
 function miGroupInstruments(group) {
-  if (group.id === 0) return MY_INSTRUMENTS.slice(0, 4);
+  if (group.id === 0) return miCurrentInstruments().filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).slice(0, 4);
   const size = 3 + (group.id % 5);
-  const start = (group.id * 4) % MY_INSTRUMENTS.length;
-  return Array.from({ length: size }, (_, offset) => MY_INSTRUMENTS[(start + (offset * 2)) % MY_INSTRUMENTS.length]);
+  const start = (group.id * 4) % miCurrentInstruments().length;
+  return [...miCurrentInstruments().slice(start), ...miCurrentInstruments().slice(0, start)]
+    .filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial))
+    .slice(0, size);
 }
 
 function miGroupDetailMarkup(group) {
@@ -3447,13 +3916,13 @@ function miGroupDetailMarkup(group) {
   </tr>`;
   const rows = group.members ? group.members.map((member) => {
     if (member.startsWith("instrument:")) {
-      const instrument = MY_INSTRUMENTS.find((candidate) => candidate.serial === member.replace("instrument:", ""));
-      return instrument ? instrumentRow(instrument) : "";
+      const instrument = miCurrentInstruments().find((candidate) => candidate.serial === member.replace("instrument:", ""));
+      return instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial) ? instrumentRow(instrument) : "";
     }
     const system = miFindSystemById(member.replace("system:", ""));
     if (!system) return "";
     const key = `group-system-${system.id}`;
-    const components = system.components.map((serial) => MY_INSTRUMENTS.find((candidate) => candidate.serial === serial)).filter(Boolean);
+    const components = system.components.map((serial) => miCurrentInstruments().find((candidate) => candidate.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
     const parent = `<tr class="mi-system-row" data-mi-group-instrument data-search="System ${system.nickname} ${system.typeCode}"><td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>${system.typeCode}</td><td>—</td><td><button class="mi-icon-action" type="button" data-mi-remove-group-instrument aria-label="Remove ${system.nickname} from ${group.name}"><img src="assets/icons/actions/delete/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
     const children = components.map((instrument, index) => instrumentRow(instrument, `class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}"`, false, false)).join("");
     return parent + children;
@@ -3563,7 +4032,7 @@ function renderMiSystemDetail(route) {
   }
   const systemFavoriteKey = `system:${system.id}`;
   const systemIsFavorite = miIsFavorite(systemFavoriteKey);
-  const components = system.components.map((serial) => MY_INSTRUMENTS.find((instrument) => instrument.serial === serial)).filter(Boolean);
+  const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   const systemGroups = MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`));
   app.innerHTML = `<section class="screen screen--system-detail" aria-label="${system.nickname} system details">
     <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>${system.nickname}</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
@@ -3743,6 +4212,7 @@ function openSystemEditDialog(system, field) {
       const detailToolbarTitle = app.querySelector(".flow-toolbar > strong");
       if (detailNickname) detailNickname.textContent = system.nickname;
       if (detailToolbarTitle) detailToolbarTitle.textContent = system.nickname;
+      syncFlowToolbarTitle();
       if (detailNickname) document.title = `${system.nickname} — Services Central`;
     } else if (field === "notes") {
       system.notes = input.value.trim();
@@ -3996,13 +4466,13 @@ function wireInstrumentDetailTabContent(tab, instrument) {
 }
 
 function renderInstrumentDetail(serial) {
-  const instrument = MY_INSTRUMENTS.find((candidate) => candidate.serial === serial);
+  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial);
   if (!instrument || MI_REMOVED_INSTRUMENTS.has(instrument.serial)) {
     setRoute("my-instruments");
     return;
   }
   const displayName = instrument.nickname === "—" ? instrument.serial : instrument.nickname;
-  const owningSystem = [...MI_REFERENCE_SYSTEMS, ...MI_CREATED_SYSTEMS].find((system) => system.components.includes(instrument.serial));
+  const owningSystem = miCurrentSystems().find((system) => system.components.includes(instrument.serial));
   const instrumentFavoriteKey = `instrument:${instrument.serial}`;
   const instrumentIsFavorite = miIsFavorite(instrumentFavoriteKey);
   app.innerHTML = `<section class="screen screen--instrument-detail" aria-label="Instrument ${instrument.serial} details">
@@ -4030,7 +4500,7 @@ function renderInstrumentDetail(serial) {
             <div><dt>Type</dt><dd>${miInstrumentType(instrument)}</dd></div>
             <div><dt>Groups</dt><dd>${instrument.group === "—" ? "—" : `<button type="button" data-id-toast="${instrument.group} opened">${instrument.group}</button>`}</dd></div>
             <div class="id-fact--wide id-knowledge"><dt>Knowledge</dt><dd><button type="button" data-id-browse-knowledge-external><img src="assets/icons/actions/search/size=16px, style=mono.svg" alt="" />Browse for manuals and troubleshooting articles</button><button type="button" data-id-open-knowledge><img src="assets/icons/media/document/size=16px, style=mono.svg" alt="" />View operating manual</button><button type="button" data-id-open-knowledge><img src="assets/icons/media/document/size=16px, style=mono.svg" alt="" />View system operating manual</button></dd></div>
-            <div><dt>System</dt><dd>${owningSystem ? `<button type="button" data-route="system-detail-${owningSystem.id}">${owningSystem.nickname}</button>` : '<button type="button" data-id-toast="Create a system selected">Create a system</button>'}</dd></div>
+            ${isEuropeLePrototype() ? "" : `<div><dt>System</dt><dd>${owningSystem ? `<button type="button" data-route="system-detail-${owningSystem.id}">${owningSystem.nickname}</button>` : '<button type="button" data-id-toast="Create a system selected">Create a system</button>'}</dd></div>`}
             <div class="id-notes"><dt>Notes <button type="button" data-id-toast="Edit notes" aria-label="Edit notes"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" /></button></dt><dd><button type="button" data-id-toast="Add instrument note selected">Add instrument note</button></dd></div>
           </dl>
         </section>
@@ -4102,12 +4572,96 @@ const ADD_INSTRUMENT_PROFILES = [
   { image: "tsq.png", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2028" },
 ];
 
+const ADD_LE_INSTRUMENT_PROFILES = [
+  { image: "le/tsx-40086.png", type: "ULT Freezers", model: "ULTXX000AV", coverage: "Under contract", end: "24 Dec 2027" },
+  { image: "le/bios-16.png", type: "Centrifuges", model: "BIOS16", coverage: "Under contract", end: "18 Jul 2028" },
+  { image: "le/tsx-2330.png", type: "Lab Freezers", model: "TSX2330FA", coverage: "Under contract", end: "08 Jan 2028" },
+  { image: "le/midi-co2-40l.png", type: "CO2 Incubators", model: "MIDI40", coverage: "Under contract", end: "15 May 2028" },
+];
+
+function assignAddInstrumentProfiles(entries) {
+  if (!entries.length) return [];
+  const mainFlowStartsWithLe = aiStableHash(entries.map((entry) => entry.serial).join("|")) % 2 === 0;
+  return entries.map((entry, index) => {
+    let profiles = ADD_INSTRUMENT_PROFILES;
+    if (isEuropeLePrototype()) profiles = ADD_LE_INSTRUMENT_PROFILES;
+    else if (isMainPrototype()) {
+      const useLeProfile = index % 2 === 0 ? mainFlowStartsWithLe : !mainFlowStartsWithLe;
+      profiles = useLeProfile ? ADD_LE_INSTRUMENT_PROFILES : ADD_INSTRUMENT_PROFILES;
+    }
+    const profileIndex = aiStableHash(`${entry.serial}:${index}`) % profiles.length;
+    return { ...profiles[profileIndex], ...entry };
+  });
+}
+
 let addInstrumentDraft = [];
 let bulkInstrumentDraft = [];
 let addInstrumentSystemsDraft = [];
 
 function aiEscapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
+}
+
+const AI_ANALYTICAL_INSTRUMENT_FAMILIES = [
+  "Atomic absorption and optical emission spectroscopy",
+  "Automated sample prep",
+  "Discrete analyzers",
+  "Liquid, gas and ion chromatography",
+  "Mass spectrometry – includes LC-, GC-, ICP-, IC-, and inorganic MS",
+  "Spectroscopy – FT-IR, NIR, Raman, UV/Vis, Micro UV, NMR",
+];
+
+const AI_LAB_EQUIPMENT_FAMILIES = [
+  "Baths and circulators",
+  "Biological Safety cabinets and hoods",
+  "Centrifuges - benchtop, general purpose, high speed, ultra-speed, industrial",
+  "Chillers",
+  "Environmental chambers",
+  "Freezers – Cryo systems (-196° to -130°C), Lab Freezers (-40° to -10°C), ULT Freezers (-80° to -40°C)",
+  "Incubators - Dry Bath, CO2, Microbiological, Plant Growth, and Refrigerated",
+  "Lab Ovens and Furnaces",
+  "Refrigerators – Blood storage, Chromatography, Flammable materials, Refrigerator/freezer combinations, Standard laboratory, Vaccine/Pharmacy Storage",
+  "Rockers and shakers",
+  "SpeedVac Vacuum Concentrators",
+  "Water purification – Ultra Pure, Pure, Reverse Osmosis, Water Distillation, and Cartridge",
+];
+
+function aiSupportedInstrumentCategory(title, families) {
+  return `<section class="ai-supported-dialog__category"><h3>${title}</h3><ul>${families.map((family) => `<li>${family}</li>`).join("")}</ul></section>`;
+}
+
+function aiSupportedInstrumentModalMarkup() {
+  let region = "Europe*";
+  let trailingCopy = "from the following categories. Any instruments uploaded that are not supported will not be recognized by Services Central at this time.";
+  let includeLabEquipment = true;
+  let includeEuropeDisclaimer = true;
+  if (isNorthAmericaCmdPrototype()) {
+    region = "the United States and Canada";
+    trailingCopy = "from the following instrument categories. Any uploaded instruments that are not supported will not be recognized by Services Central.";
+    includeLabEquipment = false;
+    includeEuropeDisclaimer = false;
+  } else if (isKoreaCmdPrototype()) {
+    region = "the South Korea";
+    trailingCopy = "from the following instrument categories. Any uploaded instruments that are not supported will not be recognized by Services Central.";
+    includeLabEquipment = false;
+    includeEuropeDisclaimer = false;
+  }
+  return `<p>Services Central currently supports Thermo Fisher Scientific instruments and lab equipment installed on <strong>01 January 2010</strong> or later in <strong>${region}</strong> ${trailingCopy}</p>
+    <div class="ai-supported-dialog__families">
+      ${aiSupportedInstrumentCategory("Analytical Instruments", AI_ANALYTICAL_INSTRUMENT_FAMILIES)}
+      ${includeLabEquipment ? aiSupportedInstrumentCategory("Lab Equipment", AI_LAB_EQUIPMENT_FAMILIES) : ""}
+    </div>
+    ${includeEuropeDisclaimer ? '<p class="ai-supported-dialog__disclaimer">* United Kingdom, Ireland, Norway, Finland, Sweden, Denmark, Iceland, Belgium, Netherlands, Luxembourg, Germany, Austria, Switzerland, France, Italy, Spain</p>' : ""}`;
+}
+
+function openAiSupportedInstrumentDialog() {
+  const dialog = app.querySelector("[data-ai-supported-dialog]");
+  if (!dialog) return;
+  const content = dialog.querySelector("[data-ai-supported-content]");
+  content.innerHTML = aiSupportedInstrumentModalMarkup();
+  content.scrollTop = 0;
+  if (!dialog.open) dialog.showModal();
+  dialog.querySelector("#supported-dialog-title")?.focus();
 }
 
 function aiWorkbookCellValue(cell, sharedStrings) {
@@ -4168,13 +4722,12 @@ async function parseBulkInstrumentWorkbook(file) {
       const nickname = values.get(`C${row}`) || "";
       if (nickname.length > 90) errors.push(`Item ${row - 1} has a nickname longer than 90 characters.`);
       if (!serial) continue;
-      const profile = ADD_INSTRUMENT_PROFILES[(row - 2) % ADD_INSTRUMENT_PROFILES.length];
-      entries.push({ ...profile, item: row - 1, serial, nickname, users: String((row % 3) + 1), group: "—", locked: false, pendingNew: true, selected: true });
+      entries.push({ item: row - 1, serial, nickname, users: String((row % 3) + 1), group: "—", locked: false, pendingNew: true, selected: true });
     }
     const extraSerial = [...values.entries()].find(([reference, value]) => /^B(?:5[2-9]|[6-9]\d|\d{3,})$/.test(reference) && value);
     if (extraSerial) errors.push("The maximum amount of instruments per upload is 50.");
     if (!entries.length) errors.push("Add at least one serial number in the “Serial Number* (required)” column.");
-    return { valid: errors.length === 0, errors, entries };
+    return { valid: errors.length === 0, errors, entries: assignAddInstrumentProfiles(entries) };
   } catch (error) {
     return { valid: false, errors: ["This file could not be read as a valid .xlsx workbook."] };
   }
@@ -4280,6 +4833,15 @@ function aiBulkReviewTable(section, total) {
 }
 
 function showBulkInstrumentReviewStep() {
+  if (isUnmappedPrototypeUser()) {
+    addInstrumentDraft = bulkInstrumentDraft.map((instrument, index) => ({
+      ...instrument,
+      item: instrument.item ?? index + 1,
+      selected: true,
+    }));
+    showAddInstrumentStep(2);
+    return;
+  }
   const form = app.querySelector(".ai-form");
   const inputContent = form.querySelector(".ai-columns");
   const main = app.querySelector(".ai-main");
@@ -4328,7 +4890,10 @@ function showBulkInstrumentReviewStep() {
     form.querySelector(`#${toggle.getAttribute("aria-controls")}`).hidden = expanded;
     toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "up"}/size=24px, style=mono.svg`;
   }));
-  form.querySelectorAll("[data-ai-specific-families]").forEach((link) => link.addEventListener("click", (event) => event.preventDefault()));
+  form.querySelectorAll("[data-ai-specific-families]").forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
+    openAiSupportedInstrumentDialog();
+  }));
   updateSelection();
   actionBarBack.onclick = () => showAddInstrumentStep(1);
   actionBarPrimary.onclick = () => {
@@ -4362,9 +4927,9 @@ function showBulkInstrumentReviewStep() {
     }));
     aiPrepareAddedSystems();
     addInstrumentDraft.filter((instrument) => instrument.selected).forEach((instrument) => {
-      const existing = MY_INSTRUMENTS.find((candidate) => candidate.serial === instrument.serial);
+      const existing = miCurrentInstruments().find((candidate) => candidate.serial === instrument.serial);
       if (existing) Object.assign(existing, instrument, { nickname: instrument.nickname || "—", pendingNew: true });
-      else MY_INSTRUMENTS.push({ ...instrument, nickname: instrument.nickname || "—" });
+      else miCurrentInstruments().push({ ...instrument, nickname: instrument.nickname || "—" });
     });
     showAddInstrumentStep(3);
   };
@@ -4399,14 +4964,14 @@ function updateAddInstrumentsContinueState() {
 
 function collectAddInstrumentDraft() {
   const seen = new Set();
-  addInstrumentDraft = [...app.querySelectorAll(".ai-entry-row")].flatMap((row, index) => {
+  const entries = [...app.querySelectorAll(".ai-entry-row")].flatMap((row) => {
     const serial = row.querySelector("[data-ai-serial]").value.trim();
     if (!serial || seen.has(serial)) return [];
     seen.add(serial);
     const nickname = row.querySelector("[data-ai-nickname]").value.trim();
-    const profile = ADD_INSTRUMENT_PROFILES[index % ADD_INSTRUMENT_PROFILES.length];
-    return [{ ...profile, serial, nickname, users: "1", group: "—", locked: false, pendingNew: true, selected: true }];
+    return [{ serial, nickname, users: "1", group: "—", locked: false, pendingNew: true, selected: true }];
   });
+  addInstrumentDraft = assignAddInstrumentProfiles(entries);
 }
 
 function aiPrepareAddedSystems() {
@@ -4415,7 +4980,7 @@ function aiPrepareAddedSystems() {
   if (!bulkInstrumentDraft.length || !eligible.length) return;
   const names = ["Alpine", "Vanquish Core", "Chromeleon Lab"];
   const systemCount = Math.min(3, Math.max(1, Math.ceil(eligible.length / 5)));
-  const usedSerials = new Set(MY_INSTRUMENTS.map((instrument) => instrument.serial));
+  const usedSerials = new Set(miCurrentInstruments().map((instrument) => instrument.serial));
   for (let index = 0; index < systemCount; index += 1) {
     const enteredComponents = eligible.slice(index * 2, (index * 2) + 2);
     const enteredComponent = enteredComponents[0];
@@ -4455,9 +5020,9 @@ function aiPrepareAddedSystems() {
     };
     addInstrumentSystemsDraft.push(system);
     components.forEach((component) => {
-      const existing = MY_INSTRUMENTS.find((instrument) => instrument.serial === component.serial);
+      const existing = miCurrentInstruments().find((instrument) => instrument.serial === component.serial);
       if (existing) Object.assign(existing, component, { nickname: component.nickname || "—", pendingNew: true });
-      else MY_INSTRUMENTS.push({ ...component, nickname: component.nickname || "—" });
+      else miCurrentInstruments().push({ ...component, nickname: component.nickname || "—" });
     });
     if (!miFindSystemById(systemId)) MI_CREATED_SYSTEMS.unshift({ ...system, components: components.map((component) => component.serial) });
   }
@@ -4488,14 +5053,29 @@ function aiSummarySystemsMarkup() {
   return `<section class="ai-summary-section ai-summary-section--systems"><div class="ai-summary__description"><h2>System(s) found and added successfully</h2><p>Instrument(s) you entered exist within System(s) in Services Central. The entire System(s) have been added to your account.</p></div><div class="ai-summary-system-table-wrap"><table class="ai-summary-system-table"><colgroup><col class="ai-summary-system-col-status" /><col class="ai-summary-system-col-item" /><col class="ai-summary-system-col-branch" /><col class="ai-summary-system-col-image" /><col /><col class="ai-summary-system-col-nickname" /><col class="ai-summary-system-col-type" /><col class="ai-summary-system-col-model" /><col class="ai-summary-system-col-coverage" /><col class="ai-summary-system-col-end" /><col class="ai-summary-system-col-users" /></colgroup><thead><tr><th></th><th>Item</th><th></th><th></th><th>Serial number</th><th>Nickname</th><th>Type</th><th>Catalog no.</th><th>Coverage</th><th>Coverage end</th><th><span class="ai-bulk-users-header"><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />Users</span></th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
 }
 
-function aiSummaryNotAddedMarkup(instruments) {
+function aiSummaryNotAddedMarkup(instruments, noteOverride = "") {
   if (!instruments.length) return "";
-  return `<section class="ai-summary-section ai-summary-section--not-added"><h2>Instrument(s) not added</h2><div class="ai-summary-not-added-wrap"><table class="ai-summary-not-added"><colgroup><col class="ai-summary-not-added-item" /><col class="ai-summary-not-added-serial" /><col class="ai-summary-not-added-nickname" /><col /></colgroup><thead><tr><th>Item</th><th>Serial number</th><th>Nickname</th><th>Notes</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "")}</td><td>${aiEscapeHtml(aiSummaryNotAddedNote(instrument))}</td></tr>`).join("")}</tbody></table></div></section>`;
+  return `<section class="ai-summary-section ai-summary-section--not-added"><h2>Instrument(s) not added</h2><div class="ai-summary-not-added-wrap"><table class="ai-summary-not-added"><colgroup><col class="ai-summary-not-added-item" /><col class="ai-summary-not-added-serial" /><col class="ai-summary-not-added-nickname" /><col /></colgroup><thead><tr><th>Item</th><th>Serial number</th><th>Nickname</th><th>Notes</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "")}</td><td>${aiEscapeHtml(noteOverride || aiSummaryNotAddedNote(instrument))}</td></tr>`).join("")}</tbody></table></div></section>`;
+}
+
+function aiUnmappedReviewMarkup() {
+  return `<section class="ai-review ai-review--unmapped" data-ai-step-content="2" aria-label="Add instruments review">
+    <div class="ai-account-warning" role="alert" data-ai-account-warning>
+      <span class="ai-account-warning__accent" aria-hidden="true"></span>
+      <span class="ai-account-warning__icon" aria-hidden="true"></span>
+      <div class="ai-account-warning__copy">
+        <strong>Unable to add instruments</strong>
+        <p>An issue with your account needs to be resolved by our support team before you can add instruments. <button type="button" data-open-services-help data-help-source="Add instruments account warning">Please contact support.</button></p>
+      </div>
+    </div>
+    <div>${aiSummaryNotAddedMarkup(addInstrumentDraft, "Account issue needs to be resolved by support")}</div>
+  </section>`;
 }
 
 function addInstrumentStepMarkup(step) {
   const selected = addInstrumentDraft.filter((instrument) => instrument.selected);
   if (step === 2) {
+    if (isUnmappedPrototypeUser()) return aiUnmappedReviewMarkup();
     return `<section class="ai-review" data-ai-step-content="2" aria-labelledby="ai-review-title">
       <header class="ai-review__intro"><button type="button" data-ai-review-toggle aria-expanded="true" aria-controls="ai-recognized-content"><img src="assets/icons/directions/chevron up/size=24px, style=mono.svg" alt="" /><h2 id="ai-review-title">All instrument(s) recognized</h2></button></header>
       <section class="ai-review__ready" id="ai-recognized-content">
@@ -4550,6 +5130,16 @@ function showAddInstrumentStep(step) {
   actionBarPrimary.onclick = step === 3 ? () => setRoute("my-instruments") : null;
   form.insertAdjacentHTML("beforeend", addInstrumentStepMarkup(step));
   if (step === 2) {
+    if (isUnmappedPrototypeUser()) {
+      addInstrumentDraft.forEach((instrument) => {
+        instrument.selected = false;
+        instrument.reviewSelected = false;
+      });
+      window.PlatformActionBar?.setPrimaryDisabled(actionBar, true);
+      actionBarPrimary.onclick = null;
+      wireServicesHelpTriggers(form);
+      return;
+    }
     const updateReview = () => {
       const checkboxes = [...form.querySelectorAll("[data-ai-review-select]")];
       const selectedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
@@ -4585,9 +5175,9 @@ function showAddInstrumentStep(step) {
       addInstrumentSystemsDraft = [];
       addInstrumentDraft.forEach((instrument) => { instrument.reviewSelected = instrument.selected; });
       addInstrumentDraft.filter((instrument) => instrument.selected).forEach((instrument) => {
-        const existing = MY_INSTRUMENTS.find((candidate) => candidate.serial === instrument.serial);
+        const existing = miCurrentInstruments().find((candidate) => candidate.serial === instrument.serial);
         if (existing) Object.assign(existing, instrument, { nickname: instrument.nickname || "—", pendingNew: true });
-        else MY_INSTRUMENTS.push({ ...instrument, nickname: instrument.nickname || "—" });
+        else miCurrentInstruments().push({ ...instrument, nickname: instrument.nickname || "—" });
       });
       showAddInstrumentStep(3);
     };
@@ -4749,7 +5339,7 @@ function wireAddInstruments() {
   app.querySelector("[data-ai-banner-next]").addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBannerDots(); });
 
   const supportedDialog = app.querySelector("[data-ai-supported-dialog]");
-  app.querySelectorAll("[data-ai-supported]").forEach((button) => button.addEventListener("click", () => supportedDialog.showModal()));
+  app.querySelectorAll("[data-ai-supported]").forEach((button) => button.addEventListener("click", openAiSupportedInstrumentDialog));
   app.querySelectorAll("[data-ai-supported-close]").forEach((button) => button.addEventListener("click", () => supportedDialog.close()));
   supportedDialog.addEventListener("click", (event) => { if (event.target === supportedDialog) supportedDialog.close(); });
   window.PlatformSidebar?.wire(app);
@@ -5060,7 +5650,13 @@ function renderSupportHistory() {
   mountTopbarSc();
   mountPlatformSidebar("support-history");
   mountFooter();
-  wireSupportHistory();
+  if (shouldShowAccountEmptyState()) {
+    applyUnmappedSupportHistory();
+    window.PlatformSidebar?.wire(app);
+    wireRouteControls();
+  } else {
+    wireSupportHistory();
+  }
   document.title = "Support request history — Services Central";
 }
 
@@ -5167,6 +5763,9 @@ function renderRequestSupport() {
   const template = document.querySelector("#request-support-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Request support", backRoute: "dashboard" });
+  if (isEuropeLePrototype()) app.querySelector('[data-route="installation-support"]')?.closest(".rs-request")?.remove();
+  if (isNorthAmericaCmdPrototype() || isKoreaCmdPrototype()) app.querySelector('[data-route="request-calibration"]')?.closest(".rs-request")?.remove();
+  if (shouldShowAccountEmptyState()) applyUnmappedRequestSupport();
   wireRequestSupport();
   document.title = "Request support — Services Central";
 }
@@ -5177,10 +5776,11 @@ function wireInstrumentSupportSelection() {
   const systemToggle = app.querySelector("[data-iss-system-toggle]");
   const systemRow = app.querySelector(".iss-system");
   const systemRows = [...app.querySelectorAll("[data-iss-row]")];
-  const collapsibleSystemRows = systemRows.slice(0, 5);
+  const hasSystem = Boolean(systemToggle && systemRow);
+  const collapsibleSystemRows = hasSystem ? systemRows.slice(0, 5) : [];
   let systemExpanded = true;
   systemRows.forEach((row) => {
-    row.classList.add("iss-system-child");
+    if (hasSystem && collapsibleSystemRows.includes(row)) row.classList.add("iss-system-child");
     row.querySelectorAll('img[src="assets/icons/actions/return/Size=16px, Style=Mono.svg"]').forEach((icon) => {
       icon.src = "assets/icons/actions/system-return/Size=16px, Style=Mono.svg";
     });
@@ -5190,7 +5790,7 @@ function wireInstrumentSupportSelection() {
     if (!row.dataset.model) row.dataset.model = cells[7]?.textContent.trim() || "—";
     if (!row.dataset.coverage) row.dataset.coverage = cells[8]?.textContent.trim() || "—";
   });
-  systemRows.slice(5).forEach((row) => {
+  (hasSystem ? systemRows.slice(5) : []).forEach((row) => {
     const image = row.cells[2]?.querySelector("img");
     if (!image) return;
     image.classList.add("iss-indent-instrument");
@@ -5266,9 +5866,9 @@ function wireInstrumentSupportSelection() {
       row.hidden = (!systemExpanded && collapsibleSystemRows.includes(row)) || !matchesSearch || !matchesFilters;
       if (collapsibleSystemRows.includes(row) && !row.hidden) visibleSystemInstrument = true;
     });
-    systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
+    if (systemRow) systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
   };
-  systemToggle.addEventListener("click", () => {
+  systemToggle?.addEventListener("click", () => {
     systemExpanded = !systemExpanded;
     systemToggle.setAttribute("aria-expanded", String(systemExpanded));
     systemToggle.setAttribute("aria-label", `${systemExpanded ? "Collapse" : "Expand"} system`);
@@ -5334,6 +5934,16 @@ function renderOpenSupportTicket() {
   const template = document.querySelector("#open-support-ticket-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountNativePageChrome("request-support", { title: "Open a support ticket", backRoute: "request-support" });
+  if (isEuropeLePrototype()) {
+    app.querySelector(".iss-system")?.remove();
+    const body = app.querySelector(".iss-table tbody");
+    body.innerHTML = miCurrentInstruments().filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial)).map((instrument) => {
+      const coverage = instrument.coverage === "Coverage expired" ? `<span class="iss-status iss-status--expired">${instrument.coverage}</span>` : instrument.coverage === "Expiring soon" ? `<span class="iss-status iss-status--soon">${instrument.coverage}</span>` : instrument.coverage;
+      return `<tr data-iss-row data-search="${instrument.serial.toLowerCase()} ${instrument.nickname.toLowerCase()}" data-group="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}"><td><input type="radio" name="instrument" data-iss-instrument aria-label="Select ${instrument.serial} ${instrument.nickname}" /></td><td></td><td><img src="assets/instruments/${instrument.image}" alt="" /></td><td><button type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td>${instrument.group}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${coverage}</td></tr>`;
+    }).join("");
+    const total = app.querySelector(".iss-results-total");
+    if (total) total.textContent = String(miCurrentInstruments().length);
+  }
   mountTicketStepViewer(1);
   mountNativeFlowActionBar();
   wireInstrumentSupportSelection();
@@ -6934,13 +7544,87 @@ function wireServicePlanContacts() {
   wireRouteControls();
 }
 
+function applyServicePlanApprovalState() {
+  const top = app.querySelector(".splan-top");
+  const contactGrid = app.querySelector(".splan-contact-grid");
+  if (!top || !contactGrid) return;
+  contactGrid.querySelectorAll(".splan-card").forEach((card, index) => {
+    if (index > 0) card.remove();
+  });
+  const banner = document.createElement("section");
+  banner.className = "splan-approval-banner";
+  banner.setAttribute("aria-labelledby", "splan-approval-banner-title");
+  banner.innerHTML = `<div class="splan-approval-banner__content"><img src="assets/service-plan/contact-confirmation.svg" alt="" /><div><h2 id="splan-approval-banner-title">Confirm you are the service plan contact</h2><p>Your colleague recommended you as the service plan contact for certain instrument(s). Please click the button to review and confirm.<br />If you become the service plan contact, you will receive communications regarding your service plan updates and renewals.</p></div></div><button type="button" data-service-plan-review>Review and confirm</button>`;
+  top.after(banner);
+}
+
+function closeServicePlanApprovalDialogs() {
+  if (servicePlanApprovalDialog?.open) servicePlanApprovalDialog.close();
+  if (servicePlanDeclineDialog?.open) servicePlanDeclineDialog.close();
+}
+
+function resolveServicePlanApproval({ accepted = false } = {}) {
+  servicePlanApprovalPending = false;
+  servicePlanApprovalAcceptedNotice = accepted;
+  closeServicePlanApprovalDialogs();
+  renderServicePlanContacts();
+  if (accepted) showToast("You are now the service plan contact.", { title: "Success:", variant: "success", duration: 5000 });
+}
+
+function applyServicePlanApprovalSuccessState() {
+  const content = app.querySelector(".splan-content");
+  if (!content) return;
+  const notice = document.createElement("section");
+  notice.className = "splan-approval-success";
+  notice.setAttribute("role", "status");
+  notice.innerHTML = `<div class="splan-approval-success__content"><img src="assets/icons/notifications/info/size=24px, style=bold.svg" alt="" /><p><strong>Note:</strong> XX instrument(s) added to My Instruments. In addition to service plan notifications, you will receive automated Services Central notifications for the instrument(s). <button type="button" data-route="notifications">Manage automated notifications</button><img src="assets/icons/navigation/bell settings/size=24px, style=mono.svg" alt="" /></p></div><button type="button" data-service-plan-success-close aria-label="Close notification"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>`;
+  content.prepend(notice);
+}
+
+function wireServicePlanApprovalSuccessState() {
+  app.querySelector("[data-service-plan-success-close]")?.addEventListener("click", () => {
+    servicePlanApprovalAcceptedNotice = false;
+    app.querySelector(".splan-approval-success")?.remove();
+  });
+}
+
+function wireServicePlanApprovalState() {
+  if (!servicePlanApprovalPending || !servicePlanApprovalDialog || !servicePlanDeclineDialog) return;
+  const openApproval = () => {
+    if (servicePlanDeclineDialog.open) servicePlanDeclineDialog.close();
+    if (!servicePlanApprovalDialog.open) servicePlanApprovalDialog.showModal();
+  };
+  app.querySelector("[data-service-plan-review]")?.addEventListener("click", openApproval);
+  servicePlanApprovalDialog.querySelectorAll("[data-service-plan-approval-close]").forEach((button) => button.onclick = () => servicePlanApprovalDialog.close());
+  servicePlanApprovalDialog.querySelector("[data-service-plan-accept]").onclick = () => resolveServicePlanApproval({ accepted: true });
+  servicePlanApprovalDialog.querySelector("[data-service-plan-decline]").onclick = () => {
+    servicePlanApprovalDialog.close();
+    servicePlanDeclineDialog.showModal();
+  };
+  servicePlanDeclineDialog.querySelectorAll("[data-service-plan-decline-cancel]").forEach((button) => button.onclick = () => {
+    servicePlanDeclineDialog.close();
+    openApproval();
+  });
+  servicePlanDeclineDialog.querySelector("[data-service-plan-decline-confirm]").onclick = () => resolveServicePlanApproval();
+  if (!servicePlanApprovalPromptShown) {
+    servicePlanApprovalPromptShown = true;
+    openApproval();
+  }
+}
+
 function renderServicePlanContacts() {
   const template = document.querySelector("#service-plan-contacts-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
   mountPlatformSidebar("service-plan-contacts");
   mountFooter();
+  if (shouldShowAccountEmptyState()) applyServicePlanContactsZeroState();
+  else if (new URL(window.location.href).searchParams.get("contacts") === "empty") applyServicePlanContactsZeroState({ contactsAvailable: true });
+  else if (servicePlanApprovalPending) applyServicePlanApprovalState();
+  else if (servicePlanApprovalAcceptedNotice) applyServicePlanApprovalSuccessState();
   wireServicePlanContacts();
+  wireServicePlanApprovalState();
+  wireServicePlanApprovalSuccessState();
   document.title = "Service plan contacts — Services Central";
 }
 
@@ -7020,6 +7704,10 @@ function wireConsumables(consumablesSupportPortalDialog) {
 function renderConsumables() {
   const template = document.querySelector("#consumables-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  if (isEuropeLePrototype()) {
+    app.querySelector(".screen--consumables")?.classList.add("cons--europe-le");
+    app.querySelector(".cons-columns")?.remove();
+  }
   mountTopbarSc();
   mountPlatformSidebar("consumables");
   mountFooter();
@@ -7527,7 +8215,10 @@ function renderInstallations(expanded = false, progressExpanded = false) {
   wireInstallations(expanded, progressExpanded);
   if (!installationPendingShownForVisit) {
     installationPendingShownForVisit = true;
-    installationPendingDialog.showModal();
+    if (installationWelcomeFromEmail) {
+      installationWelcomeFromEmail = false;
+      installationWelcomeDialog.showModal();
+    } else installationPendingDialog.showModal();
   }
 }
 
@@ -7768,6 +8459,7 @@ function renderFlow(route) {
   const template = document.querySelector("#flow-template");
   app.replaceChildren(template.content.cloneNode(true));
   const section = app.querySelector(".screen--flow");
+  const stage = app.querySelector(".flow-stage");
   const canvas = app.querySelector("[data-flow-canvas]");
   const image = app.querySelector("[data-flow-image]");
   section.setAttribute("aria-label", screen.title);
@@ -7781,7 +8473,25 @@ function renderFlow(route) {
   image.width = screen.width;
   image.height = screen.height;
   image.alt = screen.title;
+  if (screen.emailSkin) {
+    stage.classList.add("flow-stage--email-client");
+    canvas.classList.add("flow-canvas--fixed-email");
+    canvas.style.setProperty("--email-height", `${screen.height}px`);
+    const emailSkin = document.createElement("section");
+    emailSkin.className = "flow-email-skin";
+    emailSkin.setAttribute("aria-label", "Email notification viewer");
+    emailSkin.innerHTML = `<header class="flow-email-skin__toolbar"><strong>Inbox</strong><span>${aiEscapeHtml(screen.emailLabel || "Email notification")}</span></header>
+      <div class="flow-email-skin__message-header">
+        <div><strong>${aiEscapeHtml(screen.emailSubject || screen.title)}</strong><span>${aiEscapeHtml(screen.emailSender || "Thermo Fisher Scientific <notifications@thermofisher.com>")}</span></div>
+        <time datetime="2026-08-21T09:41:00">${aiEscapeHtml(screen.emailTime || "Today, 9:41 AM")}</time>
+      </div>
+      <div class="flow-email-skin__viewport"></div>`;
+    canvas.before(emailSkin);
+    emailSkin.querySelector(".flow-email-skin__viewport").append(canvas);
+  }
   addScreenSpecificHotspots(canvas, route, screen);
+  if (route === "installation-order") canvas.querySelector(".flow-cta")?.setAttribute("data-installation-email-entry", "");
+  if (route === "service-plan-approval") canvas.querySelector(".flow-cta")?.setAttribute("data-service-plan-email-entry", "");
   wireRouteControls();
   document.title = `${screen.title} — Services Central`;
 }
@@ -7789,12 +8499,27 @@ function renderFlow(route) {
 function render() {
   disconnectEditSpcCanvas();
   document.querySelector(".wg-premium-tooltip")?.classList.remove("is-visible");
-  const route = routeFromHash();
+  let route = routeFromHash();
+  if (route === "education" && isKoreaCmdPrototype()) {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.hash = "#korea-education";
+    window.history.replaceState({ regionalRoute: "korea-education" }, "", nextUrl);
+    route = "korea-education";
+  }
+  if (isUnmappedPrototypeUser() && (isInstallationsSectionRoute(route) || route === "installation-support")) {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.hash = "#dashboard";
+    window.history.replaceState({ unavailableRoute: route }, "", nextUrl);
+    route = "dashboard";
+  }
   const isInstallationsPage = route === "installations" || route === "installations-expanded" || route === "installations-progress";
   const isInstallationsSection = isInstallationsPage || route === "installation-faqs" || route === "installation-support" || isInstallationShellDetailRoute(route);
   if (!isInstallationsSection) installationPendingShownForVisit = false;
   if (addUserOrderDialog.open) addUserOrderDialog.close();
   if (preferredDeliveryDatesDialog.open && !isInstallationsPage) preferredDeliveryDatesDialog.close();
+  if (installationWelcomeDialog.open && !isInstallationsPage) installationWelcomeDialog.close();
+  if (servicePlanApprovalDialog.open && route !== "service-plan-contacts") servicePlanApprovalDialog.close();
+  if (servicePlanDeclineDialog.open && route !== "service-plan-contacts") servicePlanDeclineDialog.close();
   if (deliveryChecklistUploadDialog.open && !isInstallationsPage) deliveryChecklistUploadDialog.close();
   if (deliveryChecklistConfirmationDialog.open && !isInstallationsPage) deliveryChecklistConfirmationDialog.close();
   if (deliveryDatesConfirmationDialog.open && !isInstallationsPage) deliveryDatesConfirmationDialog.close();
@@ -7813,6 +8538,7 @@ function render() {
     mountTopbarSc();
     mountPlatformSidebar("dashboard");
     mountFooter();
+    if (shouldShowAccountEmptyState()) applyUnmappedDashboard();
     document.title = "Services Central Dashboard";
     wireDashboard();
   } else if (route === "edit-spc") {
@@ -7898,17 +8624,21 @@ function render() {
   } else {
     renderFlow(route);
   }
+  syncFlowToolbarTitle();
   window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 }
 
-FLOW_MENU.forEach(([label, route]) => {
+FLOW_MENU.forEach(({ label, mode, route, region, placeholder }) => {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "flow-link";
   button.textContent = label;
   button.addEventListener("click", () => {
+    if (placeholder) return;
     flowsDialog.close();
-    setRoute(route);
+    if (region) startPrototypeRegionalFlow(region, route);
+    else if (route) startPrototypeRouteFlow(route);
+    else startPrototypeFlow(mode);
   });
   flowsGrid.append(button);
 });
@@ -7938,6 +8668,7 @@ miEditColumnsDialog.addEventListener("click", (event) => {
 });
 document.querySelector("[data-close-flows]").addEventListener("click", () => flowsDialog.close());
 document.querySelectorAll("[data-installation-pending-close], [data-installation-pending-continue]").forEach((button) => button.addEventListener("click", () => installationPendingDialog.close()));
+installationWelcomeDialog.querySelectorAll("[data-installation-welcome-close], [data-installation-welcome-continue]").forEach((button) => button.addEventListener("click", () => installationWelcomeDialog.close()));
 document.querySelector("[data-installation-pending-instruments]").addEventListener("click", () => {
   installationPendingDialog.close();
   setRoute("my-instruments");
@@ -8185,6 +8916,9 @@ flowsDialog.addEventListener("click", (event) => {
 });
 installationPendingDialog.addEventListener("click", (event) => {
   if (event.target === installationPendingDialog) installationPendingDialog.close();
+});
+installationWelcomeDialog.addEventListener("click", (event) => {
+  if (event.target === installationWelcomeDialog) installationWelcomeDialog.close();
 });
 addUserOrderDialog.addEventListener("click", (event) => {
   if (event.target === addUserOrderDialog) {
