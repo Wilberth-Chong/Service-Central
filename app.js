@@ -17,6 +17,7 @@ const deliveryDatesPauseDialog = document.querySelector("#delivery-dates-pause-d
 const installationStatusScenariosDialog = document.querySelector("#installation-status-scenarios-dialog");
 const installationActivityDialog = document.querySelector("#installation-activity-dialog");
 const miEditColumnsDialog = document.querySelector("#mi-edit-columns-dialog");
+const miEditColumnsDefaultRowsMarkup = miEditColumnsDialog.querySelector("tbody").innerHTML;
 const miCreateDialog = document.querySelector("#mi-create-dialog");
 const miCreateSystemDialog = document.querySelector("#mi-create-system-dialog");
 const miCreateGroupDialog = document.querySelector("#mi-create-group-dialog");
@@ -65,6 +66,7 @@ let selectedSupportHistoryTicket = null;
 let selectedOpenSupportTicketInstrument = null;
 let installationSupportReturnRoute = "request-support";
 const openSupportTicketDraft = { instrument: null, request: {}, files: [], contact: {} };
+const pmRequestDraft = { instruments: [], schedulingInstruments: [], requestInstruments: [], schedulingDetails: "", requestDetails: "", contact: {} };
 const qualificationRequestDraft = { instruments: [], additionalDetails: "", contact: {} };
 const calibrationRequestDraft = { instruments: [], additionalDetails: "", serviceNeeds: { level: "", interval: "" }, contact: {} };
 const servicePlanRequestDraft = { instruments: [], additionalDetails: "", coverageNeeds: { downtime: "", priorities: [] }, contact: {} };
@@ -231,6 +233,12 @@ const ROUTES = {
   "service-plan-contacts": { title: "Service plan contacts", src: "assets/flows/service-plan-contacts.png", width: 1440, height: 1800, kind: "app" },
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
   "request-pm": { title: "Request PM scheduling", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
+  "request-pm-direct-review": { title: "Request PM scheduling — confirmed PM review", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
+  "request-pm-status": { title: "Request PM scheduling — view PM status", src: "assets/flows/request-pm.png", width: 1440, height: 1827, kind: "app" },
+  "request-pm-contact": { title: "Request PM scheduling — confirm contact information", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
+  "request-pm-review": { title: "Request PM scheduling — review and submit", src: "assets/flows/request-pm.png", width: 1440, height: 1900, kind: "app" },
+  "pm-request-summary": { title: "Request PM scheduling — submitted", src: "assets/flows/request-pm.png", width: 1440, height: 1623, kind: "app" },
+  "request-pm-details": { title: "Request PM scheduling — add request details", src: "assets/flows/request-pm.png", width: 1440, height: 1827, kind: "app" },
   "request-serviceplan": { title: "Request a service plan quote", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-serviceplan-details": { title: "Request a service plan quote — add request details", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
   "request-serviceplan-contact": { title: "Request a service plan quote — confirm contact information", src: "assets/flows/request-support.png", width: 1440, height: 1500, kind: "app" },
@@ -2025,6 +2033,24 @@ function isMiInstrumentDetailRoute(route) {
 
 const MI_OPTIONAL_COLUMNS = ["instrument-images", "nickname", "users", "groups", "type", "model", "coverage", "coverage-end", "added-date"];
 const miVisibleColumns = new Set(MI_OPTIONAL_COLUMNS);
+const SUPPORT_HISTORY_COLUMNS = [
+  { key: "status", index: 1, label: "Status", width: 113, required: true },
+  { key: "ticket", index: 2, label: "Ticket no.", width: 118, required: true },
+  { key: "serial", index: 6, label: "Serial no.", width: 108, required: true },
+  { key: "type", index: 3, label: "Ticket type", width: 120 },
+  { key: "subject", index: 4, label: "Subject", width: 103 },
+  { key: "model", index: 7, label: "Model", width: 118 },
+  { key: "nickname", index: 8, label: "Nickname", width: 118 },
+  { key: "groups", index: 9, label: "Groups", width: 113 },
+  { key: "contact", index: 10, label: "Contact", width: 113 },
+  { key: "created", index: 11, label: "Created date", width: 114 },
+  { key: "closed", index: 12, label: "Closed date", width: 118 },
+];
+const SUPPORT_HISTORY_FIXED_COLUMNS = [
+  { index: 0, width: 24 },
+  { index: 5, width: 40 },
+];
+const supportHistoryVisibleColumns = new Set(SUPPORT_HISTORY_COLUMNS.map(({ key }) => key));
 function instrumentRowMarkup(instrument) {
   const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
   const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
@@ -3658,6 +3684,10 @@ function activateMyInstrumentsTab(tabName, { pushHistory = false } = {}) {
 }
 
 function syncMiColumnDialog() {
+  if (miEditColumnsDialog.dataset.editColumnsContext === "support-history" || !miEditColumnsDialog.querySelector("[data-mi-column]")) {
+    miEditColumnsDialog.querySelector("tbody").innerHTML = miEditColumnsDefaultRowsMarkup;
+    delete miEditColumnsDialog.dataset.editColumnsContext;
+  }
   miEditColumnsDialog.querySelectorAll("[data-mi-column]").forEach((checkbox) => {
     checkbox.checked = checkbox.disabled || miVisibleColumns.has(checkbox.dataset.miColumn);
   });
@@ -5357,14 +5387,14 @@ function renderAddInstruments() {
 }
 
 const SUPPORT_HISTORY_TICKETS = [
-  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", systemNames: ["Alpine", "Sasha"] },
-  { status: "In progress", ticket: "46521863", type: "Service Request", subject: "Repair 0000123459", serial: "1009999", model: "VQH0000VEN", nickname: "Column-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "quote" },
-  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---", icon: "support", systemNames: ["Alpine", "Sasha"] },
-  { status: "In progress", ticket: "465218988", type: "Inquiry", subject: "Repair instrument", serial: "1009997", model: "VQF000PUMP", nickname: "Pump-2B", group: "HPLC 2B...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
-  { status: "In progress", ticket: "46927364", type: "Tech Support", subject: "Repair instrument", serial: "8044421", model: "ULT3R0PDET", nickname: "Pump-RD", group: "Biotherapeutics...", contact: "Alma...", created: "18 Oct 2020", closed: "---" },
-  { status: "In progress", ticket: "46719836", type: "Inquiry", subject: "Need support for error", serial: "8044422", model: "ULT3S0MISC", nickname: "Misc-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
-  { status: "In progress", ticket: "46075402", type: "Inquiry", subject: "Need support for error", serial: "8044423", model: "ULT3S00DET", nickname: "Detector-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
-  { status: "In progress", ticket: "46917372", type: "Inquiry", subject: "Need support for error", serial: "8044424", model: "ULT3SSA000", nickname: "Sampler-RD", group: "Biotherapeutics...", contact: "Alma...", created: "12 May 2020", closed: "---" },
+  { status: "Open", ticket: "5551726344", type: "Tech Support", subject: "Won’t turn on", serial: "1009996", model: "VQF0000DET", nickname: "Detector-2B", group: "HPLC 2B...", contact: "Alma Duncan", created: "18 Oct 2020", closed: "---", systemNames: ["Alpine", "Sasha"] },
+  { status: "In progress", ticket: "46521863", type: "Service Request", subject: "Repair 0000123459", serial: "1009999", model: "VQH0000VEN", nickname: "Column-2B", group: "HPLC 2B...", contact: "Alma Duncan", created: "18 Oct 2020", closed: "---", icon: "quote" },
+  { status: "In progress", ticket: "46927364", type: "PM (Contract)", subject: "Preventive maintenance", serial: "1009998", model: "VQF00SAMPL", nickname: "Sampler-2B", group: "HPLC 2B...", contact: "Alma Duncan", created: "18 Oct 2020", closed: "---", icon: "support", systemNames: ["Alpine", "Sasha"] },
+  { status: "In progress", ticket: "465218988", type: "Inquiry", subject: "Repair instrument", serial: "1009997", model: "VQF000PUMP", nickname: "Pump-2B", group: "HPLC 2B...", contact: "Alma Duncan", created: "18 Oct 2020", closed: "---" },
+  { status: "In progress", ticket: "46927364", type: "Tech Support", subject: "Repair instrument", serial: "8044421", model: "ULT3R0PDET", nickname: "Pump-RD", group: "Biotherapeutics...", contact: "Alma Duncan", created: "18 Oct 2020", closed: "---" },
+  { status: "In progress", ticket: "46719836", type: "Inquiry", subject: "Need support for error", serial: "8044422", model: "ULT3S0MISC", nickname: "Misc-RD", group: "Biotherapeutics...", contact: "Alma Duncan", created: "12 May 2020", closed: "---" },
+  { status: "In progress", ticket: "46075402", type: "Inquiry", subject: "Need support for error", serial: "8044423", model: "ULT3S00DET", nickname: "Detector-RD", group: "Biotherapeutics...", contact: "Alma Duncan", created: "12 May 2020", closed: "---" },
+  { status: "In progress", ticket: "46917372", type: "Inquiry", subject: "Need support for error", serial: "8044424", model: "ULT3SSA000", nickname: "Sampler-RD", group: "Biotherapeutics...", contact: "Alma Duncan", created: "12 May 2020", closed: "---" },
   { status: "In progress", ticket: "46003524", type: "Depot Repair", subject: "Need support for error", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "", group: "", contact: "Tyler Durden", created: "12 May 2020", closed: "---" },
   { status: "Closed", ticket: "46195527", type: "PM (Contract)", subject: "Preventive maintenance", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
   { status: "Closed", ticket: "46939573", type: "Inquiry", subject: "Need support", serial: "TSQ-...", model: "MSTSQQUTIS", nickname: "TSQ-1", group: "Precision...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
@@ -5519,6 +5549,37 @@ function canShowSupportHistoryTooltip(trigger) {
   return !trigger.matches("[data-sh-tooltip]") || trigger.scrollWidth > trigger.clientWidth;
 }
 
+function applySupportHistoryColumnVisibility() {
+  const table = app.querySelector(".sh-table");
+  if (!table) return;
+  const visibleColumns = SUPPORT_HISTORY_COLUMNS.filter(({ key }) => supportHistoryVisibleColumns.has(key));
+  const activeColumns = [...SUPPORT_HISTORY_FIXED_COLUMNS, ...visibleColumns];
+  const totalWidth = activeColumns.reduce((sum, column) => sum + column.width, 0);
+  const applyColumn = (column, visible) => {
+    const columnIndex = column.index + 1;
+    const width = visible ? `${(column.width / totalWidth) * 100}%` : "0";
+    table.querySelector(`col:nth-child(${columnIndex})`).style.display = visible ? "" : "none";
+    table.querySelector(`col:nth-child(${columnIndex})`).style.width = width;
+    table.querySelectorAll(`tr > :nth-child(${columnIndex})`).forEach((cell) => { cell.hidden = !visible; });
+  };
+  SUPPORT_HISTORY_FIXED_COLUMNS.forEach((column) => applyColumn(column, true));
+  SUPPORT_HISTORY_COLUMNS.forEach((column) => {
+    const visible = supportHistoryVisibleColumns.has(column.key);
+    applyColumn(column, visible);
+  });
+}
+
+function openSupportHistoryColumnDialog() {
+  const tableBody = miEditColumnsDialog.querySelector("tbody");
+  miEditColumnsDialog.dataset.editColumnsContext = "support-history";
+  miEditColumnsDialog.querySelector("[data-mi-edit-columns-title]")?.replaceChildren("Edit columns");
+  miEditColumnsDialog.querySelector("[data-mi-column-search]").value = "";
+  tableBody.innerHTML = SUPPORT_HISTORY_COLUMNS.map(({ key, label, required }) => `<tr data-sh-column-row data-search="${label.toLowerCase()}"><td>${label}</td><td><input type="checkbox" data-sh-edit-column="${key}" aria-label="${required ? `${label} is always displayed` : `Display ${label}` }"${supportHistoryVisibleColumns.has(key) ? " checked" : ""}${required ? " checked disabled" : ""} /></td></tr>`).join("");
+  miEditColumnsDialog.querySelector(".mi-edit-columns-modal__table-wrap").scrollTop = 0;
+  miEditColumnsDialog.showModal();
+  miEditColumnsDialog.querySelector("[data-mi-column-search]").focus({ preventScroll: true });
+}
+
 function wireSupportHistory() {
   const tbody = app.querySelector("[data-sh-rows]");
   const datePickerRoot = app.querySelector("[data-sh-date-picker]");
@@ -5560,6 +5621,7 @@ function wireSupportHistory() {
   new window.DateRangePicker(datePickerRoot);
   const renderRows = () => {
     tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join("");
+    applySupportHistoryColumnVisibility();
     tbody.querySelectorAll("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]").forEach((trigger) => {
       trigger.addEventListener("pointerenter", () => { if (canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true); });
       trigger.addEventListener("pointerleave", () => setSupportHistoryTooltip(trigger, false));
@@ -5638,7 +5700,7 @@ function wireSupportHistory() {
     }
     if (event.target.closest("[data-sh-group]")) showToast("Instrument group opened");
   });
-  app.querySelector("[data-sh-edit-columns]").addEventListener("click", () => showToast("Column editor opened"));
+  app.querySelector("[data-sh-edit-columns]").addEventListener("click", openSupportHistoryColumnDialog);
   app.querySelectorAll("[data-sh-menu]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.shMenu} filter opened`)));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -6197,43 +6259,243 @@ function renderOpenSupportTicketReview() {
   document.title = "Open a support ticket — review and submit";
 }
 
+function preparePmStepOne() {
+  const selectAll = app.querySelector(".pm-select-all");
+  selectAll.outerHTML = '<button class="pm-select-all qualification-select-all" type="button" data-pm-select-all aria-pressed="false">Select all 240 instruments</button>';
+  const applied = document.createElement("div");
+  applied.className = "sh-applied-filters iss-applied-filters";
+  applied.dataset.pmAppliedFilters = "";
+  applied.hidden = true;
+  applied.innerHTML = '<div class="iss-applied-filters__badges" data-pm-applied-badges></div><button class="sh-clear-filters" type="button" data-pm-clear-filters hidden>Clear filter(s)</button>';
+  app.querySelector("[data-pm-select-all]").after(applied);
+
+  const tableWrap = app.querySelector(".pm-table-wrap");
+  tableWrap.className = "iss-table-wrap pm-selection-table-wrap";
+  const table = tableWrap.querySelector(".pm-table");
+  table.className = "iss-table pm-selection-table";
+  const systemRow = table.querySelector(".pm-system");
+  systemRow.className = "iss-system pm-system";
+  table.tHead.rows[0].cells[0].innerHTML = '<input type="checkbox" data-pm-select-all-table aria-label="Select all instruments" />';
+  systemRow.cells[1].innerHTML = '<button class="iss-system-toggle" type="button" data-pm-system-toggle aria-expanded="true" aria-label="Collapse system"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>';
+  systemRow.cells[2].innerHTML = '<img src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" />';
+  [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].forEach(([key, label], index) => {
+    table.tHead.rows[0].cells[index + 5].innerHTML = `<div data-pm-filter-host="${key}" aria-label="${label} filter"></div>`;
+  });
+
+  const pagination = app.querySelector(".pm-pagination");
+  pagination.className = "iss-pagination pm-pagination";
+  const pageSize = pagination.querySelector(".pm-page-size");
+  pageSize.className = "iss-page-size";
+  pageSize.dataset.pmPageSize = "";
+  pageSize.setAttribute("aria-expanded", "false");
+  const pageSizeControl = document.createElement("span");
+  pageSizeControl.className = "iss-page-size-control";
+  pageSize.replaceWith(pageSizeControl);
+  pageSizeControl.append(pageSize);
+  const pageSizeMenu = document.createElement("div");
+  pageSizeMenu.className = "iss-page-size-menu";
+  pageSizeMenu.dataset.pmPageSizeMenu = "";
+  pageSizeMenu.hidden = true;
+  pageSizeMenu.innerHTML = [10, 20, 30, 40, 50].map((value) => `<button type="button" data-pm-page-size-option="${value}" aria-selected="${value === 20}">${value}</button>`).join("");
+  pageSizeControl.append(pageSizeMenu);
+  pagination.querySelector("strong").className = "iss-results-total";
+  pagination.querySelectorAll(".pm-page-arrow").forEach((button) => { button.className = "iss-page-arrow"; });
+  pagination.querySelectorAll(".pm-page-number").forEach((button) => { button.className = button.classList.contains("is-current") ? "iss-page-number is-current" : "iss-page-number"; });
+  pagination.querySelector("span:last-of-type").className = "iss-go-to";
+}
+
+function populatePmStatusTables() {
+  if (!pmRequestDraft.instruments.length) return;
+  const selected = new Map(pmRequestDraft.instruments.map((instrument) => [instrument.serial, instrument]));
+  const image = (instrument) => instrument?.image || "assets/instruments/tsq.png";
+  const directRow = (serial, details) => {
+    const instrument = selected.get(serial);
+    if (!instrument) return "";
+    const checkbox = details.selectable ? `<input type="checkbox" checked data-pm-status-instruments="${serial}" aria-label="Select ${serial}" />` : "";
+    return `<tr><td>${checkbox}</td><td>${details.date}</td><td><img src="${image(instrument)}" alt="" /></td><td><a href="#instrument-detail-${serial}">${serial}</a></td><td>${instrument.nickname}</td>${details.tail}</tr>`;
+  };
+  const systemRows = (group, details) => {
+    const instruments = group.serials.map((serial) => selected.get(serial)).filter(Boolean);
+    if (!instruments.length) return "";
+    const checkbox = details.selectable ? `<input type="checkbox" checked data-pm-status-instruments="${instruments.map((instrument) => instrument.serial).join(",")}" aria-label="Select ${group.nickname}" />` : "";
+    const parent = `<tr><td>${checkbox}</td><td>${group.date}</td><td class="pm-status-system"><button class="pm-status-system-toggle" type="button" data-pm-status-system-toggle="${group.id}" aria-expanded="false" aria-label="Expand ${group.nickname}"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /></button><img src="assets/icons/general/in systems/size=24px, style=mono.svg" alt="" /></td><td><a href="#system">System</a></td><td>${group.nickname}</td>${details.systemTail || ""}</tr>`;
+    const children = instruments.map((instrument) => `<tr data-pm-status-child="${group.id}" hidden><td></td><td></td><td><img src="${image(instrument)}" alt="" /></td><td><a href="#instrument-detail-${instrument.serial}">${instrument.serial}</a></td><td>${instrument.nickname}</td>${details.childTail || ""}</tr>`).join("");
+    return parent + children;
+  };
+  const tables = [
+    {
+      label: "Confirmed PM dates", selectable: false,
+      direct: ["TSQ-Z-12347", "SN98359W"],
+      directDetails: { date: "30 Apr 2024", tail: "<td>tamara.miller@company.com</td>" },
+      groups: [
+        { id: "confirmed-one", date: "02 May 2024", nickname: "Name 07", serials: ["1009996"] },
+        { id: "confirmed-multiple", date: "Multiple", nickname: "Name 08", serials: ["1009999", "1009998"] },
+      ],
+      systemDetails: { selectable: false, systemTail: "<td>neil.wright@company.com</td>", childTail: "<td></td>" },
+    },
+    {
+      label: "Request PM scheduling instruments", selectable: true,
+      direct: ["TSQ-Z-12349", "SN98358W"],
+      directDetails: { selectable: true, date: "Contact us", tail: "<td><span class=\"pm-status pm-status--contract\">Under contract</span></td><td><span class=\"pm-status pm-status--open\">Open</span></td>" },
+      groups: [{ id: "scheduling-one", date: "Contact us", nickname: "Name 01", serials: ["TSQ-Z-12346"] }],
+      systemDetails: { selectable: true, systemTail: "<td></td><td></td>", childTail: "<td></td><td></td>" },
+    },
+    {
+      label: "Request PM instruments", selectable: true,
+      direct: ["SN98359W"],
+      directDetails: { selectable: true, date: "Request a quote", tail: "<td><span class=\"pm-status pm-status--neutral\">Expired</span></td><td>18 Dec 2023</td>" },
+      groups: [{ id: "request-one", date: "Request a quote", nickname: "Name 03", serials: ["1009997"] }],
+      systemDetails: { selectable: true, systemTail: "<td></td><td></td>", childTail: "<td></td><td></td>" },
+    },
+  ];
+  tables.forEach((definition) => {
+    const table = app.querySelector(`table[aria-label="${definition.label}"]`);
+    const body = table?.tBodies[0];
+    if (!body) return;
+    body.innerHTML = definition.direct.map((serial) => directRow(serial, definition.directDetails)).join("") + definition.groups.map((group) => systemRows(group, definition.systemDetails)).join("");
+  });
+}
+
+function collectPmStatusInstruments(tableLabel) {
+  const table = app.querySelector(`table[aria-label="${tableLabel}"]`);
+  const serials = [...new Set([...table?.querySelectorAll('tbody input[data-pm-status-instruments]:checked') || []]
+    .flatMap((checkbox) => checkbox.dataset.pmStatusInstruments.split(","))
+    .filter(Boolean))];
+  return serials.map((serial) => pmRequestDraft.instruments.find((instrument) => instrument.serial === serial)).filter(Boolean);
+}
+
 function wireRequestPm() {
   const continueButton = app.querySelector('[data-actionbar-action="primary"]');
   const search = app.querySelector("[data-pm-search]");
   const selectAll = app.querySelector("[data-pm-select-all]");
-  const system = app.querySelector("[data-pm-system]");
-  const instruments = [...app.querySelectorAll("[data-pm-instrument]")];
+  const tableSelectAll = app.querySelector("[data-pm-select-all-table]");
+  const systemRow = app.querySelector(".pm-system");
+  const systemToggle = app.querySelector("[data-pm-system-toggle]");
+  const systemCheckbox = app.querySelector("[data-pm-system]");
+  const rows = [...app.querySelectorAll("[data-pm-row]")];
+  const collapsibleRows = rows.slice(0, 5);
+  let expanded = true;
 
-  const updateSelection = () => {
-    const selected = instruments.filter((input) => input.checked).length;
-    system.checked = selected > 0 && selected === instruments.length;
-    system.indeterminate = selected > 0 && selected < instruments.length;
-    selectAll.checked = system.checked;
-    selectAll.indeterminate = system.indeterminate;
-    continueButton.disabled = selected === 0;
-    const pmSelectedCount = app.querySelector("[data-pm-selected-count]");
-    if (pmSelectedCount) pmSelectedCount.textContent = String(selected);
-  };
-
-  const setAll = (checked) => {
-    instruments.forEach((input) => { input.checked = checked; });
-    updateSelection();
-  };
-
-  system.addEventListener("change", () => setAll(system.checked));
-  selectAll.addEventListener("change", () => setAll(selectAll.checked));
-  instruments.forEach((input) => input.addEventListener("change", updateSelection));
-  search.addEventListener("input", () => {
-    const query = search.value.trim().toLowerCase();
-    app.querySelectorAll("[data-pm-row]").forEach((row) => {
-      row.hidden = Boolean(query) && !row.dataset.search.includes(query);
+  rows.forEach((row) => {
+    const cells = row.cells;
+    row.classList.add("iss-system-child");
+    row.dataset.group = cells[5]?.textContent.trim() || "—";
+    row.dataset.type = cells[6]?.textContent.trim() || "—";
+    row.dataset.model = cells[7]?.textContent.trim() || "—";
+    row.dataset.coverage = cells[8]?.textContent.trim() || "—";
+    row.querySelectorAll('img[src="assets/icons/actions/return/Size=16px, Style=Mono.svg"]').forEach((icon) => {
+      icon.src = "assets/icons/actions/system-return/Size=16px, Style=Mono.svg";
     });
   });
-  continueButton.addEventListener("click", () => showToast("Continue to View PM status"));
-  app.querySelectorAll("[data-pm-promo], [data-pm-filter], [data-pm-instrument-link]").forEach((button) => {
-    button.addEventListener("click", () => showToast(button.dataset.pmPromo || "Instrument details opened"));
+  const appliedFilters = app.querySelector("[data-pm-applied-filters]");
+  const appliedBadges = app.querySelector("[data-pm-applied-badges]");
+  const clearFiltersButton = app.querySelector("[data-pm-clear-filters]");
+  const filters = [["group", "Groups"], ["type", "Type"], ["model", "Model"], ["coverage", "Coverage"]].map(([key, label]) => {
+    const controlHost = app.querySelector(`[data-pm-filter-host="${key}"]`);
+    const host = document.createElement("div");
+    appliedBadges.append(host);
+    const options = [...new Set(rows.map((row) => row.dataset[key]).filter((value) => value && value !== "—"))];
+    return { key, filter: new window.MultiSelectFilter(host, { label, options: options.length ? options : ["—"], controlHost, menuStyle: "figma-column" }) };
   });
+  const updateAppliedFilters = () => {
+    const hasFilters = filters.some(({ filter }) => filter.values.length);
+    appliedFilters.hidden = !hasFilters;
+    clearFiltersButton.hidden = !hasFilters;
+  };
+  const updateSelection = () => {
+    const selected = rows.filter((row) => row.querySelector("[data-pm-instrument]").checked);
+    const selectedSystemRows = collapsibleRows.filter((row) => row.querySelector("[data-pm-instrument]").checked);
+    systemCheckbox.checked = selectedSystemRows.length === collapsibleRows.length;
+    systemCheckbox.indeterminate = selectedSystemRows.length > 0 && selectedSystemRows.length < collapsibleRows.length;
+    tableSelectAll.checked = selected.length === rows.length;
+    tableSelectAll.indeterminate = selected.length > 0 && selected.length < rows.length;
+    selectAll.setAttribute("aria-pressed", String(tableSelectAll.checked));
+    continueButton.disabled = selected.length === 0;
+  };
+  const filterRows = () => {
+    const query = search.value.trim().toLowerCase();
+    let visibleSystemInstrument = false;
+    rows.forEach((row) => {
+      const matchesSearch = !query || row.dataset.search.includes(query);
+      const matchesFilters = filters.every(({ key, filter }) => !filter.values.length || filter.values.includes(row.dataset[key]));
+      row.hidden = (!expanded && collapsibleRows.includes(row)) || !matchesSearch || !matchesFilters;
+      if (collapsibleRows.includes(row) && !row.hidden) visibleSystemInstrument = true;
+    });
+    systemRow.hidden = Boolean(query) && !visibleSystemInstrument;
+  };
+  const setAllRows = (checked) => { rows.forEach((row) => { row.querySelector("[data-pm-instrument]").checked = checked; }); updateSelection(); };
+  const setAllSystemRows = (checked) => { collapsibleRows.forEach((row) => { row.querySelector("[data-pm-instrument]").checked = checked; }); updateSelection(); };
+
+  search.addEventListener("input", filterRows);
+  selectAll.addEventListener("click", () => setAllRows(!tableSelectAll.checked));
+  tableSelectAll.addEventListener("change", () => setAllRows(tableSelectAll.checked));
+  systemCheckbox.addEventListener("change", () => setAllSystemRows(systemCheckbox.checked));
+  rows.forEach((row) => row.querySelector("[data-pm-instrument]").addEventListener("change", updateSelection));
+  systemToggle.addEventListener("click", () => {
+    expanded = !expanded;
+    systemToggle.setAttribute("aria-expanded", String(expanded));
+    systemToggle.setAttribute("aria-label", `${expanded ? "Collapse" : "Expand"} system`);
+    systemToggle.querySelector("img").style.transform = expanded ? "" : "rotate(-90deg)";
+    filterRows();
+  });
+  filters.forEach(({ filter }) => filter.host.addEventListener("multiselect-filter-change", () => { filterRows(); updateAppliedFilters(); }));
+  clearFiltersButton.addEventListener("click", () => { filters.forEach(({ filter }) => filter.clear()); updateAppliedFilters(); });
+
+  const pageSizeButton = app.querySelector("[data-pm-page-size]");
+  const pageSizeMenu = app.querySelector("[data-pm-page-size-menu]");
+  const closePageSizeMenu = () => { pageSizeMenu.hidden = true; pageSizeButton.setAttribute("aria-expanded", "false"); };
+  pageSizeButton.addEventListener("click", () => { pageSizeMenu.hidden = !pageSizeMenu.hidden; pageSizeButton.setAttribute("aria-expanded", String(!pageSizeMenu.hidden)); });
+  pageSizeMenu.querySelectorAll("[data-pm-page-size-option]").forEach((option) => option.addEventListener("click", () => {
+    const caret = pageSizeButton.querySelector("img");
+    pageSizeButton.replaceChildren(document.createTextNode(`${option.dataset.pmPageSizeOption} `), caret);
+    pageSizeMenu.querySelectorAll("[data-pm-page-size-option]").forEach((item) => item.setAttribute("aria-selected", String(item === option)));
+    closePageSizeMenu();
+  }));
+  document.addEventListener("mousedown", (event) => { if (!event.target.closest(".iss-page-size-control")) closePageSizeMenu(); });
+  continueButton.addEventListener("click", () => {
+    pmRequestDraft.instruments = rows.filter((row) => row.querySelector("[data-pm-instrument]").checked).map((row) => ({
+      serial: row.cells[3].textContent.trim(),
+      nickname: row.cells[4].textContent.trim(),
+      image: row.cells[2].querySelector("img")?.getAttribute("src") || "",
+    }));
+    if (pmRequestDraft.instruments.length === 1 && pmRequestDraft.instruments[0].serial === "TSQ-Z-12347") {
+      setRoute("request-pm-direct-review");
+      return;
+    }
+    setRoute("request-pm-status");
+  });
+  const promo = app.querySelector(".pm-promo");
+  const promotions = [
+    { title: "Save 35% on your next reversed phase column", message: "Save now on your next C18, phenyl or other reversed phase column.", detail: "Promo expires 29 Mar 2024. Applicable for online orders on analytical columns." },
+    { title: "Keep your instruments ready for what’s next", message: "Request planned maintenance to help keep your lab running smoothly.", detail: "Talk with a Thermo Fisher representative about scheduling options." },
+  ];
+  if (promo) {
+    const promoCopy = promo.querySelector("[data-pm-promo-copy]");
+    let promoIndex = Number(promo.dataset.pmPromoIndex || 0);
+    const renderPromotion = () => {
+      const current = promotions[promoIndex];
+      promo.dataset.pmPromoIndex = String(promoIndex);
+      promo.setAttribute("aria-label", `Promotion ${promoIndex + 1} of ${promotions.length}`);
+      promoCopy.innerHTML = `<h2>${current.title}</h2><p><strong>${current.message}</strong></p><small>${current.detail}</small>`;
+    };
+    promo.querySelectorAll("[data-pm-promo]").forEach((button) => button.addEventListener("click", () => {
+      promoIndex = button.dataset.pmPromo === "next" ? (promoIndex + 1) % promotions.length : (promoIndex - 1 + promotions.length) % promotions.length;
+      renderPromotion();
+    }));
+    renderPromotion();
+  }
+  const directReviewTrigger = app.querySelector("[data-pm-direct-review-trigger]");
+  directReviewTrigger?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setRoute("request-pm-direct-review");
+  }, { capture: true });
+  app.querySelectorAll("[data-pm-instrument-link]:not([data-pm-direct-review-trigger])").forEach((button) => button.addEventListener("click", () => {
+    showToast("Instrument details opened");
+  }));
   updateSelection();
+  filterRows();
+  updateAppliedFilters();
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
@@ -6241,10 +6503,344 @@ function wireRequestPm() {
 function renderRequestPm() {
   const template = document.querySelector("#request-pm-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  const legacySteps = app.querySelector(".pm-steps");
+  const stepMount = document.createElement("div");
+  stepMount.dataset.ticketStepViewer = "";
+  legacySteps.replaceWith(stepMount);
+  mountTicketStepViewer(1, {
+    labels: ["Select instrument(s)", "View PM status", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel: "PM scheduling request progress",
+    firstStepProgress: "calc(20% - 18px)",
+  });
+  preparePmStepOne();
   mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-support" });
   mountNativeFlowActionBar();
   wireRequestPm();
   document.title = "Request PM scheduling — Services Central";
+}
+
+function renderRequestPmDirectReview() {
+  const template = document.querySelector("#pm-direct-review-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-pm" });
+  mountTicketStepViewer(2, {
+    labels: ["Select instrument(s)", "Review"],
+    ariaLabel: "PM scheduled instrument review",
+    firstStepProgress: "calc(100% - 36px)",
+  });
+  const currentStep = app.querySelector(".iss-steps li.is-current > span:first-child");
+  currentStep?.replaceChildren(Object.assign(document.createElement("img"), {
+    src: "assets/icons/actions/checkmark/size=24px, style=mono.svg",
+    alt: "",
+  }));
+  const closeBar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), { cancelRoute: "request-support", backRoute: "request-pm", primaryLabel: "Close", primaryRoute: "request-support" });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--pm-direct-review");
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request PM scheduling — confirmed PM review";
+}
+
+function createPmStatusTermsDialog() {
+  return window.PlatformModal?.mount('[data-modal-mount="pm-status-terms"]', {
+    id: "pm-status-terms-dialog",
+    title: "Terms and conditions",
+    description: "Promotion:Save 35% on your next reversed phase column",
+    width: 862,
+    className: "pm-status-terms-modal",
+    closeIcon: "assets/icons/actions/close/size=24px, style=mono.svg",
+    content: '<section class="pm-status-terms__panel"><h3>Title 1</h3><ul><li>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ornare lectus in nunc aliquam, id tincidunt ex suscipit. Sed eget ullamcorper nisi, et accumsan mi. Nunc in ultricies purus. Aliquam aliquam nisl dolor, vitae dictum arcu accumsan pellentesque. Aenean a faucibus ante. Aenean rutrum libero vitae urna tristique, eget elementum justo eleifend. Fusce quis elit egestas, tincidunt mauris tincidunt, ultrices sem. Integer lobortis, neque lacinia luctus tincidunt, eros purus dictum eros, placerat sodales est turpis quis sem.</li><li>Vestibulum nec ex elit. Vestibulum venenatis dictum rhoncus. Nam leo tellus, placerat nec scelerisque non, maximus sit amet massa. Vivamus sagittis tortor ut lacus aliquam bibendum. Donec quis tempus odio, eget commodo elit. Fusce vel tristique ligula. Nulla purus libero, viverra eu maximus interdum, commodo nec eros. Praesent volutpat mi nec neque interdum accumsan.</li><li>Praesent non venenatis ligula, at suscipit purus. Aliquam pulvinar nunc non neque dapibus ultrices. Sed feugiat, risus a eleifend lacinia, lorem risus laoreet neque, in malesuada odio ipsum id sem. Pellentesque pellentesque facilisis mauris nec mollis.</li></ul></section>',
+  });
+}
+
+function wirePmStatusPromotion() {
+  const termsDialog = createPmStatusTermsDialog();
+  app.querySelector("[data-pm-status-terms]")?.addEventListener("click", () => {
+    window.PlatformModal?.open(termsDialog);
+  });
+}
+
+function wireRequestPmStatus() {
+  wirePmStatusPromotion();
+  app.querySelectorAll(".pm-status-section table").forEach((table) => {
+    const imageHeader = table.querySelector("thead th:nth-child(3)");
+    if (imageHeader) imageHeader.before(document.createElement("th"));
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      if (!row.querySelector(".pm-status-system")) {
+        const treeCell = document.createElement("td");
+        treeCell.className = "pm-status-tree";
+        row.cells[2].before(treeCell);
+      }
+    });
+  });
+  app.querySelectorAll(".pm-status-system").forEach((cell) => {
+    const treeCell = document.createElement("td");
+    treeCell.className = "pm-status-tree";
+    treeCell.append(cell.querySelector("[data-pm-status-system-toggle]") || cell.querySelector("img:first-child"));
+    cell.before(treeCell);
+  });
+  app.querySelectorAll(".pm-status-system img").forEach((icon) => {
+    icon.src = "assets/icons/general/in systems/size=24px, style=mono.svg";
+  });
+  app.querySelectorAll("[data-pm-status-section] table").forEach((table) => {
+    const headerCheckbox = table.tHead?.querySelector('input[type="checkbox"]');
+    const rowCheckboxes = [...table.tBodies[0]?.querySelectorAll('input[type="checkbox"]') || []];
+    if (!headerCheckbox || !rowCheckboxes.length) return;
+
+    table.classList.add("pm-status-table--selectable");
+    const syncCheckboxes = () => {
+      const selected = rowCheckboxes.filter((checkbox) => checkbox.checked).length;
+      headerCheckbox.checked = selected === rowCheckboxes.length;
+      headerCheckbox.indeterminate = selected > 0 && selected < rowCheckboxes.length;
+    };
+    headerCheckbox.addEventListener("change", () => {
+      rowCheckboxes.forEach((checkbox) => { checkbox.checked = headerCheckbox.checked; });
+      syncCheckboxes();
+    });
+    rowCheckboxes.forEach((checkbox) => checkbox.addEventListener("change", syncCheckboxes));
+    syncCheckboxes();
+  });
+  app.querySelectorAll("[data-pm-status-system-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.pmStatusSystemToggle;
+      const expanded = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(expanded));
+      button.setAttribute("aria-label", `${expanded ? "Collapse" : "Expand"} system instruments`);
+      button.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
+      app.querySelectorAll(`[data-pm-status-child="${id}"]`).forEach((row) => { row.hidden = !expanded; });
+    });
+  });
+  app.querySelectorAll("[data-pm-status-toggle]").forEach((button) => {
+    const icon = button.querySelector("img");
+    icon.src = "assets/icons/directions/chevron up/size=24px, style=mono.svg";
+    button.addEventListener("click", () => {
+      const section = button.closest("[data-pm-status-section]");
+      const table = section.querySelector("table");
+      const expanded = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(expanded));
+      icon.src = `assets/icons/directions/chevron ${expanded ? "up" : "down"}/size=24px, style=mono.svg`;
+      table.hidden = !expanded;
+    });
+  });
+  app.querySelector('[data-actionbar-action="primary"]')?.addEventListener("click", () => {
+    pmRequestDraft.schedulingInstruments = collectPmStatusInstruments("Request PM scheduling instruments");
+    pmRequestDraft.requestInstruments = collectPmStatusInstruments("Request PM instruments");
+    setRoute("request-pm-details");
+  });
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestPmStatus() {
+  const template = document.querySelector("#request-pm-status-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  populatePmStatusTables();
+  mountTicketStepViewer(2, {
+    labels: ["Select instrument(s)", "View PM status", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel: "PM scheduling request progress",
+  });
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-pm" });
+  mountNativeFlowActionBar({ backRoute: "request-pm", primaryDisabled: false });
+  wireRequestPmStatus();
+  document.title = "View PM status — Services Central";
+}
+
+function renderPmDetailsSelectedInstruments(host, key) {
+  const table = document.createElement("table");
+  table.className = "pm-details-selected-table";
+  table.innerHTML = '<thead><tr><th>Serial number</th><th>Nickname</th></tr></thead>';
+  const body = document.createElement("tbody");
+  (pmRequestDraft[`${key}Instruments`] || []).forEach((instrument) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${instrument.serial}</td><td>${instrument.nickname}</td>`;
+    body.append(row);
+  });
+  table.append(body);
+  host.replaceChildren(table);
+}
+
+function wireRequestPmDetails() {
+  wirePmStatusPromotion();
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const fields = [...app.querySelectorAll("[data-pm-details-field]")];
+  const draftKeys = { scheduling: "schedulingDetails", request: "requestDetails" };
+  fields.forEach((field) => {
+    const key = field.dataset.pmDetailsField;
+    const count = app.querySelector(`[data-pm-details-count="${key}"]`);
+    field.value = pmRequestDraft[draftKeys[key]];
+    const update = () => {
+      pmRequestDraft[draftKeys[key]] = field.value;
+      count.textContent = `${field.value.length} / 500`;
+      primary.disabled = !fields.every((input) => input.value.trim());
+    };
+    field.addEventListener("input", update);
+    update();
+  });
+  app.querySelectorAll("[data-pm-details-selected-toggle]").forEach((toggle) => {
+    const key = toggle.dataset.pmDetailsSelectedToggle;
+    const panel = app.querySelector(`[data-pm-details-selected-panel="${key}"]`);
+    renderPmDetailsSelectedInstruments(panel, key);
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(expanded));
+      toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
+      panel.hidden = !expanded;
+    });
+  });
+  primary.addEventListener("click", () => setRoute("request-pm-contact"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestPmDetails() {
+  const template = document.querySelector("#request-pm-details-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-pm-status" });
+  mountTicketStepViewer(3, {
+    labels: ["Select instrument(s)", "View PM status", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel: "PM scheduling request progress",
+  });
+  mountNativeFlowActionBar({ backRoute: "request-pm-status" });
+  wireRequestPmDetails();
+  document.title = "Request PM scheduling — add request details";
+}
+
+function wireRequestPmContact() {
+  const defaultPmContact = {
+    firstName: "Molly",
+    lastName: "Hartman",
+    phone: "555-555-5555",
+    email: "molly.hartman@thermofisher.com",
+    country: "USA",
+    state: "California",
+    city: "Carlsbad",
+    postalCode: "93047",
+  };
+  const fields = [...app.querySelectorAll("[data-pm-contact-field]")];
+  const requiredFields = fields.filter((field) => field.required);
+  const primary = app.querySelector('[data-actionbar-action="primary"]');
+  const country = fields.find((field) => field.dataset.pmContactField === "country");
+  const state = fields.find((field) => field.dataset.pmContactField === "state");
+  const update = () => {
+    fields.forEach((field) => { pmRequestDraft.contact[field.dataset.pmContactField] = field.value; });
+    primary.disabled = !requiredFields.every((field) => field.validity.valid && field.value.trim());
+  };
+  country.replaceChildren(...CALIBRATION_SUPPORTED_COUNTRIES.map((value) => new Option(value, value)));
+  let stateDropdown;
+  const updatePmStates = () => {
+    const options = country.value === "USA" ? CALIBRATION_US_STATES : country.value === "Canada" ? CALIBRATION_CANADIAN_PROVINCES : ["Not applicable"];
+    const previous = pmRequestDraft.contact.state || state.value;
+    state.replaceChildren(...options.map((value) => new Option(value, value)));
+    state.value = options.includes(previous) ? previous : options.includes(defaultPmContact.state) ? defaultPmContact.state : options[0];
+    stateDropdown?.refresh();
+    update();
+  };
+  fields.forEach((field) => {
+    field.value = pmRequestDraft.contact[field.dataset.pmContactField]
+      || defaultPmContact[field.dataset.pmContactField]
+      || field.value;
+    field.addEventListener("input", () => {
+      if (field.dataset.pmContactField === "phone") field.value = field.value.replace(/[^0-9 -]/g, "");
+      update();
+    });
+    field.addEventListener("change", update);
+  });
+  country.addEventListener("change", updatePmStates);
+  updatePmStates();
+  new KomodoSingleSelect(country);
+  stateDropdown = new KomodoSingleSelect(state);
+  primary.addEventListener("click", () => setRoute("request-pm-review"));
+  update();
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+}
+
+function renderRequestPmContact() {
+  const template = document.querySelector("#request-pm-contact-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-pm-details" });
+  mountTicketStepViewer(4, {
+    labels: ["Select instrument(s)", "View PM status", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel: "PM scheduling request progress",
+  });
+  mountNativeFlowActionBar({ backRoute: "request-pm-details" });
+  wireRequestPmContact();
+  document.title = "Request PM scheduling — confirm contact information";
+}
+
+function wirePmReviewDisclosure(toggle, panel, key) {
+  renderPmDetailsSelectedInstruments(panel, key);
+  toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") !== "true";
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
+    panel.hidden = !expanded;
+  });
+}
+
+function renderRequestPmReview() {
+  const template = document.querySelector("#request-pm-review-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  wirePmStatusPromotion();
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-pm-contact" });
+  mountTicketStepViewer(5, {
+    labels: ["Select instrument(s)", "View PM status", "Add request details", "Confirm contact information", "Review and submit"],
+    ariaLabel: "PM scheduling request progress",
+  });
+  const actionBar = mountNativeFlowActionBar({ backRoute: "request-pm-contact", primaryDisabled: false });
+  actionBar.querySelector('[data-actionbar-action="primary"]').textContent = "Submit";
+  const contact = pmRequestDraft.contact;
+  const serviceAddress = [
+    [contact.serviceAddress, contact.additionalAddress].filter(Boolean).join(", "),
+    [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", "),
+  ].filter(Boolean).join("\n") || "—";
+  app.querySelector("[data-pm-review-scheduling-details]").textContent = pmRequestDraft.schedulingDetails || "—";
+  app.querySelector("[data-pm-review-request-details]").textContent = pmRequestDraft.requestDetails || "—";
+  app.querySelector("[data-pm-review-name]").textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  ["phone", "email", "company"].forEach((key) => {
+    app.querySelector(`[data-pm-review-contact="${key}"]`).textContent = contact[key] || "—";
+  });
+  app.querySelector("[data-pm-review-service-address]").textContent = serviceAddress;
+  ["scheduling", "request"].forEach((key) => {
+    wirePmReviewDisclosure(
+      app.querySelector(`[data-pm-review-selected-toggle="${key}"]`),
+      app.querySelector(`[data-pm-review-selected-panel="${key}"]`),
+      key,
+    );
+  });
+  actionBar.querySelector('[data-actionbar-action="primary"]').addEventListener("click", () => setRoute("pm-request-summary"));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request PM scheduling — review and submit";
+}
+
+function renderPmRequestSummary() {
+  const template = document.querySelector("#pm-request-summary-template");
+  app.replaceChildren(template.content.cloneNode(true));
+  mountNativePageChrome("request-support", { title: "Request PM scheduling", backRoute: "request-support" });
+  const contact = pmRequestDraft.contact;
+  const serviceAddress = [
+    [contact.serviceAddress, contact.additionalAddress].filter(Boolean).join(", "),
+    [contact.city, contact.state, contact.country, contact.postalCode ? `CP: ${contact.postalCode}` : ""].filter(Boolean).join(", "),
+  ].filter(Boolean).join("\n") || "—";
+  app.querySelector("[data-pm-summary-scheduling-details]").textContent = pmRequestDraft.schedulingDetails || "—";
+  app.querySelector("[data-pm-summary-request-details]").textContent = pmRequestDraft.requestDetails || "—";
+  app.querySelector("[data-pm-summary-name]").textContent = [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "—";
+  ["phone", "email", "company"].forEach((key) => {
+    app.querySelector(`[data-pm-summary-contact="${key}"]`).textContent = contact[key] || "—";
+  });
+  app.querySelector("[data-pm-summary-service-address]").textContent = serviceAddress;
+  ["scheduling", "request"].forEach((key) => {
+    wirePmReviewDisclosure(
+      app.querySelector(`[data-pm-summary-selected-toggle="${key}"]`),
+      app.querySelector(`[data-pm-summary-selected-panel="${key}"]`),
+      key,
+    );
+  });
+  const closeBar = window.PlatformActionBar?.mount(app.querySelector("[data-platform-action-bar-mount]"), { closeOnly: true, closeRoute: "request-support" });
+  closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = "Request PM scheduling — submitted";
 }
 
 function wireRequestServicePlan() {
@@ -8573,6 +9169,18 @@ function render() {
     renderRequestSupport();
   } else if (route === "request-pm") {
     renderRequestPm();
+  } else if (route === "request-pm-direct-review") {
+    renderRequestPmDirectReview();
+  } else if (route === "request-pm-status") {
+    renderRequestPmStatus();
+  } else if (route === "request-pm-details") {
+    renderRequestPmDetails();
+  } else if (route === "request-pm-contact") {
+    renderRequestPmContact();
+  } else if (route === "request-pm-review") {
+    renderRequestPmReview();
+  } else if (route === "pm-request-summary") {
+    renderPmRequestSummary();
   } else if (route === "request-serviceplan") {
     renderRequestServicePlan();
   } else if (route === "request-serviceplan-details") {
@@ -8647,14 +9255,27 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => {
   button.addEventListener("click", () => helpDialog.close());
 });
 miEditColumnsDialog.querySelectorAll("[data-mi-edit-columns-close], [data-mi-edit-columns-cancel]").forEach((button) => button.addEventListener("click", () => {
-  syncMiColumnDialog();
+  if (miEditColumnsDialog.dataset.editColumnsContext === "support-history") {
+    delete miEditColumnsDialog.dataset.editColumnsContext;
+  } else {
+    syncMiColumnDialog();
+  }
   miEditColumnsDialog.close();
 }));
 miEditColumnsDialog.querySelector("[data-mi-column-search]").addEventListener("input", (event) => {
   const query = event.currentTarget.value.trim().toLowerCase();
-  miEditColumnsDialog.querySelectorAll("[data-mi-column-row]").forEach((row) => { row.hidden = query !== "" && !row.dataset.search.includes(query); });
+  const rowSelector = miEditColumnsDialog.dataset.editColumnsContext === "support-history" ? "[data-sh-column-row]" : "[data-mi-column-row]";
+  miEditColumnsDialog.querySelectorAll(rowSelector).forEach((row) => { row.hidden = query !== "" && !row.dataset.search.includes(query); });
 });
 miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListener("submit", () => {
+  if (miEditColumnsDialog.dataset.editColumnsContext === "support-history") {
+    supportHistoryVisibleColumns.clear();
+    miEditColumnsDialog.querySelectorAll("[data-sh-edit-column]:checked").forEach((checkbox) => supportHistoryVisibleColumns.add(checkbox.dataset.shEditColumn));
+    applySupportHistoryColumnVisibility();
+    delete miEditColumnsDialog.dataset.editColumnsContext;
+    showToast("Column preferences updated");
+    return;
+  }
   miVisibleColumns.clear();
   miEditColumnsDialog.querySelectorAll("[data-mi-column]:not(:disabled):checked").forEach((checkbox) => miVisibleColumns.add(checkbox.dataset.miColumn));
   applyMiColumnVisibility();
@@ -8662,7 +9283,11 @@ miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListene
 });
 miEditColumnsDialog.addEventListener("click", (event) => {
   if (event.target === miEditColumnsDialog) {
-    syncMiColumnDialog();
+    if (miEditColumnsDialog.dataset.editColumnsContext === "support-history") {
+      delete miEditColumnsDialog.dataset.editColumnsContext;
+    } else {
+      syncMiColumnDialog();
+    }
     miEditColumnsDialog.close();
   }
 });
