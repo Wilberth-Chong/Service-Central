@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instrument card catalog label regression</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #result { position: fixed; z-index: 100; top: 8px; right: 8px; padding: 8px 12px; background: #fff; }
+      iframe { width: 1440px; height: 900px; border: 0; }
+    </style>
+  </head>
+  <body>
+    <strong id="result">RUNNING</strong>
+    <iframe id="app-frame" src="../?instrumentCardCatalogLabelHarness=2#dashboard" title="Dashboard fixture"></iframe>
+    <script>
+      const result = document.querySelector("#result");
+      const frame = document.querySelector("#app-frame");
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+
+      frame.addEventListener("load", () => {
+        try {
+          const doc = frame.contentDocument;
+          const labels = [...doc.querySelectorAll(".mi-card-details--instrument dt")];
+          const catalogLabel = labels.find((label) => label.textContent.trim() === "Catalog no.");
+          assert(catalogLabel, "dashboard renders a Catalog no. label in the shared instrument card");
+
+          const style = frame.contentWindow.getComputedStyle(catalogLabel);
+          assert(style.maxWidth === "64px", "Catalog no. label has a 64px maximum width");
+          assert(style.overflow === "hidden", "Catalog no. label hides overflow");
+          assert(style.textOverflow === "ellipsis", "Catalog no. label uses an ellipsis");
+          assert(style.whiteSpace === "nowrap", "Catalog no. label stays on one line");
+          assert(catalogLabel.scrollWidth > catalogLabel.clientWidth, "Catalog no. text is visually truncated");
+
+          result.textContent = "PASS";
+          result.dataset.status = "passed";
+        } catch (error) {
+          result.textContent = `FAIL: ${error.message}`;
+          result.dataset.status = "failed";
+        }
+      });
+    </script>
+  </body>
+</html>

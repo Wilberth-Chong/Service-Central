@@ -745,6 +745,9 @@ button {
 .mi-sort { width: 16px; height: 16px; margin-left: 2px; vertical-align: -3px; }
 .mi-header-select { display: flex; width: calc(100% - 8px); height: 30px; align-items: center; justify-content: space-between; border: 1px solid #ccc; padding: 0 12px; background: #fff; font-weight: 500; cursor: pointer; }
 .mi-header-select img { width: 8px; height: 8px; }
+.platform-table-catalog-filter { min-width: 0; }
+.platform-table-catalog-filter__label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-table-catalog-filter > img { flex: 0 0 auto; margin-left: 4px; }
 .mi-favorite,
 .mi-link,
 .mi-more { border: 0; padding: 0; background: transparent; cursor: pointer; }
@@ -1349,6 +1352,7 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .mi-card-count { display: inline-grid; min-width: 20px; height: 18px; flex: 0 0 auto; place-items: center; border-radius: 9px; padding: 0 5px; color: #fff; background: #2b2b30; font-size: 11px; font-weight: 700; line-height: 18px; }
 .mi-card-details--instrument { padding-top: 23px; }
 .mi-card-details--instrument div { grid-template-columns: 64px minmax(0, 1fr); gap: 24px; }
+.mi-card-details--instrument .mi-card-catalog-label { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mi-card-details--instrument dd { color: #54545c; }
 .mi-card-coverage { position: absolute; right: 23px; bottom: 64px; left: 23px; height: 24px; }
 .mi-card-coverage .mi-status { display: inline-flex; height: 24px; align-items: center; border-radius: 10px; padding: 0 10px; font-size: 14px; font-weight: 400; line-height: 14px; }
