@@ -32,6 +32,7 @@ const CONSUMABLES_SUPPORT_PORTAL_IMAGE = "assets/consumables/support-portal-logi
 const DEFAULT_INSTALLATION_USER_EMAIL = "holly.hartman@company.com";
 let toastTimer;
 let preferredDeliveryDatesSubmitted = false;
+let preferredDeliveryDateValues = { earliest: "", latest: "" };
 let deliveryReminderPauseDays = "";
 let deliveryChecklistSubmitted = false;
 let deliveryChecklistUploadTimer;
@@ -39,10 +40,18 @@ let checklistConfirmationContext = "";
 let preInstallChecklistsUploaded = 0;
 let pendingPreInstallChecklists = [];
 const submittedPreInstallChecklists = [];
-const installationActivityEntries = [];
+const submittedProgressPreInstallChecklists = [];
+let preInstallChecklistOrderContext = "9012611245";
+const installationActivityEntries = [
+  { orderNumber: "7659430547", date: "26 Jun 2025", prefix: "Submitted ", emphasis: "latest delivery date", suffix: ": 31 Jul 2025", user: DEFAULT_INSTALLATION_USER_EMAIL },
+  { orderNumber: "7659430547", date: "26 Jun 2025", prefix: "Submitted ", emphasis: "earliest delivery date", suffix: ": 01 Jul 2025", user: DEFAULT_INSTALLATION_USER_EMAIL },
+];
 const preInstallChecklistUploadTimers = new WeakMap();
 let draggedPreInstallUploader = null;
 let installationStatusScenario = "in-progress";
+let installationStatusTargetOrder = "9012611245";
+let progressInstallationStatusScenario = "in-progress";
+const noChecklistOrderState = { expanded: false, statusScenario: "in-progress", step3Complete: false };
 let installationOrderCollapsedByUser = false;
 let installationPendingShownForVisit = false;
 let installationWelcomeFromEmail = false;
@@ -51,8 +60,7 @@ let servicePlanApprovalPromptShown = false;
 let servicePlanApprovalAcceptedNotice = false;
 let selectedInstallationShellContext = null;
 const whiteGloveOrderStates = new Map([
-  ["1901126245", { expanded: true, status: "default" }],
-  ["323146241", { expanded: false, status: "default" }],
+  ["1901126245", { expanded: false, status: "default" }],
 ]);
 const PREINSTALL_CHECKLISTS = [
   { id: "hplc", name: "HPLC template long name", instruments: "4 instrument(s)", submittedBy: "cameron.williamson@companyname.com", submittedOn: "01 Jul 2025", items: [["10", "2", "VN-P10-A-01", "Vanquish binary pump N"], ["11", "2", "6252.1940", "Vanquish split sampler NT"]] },
@@ -61,6 +69,7 @@ const PREINSTALL_CHECKLISTS = [
   { id: "fourth", name: "Fourth template long name", instruments: "2 instrument(s)", submittedBy: "adam.smith@companyname.com", submittedOn: "03 Jul 2025", items: [["14", "2", "BRE725660", "Astral"]] },
   { id: "fifth", name: "Fifth template long name", instruments: "1 instrument(s)", submittedBy: "adam.smith@companyname.com", submittedOn: "03 Jul 2025", items: [["18", "1", "BRE725660", "Astral"]] },
 ];
+const PROGRESS_PREINSTALL_CHECKLISTS = PREINSTALL_CHECKLISTS.slice(0, 3);
 let preInstallTooltipCloseTimer;
 let selectedSupportHistoryTicket = null;
 let selectedOpenSupportTicketInstrument = null;
@@ -88,8 +97,9 @@ function formatInstallationActivityDate(date = new Date()) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
 
-function recordInstallationActivity(prefix, emphasis = "", suffix = "") {
+function recordInstallationActivity(prefix, emphasis = "", suffix = "", orderNumber = "9012611245") {
   installationActivityEntries.unshift({
+    orderNumber,
     date: formatInstallationActivityDate(),
     prefix,
     emphasis,
@@ -98,10 +108,11 @@ function recordInstallationActivity(prefix, emphasis = "", suffix = "") {
   });
 }
 
-function renderInstallationActivityLog() {
+function renderInstallationActivityLog(orderNumber = "9012611245") {
   const rows = installationActivityDialog.querySelector("[data-installation-activity-rows]");
   rows.replaceChildren();
-  installationActivityEntries.forEach((entry) => {
+  const orderEntries = installationActivityEntries.filter((entry) => entry.orderNumber === orderNumber);
+  orderEntries.forEach((entry) => {
     const row = document.createElement("tr");
     const action = document.createElement("td");
     action.append(document.createTextNode(entry.prefix));
@@ -111,17 +122,21 @@ function renderInstallationActivityLog() {
     row.append(action, Object.assign(document.createElement("td"), { textContent: entry.user }));
     rows.append(row);
   });
-  installationActivityDialog.querySelector("[data-installation-activity-empty]").hidden = installationActivityEntries.length > 0;
+  installationActivityDialog.querySelector("[data-installation-activity-empty]").hidden = orderEntries.length > 0;
 }
 
-function openInstallationActivityLog() {
-  renderInstallationActivityLog();
+function openInstallationActivityLog(orderNumber = "9012611245") {
+  renderInstallationActivityLog(orderNumber);
   installationActivityDialog.showModal();
   installationActivityDialog.querySelector("[data-close-installation-activity]").focus({ preventScroll: true });
 }
 
 function wireInstallationActivityTriggers(scope = document) {
-  scope.querySelectorAll("[data-open-installation-activity]").forEach((button) => button.addEventListener("click", openInstallationActivityLog));
+  scope.querySelectorAll("[data-open-installation-activity]").forEach((button) => {
+    if (button.dataset.installationActivityWired) return;
+    button.dataset.installationActivityWired = "true";
+    button.addEventListener("click", () => openInstallationActivityLog(button.dataset.orderNumber || "9012611245"));
+  });
 }
 
 function wireOrderUsersTooltips(scope = document) {
@@ -162,6 +177,30 @@ function normalizeOrderUsersCards(scope = document) {
         </div>
         <div class="ins-order-users-content"><span>alexander.constantine@companyname.com</span><em>+4</em></div>
       </div>`;
+  });
+}
+
+function wireOrderEmailTooltips(scope = document) {
+  const emailLabels = scope.querySelectorAll(".ins-order-users-content > span, .ins-summary-box--support > div > span");
+  emailLabels.forEach((emailLabel, index) => {
+    if (emailLabel.closest(".ins-order-email-trigger")) return;
+    const email = emailLabel.textContent.trim();
+    const tooltipId = `installation-order-email-tooltip-${index}`;
+    const trigger = document.createElement("span");
+    trigger.className = "ins-order-email-trigger";
+    trigger.setAttribute("aria-label", email);
+    trigger.innerHTML = `<span class="ins-order-email-label">${email}</span><span class="ins-order-email-tooltip" id="${tooltipId}" role="tooltip"><img src="assets/installations/shared-email-tooltip.svg" alt="" /><span>${email}</span></span>`;
+    emailLabel.replaceWith(trigger);
+    const label = trigger.querySelector(".ins-order-email-label");
+    const updateOverflowState = () => {
+      const hasOverflow = label.scrollWidth > label.clientWidth + 1;
+      trigger.classList.toggle("has-email-overflow", hasOverflow);
+      trigger.tabIndex = hasOverflow ? 0 : -1;
+      if (hasOverflow) trigger.setAttribute("aria-describedby", tooltipId);
+      else trigger.removeAttribute("aria-describedby");
+    };
+    window.requestAnimationFrame(updateOverflowState);
+    if (window.ResizeObserver) new ResizeObserver(updateOverflowState).observe(label);
   });
 }
 
@@ -211,6 +250,7 @@ const CUSTOM_ROUTES = {
   "instrument-1009996": "Instrument 1009996",
   "installation-faqs": "Installation frequently asked questions",
   "installations-progress": "Installations — order 7659430547",
+  "installations-no-checklist": "Installations — order 4827316059",
   "installation-support": "Installation support",
 };
 
@@ -219,7 +259,7 @@ function isInstallationShellDetailRoute(route) {
 }
 
 function isInstallationsSectionRoute(route) {
-  return route === "installations" || route === "installations-expanded" || route === "installations-progress" || route === "installation-faqs" || isInstallationShellDetailRoute(route);
+  return route === "installations" || route === "installations-expanded" || route === "installations-progress" || route === "installations-no-checklist" || route === "installation-faqs" || isInstallationShellDetailRoute(route);
 }
 
 let spcResizeObserver;
@@ -463,9 +503,11 @@ function hideToast() {
 
 function showToast(message, { title = "", variant = "info", duration = 4000 } = {}) {
   window.clearTimeout(toastTimer);
-  const isSuccess = variant === "success" || variant === "checklist" || variant === "system-success";
+  const isPreInstallChecklist = variant === "preinstall-checklist";
+  const isSuccess = variant === "success" || variant === "checklist" || isPreInstallChecklist || variant === "system-success";
   toast.classList.toggle("toast--success", isSuccess);
-  toast.classList.toggle("toast--checklist", variant === "checklist");
+  toast.classList.toggle("toast--checklist", variant === "checklist" || isPreInstallChecklist);
+  toast.classList.toggle("toast--preinstall", isPreInstallChecklist);
   toast.classList.toggle("toast--system", variant === "system-success");
   toast.querySelector("[data-toast-icon]").hidden = !isSuccess;
   toast.querySelector("[data-toast-title]").textContent = title ? `${title} ` : "";
@@ -476,22 +518,63 @@ function showToast(message, { title = "", variant = "info", duration = 4000 } = 
 
 toast.querySelector("[data-toast-close]").addEventListener("click", hideToast);
 
-function createInstallationPendingContent() {
+function createInstallationPendingContent({
+  showDeliveryDates = true,
+  showDeliveryChecklist = true,
+  preInstallOrderNumbers = ["9012611245", "7659430547"],
+} = {}) {
   const actions = document.createElement("div");
   actions.className = "installation-pending-modal__actions";
 
-  const deliveryRow = document.createElement("div");
-  deliveryRow.className = "installation-pending-modal__row";
-  deliveryRow.innerHTML = '<img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span>';
+  if (showDeliveryDates) {
+    const deliveryRow = document.createElement("div");
+    deliveryRow.className = "installation-pending-modal__row";
+    deliveryRow.innerHTML = '<img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" /><span>Add your preferred delivery dates for order: <strong>9012611245</strong></span>';
+    actions.append(deliveryRow);
+  }
+
+  if (showDeliveryChecklist) {
+    const deliveryChecklistRow = document.createElement("div");
+    deliveryChecklistRow.className = "installation-pending-modal__row";
+    deliveryChecklistRow.innerHTML = '<img src="assets/icons/installation/del checklist/size=24px, style=mono.svg" alt="" /><span>Upload the pending delivery checklist for order: <strong>9012611245</strong></span>';
+    actions.append(deliveryChecklistRow);
+  }
+
+  if (preInstallOrderNumbers.length) {
+    const preInstallChecklistRow = document.createElement("div");
+    preInstallChecklistRow.className = "installation-pending-modal__row";
+    preInstallChecklistRow.innerHTML = `<img src="assets/icons/installation/preinstall checklist/size=24px, style=mono.svg" alt="" /><span>Upload the pending pre-install checklist(s) for order: <strong>${preInstallOrderNumbers.join(", ")}</strong></span>`;
+    actions.append(preInstallChecklistRow);
+  }
 
   const instrumentsRow = document.createElement("button");
   instrumentsRow.type = "button";
   instrumentsRow.className = "installation-pending-modal__row";
   instrumentsRow.dataset.installationPendingInstruments = "";
-  instrumentsRow.innerHTML = '<img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>3456789</strong>. Review your instruments in <b>My instruments</b> tab.</span>';
+  instrumentsRow.innerHTML = '<img src="assets/icons/science/instrument/Size=24px, Style=Mono.svg" alt="" /><span>Installation complete for order <strong>1901126245</strong>. Review your instruments in <b>My instruments</b> tab.</span>';
 
-  actions.append(deliveryRow, instrumentsRow);
+  const accountIssueRow = document.createElement("div");
+  accountIssueRow.className = "installation-pending-modal__row installation-pending-modal__row--warning";
+  accountIssueRow.innerHTML = '<img src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="" /><span>Installation complete for order <strong>323146241</strong>. An issue with your account is preventing your instrument from appearing on the My Instruments page. Please <button type="button" data-installation-pending-contact-support>contact support</button> to resolve it.</span>';
+
+  actions.append(instrumentsRow, accountIssueRow);
   return actions;
+}
+
+function getInstallationPendingContentState() {
+  const preInstallOrderNumbers = [];
+  if (submittedPreInstallChecklists.length < PREINSTALL_CHECKLISTS.length) preInstallOrderNumbers.push("9012611245");
+  if (!isProgressPreInstallComplete()) preInstallOrderNumbers.push("7659430547");
+  return {
+    showDeliveryDates: !preferredDeliveryDatesSubmitted,
+    showDeliveryChecklist: !deliveryChecklistSubmitted,
+    preInstallOrderNumbers,
+  };
+}
+
+function refreshInstallationPendingContent() {
+  const currentContent = installationPendingDialog?.querySelector(".installation-pending-modal__actions");
+  currentContent?.replaceWith(createInstallationPendingContent(getInstallationPendingContentState()));
 }
 
 function createInstallationPendingDialog() {
@@ -583,14 +666,23 @@ function updatePreferredDeliveryDatesState() {
   const requiredFields = [...preferredDeliveryDatesDialog.querySelectorAll("[data-delivery-date-required]")];
   requiredFields.forEach((field) => {
     const clearButton = field.closest(".preferred-delivery-date-field").querySelector("[data-clear-delivery-date]");
-    clearButton.hidden = !field.value.trim();
+    if (clearButton) clearButton.hidden = !field.value.trim();
   });
   preferredDeliveryDatesDialog.querySelector("[data-submit-delivery-dates]").disabled = requiredFields.some((field) => !field.value.trim());
+}
+
+function getTodayDeliveryDate() {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(new Date());
 }
 
 function openPreferredDeliveryDatesModal() {
   const form = preferredDeliveryDatesDialog.querySelector("[data-delivery-dates-form]");
   form.reset();
+  preferredDeliveryDatesDialog.querySelector('[aria-label="Earliest delivery date"]').value = getTodayDeliveryDate();
   updatePreferredDeliveryDatesState();
   preferredDeliveryDatesDialog.showModal();
   form.focus({ preventScroll: true });
@@ -764,14 +856,14 @@ function wirePreInstallInstrumentTooltips(scope = preInstallChecklistUploadDialo
   });
 }
 
-function renderSubmittedPreInstallChecklists(checklists = submittedPreInstallChecklists) {
+function renderSubmittedPreInstallChecklists(checklists = submittedPreInstallChecklists, availableChecklists = PREINSTALL_CHECKLISTS) {
   const form = preInstallChecklistUploadDialog.querySelector("[data-preinstall-checklist-upload-form]");
   const title = preInstallChecklistUploadDialog.querySelector("#preinstall-checklist-upload-title");
   const description = preInstallChecklistUploadDialog.querySelector("#preinstall-checklist-upload-description");
   const closeButton = preInstallChecklistUploadDialog.querySelector(".preinstall-checklist-upload-modal__header > button");
   const uploadTable = preInstallChecklistUploadDialog.querySelector(".preinstall-checklist-upload-table");
   const uploadRows = Array.from(uploadTable.querySelectorAll(".preinstall-checklist-upload-table__row"));
-  const isComplete = checklists.length === PREINSTALL_CHECKLISTS.length;
+  const isComplete = checklists.length === availableChecklists.length;
 
   form.classList.toggle("is-complete", isComplete);
   title.textContent = isComplete ? "Pre-install checklist(s) submitted successfully" : "Upload your pre-install checklist(s)";
@@ -784,11 +876,12 @@ function renderSubmittedPreInstallChecklists(checklists = submittedPreInstallChe
   }
   uploadRows.forEach((row, index) => {
     const instrumentLink = row.querySelector("a");
-    instrumentLink.dataset.preinstallInstrumentsLink = PREINSTALL_CHECKLISTS[index].id;
+    const checklist = availableChecklists[index];
+    if (checklist) instrumentLink.dataset.preinstallInstrumentsLink = checklist.id;
     instrumentLink.setAttribute("aria-describedby", "preinstall-instruments-tooltip");
-    row.hidden = checklists.some((checklist) => checklist.id === PREINSTALL_CHECKLISTS[index].id);
+    row.hidden = !checklist || checklists.some((submitted) => submitted.id === checklist.id);
   });
-  uploadTable.querySelector(".preinstall-checklist-upload-table__header").hidden = checklists.length === PREINSTALL_CHECKLISTS.length;
+  uploadTable.querySelector(".preinstall-checklist-upload-table__header").hidden = isComplete;
 
   preInstallChecklistUploadDialog.querySelector("[data-preinstall-submitted-count]").textContent = String(checklists.length);
   const rows = preInstallChecklistUploadDialog.querySelector("[data-preinstall-submitted-rows]");
@@ -806,10 +899,23 @@ function renderSubmittedPreInstallChecklists(checklists = submittedPreInstallChe
 
 function openPreInstallChecklistUploadModal() {
   const form = preInstallChecklistUploadDialog.querySelector("[data-preinstall-checklist-upload-form]");
+  preInstallChecklistOrderContext = "9012611245";
   pendingPreInstallChecklists = [];
   form.reset();
   preInstallChecklistUploadDialog.querySelectorAll("[data-preinstall-uploader]").forEach(resetPreInstallChecklistUploader);
   renderSubmittedPreInstallChecklists();
+  closePreInstallInstrumentsTooltip();
+  preInstallChecklistUploadDialog.showModal();
+  form.focus({ preventScroll: true });
+}
+
+function openProgressPreInstallChecklistUploadModal() {
+  const form = preInstallChecklistUploadDialog.querySelector("[data-preinstall-checklist-upload-form]");
+  preInstallChecklistOrderContext = "7659430547";
+  pendingPreInstallChecklists = [];
+  form.reset();
+  preInstallChecklistUploadDialog.querySelectorAll("[data-preinstall-uploader]").forEach(resetPreInstallChecklistUploader);
+  renderSubmittedPreInstallChecklists(submittedProgressPreInstallChecklists, PROGRESS_PREINSTALL_CHECKLISTS);
   closePreInstallInstrumentsTooltip();
   preInstallChecklistUploadDialog.showModal();
   form.focus({ preventScroll: true });
@@ -826,6 +932,18 @@ function openCompletedPreInstallChecklistModal() {
   form.focus({ preventScroll: true });
 }
 
+function openCompletedProgressPreInstallChecklistModal() {
+  const form = preInstallChecklistUploadDialog.querySelector("[data-preinstall-checklist-upload-form]");
+  preInstallChecklistOrderContext = "7659430547";
+  pendingPreInstallChecklists = [];
+  form.reset();
+  preInstallChecklistUploadDialog.querySelectorAll("[data-preinstall-uploader]").forEach(resetPreInstallChecklistUploader);
+  renderSubmittedPreInstallChecklists(PROGRESS_PREINSTALL_CHECKLISTS, PROGRESS_PREINSTALL_CHECKLISTS);
+  closePreInstallInstrumentsTooltip();
+  preInstallChecklistUploadDialog.showModal();
+  form.focus({ preventScroll: true });
+}
+
 function wirePreInstallChecklistUploadTriggers(scope = document) {
   scope.querySelectorAll("[data-open-preinstall-checklist-upload]").forEach((control) => {
     if (control.dataset.preInstallChecklistWired) return;
@@ -835,42 +953,45 @@ function wirePreInstallChecklistUploadTriggers(scope = document) {
 }
 
 function wirePreInstallTemplateDropdown(scope = document) {
-  const toggle = scope.querySelector("[data-preinstall-template-toggle]");
-  const menu = scope.querySelector("[data-preinstall-template-menu]");
-  if (!toggle || !menu) return;
+  scope.querySelectorAll(".ins-template-dropdown").forEach((dropdown) => {
+    const toggle = dropdown.querySelector("[data-preinstall-template-toggle]");
+    const menu = dropdown.querySelector("[data-preinstall-template-menu]");
+    if (!toggle || !menu || toggle.dataset.preInstallTemplateWired) return;
+    toggle.dataset.preInstallTemplateWired = "true";
 
-  const setOpen = (open, { focusFirst = false } = {}) => {
-    toggle.setAttribute("aria-expanded", String(open));
-    menu.hidden = !open;
-    const caret = toggle.querySelector("img");
-    caret.src = open
-      ? "assets/icons/directions/caret up/up caret.svg"
-      : "assets/icons/directions/caret down/Down caret.svg";
-    if (open && focusFirst) menu.querySelector('[role="menuitem"]')?.focus();
-  };
+    const setOpen = (open, { focusFirst = false } = {}) => {
+      toggle.setAttribute("aria-expanded", String(open));
+      menu.hidden = !open;
+      const caret = toggle.querySelector("img");
+      caret.src = open
+        ? "assets/icons/directions/caret up/up caret.svg"
+        : "assets/icons/directions/caret down/Down caret.svg";
+      if (open && focusFirst) menu.querySelector('[role="menuitem"]')?.focus();
+    };
 
-  toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
-  menu.querySelectorAll('[role="menuitem"]').forEach((item) => item.addEventListener("click", () => setOpen(false)));
-  menu.addEventListener("keydown", (event) => {
-    const items = [...menu.querySelectorAll('[role="menuitem"]')];
-    const current = items.indexOf(document.activeElement);
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      const direction = event.key === "ArrowDown" ? 1 : -1;
-      items[(current + direction + items.length) % items.length].focus();
-    } else if (event.key === "Escape") {
-      setOpen(false);
-      toggle.focus();
-    }
-  });
-  toggle.addEventListener("keydown", (event) => {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setOpen(true, { focusFirst: true });
-    }
-  });
-  document.addEventListener("click", (event) => {
-    if (!event.target.closest(".ins-template-dropdown")) setOpen(false);
+    toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
+    menu.querySelectorAll('[role="menuitem"]').forEach((item) => item.addEventListener("click", () => setOpen(false)));
+    menu.addEventListener("keydown", (event) => {
+      const items = [...menu.querySelectorAll('[role="menuitem"]')];
+      const current = items.indexOf(document.activeElement);
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        items[(current + direction + items.length) % items.length].focus();
+      } else if (event.key === "Escape") {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    toggle.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setOpen(true, { focusFirst: true });
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".ins-template-dropdown")) setOpen(false);
+    });
   });
 }
 
@@ -890,10 +1011,19 @@ function formatDeliveryDate(value) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
 }
 
+function formatInstallationActivityDeliveryDate(value) {
+  const match = value.trim().match(/^(\d{1,2})[/\.\-](\d{1,2})[/\.\-](\d{2}|\d{4})$/);
+  if (!match) return value.trim();
+  const [, day, month, yearValue] = match;
+  const year = yearValue.length === 2 ? Number(`20${yearValue}`) : Number(yearValue);
+  const date = new Date(Date.UTC(year, Number(month) - 1, Number(day)));
+  if (date.getUTCDate() !== Number(day) || date.getUTCMonth() !== Number(month) - 1 || date.getUTCFullYear() !== year) return value.trim();
+  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+}
+
 function openDeliveryDatesConfirmationModal() {
   const fields = [...preferredDeliveryDatesDialog.querySelectorAll("[data-delivery-date-required]")];
   const outputs = [
-    deliveryDatesConfirmationDialog.querySelector("[data-confirmation-preferred-date]"),
     deliveryDatesConfirmationDialog.querySelector("[data-confirmation-earliest-date]"),
     deliveryDatesConfirmationDialog.querySelector("[data-confirmation-latest-date]"),
   ];
@@ -907,8 +1037,12 @@ function setDeliveryPauseDays(days) {
 }
 
 function updateDeliveryPauseConfirmState() {
-  const hasReason = Boolean(deliveryDatesPauseDialog.querySelector("[data-delivery-pause-reason]:checked"));
-  const hasDetails = Boolean(deliveryDatesPauseDialog.querySelector("[data-delivery-pause-details]").value.trim());
+  const selectedReason = deliveryDatesPauseDialog.querySelector("[data-delivery-pause-reason]:checked");
+  const isOther = selectedReason?.value === "Other";
+  const otherDetails = deliveryDatesPauseDialog.querySelector("[data-delivery-pause-other-details]");
+  otherDetails.hidden = !isOther;
+  const hasReason = Boolean(selectedReason);
+  const hasDetails = !isOther || Boolean(otherDetails.querySelector("[data-delivery-pause-details]").value.trim());
   deliveryDatesPauseDialog.querySelector("[data-confirm-delivery-pause]").disabled = !hasReason || !hasDetails;
 }
 
@@ -925,25 +1059,29 @@ function wireDeliveryDatesPauseTriggers(scope = document) {
   scope.querySelectorAll("[data-open-delivery-pause]").forEach((control) => control.addEventListener("click", openDeliveryDatesPauseModal));
 }
 
+function createCompletedDeliveryDatesCardMarkup(orderNumber) {
+  return `<div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 1</span><img class="ins-checklist-icon" src="assets/icons/installation/CRD/Size=32px, Style=Mono.svg" alt="" /></div><h3>Delivery dates submitted</h3><p>Thank you! Your preferred delivery dates have been received.</p><p class="ins-action-card__activity-link">View submitted dates in the <button type="button" data-open-installation-activity data-order-number="${orderNumber}">order activity log</button></p>`;
+}
+
 function setPreferredDeliveryDatesComplete(completed) {
   const card = app.querySelector("[data-delivery-dates-card]");
   if (!card) return;
   card.classList.toggle("is-complete", completed);
   updateInstallationActionCount();
   if (!completed) return;
-  card.innerHTML = `<div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 1</span><img class="ins-checklist-icon" src="assets/icons/installation/CRD/Size=32px, Style=Mono.svg" alt="" /></div><h3>Delivery dates submitted</h3><p>Thank you! Your preferred delivery dates have been received.</p>`;
+  card.innerHTML = createCompletedDeliveryDatesCardMarkup("9012611245");
+  wireInstallationActivityTriggers(card);
 }
 
 function setPreferredDeliveryDatesPaused(days) {
   const card = app.querySelector("[data-delivery-dates-card]");
   const status = card?.querySelector("small");
+  const cannotProvideDatesButton = preferredDeliveryDatesDialog.querySelector("[data-cannot-provide-delivery-dates]");
+  if (cannotProvideDatesButton) cannotProvideDatesButton.hidden = Boolean(days) && !preferredDeliveryDatesSubmitted;
   if (!status || !days || preferredDeliveryDatesSubmitted) return;
   status.className = "ins-action-card__pause-status";
-  status.replaceChildren(
-    document.createTextNode("Email reminders paused for "),
-    Object.assign(document.createElement("strong"), { textContent: `${days} days` }),
-    document.createTextNode("."),
-  );
+  status.setAttribute("role", "status");
+  status.innerHTML = `<img src="assets/icons/notifications/warning/size=16px, style=bold.svg" alt="" /><span>Email reminder paused for ${days} days</span>`;
 }
 
 function updateInstallationActionCount() {
@@ -989,22 +1127,57 @@ function updateInstallationOrderStatus() {
   }
 }
 
-function createInstallationItemStatus(itemStatus, index) {
-  if (itemStatus === "Awaiting action(s)") {
-    const trigger = document.createElement("span");
-    const tooltipId = `installation-awaiting-actions-tooltip-${index}`;
-    trigger.className = "ins-status-tooltip-trigger";
-    trigger.tabIndex = 0;
-    trigger.setAttribute("aria-describedby", tooltipId);
-    trigger.innerHTML = `<span class="ins-awaiting">Awaiting action(s)</span><span class="ins-status-tooltip" id="${tooltipId}" role="tooltip"><img src="assets/installations/awaiting-actions-tooltip.svg" alt="" /><span><strong>Awaiting action(s)</strong><span>Complete the action(s) required at the top of this order.</span></span></span>`;
-    return trigger;
+const INSTALLATION_ITEM_STATUS_DETAILS = {
+  "Awaiting action(s)": {
+    body: "Complete the action(s) required at the top of this order.",
+    badgeClass: "ins-awaiting",
+  },
+  "Awaiting checklist(s)": {
+    body: "Complete the checklist(s) required for this order.",
+    badgeClass: "ins-awaiting",
+  },
+  "Install scheduled": {
+    body: "The installation date has been scheduled.",
+    badgeClass: "ins-installation-state ins-installation-state--scheduled",
+  },
+  "Install complete": {
+    body: "Installation is complete and your instrument is available in My instruments page.",
+    badgeClass: "ins-installation-state ins-installation-state--complete",
+    tooltipClass: "ins-status-tooltip--tall",
+  },
+  Cancelled: {
+    body: "Item is cancelled.",
+    badgeClass: "ins-installation-state ins-installation-state--cancelled",
+    tooltipClass: "ins-status-tooltip--compact",
+  },
+};
+
+function createInstallationItemStatus(itemStatus, index, idPrefix = "installation") {
+  const details = INSTALLATION_ITEM_STATUS_DETAILS[itemStatus];
+  if (!details) {
+    const status = document.createElement("span");
+    status.textContent = itemStatus;
+    return status;
   }
-  const status = document.createElement("span");
-  status.className = itemStatus.startsWith("Install ")
-    ? `ins-installation-state ins-installation-state--${itemStatus === "Install complete" ? "complete" : "scheduled"}`
-    : "ins-awaiting";
-  status.textContent = itemStatus;
-  return status;
+
+  const trigger = document.createElement("span");
+  const safePrefix = idPrefix.replace(/[^a-z0-9-]/gi, "-").toLowerCase();
+  const tooltipId = `${safePrefix}-status-tooltip-${index}`;
+  trigger.className = "ins-status-tooltip-trigger";
+  trigger.tabIndex = 0;
+  trigger.setAttribute("aria-describedby", tooltipId);
+
+  const badge = document.createElement("span");
+  badge.className = details.badgeClass;
+  badge.textContent = itemStatus;
+
+  const tooltip = document.createElement("span");
+  tooltip.className = `ins-status-tooltip ${details.tooltipClass || ""}`.trim();
+  tooltip.id = tooltipId;
+  tooltip.setAttribute("role", "tooltip");
+  tooltip.innerHTML = `<strong>${itemStatus}</strong><span>${details.body}</span>`;
+  trigger.append(badge, tooltip);
+  return trigger;
 }
 
 function updateInstallationItemStatuses() {
@@ -1023,16 +1196,53 @@ function updateInstallationItemStatuses() {
   });
 }
 
-function openInstallationStatusScenarios() {
-  if (!areInstallationStepsComplete()) return;
+function getInstallationStatusScenarioForOrder(orderNumber) {
+  if (orderNumber === "7659430547") return progressInstallationStatusScenario;
+  if (orderNumber === "4827316059") return noChecklistOrderState.statusScenario;
+  if (whiteGloveOrderStates.has(orderNumber)) {
+    const status = whiteGloveOrderStates.get(orderNumber)?.status || "default";
+    if (status === "scheduled") return "some-scheduled";
+    if (status === "complete") return "all-installed";
+    return "in-progress";
+  }
+  return installationStatusScenario;
+}
+
+function openInstallationStatusScenarios(event) {
+  const trigger = event?.currentTarget;
+  installationStatusTargetOrder = trigger?.dataset.statusOrder || "9012611245";
+  if (installationStatusTargetOrder === "9012611245" && !areInstallationStepsComplete()) return;
+  const currentScenario = getInstallationStatusScenarioForOrder(installationStatusTargetOrder);
   installationStatusScenariosDialog.querySelectorAll("[data-installation-status-scenario]").forEach((option) => {
-    option.setAttribute("aria-pressed", String(option.dataset.installationStatusScenario === installationStatusScenario));
+    option.setAttribute("aria-pressed", String(option.dataset.installationStatusScenario === currentScenario));
   });
   installationStatusScenariosDialog.showModal();
   installationStatusScenariosDialog.querySelector("[data-close-installation-status-scenarios]").focus({ preventScroll: true });
 }
 
 function applyInstallationStatusScenario(scenario) {
+  if (installationStatusTargetOrder === "7659430547") {
+    progressInstallationStatusScenario = scenario;
+    updateProgressOrderCompletionState();
+    installationStatusScenariosDialog.close();
+    return;
+  }
+  if (installationStatusTargetOrder === "4827316059") {
+    noChecklistOrderState.statusScenario = scenario;
+    noChecklistOrderState.step3Complete = scenario !== "in-progress";
+    const order = app.querySelector('[data-no-checklist-order="4827316059"]');
+    if (order) renderNoChecklistOrderState(order);
+    installationStatusScenariosDialog.close();
+    return;
+  }
+  if (whiteGloveOrderStates.has(installationStatusTargetOrder)) {
+    const state = whiteGloveOrderStates.get(installationStatusTargetOrder);
+    state.status = scenario === "in-progress" ? "default" : scenario === "some-scheduled" ? "scheduled" : "complete";
+    const order = app.querySelector(`[data-wg-order-number="${installationStatusTargetOrder}"]`);
+    if (order) renderWhiteGloveOrderState(order);
+    installationStatusScenariosDialog.close();
+    return;
+  }
   installationStatusScenario = scenario;
   updateInstallationItemStatuses();
   updateInstallationOrderStatus();
@@ -1041,8 +1251,9 @@ function applyInstallationStatusScenario(scenario) {
 
 function wireInstallationStatusScenarioTrigger(scope = document) {
   scope.querySelectorAll("[data-open-installation-status-scenarios]").forEach((button) => {
-    button.disabled = !areInstallationStepsComplete();
-    button.title = button.disabled ? "Complete all three installation steps to change status" : "Simulate installation status change";
+    const orderNumber = button.dataset.statusOrder || "9012611245";
+    button.disabled = orderNumber === "9012611245" && !areInstallationStepsComplete();
+    button.title = button.disabled ? "Complete all three installation steps to change status" : "Change line item statuses";
     button.addEventListener("click", openInstallationStatusScenarios);
   });
 }
@@ -8426,6 +8637,16 @@ const INSTALLATION_ITEMS = [
   ["18", "1", "tsq.png", "BRE725660", "Astral"],
 ];
 
+const NO_CHECKLIST_ORDER_NUMBER = "4827316059";
+const NO_CHECKLIST_ORDER_ITEM_INDEXES = [0, 2, 4, 6];
+const NO_CHECKLIST_ORDER_ITEMS = NO_CHECKLIST_ORDER_ITEM_INDEXES.map((index) => INSTALLATION_ITEMS[index]);
+const NO_CHECKLIST_ORDER_SCHEDULE_DETAILS = [
+  { date: "18 Aug 2025", engineer: "Charles MacDonald" },
+  { date: "18 Aug 2025", engineer: "Charles MacDonald" },
+  { date: "20 Aug 2025", engineer: "Wade Wilson" },
+  { date: "20 Aug 2025", engineer: "Wade Wilson" },
+];
+
 const INSTALLATION_SCHEDULE_DETAILS = {
   0: { date: "18 Aug 2025", engineer: "Charles MacDonald" },
   1: { date: "18 Aug 2025", engineer: "Charles MacDonald" },
@@ -8435,25 +8656,24 @@ const INSTALLATION_SCHEDULE_DETAILS = {
 
 const WHITE_GLOVE_ORDERS = [
   { number: "1901126245", orderedDate: "26 Jun 2025" },
-  { number: "323146241", orderedDate: "26 Jun 2025" },
 ];
 
-const WHITE_GLOVE_STATUS_SEQUENCE = ["default", "scheduled", "complete"];
-
-function getWhiteGloveItemStatus(status, index) {
+function getWhiteGloveItemStatus(orderNumber, status, index) {
   if (!Object.hasOwn(INSTALLATION_SCHEDULE_DETAILS, index) || status === "default") return "—";
   return status === "scheduled" ? "Install scheduled" : "Install complete";
 }
 
 function createWhiteGloveItemRow(orderNumber, status, itemData, index) {
   const [item, qty, image, catalog, name] = itemData;
-  const itemStatus = getWhiteGloveItemStatus(status, index);
-  const schedule = itemStatus === "—" ? null : INSTALLATION_SCHEDULE_DETAILS[index];
+  const itemStatus = getWhiteGloveItemStatus(orderNumber, status, index);
+  const schedule = itemStatus === "Install scheduled" || itemStatus === "Install complete"
+    ? INSTALLATION_SCHEDULE_DETAILS[index]
+    : null;
   const row = document.createElement("tr");
-  const statusMarkup = itemStatus === "—"
-    ? "—"
-    : `<span class="ins-installation-state ins-installation-state--${status === "scheduled" ? "scheduled" : "complete"}">${itemStatus}</span>`;
-  row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td title="${name}">${name}</td><td>${statusMarkup}</td><td>${schedule?.date || "—"}</td><td>${schedule?.engineer || "—"}</td><td><button class="ins-view" type="button" data-wg-shell-index="${index}" data-wg-order-number="${orderNumber}" aria-label="View details for item ${item}, ${name}">View</button></td>`;
+  row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td title="${name}">${name}</td><td class="ins-status-cell" data-wg-item-status></td><td>${schedule?.date || "—"}</td><td>${schedule?.engineer || "—"}</td><td><button class="ins-view" type="button" data-wg-shell-index="${index}" data-wg-order-number="${orderNumber}" aria-label="View details for item ${item}, ${name}">View</button></td>`;
+  const statusCell = row.querySelector("[data-wg-item-status]");
+  if (itemStatus === "—") statusCell.textContent = "—";
+  else statusCell.append(createInstallationItemStatus(itemStatus, index, `white-glove-${orderNumber}`));
   return row;
 }
 
@@ -8470,8 +8690,8 @@ function renderWhiteGloveOrderState(order) {
   const completeNotice = order.querySelector("[data-wg-complete]");
   note.hidden = status === "complete";
   completeNotice.hidden = status !== "complete";
-  const statusButton = order.querySelector("[data-wg-status-toggle]");
-  statusButton.setAttribute("aria-label", `Status: ${status === "default" ? "not scheduled" : status}. Select to show the next White Glove status`);
+  const statusButton = order.querySelector("[data-open-installation-status-scenarios]");
+  statusButton.setAttribute("aria-label", `Status: ${status === "default" ? "not scheduled" : status}. Open status change modal`);
 
   const body = order.querySelector("[data-wg-items]");
   body.replaceChildren(...INSTALLATION_ITEMS.map((item, index) => createWhiteGloveItemRow(orderNumber, status, item, index)));
@@ -8480,7 +8700,7 @@ function renderWhiteGloveOrderState(order) {
     selectedInstallationShellContext = {
       index,
       orderNumber,
-      status: getWhiteGloveItemStatus(status, index),
+      status: getWhiteGloveItemStatus(orderNumber, status, index),
     };
     setRoute(`installation-shell-${index}`);
   }));
@@ -8488,6 +8708,9 @@ function renderWhiteGloveOrderState(order) {
 
 function createWhiteGloveOrder({ number, orderedDate }) {
   const order = document.createElement("article");
+  const additionalItemsMarkup = `
+        <button class="ins-additional" type="button" data-wg-additional-toggle aria-expanded="false" aria-controls="white-glove-additional-${number}"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
+        <div class="ins-additional-items" id="white-glove-additional-${number}" data-wg-additional-panel hidden><table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><tbody data-wg-additional-items></tbody></table></div>`;
   order.className = "ins-order ins-order--white-glove";
   order.dataset.wgOrderNumber = number;
   order.innerHTML = `
@@ -8496,7 +8719,7 @@ function createWhiteGloveOrder({ number, orderedDate }) {
       <header class="wg-order-head">
         <button class="ins-order-toggle" type="button" data-wg-toggle aria-expanded="false" aria-controls="white-glove-details-${number}"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> ${number}</span></button>
         <span class="wg-premium" data-white-glove-tooltip tabindex="0" aria-label="White Glove order"><img src="assets/icons/general/premium/size=24px, style=bold.svg" alt="" /></span>
-        <button class="mi-button ins-activity" type="button" data-open-installation-activity>Activity log</button>
+        <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="${number}">Activity log</button>
       </header>
       <div class="wg-order-summary" data-wg-expanded hidden>
         <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Ordered date</strong><span>${orderedDate}</span></div></div>
@@ -8508,30 +8731,25 @@ function createWhiteGloveOrder({ number, orderedDate }) {
       <aside class="wg-order-notice" data-wg-note><img src="assets/icons/notifications/info/size=24px, style=bold.svg" alt="" /><p><strong>Note:</strong> As this is a white glove order, our dedicated team will reach out to you directly. If you prefer, you’re also welcome to contact them using the information provided above.</p></aside>
       <aside class="ins-installation-complete-notice wg-order-complete" data-wg-complete hidden><img src="assets/icons/notifications/info/size=24px, style=bold.svg" alt="" /><div><strong>Installation complete</strong><p>Your installation is complete and the supported instrument(s)/system(s) will be available in the “My instruments” page of Services Central. Please note the order will disappear from the installation page upon your next login.</p><button class="mi-button" type="button" data-route="my-instruments">Go to My Instruments</button></div></aside>
       <div class="ins-items wg-order-items">
-        <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-wg-status-toggle>Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-wg-items></tbody></table>
-        <button class="ins-additional" type="button" data-wg-additional-toggle aria-expanded="false" aria-controls="white-glove-additional-${number}"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
-        <div class="ins-additional-items" id="white-glove-additional-${number}" data-wg-additional-panel hidden><table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><tbody data-wg-additional-items></tbody></table></div>
+        <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-open-installation-status-scenarios data-status-order="${number}" aria-haspopup="dialog">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-wg-items></tbody></table>
+        ${additionalItemsMarkup}
       </div>
     </div>`;
 
   const additionalRows = order.querySelector("[data-wg-additional-items]");
-  ADDITIONAL_INSTALLATION_ITEMS.forEach(([item, qty, catalog, name]) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${item}</td><td>${qty}</td><td><span class="ins-no-image"><img src="assets/icons/media/image/size=16px, style=mono.svg" alt="" /></span></td><td>${catalog}</td><td title="${name}">${name}</td><td>—</td><td>—</td><td>—</td><td></td>`;
-    additionalRows.append(row);
-  });
+  if (additionalRows) {
+    ADDITIONAL_INSTALLATION_ITEMS.forEach(([item, qty, catalog, name]) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${item}</td><td>${qty}</td><td><span class="ins-no-image"><img src="assets/icons/media/image/size=16px, style=mono.svg" alt="" /></span></td><td>${catalog}</td><td title="${name}">${name}</td><td>—</td><td>—</td><td>—</td><td></td>`;
+      additionalRows.append(row);
+    });
+  }
   order.querySelector("[data-wg-toggle]").addEventListener("click", () => {
     const state = whiteGloveOrderStates.get(number);
     state.expanded = !state.expanded;
     renderWhiteGloveOrderState(order);
   });
-  order.querySelector("[data-wg-status-toggle]").addEventListener("click", () => {
-    const state = whiteGloveOrderStates.get(number);
-    const currentIndex = WHITE_GLOVE_STATUS_SEQUENCE.indexOf(state.status);
-    state.status = WHITE_GLOVE_STATUS_SEQUENCE[(currentIndex + 1) % WHITE_GLOVE_STATUS_SEQUENCE.length];
-    renderWhiteGloveOrderState(order);
-  });
-  order.querySelector("[data-wg-additional-toggle]").addEventListener("click", (event) => {
+  order.querySelector("[data-wg-additional-toggle]")?.addEventListener("click", (event) => {
     const expanded = event.currentTarget.getAttribute("aria-expanded") !== "true";
     event.currentTarget.setAttribute("aria-expanded", String(expanded));
     event.currentTarget.classList.toggle("is-expanded", expanded);
@@ -8639,9 +8857,10 @@ function renderInstallationShellDetail(route) {
   statusBadge.classList.toggle("shell-detail-status--plain", status === "—");
   statusBadge.classList.toggle("shell-detail-status--scheduled", status === "Install scheduled");
   statusBadge.classList.toggle("shell-detail-status--complete", status === "Install complete");
+  statusBadge.classList.toggle("shell-detail-status--cancelled", status === "Cancelled");
   renderInstallationShellSupport(status);
   app.querySelector("[data-shell-manual-title]").textContent = `${catalog} - ${name} Operating Manual`;
-  app.querySelector("[data-go-back]").addEventListener("click", () => setRoute(shellContext?.orderNumber === "7659430547" ? "installations-progress" : "installations-expanded"));
+  app.querySelectorAll("[data-go-back], [data-shell-back]").forEach((button) => button.addEventListener("click", () => setRoute(shellContext?.returnRoute || (shellContext?.orderNumber === "7659430547" ? "installations-progress" : "installations-expanded"))));
   app.querySelector(".shell-detail-search input").addEventListener("keydown", (event) => {
     if (event.key === "Enter") event.preventDefault();
   });
@@ -8679,6 +8898,14 @@ const ADDITIONAL_INSTALLATION_ITEMS = [
   ["16", "2", "701-057465", "Unity ext warranty"],
 ];
 
+function replaceInstallationOrderRoute(route, title) {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.hash = `#${route}`;
+  window.history.replaceState({}, "", nextUrl);
+  document.title = title;
+  syncFlowToolbarTitle();
+}
+
 function setInstallationExpanded(expanded, { userInitiated = false, updateStatus = true } = {}) {
   const order = app.querySelector("[data-ins-order]");
   const toggle = app.querySelector("[data-ins-toggle]");
@@ -8688,8 +8915,7 @@ function setInstallationExpanded(expanded, { userInitiated = false, updateStatus
   toggle.setAttribute("aria-expanded", String(expanded));
   app.querySelectorAll("[data-ins-expanded]").forEach((element) => { element.hidden = !expanded; });
   const route = expanded ? "installations-expanded" : "installations";
-  window.history.replaceState({}, "", `#${route}`);
-  document.title = expanded ? "Installations — order 9012611245 — Services Central" : "Installations — Services Central";
+  replaceInstallationOrderRoute(route, expanded ? "Installations — order 9012611245 — Services Central" : "Installations — Services Central");
   if (updateStatus) updateInstallationOrderStatus();
 }
 
@@ -8702,66 +8928,240 @@ function setAdditionalInstallationItemsExpanded(expanded) {
   panel.hidden = !expanded;
 }
 
+function isProgressPreInstallComplete() {
+  return submittedProgressPreInstallChecklists.length === PROGRESS_PREINSTALL_CHECKLISTS.length;
+}
+
+function createProgressPreInstallCardMarkup() {
+  if (isProgressPreInstallComplete()) {
+    return `<div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/installation/preinstall checklist/size=32px, style=mono.svg" alt="" /></div><h3>Pre-install checklist(s) submitted</h3><p>Thank you! Your checklist(s) have been received.</p><button class="mi-button ins-small-button" type="button" data-open-progress-preinstall-details>View details</button>`;
+  }
+  return `<div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/alert/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/installation/preinstall checklist/size=32px, style=mono.svg" alt="" /></div><h3>Upload your pre-install checklist(s)<br /><span>(${PROGRESS_PREINSTALL_CHECKLISTS.length - submittedProgressPreInstallChecklists.length} of ${PROGRESS_PREINSTALL_CHECKLISTS.length} remaining)</span></h3><p>Your completed checklist(s) help us verify site readiness and avoid delaying your installation.</p><div class="ins-card-actions"><button class="mi-button ins-small-button" type="button" data-open-progress-preinstall-upload>Upload</button><div class="ins-template-dropdown"><button class="mi-button ins-small-button ins-download" type="button" data-preinstall-template-toggle aria-haspopup="menu" aria-expanded="false" aria-controls="progress-preinstall-template-menu">Download template(s) <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="ins-template-menu" id="progress-preinstall-template-menu" role="menu" data-preinstall-template-menu hidden><button type="button" role="menuitem">Download all</button><button type="button" role="menuitem">HPLC template long name</button><button type="button" role="menuitem">Mass spec template long name</button><button type="button" role="menuitem">Third template long name</button></div></div></div><div class="ins-checklist-availability"><span class="ins-checklist-availability__trigger" tabindex="0" aria-describedby="progress-checklist-availability-tooltip"><img src="assets/icons/notifications/prohibited/size=16px, style=bold.svg" alt="" /><span class="ins-checklist-availability__tooltip" id="progress-checklist-availability-tooltip" role="tooltip">We’ve notified our team. If we need any additional documentation, we will contact you. No further action needed at this time.</span></span><span>Certain PDFs may not be available to download.</span></div>`;
+}
+
+function wireProgressPreInstallCard(order) {
+  order.querySelector("[data-open-progress-preinstall-upload]")?.addEventListener("click", openProgressPreInstallChecklistUploadModal);
+  order.querySelector("[data-open-progress-preinstall-details]")?.addEventListener("click", openCompletedProgressPreInstallChecklistModal);
+  wirePreInstallTemplateDropdown(order);
+}
+
+function getProgressOrderItemStatus(index) {
+  if (index === 4) return "Cancelled";
+  const checklistComplete = isProgressPreInstallComplete();
+  const baseStatus = checklistComplete ? "—" : "Awaiting checklist(s)";
+  if (!Object.hasOwn(INSTALLATION_SCHEDULE_DETAILS, index) || progressInstallationStatusScenario === "in-progress") return baseStatus;
+  if (progressInstallationStatusScenario === "some-scheduled") return "Install scheduled";
+  if (progressInstallationStatusScenario === "some-installed") return index < 2 ? "Install complete" : "Install scheduled";
+  if (progressInstallationStatusScenario === "all-installed") return "Install complete";
+  return baseStatus;
+}
+
+function updateProgressOrderCompletionState() {
+  const order = app.querySelector(".ins-order--progress");
+  if (!order) return;
+  const complete = isProgressPreInstallComplete();
+  const installationComplete = progressInstallationStatusScenario === "all-installed";
+  order.classList.toggle("is-steps-complete", complete);
+  const status = order.querySelector("[data-progress-order-status]");
+  status.className = `ins-badge ${complete ? "ins-badge--success" : "ins-badge--danger"}`;
+  status.innerHTML = complete
+    ? '<img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress'
+    : '<img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" />Action(s) required';
+  status.hidden = installationComplete;
+  order.querySelector("[data-progress-order-modified]").hidden = installationComplete;
+  const card = order.querySelector("[data-progress-preinstall-card]");
+  card.classList.toggle("is-complete", complete);
+  card.innerHTML = createProgressPreInstallCardMarkup();
+  order.querySelectorAll("[data-progress-item-status]").forEach((cell) => {
+    const index = Number(cell.dataset.progressItemIndex);
+    const itemStatus = getProgressOrderItemStatus(index);
+    const schedule = itemStatus === "Install scheduled" || itemStatus === "Install complete" ? INSTALLATION_SCHEDULE_DETAILS[index] : null;
+    const row = cell.closest("tr");
+    row.querySelector("[data-progress-item-date]").textContent = schedule?.date || "—";
+    row.querySelector("[data-progress-item-engineer]").textContent = schedule?.engineer || "—";
+    cell.replaceChildren();
+    if (itemStatus === "—") cell.textContent = "—";
+    else cell.append(createInstallationItemStatus(itemStatus, index, "progress-7659430547"));
+  });
+  wireProgressPreInstallCard(order);
+}
+
+function setProgressOrderExpanded(order, expanded) {
+  order.classList.toggle("is-expanded", expanded);
+  order.querySelector("[data-progress-order-toggle]").setAttribute("aria-expanded", String(expanded));
+  order.querySelectorAll("[data-progress-expanded]").forEach((element) => { element.hidden = !expanded; });
+  replaceInstallationOrderRoute(
+    expanded ? "installations-progress" : "installations",
+    expanded ? "Installations — order 7659430547 — Services Central" : "Installations — Services Central",
+  );
+}
+
 function renderProgressStandardOrder(expanded) {
   const order = app.querySelector(".ins-order--secondary");
   if (!order) return;
-  order.className = `ins-order ins-order--primary ins-order--progress is-steps-complete${expanded ? " is-expanded" : ""}`;
+  const progressComplete = isProgressPreInstallComplete();
+  order.className = `ins-order ins-order--primary ins-order--progress${progressComplete ? " is-steps-complete" : ""}${expanded ? " is-expanded" : ""}`;
   order.innerHTML = `
     <header class="ins-order-head">
-      <button class="ins-order-toggle" type="button" data-progress-order-toggle aria-expanded="${expanded}" aria-controls="installation-progress-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 7659430547</span></button>
-      <span class="ins-badge ins-badge--success"><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span>
-      <button class="mi-button ins-activity" type="button" data-open-installation-activity>Activity log</button>
+      <button class="ins-order-toggle" type="button" data-progress-order-toggle aria-expanded="${expanded}" aria-controls="installation-progress-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 7659430547 (Partially available)</span></button>
+      <span class="ins-badge ${progressComplete ? "ins-badge--success" : "ins-badge--danger"}" data-progress-order-status>${progressComplete ? '<img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress' : '<img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" />Action(s) required'}</span>
+      <span class="ins-badge ins-badge--modified" data-progress-order-modified><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />Order modified</span>
+      <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="7659430547">Activity log</button>
     </header>
     <div class="ins-expanded-summary" data-progress-expanded ${expanded ? "" : "hidden"}>
       <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Order date</strong><span>26 Jun 2025</span></div></div>
       <div class="ins-summary-box ins-summary-box--users"></div>
     </div>
-    <div class="ins-action-cards" id="installation-progress-details" data-progress-expanded ${expanded ? "" : "hidden"}>
-      <article class="ins-action-card is-complete"><div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 1</span><img class="ins-checklist-icon" src="assets/icons/installation/CRD/Size=32px, Style=Mono.svg" alt="" /></div><h3>Delivery dates submitted</h3><p>Thank you! Your preferred delivery dates have been received.</p></article>
+    <div class="ins-action-cards" id="installation-progress-details">
+      <article class="ins-action-card is-complete">${createCompletedDeliveryDatesCardMarkup("7659430547")}</article>
       <article class="ins-action-card is-complete"><div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 2</span><img class="ins-checklist-icon" src="assets/icons/installation/del checklist/size=32px, style=mono.svg" alt="" /></div><h3>Delivery checklist submitted</h3><p>Thank you! Your checklist has been received.</p><button class="mi-button ins-small-button" type="button" data-open-delivery-checklist-details>View details</button></article>
-      <article class="ins-action-card is-complete"><div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/installation/preinstall checklist/size=32px, style=mono.svg" alt="" /></div><h3>Pre-install checklist(s) submitted</h3><p>Thank you! Your checklist(s) have been received.</p><button class="mi-button ins-small-button" type="button" data-open-progress-preinstall-details>View details</button></article>
+      <article class="ins-action-card${progressComplete ? " is-complete" : ""}" data-progress-preinstall-card>${createProgressPreInstallCardMarkup()}</article>
     </div>
     <div class="ins-items" data-progress-expanded ${expanded ? "" : "hidden"}>
-      <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Status</th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-progress-items></tbody></table>
-      <button class="ins-additional" type="button" data-progress-additional-toggle aria-expanded="false" aria-controls="installation-progress-additional-items"><img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span>Additional item(s) on your order</span><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></button>
-      <div class="ins-additional-items" id="installation-progress-additional-items" data-progress-additional-panel hidden><table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><tbody data-progress-additional-items></tbody></table></div>
+      <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-checklist-availability" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-open-installation-status-scenarios data-status-order="7659430547" aria-haspopup="dialog">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-progress-items></tbody></table>
     </div>`;
 
   const items = order.querySelector("[data-progress-items]");
   INSTALLATION_ITEMS.forEach(([item, qty, image, catalog, name], index) => {
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td title="${name}">${name}</td><td>—</td><td>—</td><td>—</td><td><button class="ins-view" type="button" data-progress-shell-index="${index}" aria-label="View details for item ${item}, ${name}">View</button></td>`;
+    const noChecklistIndicator = index < 3
+      ? `<span class="ins-no-checklist" tabindex="0" aria-label="No checklist available" aria-describedby="progress-no-checklist-tooltip-${index}"><img src="assets/icons/general/no document/size=24px, style=mono.svg" alt="" /><span class="ins-no-checklist__tooltip" id="progress-no-checklist-tooltip-${index}" role="tooltip">We’ve notified our team. If we need any additional documentation, we will contact you. No further action needed at this time.</span></span>`
+      : "";
+    row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td class="ins-no-checklist-cell">${noChecklistIndicator}</td><td title="${name}">${name}</td><td class="ins-status-cell" data-progress-item-status data-progress-item-index="${index}"></td><td data-progress-item-date>—</td><td data-progress-item-engineer>—</td><td><button class="ins-view" type="button" data-progress-shell-index="${index}" aria-label="View details for item ${item}, ${name}"${index === 4 ? " disabled" : ""}>View</button></td>`;
+    const statusCell = row.querySelector("[data-progress-item-status]");
+    const itemStatus = getProgressOrderItemStatus(index);
+    if (itemStatus === "—") statusCell.textContent = "—";
+    else statusCell.append(createInstallationItemStatus(itemStatus, index, "progress-7659430547"));
     items.append(row);
   });
-  const additionalItems = order.querySelector("[data-progress-additional-items]");
-  ADDITIONAL_INSTALLATION_ITEMS.forEach(([item, qty, catalog, name]) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${item}</td><td>${qty}</td><td><span class="ins-no-image"><img src="assets/icons/media/image/size=16px, style=mono.svg" alt="" /></span></td><td>${catalog}</td><td title="${name}">${name}</td><td>—</td><td>—</td><td>—</td><td></td>`;
-    additionalItems.append(row);
+  order.querySelector("[data-progress-order-toggle]").addEventListener("click", (event) => {
+    setProgressOrderExpanded(order, event.currentTarget.getAttribute("aria-expanded") !== "true");
   });
-
-  order.querySelector("[data-progress-order-toggle]").addEventListener("click", () => setRoute(expanded ? "installations" : "installations-progress"));
-  order.querySelector("[data-open-progress-preinstall-details]").addEventListener("click", openCompletedPreInstallChecklistModal);
-  order.querySelector("[data-progress-additional-toggle]").addEventListener("click", (event) => {
-    const toggle = event.currentTarget;
-    const nextExpanded = toggle.getAttribute("aria-expanded") !== "true";
-    toggle.classList.toggle("is-expanded", nextExpanded);
-    toggle.setAttribute("aria-expanded", String(nextExpanded));
-    order.querySelector("[data-progress-additional-panel]").hidden = !nextExpanded;
-  });
+  wireProgressPreInstallCard(order);
   order.querySelectorAll("[data-progress-shell-index]").forEach((button) => button.addEventListener("click", () => {
     const index = Number(button.dataset.progressShellIndex);
-    selectedInstallationShellContext = { index, orderNumber: "7659430547", status: "—" };
+    selectedInstallationShellContext = {
+      index,
+      orderNumber: "7659430547",
+      status: getProgressOrderItemStatus(index),
+      returnRoute: "installations-progress",
+    };
     setRoute(`installation-shell-${index}`);
   }));
+  updateProgressOrderCompletionState();
 }
 
-function wireInstallations(expanded = false, progressExpanded = false) {
+function getNoChecklistOrderItemStatus(index) {
+  const scenario = noChecklistOrderState.statusScenario;
+  if (scenario === "some-scheduled") return "Install scheduled";
+  if (scenario === "some-installed") return index < 2 ? "Install complete" : "Install scheduled";
+  if (scenario === "all-installed") return "Install complete";
+  return "—";
+}
+
+function createNoChecklistStepCardMarkup() {
+  if (noChecklistOrderState.step3Complete) {
+    return `<div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/general/no document/size=32px, style=mono.svg" alt="" /></div><h3>Pre-install checklist(s) completed</h3><p>All applicable items have been scheduled for installation.</p>`;
+  }
+  return `<div class="ins-action-card__head"><img class="ins-alert" src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="" /><span>Step 3</span><img class="ins-checklist-icon" src="assets/icons/general/no document/size=32px, style=mono.svg" alt="" /></div><h3>Pre-install checklist(s)</h3><p>PDFs are not available to download. We’ve notified our team. If we need any additional documentation, we will contact you. No further action needed at this time.</p>`;
+}
+
+function setNoChecklistOrderExpanded(order, expanded) {
+  noChecklistOrderState.expanded = expanded;
+  order.classList.toggle("is-expanded", expanded);
+  order.querySelector("[data-no-checklist-toggle]").setAttribute("aria-expanded", String(expanded));
+  order.querySelectorAll("[data-no-checklist-expanded]").forEach((element) => { element.hidden = !expanded; });
+  replaceInstallationOrderRoute(
+    expanded ? "installations-no-checklist" : "installations",
+    expanded ? `Installations — order ${NO_CHECKLIST_ORDER_NUMBER} — Services Central` : "Installations — Services Central",
+  );
+}
+
+function renderNoChecklistOrderState(order) {
+  const expanded = noChecklistOrderState.expanded;
+  const installationComplete = noChecklistOrderState.statusScenario === "all-installed";
+  order.classList.toggle("is-expanded", expanded);
+  order.classList.toggle("is-steps-complete", noChecklistOrderState.step3Complete);
+  order.querySelector("[data-no-checklist-toggle]").setAttribute("aria-expanded", String(expanded));
+  order.querySelectorAll("[data-no-checklist-expanded]").forEach((element) => { element.hidden = !expanded; });
+  const card = order.querySelector("[data-no-checklist-step-card]");
+  card.className = `ins-action-card ins-action-card--no-checklist${noChecklistOrderState.step3Complete ? " is-complete" : ""}`;
+  card.innerHTML = createNoChecklistStepCardMarkup();
+  order.querySelector("[data-no-checklist-order-status]").hidden = installationComplete;
+  order.querySelectorAll("[data-no-checklist-item-status]").forEach((cell) => {
+    const index = Number(cell.dataset.noChecklistItemIndex);
+    const itemStatus = getNoChecklistOrderItemStatus(index);
+    const schedule = itemStatus === "Install scheduled" || itemStatus === "Install complete" ? NO_CHECKLIST_ORDER_SCHEDULE_DETAILS[index] : null;
+    const row = cell.closest("tr");
+    row.querySelector("[data-no-checklist-item-date]").textContent = schedule?.date || "—";
+    row.querySelector("[data-no-checklist-item-engineer]").textContent = schedule?.engineer || "—";
+    cell.replaceChildren();
+    if (itemStatus === "—") cell.textContent = "—";
+    else cell.append(createInstallationItemStatus(itemStatus, index, `no-checklist-${NO_CHECKLIST_ORDER_NUMBER}`));
+  });
+}
+
+function createNoChecklistOrder(expanded = false) {
+  noChecklistOrderState.expanded = expanded;
+  const order = document.createElement("article");
+  order.className = "ins-order ins-order--primary ins-order--no-checklist";
+  order.dataset.noChecklistOrder = NO_CHECKLIST_ORDER_NUMBER;
+  order.innerHTML = `
+    <header class="ins-order-head">
+      <button class="ins-order-toggle" type="button" data-no-checklist-toggle aria-expanded="${expanded}" aria-controls="no-checklist-order-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> ${NO_CHECKLIST_ORDER_NUMBER} (Not available)</span></button>
+      <span class="ins-badge ins-badge--success" data-no-checklist-order-status><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span>
+      <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="${NO_CHECKLIST_ORDER_NUMBER}">Activity log</button>
+    </header>
+    <div class="ins-expanded-summary" data-no-checklist-expanded ${expanded ? "" : "hidden"}>
+      <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Order date</strong><span>30 Jun 2025</span></div></div>
+      <div class="ins-summary-box ins-summary-box--users"></div>
+    </div>
+    <div class="ins-action-cards" id="no-checklist-order-details">
+      <article class="ins-action-card is-complete">${createCompletedDeliveryDatesCardMarkup(NO_CHECKLIST_ORDER_NUMBER)}</article>
+      <article class="ins-action-card is-complete"><div class="ins-action-card__head"><img class="ins-complete" src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><span>Step 2</span><img class="ins-checklist-icon" src="assets/icons/installation/del checklist/size=32px, style=mono.svg" alt="" /></div><h3>Delivery checklist submitted</h3><p>Thank you! Your checklist has been received.</p><button class="mi-button ins-small-button" type="button" data-open-delivery-checklist-details>View details</button></article>
+      <article class="ins-action-card ins-action-card--no-checklist" data-no-checklist-step-card>${createNoChecklistStepCardMarkup()}</article>
+    </div>
+    <div class="ins-items" data-no-checklist-expanded ${expanded ? "" : "hidden"}>
+      <table><colgroup><col class="ins-col-item" /><col class="ins-col-qty" /><col class="ins-col-image" /><col class="ins-col-catalog" /><col class="ins-col-checklist-availability" /><col class="ins-col-name" /><col class="ins-col-status" /><col class="ins-col-date" /><col class="ins-col-engineer" /><col class="ins-col-action" /></colgroup><thead><tr><th>Item <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Qty</th><th></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th></th><th>Catalog name <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th><button type="button" data-open-installation-status-scenarios data-status-order="${NO_CHECKLIST_ORDER_NUMBER}" aria-haspopup="dialog">Status <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Scheduled date <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Engineer assigned <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Action</th></tr></thead><tbody data-no-checklist-items></tbody></table>
+    </div>`;
+
+  const body = order.querySelector("[data-no-checklist-items]");
+  NO_CHECKLIST_ORDER_ITEMS.forEach(([item, qty, image, catalog, name], index) => {
+    const sourceIndex = NO_CHECKLIST_ORDER_ITEM_INDEXES[index];
+    const row = document.createElement("tr");
+    const tooltipId = `no-checklist-order-tooltip-${index}`;
+    const noChecklistIndicator = `<span class="ins-no-checklist" tabindex="0" aria-label="No checklist available" aria-describedby="${tooltipId}"><img src="assets/icons/general/no document/size=24px, style=mono.svg" alt="" /><span class="ins-no-checklist__tooltip" id="${tooltipId}" role="tooltip">We’ve notified our team. If we need any additional documentation, we will contact you. No further action needed at this time.</span></span>`;
+    row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td class="ins-no-checklist-cell">${noChecklistIndicator}</td><td title="${name}">${name}</td><td class="ins-status-cell" data-no-checklist-item-status data-no-checklist-item-index="${index}"></td><td data-no-checklist-item-date>—</td><td data-no-checklist-item-engineer>—</td><td><button class="ins-view" type="button" data-no-checklist-shell-index="${sourceIndex}" aria-label="View details for item ${item}, ${name}">View</button></td>`;
+    body.append(row);
+  });
+  order.querySelector("[data-no-checklist-toggle]").addEventListener("click", (event) => {
+    setNoChecklistOrderExpanded(order, event.currentTarget.getAttribute("aria-expanded") !== "true");
+  });
+  order.querySelectorAll("[data-no-checklist-shell-index]").forEach((button) => button.addEventListener("click", () => {
+    const index = Number(button.dataset.noChecklistShellIndex);
+    const localIndex = NO_CHECKLIST_ORDER_ITEM_INDEXES.indexOf(index);
+    selectedInstallationShellContext = {
+      index,
+      orderNumber: NO_CHECKLIST_ORDER_NUMBER,
+      status: getNoChecklistOrderItemStatus(localIndex),
+      returnRoute: "installations-no-checklist",
+    };
+    setRoute(`installation-shell-${index}`);
+  }));
+  renderNoChecklistOrderState(order);
+  return order;
+}
+
+function renderNoChecklistOrder(expanded = false) {
+  app.querySelector(".ins-orders")?.append(createNoChecklistOrder(expanded));
+}
+
+function wireInstallations(expanded = false, progressExpanded = false, noChecklistExpanded = false) {
   const tbody = app.querySelector("[data-ins-items]");
   INSTALLATION_ITEMS.forEach(([item, qty, image, catalog, name], index) => {
     const row = document.createElement("tr");
     row.innerHTML = `<td>${item}</td><td>${qty}</td><td><img src="assets/instruments/${image}" alt="" /></td><td>${catalog}</td><td title="${name}">${name}</td><td class="ins-status-cell" data-ins-item-status data-ins-item-index="${index}"></td><td data-ins-item-date>—</td><td data-ins-item-engineer>—</td><td><button class="ins-view" type="button" data-ins-shell-index="${index}" aria-label="View details for item ${item}, ${name}">View</button></td>`;
-    row.querySelector("[data-ins-item-status]").append(createInstallationItemStatus("Awaiting action(s)", index));
+    row.querySelector("[data-ins-item-status]").append(createInstallationItemStatus(getInstallationItemStatus(index), index));
     tbody.append(row);
   });
   const additionalTbody = app.querySelector("[data-ins-additional-items]");
@@ -8778,10 +9178,15 @@ function wireInstallations(expanded = false, progressExpanded = false) {
   setPreInstallChecklistComplete(submittedPreInstallChecklists.length === PREINSTALL_CHECKLISTS.length);
   updatePreInstallChecklistCardCount();
   renderProgressStandardOrder(progressExpanded);
+  renderNoChecklistOrder(noChecklistExpanded);
   if (progressExpanded) {
     setInstallationExpanded(false, { updateStatus: false });
     window.history.replaceState({}, "", "#installations-progress");
     document.title = "Installations — order 7659430547 — Services Central";
+  } else if (noChecklistExpanded) {
+    setInstallationExpanded(false, { updateStatus: false });
+    window.history.replaceState({}, "", "#installations-no-checklist");
+    document.title = `Installations — order ${NO_CHECKLIST_ORDER_NUMBER} — Services Central`;
   }
   app.querySelector("[data-ins-toggle]").addEventListener("click", (event) => setInstallationExpanded(event.currentTarget.getAttribute("aria-expanded") !== "true", { userInitiated: true }));
   app.querySelector("[data-ins-additional-toggle]").addEventListener("click", (event) => setAdditionalInstallationItemsExpanded(event.currentTarget.getAttribute("aria-expanded") !== "true"));
@@ -8799,6 +9204,7 @@ function wireInstallations(expanded = false, progressExpanded = false) {
   wireDeliveryDatesPauseTriggers(app);
   renderWhiteGloveOrders();
   normalizeOrderUsersCards(app);
+  wireOrderEmailTooltips(app);
   wireOrderUsersTooltips(app);
   wireAdditionalItemsTooltips(app);
   wireWhiteGloveTooltips(app);
@@ -8807,7 +9213,7 @@ function wireInstallations(expanded = false, progressExpanded = false) {
   wireRouteControls();
 }
 
-function renderInstallations(expanded = false, progressExpanded = false) {
+function renderInstallations(expanded = false, progressExpanded = false, noChecklistExpanded = false) {
   const template = document.querySelector("#installations-native-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
@@ -8822,13 +9228,16 @@ function renderInstallations(expanded = false, progressExpanded = false) {
     );
     window.PlatformSidebar.wire(document);
   }
-  wireInstallations(expanded, progressExpanded);
+  wireInstallations(expanded, progressExpanded, noChecklistExpanded);
   if (!installationPendingShownForVisit) {
     installationPendingShownForVisit = true;
     if (installationWelcomeFromEmail) {
       installationWelcomeFromEmail = false;
       installationWelcomeDialog.showModal();
-    } else installationPendingDialog.showModal();
+    } else {
+      refreshInstallationPendingContent();
+      installationPendingDialog.showModal();
+    }
   }
 }
 
@@ -9122,7 +9531,7 @@ function render() {
     window.history.replaceState({ unavailableRoute: route }, "", nextUrl);
     route = "dashboard";
   }
-  const isInstallationsPage = route === "installations" || route === "installations-expanded" || route === "installations-progress";
+  const isInstallationsPage = route === "installations" || route === "installations-expanded" || route === "installations-progress" || route === "installations-no-checklist";
   const isInstallationsSection = isInstallationsPage || route === "installation-faqs" || route === "installation-support" || isInstallationShellDetailRoute(route);
   if (!isInstallationsSection) installationPendingShownForVisit = false;
   if (addUserOrderDialog.open) addUserOrderDialog.close();
@@ -9168,7 +9577,7 @@ function render() {
   } else if (route === "add-instruments") {
     renderAddInstruments();
   } else if (isInstallationsPage) {
-    renderInstallations(route === "installations-expanded", route === "installations-progress");
+    renderInstallations(route === "installations-expanded", route === "installations-progress", route === "installations-no-checklist");
   } else if (route === "installation-faqs") {
     renderInstallationFaqs();
   } else if (route === "installation-support") {
@@ -9309,10 +9718,6 @@ miEditColumnsDialog.addEventListener("click", (event) => {
 document.querySelector("[data-close-flows]").addEventListener("click", () => flowsDialog.close());
 document.querySelectorAll("[data-installation-pending-close], [data-installation-pending-continue]").forEach((button) => button.addEventListener("click", () => installationPendingDialog.close()));
 installationWelcomeDialog.querySelectorAll("[data-installation-welcome-close], [data-installation-welcome-continue]").forEach((button) => button.addEventListener("click", () => installationWelcomeDialog.close()));
-document.querySelector("[data-installation-pending-instruments]").addEventListener("click", () => {
-  installationPendingDialog.close();
-  setRoute("my-instruments");
-});
 document.querySelector("[data-close-services-help]").addEventListener("click", closeServicesHelpModal);
 installationStatusScenariosDialog.querySelector("[data-close-installation-status-scenarios]").addEventListener("click", () => installationStatusScenariosDialog.close());
 installationStatusScenariosDialog.querySelectorAll("[data-installation-status-scenario]").forEach((option) => {
@@ -9352,9 +9757,15 @@ deliveryDatesConfirmationDialog.querySelector("[data-edit-delivery-dates]").addE
 });
 deliveryDatesConfirmationDialog.querySelector("[data-delivery-dates-confirmation-form]").addEventListener("submit", (event) => {
   event.preventDefault();
+  const [earliestField, latestField] = preferredDeliveryDatesDialog.querySelectorAll("[data-delivery-date-required]");
+  preferredDeliveryDateValues = {
+    earliest: formatInstallationActivityDeliveryDate(earliestField.value),
+    latest: formatInstallationActivityDeliveryDate(latestField.value),
+  };
   preferredDeliveryDatesSubmitted = true;
   deliveryReminderPauseDays = "";
-  recordInstallationActivity("Submitted ", "Preferred delivery date(s)");
+  recordInstallationActivity("Submitted ", "earliest delivery date", `: ${preferredDeliveryDateValues.earliest}`);
+  recordInstallationActivity("Submitted ", "latest delivery date", `: ${preferredDeliveryDateValues.latest}`);
   deliveryDatesConfirmationDialog.close();
   setPreferredDeliveryDatesComplete(true);
 });
@@ -9413,7 +9824,17 @@ deliveryChecklistConfirmationDialog.querySelector("[data-delivery-checklist-conf
     pendingPreInstallChecklists = [];
     updatePreInstallChecklistCardCount();
     setPreInstallChecklistComplete(preInstallChecklistsUploaded === PREINSTALL_CHECKLISTS.length);
-    showToast("Pre-install checklist(s) successfully submitted.", { title: "Success:", variant: "checklist" });
+    showToast("Pre-install checklist(s) successfully submitted.", { title: "Success:", variant: "preinstall-checklist" });
+  } else if (checklistConfirmationContext === "preinstall-progress") {
+    pendingPreInstallChecklists.forEach((checklist) => {
+      if (!submittedProgressPreInstallChecklists.some((submitted) => submitted.id === checklist.id)) {
+        submittedProgressPreInstallChecklists.push({ ...checklist, submittedBy: DEFAULT_INSTALLATION_USER_EMAIL });
+        recordInstallationActivity("Submitted Pre-installation checklist for ", checklist.name, "", "7659430547");
+      }
+    });
+    pendingPreInstallChecklists = [];
+    updateProgressOrderCompletionState();
+    showToast("Pre-install checklist(s) successfully submitted.", { title: "Success:", variant: "preinstall-checklist" });
   }
   checklistConfirmationContext = "";
 });
@@ -9488,9 +9909,10 @@ preInstallChecklistUploadDialog.querySelector("[data-preinstall-checklist-upload
   event.preventDefault();
   if (preInstallChecklistUploadDialog.querySelector("[data-submit-preinstall-checklists]").disabled) return;
   const uploadRows = Array.from(preInstallChecklistUploadDialog.querySelectorAll(".preinstall-checklist-upload-table__row"));
-  pendingPreInstallChecklists = uploadRows.flatMap((row, index) => row.querySelector("[data-preinstall-uploader]").dataset.state === "uploaded" ? [PREINSTALL_CHECKLISTS[index]] : []);
+  const availableChecklists = preInstallChecklistOrderContext === "7659430547" ? PROGRESS_PREINSTALL_CHECKLISTS : PREINSTALL_CHECKLISTS;
+  pendingPreInstallChecklists = uploadRows.flatMap((row, index) => row.querySelector("[data-preinstall-uploader]").dataset.state === "uploaded" && availableChecklists[index] ? [availableChecklists[index]] : []);
   preInstallChecklistUploadDialog.close();
-  checklistConfirmationContext = "preinstall";
+  checklistConfirmationContext = preInstallChecklistOrderContext === "7659430547" ? "preinstall-progress" : "preinstall";
   deliveryChecklistConfirmationDialog.showModal();
   deliveryChecklistConfirmationDialog.querySelector("[data-delivery-checklist-confirmation-form]").focus({ preventScroll: true });
 });
@@ -9508,7 +9930,7 @@ preInstallChecklistUploadDialog.addEventListener("keydown", (event) => {
 deliveryChecklistDetailsDialog.querySelectorAll("[data-close-delivery-checklist-details]").forEach((button) => button.addEventListener("click", () => deliveryChecklistDetailsDialog.close()));
 deliveryDatesPauseDialog.querySelectorAll("[data-close-delivery-pause]").forEach((button) => button.addEventListener("click", () => deliveryDatesPauseDialog.close()));
 deliveryDatesPauseDialog.querySelectorAll("[data-delivery-pause-reason]").forEach((radio) => radio.addEventListener("change", updateDeliveryPauseConfirmState));
-deliveryDatesPauseDialog.querySelector("[data-delivery-pause-details]").addEventListener("input", updateDeliveryPauseConfirmState);
+deliveryDatesPauseDialog.querySelectorAll("[data-delivery-pause-details]").forEach((field) => field.addEventListener("input", updateDeliveryPauseConfirmState));
 deliveryDatesPauseDialog.querySelectorAll("[data-delivery-pause-days]").forEach((button) => button.addEventListener("click", () => setDeliveryPauseDays(button.dataset.deliveryPauseDays)));
 deliveryDatesPauseDialog.querySelector("[data-delivery-pause-form]").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -9555,7 +9977,21 @@ flowsDialog.addEventListener("click", (event) => {
   if (event.target === flowsDialog) flowsDialog.close();
 });
 installationPendingDialog.addEventListener("click", (event) => {
-  if (event.target === installationPendingDialog) installationPendingDialog.close();
+  if (event.target === installationPendingDialog) {
+    installationPendingDialog.close();
+    return;
+  }
+  const instrumentsLink = event.target.closest("[data-installation-pending-instruments]");
+  if (instrumentsLink) {
+    installationPendingDialog.close();
+    setRoute("my-instruments");
+    return;
+  }
+  const contactSupportLink = event.target.closest("[data-installation-pending-contact-support]");
+  if (contactSupportLink) {
+    installationPendingDialog.close();
+    openServicesHelpModal(contactSupportLink);
+  }
 });
 installationWelcomeDialog.addEventListener("click", (event) => {
   if (event.target === installationWelcomeDialog) installationWelcomeDialog.close();

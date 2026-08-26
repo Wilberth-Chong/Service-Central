@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APP_JS="$ROOT_DIR/app.js"
+STYLES="$ROOT_DIR/styles.css"
+
+grep -Fq '7659430547 (Partially available)' "$APP_JS"
+grep -Fq 'data-progress-order-status' "$APP_JS"
+grep -Fq 'Action(s) required' "$APP_JS"
+grep -Fq 'const PROGRESS_PREINSTALL_CHECKLISTS = PREINSTALL_CHECKLISTS.slice(0, 3);' "$APP_JS"
+grep -Fq 'Certain PDFs may not be available to download.' "$APP_JS"
+grep -Fq 'We’ve notified our team. If we need any additional documentation, we will contact you. No further action needed at this time.' "$APP_JS"
+grep -Fq 'const baseStatus = checklistComplete ? "—" : "Awaiting checklist(s)";' "$APP_JS"
+grep -Fq 'if (index === 4) return "Cancelled";' "$APP_JS"
+grep -Fq 'cell.append(createInstallationItemStatus(itemStatus, index, "progress-7659430547"))' "$APP_JS"
+grep -Fq 'openProgressPreInstallChecklistUploadModal' "$APP_JS"
+grep -Fq '.ins-checklist-availability__tooltip' "$STYLES"
+grep -Fq 'index < 3' "$APP_JS"
+grep -Fq 'assets/icons/general/no document/size=24px, style=mono.svg' "$APP_JS"
+grep -Fq 'progress-no-checklist-tooltip-' "$APP_JS"
+grep -Fq '.ins-no-checklist__tooltip' "$STYLES"
+grep -Fq '.ins-no-checklist__tooltip::after' "$STYLES"
+grep -Fq 'ins-col-checklist-availability' "$APP_JS"
+grep -Fq '<th></th><th>Catalog name' "$APP_JS"
+grep -Fq 'class="ins-no-checklist-cell"' "$APP_JS"
+grep -Fq '${index === 4 ? " disabled" : ""}' "$APP_JS"
+grep -Fq '.ins-view:disabled { border-color: #ccc; color: #81828c !important; background: #ccc; cursor: not-allowed; }' "$STYLES"
+grep -Fq 'Download template(s)' "$APP_JS"
+grep -Fq '.ins-template-dropdown .ins-download { width: auto; margin-top: 0; gap: 8px; border-color: #e5e5e5; padding-right: 16px; padding-left: 16px;' "$STYLES"
+
+echo "Installation progress-order incomplete Step 3 checks passed."
