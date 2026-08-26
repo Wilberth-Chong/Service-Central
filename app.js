@@ -8842,6 +8842,7 @@ function renderInstallationShellDetail(route) {
   const template = document.querySelector("#installation-shell-detail-template");
   app.replaceChildren(template.content.cloneNode(true));
   mountTopbarSc();
+  mountFooter();
   mountPlatformSidebar("installations");
   app.querySelector("[data-shell-flow-title]").textContent = `Shell item ${item}`;
   const shellImage = app.querySelector("[data-shell-image]");

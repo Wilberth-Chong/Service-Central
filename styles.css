@@ -7392,10 +7392,16 @@ checklist-upload-note { display: block; width: 100%; }
 
 .is-platform-titlebar-compact > .shell-detail-hero {
   display: flex;
+  flex-direction: row;
+  gap: 0;
 }
 
 .is-platform-titlebar-compact > .shell-detail-hero .shell-detail-summary {
   display: none;
+}
+
+.is-platform-titlebar-compact > .shell-detail-hero .shell-detail-back + .platform-titlebar__go-top {
+  margin-left: 16px;
 }
 
 .is-platform-titlebar-compact > .id-hero {
