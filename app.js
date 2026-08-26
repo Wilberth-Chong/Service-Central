@@ -1706,11 +1706,29 @@ function applyServicePlanContactsZeroState({ contactsAvailable = false } = {}) {
   main.append(heading, document.createRange().createContextualFragment(zeroStateMarkup("contacts", { contactsAvailable })));
 }
 
+function isSupportFlowTitlebarRoute(route) {
+  return route.startsWith("open-support-ticket")
+    || route.startsWith("request-pm")
+    || route === "pm-request-summary"
+    || route.startsWith("request-serviceplan")
+    || route === "serviceplan-summary"
+    || route.startsWith("request-qualification")
+    || route === "qualification-summary"
+    || route.startsWith("request-calibration")
+    || route === "calibration-summary"
+    || Boolean(TICKET_SUMMARIES[route]);
+}
+
 function mountNativePageChrome(activeRoute, { title, backRoute = "request-support" } = {}) {
   const stage = app.querySelector(".mi-stage");
   const shell = app.querySelector(".mi-shell");
   const legacyHeader = app.querySelector(".mi-header");
   const legacyFooter = app.querySelector(".mi-footer");
+  const titlebar = app.querySelector(".iss-titlebar, .pm-titlebar, .ts-titlebar");
+
+  if (titlebar && isSupportFlowTitlebarRoute(routeFromHash())) {
+    titlebar.dataset.platformTitlebar = "";
+  }
 
   if (!app.querySelector(".flow-toolbar") && stage) {
     const toolbar = document.createElement("div");
@@ -4069,7 +4087,7 @@ function renderMiSystemDetail(route) {
     <div class="id-stage"><div class="mi-shell sd-shell">
       <div data-topbar-sc-mount></div><div data-platform-sidebar-mount></div>
       <main class="platform-page-body sd-main">
-        <section class="sd-hero" aria-label="System summary">
+        <section class="sd-hero" data-platform-titlebar aria-label="System summary">
           <div class="sd-actions"><button type="button" data-route="consumables">Order consumables</button><div class="sd-action-menu-wrap"><button type="button" data-sd-more-actions aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="sd-action-menu" role="menu" data-sd-action-menu hidden>
             <button type="button" role="menuitem" data-sd-action="edit-system"><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /><span>Edit system</span></button>
             <button type="button" role="menuitem" data-sd-action="edit-nickname"><img src="assets/icons/actions/edit/size=24px, style=mono.svg" alt="" /><span>Edit nickname</span></button>
@@ -4515,7 +4533,7 @@ function renderInstrumentDetail(serial) {
       <div data-topbar-sc-mount></div>
       <div data-platform-sidebar-mount></div>
       <main class="platform-page-body id-main">
-        <section class="id-hero" aria-label="Instrument summary">
+        <section class="id-hero" data-platform-titlebar aria-label="Instrument summary">
           <div class="id-hero__actions">
             <div class="id-actions"><button class="id-more-actions" type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" data-mi-action-menu-context="detail" aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div>
             <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
@@ -5748,12 +5766,7 @@ function renderTicketSummary(route) {
     selectedFromHistory: true,
   } : baseTicket;
   const isTechSupport = ticket.isTechSupport === true;
-  const usesReferenceLayout = isTechSupport || Boolean(ticket.summaryKind);
-  const titleMeta = ticket.submitted
-    ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span></p>`
-    : usesReferenceLayout
-    ? `<p><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`
-    : `<p>Ticket number: ${ticket.ticket} <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span></p>`;
+  const titleMeta = `<p class="ts-titlebar__metadata"><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`;
   const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
   const ticketPhone = ticket.selectedFromHistory ? ticket.phone || "---" : "123-456-7890";
   const ticketEmail = ticket.selectedFromHistory ? ticket.email || "---" : "molly.hartman@thermofisher.com";
@@ -5771,10 +5784,11 @@ function renderTicketSummary(route) {
   const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
   const closedContent = `<article class="ts-card ts-card--standard ts-card--closed">${contactMarkup}${closedRequestMarkup}<section class="ts-service ts-service--closed"><h3>Service details</h3><div class="ts-service--closed__body"><div class="ts-service--closed__details"><dl><div><dt>Arrival date</dt><dd>12 Mar 2023</dd></div><div><dt>Completion date</dt><dd>12 Mar 2023</dd></div><div><dt>Type of service</dt><dd>Preventive maintenance</dd></div></dl><dl class="ts-service-description"><div><dt>Service description</dt><dd>Cras gravida nibh enim, sit amet molestie nisi congue id. Proin rhoncus consectetur arcu, in lobortis magna. Donec purus ipsum, dignissim non maximus nec, rhoncus accumsan erat. Proin consectetur tincidunt mi eget cursus. Sed facilisis at risus imperdiet.</dd></div></dl></div><article class="ts-service-report"><div><strong>View service report</strong><p>Available here until dd mmm yyyy.<br />After this date, contact support.</p></div><button type="button" aria-label="Download service report"><img src="assets/icons/actions/download/Size=24px, Style=Mono, Color=Blue.svg" alt="" /></button></article></div></section></article>${instrumentMarkup}`;
   const defaultContent = ticket.summaryKind === "quote" ? quoteContent : ticket.summaryKind === "preventive" ? preventiveContent : closedContent;
-  const titleDate = ticket.summaryKind === "quote" || ticket.summaryKind === "preventive" ? `<div class="ts-title-date"><span>Scheduled start date</span><time>${ticket.created}</time></div>` : ticket.summaryKind === "closed" || isTechSupport ? "" : `<time>${ticket.created}</time>`;
+  const scheduledStartDate = ticket.summaryKind === "quote" || ticket.summaryKind === "preventive" ? ticket.created : "—";
+  const titleDate = `<div class="ts-title-date"><span>Scheduled start date</span><time>${scheduledStartDate}</time></div>`;
   app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
     <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
-    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div><h1>${ticket.title}${usesReferenceLayout ? ` <span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>` : ""}</h1>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}" data-platform-go-top-anchor>${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
   if (submittedNotice) {
     const notice = document.createElement("section");
     notice.className = "ts-notice ts-notice--submitted";
@@ -9233,6 +9247,7 @@ function render() {
     renderFlow(route);
   }
   syncFlowToolbarTitle();
+  window.PlatformTitlebar?.wire(app);
   window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 }
 

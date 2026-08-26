@@ -94,7 +94,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main db-main">
-            <section class="mi-titlebar db-titlebar"><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
+            <section class="mi-titlebar db-titlebar" data-platform-titlebar><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
             <section class="ai-banner db-banner" aria-label="Dashboard notifications">
               <button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button>
               <div class="ai-banner__content">
@@ -151,7 +151,7 @@
             <div data-platform-sidebar-mount></div>
 
             <main class="platform-page-body mi-main">
-              <section class="mi-titlebar">
+              <section class="mi-titlebar" data-platform-titlebar>
                 <h1>Instruments</h1>
                 <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
               </section>
@@ -239,7 +239,7 @@
             <div data-platform-sidebar-mount></div>
 
             <main class="platform-page-body mi-main ai-main">
-              <section class="mi-titlebar ai-titlebar"><h1>Add instruments to get support</h1></section>
+              <section class="mi-titlebar ai-titlebar" data-platform-titlebar><h1>Add instruments to get support</h1></section>
               <section class="ai-banner" aria-label="Instrument suggestions">
                 <button class="ai-banner__arrow" type="button" data-ai-banner-prev aria-label="Previous suggestion"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button>
                 <div class="ai-banner__content">
@@ -341,8 +341,8 @@
         <div class="mi-stage"><div class="mi-shell rs-shell">
           <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
           <div data-platform-sidebar-mount></div>
-          <main class="mi-main rs-main">
-            <section class="mi-titlebar rs-titlebar"><h1>Request support</h1></section>
+          <main class="platform-page-body mi-main rs-main">
+            <section class="mi-titlebar rs-titlebar" data-platform-titlebar><h1>Request support</h1></section>
             <section class="rs-content" aria-labelledby="rs-heading">
               <div class="rs-intro"><h2 id="rs-heading">Submit a request for your instrument(s)</h2><p>Select the type of request you would like to submit for your instrument(s).</p></div>
               <div class="rs-layout">
@@ -651,7 +651,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main sh-main">
-            <section class="mi-titlebar sh-titlebar"><h1>Support request history</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
+            <section class="mi-titlebar sh-titlebar" data-platform-titlebar><h1>Support request history</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
             <section class="sh-content" aria-labelledby="sh-ticket-heading">
               <div class="sh-top">
                 <h2 id="sh-ticket-heading">Support request tickets <span data-sh-count>100</span></h2>
@@ -696,8 +696,8 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main splan-main">
-            <section class="splan-top">
-              <div class="splan-heading"><div><h1>Service plan contacts</h1><p>Tell us who to contact for any service plan notifications or to renew your plan.</p></div><button class="mi-button mi-button--primary splan-primary" type="button" data-route="edit-spc">Edit service plan contact</button></div>
+            <section class="splan-top" data-platform-titlebar>
+              <div class="splan-heading"><div><h1 data-platform-go-top-anchor>Service plan contacts</h1><p>Tell us who to contact for any service plan notifications or to renew your plan.</p></div><button class="mi-button mi-button--primary splan-primary" type="button" data-route="edit-spc">Edit service plan contact</button></div>
               <div class="splan-contact-grid">
                 <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-splan-action="Molly Hartman">Molly Hartman</button><span>molly_hartman@companyname.com</span></div></div><p>Service plan contact for 10 instruments</p><footer><button type="button" data-route="edit-spc"><img class="splan-card__edit-icon" src="assets/icons/actions/edit/size=16px,%20style=mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Molly Hartman menu" aria-label="More options for Molly Hartman"><img src="assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg" alt="" /></button></footer></article>
                 <article class="splan-card"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-route="contact-page">Sebastien Martin</button><span>sebastien_martin@companyname.com</span></div></div><p>Service plan contact for 5 instruments</p><footer><button type="button" data-route="edit-spc"><img class="splan-card__edit-icon" src="assets/icons/actions/edit/size=16px,%20style=mono.svg" alt="" />Edit</button><button type="button" data-splan-action="Sebastien Martin menu" aria-label="More options for Sebastien Martin"><img src="assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg" alt="" /></button></footer></article>
@@ -753,7 +753,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main contact-main">
-            <section class="mi-titlebar contact-titlebar"><h1>Service plan contacts</h1></section>
+            <section class="mi-titlebar contact-titlebar" data-platform-titlebar><h1>Service plan contacts</h1><button class="mi-button contact-scheduling-support" type="button" disabled>Scheduling Support</button></section>
             <section class="contact-content">
               <header class="contact-heading">
                 <div>
@@ -806,7 +806,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main cons-main">
-            <section class="mi-titlebar cons-titlebar"><h1>Consumables</h1></section>
+            <section class="mi-titlebar cons-titlebar" data-platform-titlebar><h1>Consumables</h1></section>
             <section class="cons-quick-order"><div class="cons-spot cons-spot--cart"><img src="assets/consumables/cart.svg" alt="" /></div><div><h2>Already know the consumables you need?</h2><p>Just order your product by entering the catalog number.</p></div><button class="mi-button" type="button">Quick order</button></section>
             <div class="cons-body">
               <section class="cons-columns"><header class="cons-section-heading"><h2>LC/GC columns and more</h2><p>Use our selection guides to pick the right LC/GC consumables.</p></header>
@@ -845,7 +845,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main ins-main">
-            <section class="mi-titlebar ins-titlebar"><h1>Installations</h1><div class="ins-title-actions"><button class="ins-faq" type="button" data-route="installation-faqs"><img src="assets/icons/notifications/question/size=16px, style=bold.svg" alt="" />FAQs</button><i></i><button class="mi-button ins-add-user" type="button" data-open-add-user>Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-support">Installation support</button></div></section>
+            <section class="mi-titlebar ins-titlebar" data-platform-titlebar><h1>Installations</h1><div class="ins-title-actions"><button class="ins-faq" type="button" data-route="installation-faqs"><img src="assets/icons/notifications/question/size=16px, style=bold.svg" alt="" />FAQs</button><i></i><button class="mi-button ins-add-user" type="button" data-open-add-user>Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-support">Installation support</button></div></section>
             <section class="ins-content">
               <header class="ins-intro"><h2>Order(s) <span>4</span></h2><p>Monitor the progress of your installation(s).</p></header>
               <div class="ins-orders">
@@ -893,7 +893,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main shell-detail-main">
-            <section class="shell-detail-hero" aria-label="Shell summary">
+            <section class="shell-detail-hero" data-platform-titlebar aria-label="Shell summary">
               <div class="shell-detail-summary">
                 <div class="shell-detail-image"><img data-shell-image src="assets/instruments/vanquish-pump.png" alt="" /></div>
                 <dl class="shell-detail-facts">
@@ -947,7 +947,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main ifaq-main">
-            <section class="ifaq-titlebar">
+            <section class="ifaq-titlebar" data-platform-titlebar>
               <div class="ifaq-heading"><button type="button" data-route="installations"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />Installations</button><h1>Frequently asked questions</h1></div>
               <div class="ifaq-title-actions"><button class="mi-button ifaq-add-user" type="button" data-open-add-user>Add user to order</button><button class="mi-button ins-support" type="button" data-route="installation-support">Installation support</button></div>
             </section>
@@ -1097,7 +1097,7 @@
               <div data-platform-sidebar-mount></div>
 
               <main class="platform-page-body platform-page-body--has-actionbar spc-main">
-            <div class="spc-title-band">
+            <div class="mi-titlebar spc-title-band" data-platform-titlebar>
               <h1>Edit service plan contact</h1>
             </div>
 
@@ -2146,6 +2146,7 @@
     <script src="topbar-notifications.js?v=20260811-topbar-notifications"></script>
     <script src="platform-sidebar.js?v=20260821-regional-sidebar"></script>
     <script src="platform-action-bar.js?v=20260819-submitted-summary-close"></script>
+    <script src="platform-titlebar.js?v=20260826-titlebar-contact-left"></script>
     <script src="ticket-step-viewer.js?v=20260822-request-pm-status-v2"></script>
     <script src="footer.js?v=20260812-footer"></script>
     <script src="modal.js?v=20260818-modal-component"></script>
