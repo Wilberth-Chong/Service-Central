@@ -5317,6 +5317,13 @@ function aiSummaryNotAddedMarkup(instruments, noteOverride = "") {
   return `<section class="ai-summary-section ai-summary-section--not-added"><h2>Instrument(s) not added</h2><div class="ai-summary-not-added-wrap"><table class="ai-summary-not-added"><colgroup><col class="ai-summary-not-added-item" /><col class="ai-summary-not-added-serial" /><col class="ai-summary-not-added-nickname" /><col /></colgroup><thead><tr><th>Item</th><th>Serial number</th><th>Nickname</th><th>Notes</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "")}</td><td>${aiEscapeHtml(noteOverride || aiSummaryNotAddedNote(instrument))}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 
+function aiInstrumentSupportMailto(instruments) {
+  const subject = "Add instrument support request";
+  const serialRows = instruments.map((instrument) => `${instrument.serial}\t`).join("\r\n");
+  const body = `Add instrument support request for the following instruments:\r\n\r\nSerial number*\tNotes (optional)\r\n${serialRows}${serialRows ? "\r\n" : ""}\r\n*Required`;
+  return `mailto:ServicesCentralSupport@thermofisher.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function aiUnmappedReviewMarkup() {
   return `<section class="ai-review ai-review--unmapped" data-ai-step-content="2" aria-label="Add instruments review">
     <div class="ai-account-warning" role="alert" data-ai-account-warning>
@@ -5347,7 +5354,7 @@ function addInstrumentStepMarkup(step) {
   const notAdded = addInstrumentDraft.filter((instrument) => !instrument.selected);
   const systemComponentCount = addInstrumentSystemsDraft.reduce((count, system) => count + system.components.length, 0);
   return `<section class="ai-summary" data-ai-step-content="3" aria-labelledby="ai-summary-title">
-    <div class="ai-summary-cards">${addInstrumentSystemsDraft.length ? `<div class="ai-summary-card"><strong>${addInstrumentSystemsDraft.length}</strong><span><b>System(s) added</b><small>${systemComponentCount} components inside ${addInstrumentSystemsDraft.length} system${addInstrumentSystemsDraft.length === 1 ? "" : "s"}</small></span></div>` : ""}<div class="ai-summary-card"><strong>${standaloneSelected.length}</strong><span><b>Instrument(s) added</b><small>Go to <button type="button" data-route="my-instruments">My Instruments</button></small></span></div><div class="ai-summary-card"><strong>${notAdded.length}</strong><span><b>Instrument(s) not added</b><small>Get help</small></span></div></div>
+    <div class="ai-summary-cards">${addInstrumentSystemsDraft.length ? `<div class="ai-summary-card"><strong>${addInstrumentSystemsDraft.length}</strong><span><b>System(s) added</b><small>${systemComponentCount} components inside ${addInstrumentSystemsDraft.length} system${addInstrumentSystemsDraft.length === 1 ? "" : "s"}</small></span></div>` : ""}<div class="ai-summary-card"><strong>${standaloneSelected.length}</strong><span><b>Instrument(s) added</b><small>Go to <button type="button" data-route="my-instruments">My Instruments</button></small></span></div><div class="ai-summary-card"><strong>${notAdded.length}</strong><span><b>Instrument(s) not added</b><small><a href="${aiEscapeHtml(aiInstrumentSupportMailto(notAdded))}" data-ai-not-added-help>Get help</a></small></span></div></div>
     ${aiSummarySystemsMarkup()}
     ${standaloneSelected.length ? `<section class="ai-summary-section"><div class="ai-summary__description"><h2 id="ai-summary-title">Instrument(s) added successfully</h2><p>Click a serial number for instrument support details, or visit <button type="button" data-route="my-instruments">My Instruments</button> to view all within Services Central.</p></div>${aiSummaryInstrumentTable(standaloneSelected)}</section>` : ""}
     ${aiSummaryNotAddedMarkup(notAdded)}
@@ -9968,7 +9975,7 @@ servicesHelpDialog.querySelectorAll("[data-services-help-action]").forEach((cont
   control.addEventListener("click", () => {
     const action = control.dataset.servicesHelpAction;
     servicesHelpDialog.dispatchEvent(new CustomEvent("services-help:action", { detail: { action } }));
-    showToast(action === "email" ? "Email support selected" : "Tours selected");
+    if (action === "tours") showToast("Tours selected");
   });
 });
 helpDialog.addEventListener("click", (event) => {

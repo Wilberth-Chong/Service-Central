@@ -3994,9 +3994,12 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .ai-summary-card > span { display: grid; flex: 1; line-height: 24px; }
 .ai-summary-card b { overflow: hidden; color: #1b1b1d; font-size: 16px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .ai-summary-card small { color: #54545c; font-size: 13px; line-height: 24px; }
-.ai-summary-card small button { border: 0; padding: 0; color: #0071d0; background: transparent; font: inherit; cursor: pointer; }
-.ai-summary-card small button:hover { text-decoration: underline; }
-.ai-summary-card small button:focus-visible { outline: 2px solid #0071d0; outline-offset: 2px; }
+.ai-summary-card small button,
+.ai-summary-card small a { border: 0; padding: 0; color: #0071d0; background: transparent; font: inherit; text-decoration: none; cursor: pointer; }
+.ai-summary-card small button:hover,
+.ai-summary-card small a:hover { text-decoration: underline; }
+.ai-summary-card small button:focus-visible,
+.ai-summary-card small a:focus-visible { outline: 2px solid #0071d0; outline-offset: 2px; }
 .ai-summary__description { display: grid; gap: 8px; }
 .ai-summary__description p { width: 868px; margin: 0; color: #54545c; font-size: 16px; line-height: 26px; }
 .ai-summary__description button { border: 0; padding: 0; color: #0071d0; background: transparent; font: inherit; font-weight: 500; cursor: pointer; }
@@ -5178,6 +5181,17 @@ checklist-upload-note { display: block; width: 100%; }
   font-size: 16px;
   font-weight: 400;
   line-height: 26px;
+}
+
+.services-help-card__actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.services-help-card__actions .services-help-card__action {
+  width: 100%;
 }
 
 .services-help-card__action {
