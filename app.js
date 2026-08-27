@@ -58,6 +58,10 @@ let installationWelcomeFromEmail = false;
 let servicePlanApprovalPending = false;
 let servicePlanApprovalPromptShown = false;
 let servicePlanApprovalAcceptedNotice = false;
+const WHATS_NEW_DISMISSAL_KEY = "services-central-whats-new-q3-2026-dismissed";
+let whatsNewShownThisVisit = false;
+let whatsNewDialog = null;
+let whatsNewEligibleAfterSignIn = false;
 let selectedInstallationShellContext = null;
 const whiteGloveOrderStates = new Map([
   ["1901126245", { expanded: false, status: "default" }],
@@ -1333,6 +1337,93 @@ function setRoute(route, summaryTicket = null) {
   render();
 }
 
+function shouldShowWhatsNew() {
+  const params = new URL(window.location.href).searchParams;
+  if (params.get("showWhatsNew") === "1") return true;
+  if (!whatsNewEligibleAfterSignIn) return false;
+  if (whatsNewShownThisVisit) return false;
+  try {
+    return window.localStorage.getItem(WHATS_NEW_DISMISSAL_KEY) !== "true";
+  } catch {
+    return true;
+  }
+}
+
+function createWhatsNewContent() {
+  const content = document.createElement("div");
+  content.className = "whats-new";
+
+  const features = document.createElement("section");
+  features.className = "whats-new__features";
+  [
+    {
+      icon: "assets/icons/users/user add/Size=24px, Style=Mono.svg",
+      title: "Multiple service plan contacts",
+      description: "You can now add up to two contacts to receive service plan updates and communications.",
+    },
+    {
+      icon: "assets/icons/navigation/support/size=24px, style=mono.svg",
+      title: "More support request visibility",
+      description: "View history of PM, service plan, and compliance support requests submitted through Services Central.",
+    },
+  ].forEach(({ icon, title, description }) => {
+    const feature = document.createElement("article");
+    feature.className = "whats-new__feature";
+    const image = document.createElement("img");
+    image.src = icon;
+    image.alt = "";
+    image.setAttribute("aria-hidden", "true");
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    const text = document.createElement("p");
+    text.textContent = description;
+    feature.append(image, heading, text);
+    features.append(feature);
+  });
+
+  const preference = document.createElement("label");
+  preference.className = "whats-new__preference";
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.dataset.whatsNewDismiss = "";
+  const label = document.createElement("span");
+  label.textContent = "Don’t show this again";
+  preference.append(checkbox, label);
+  content.append(features, preference);
+  return content;
+}
+
+function showWhatsNewIfNeeded() {
+  if (!window.PlatformModal || whatsNewDialog?.open || !shouldShowWhatsNew()) return;
+  whatsNewShownThisVisit = true;
+  const mount = document.createElement("div");
+  document.body.append(mount);
+  const dialog = window.PlatformModal.mount(mount, {
+    id: "whats-new-dialog",
+    title: "New on Services Central",
+    width: "1100px",
+    className: "whats-new-dialog",
+    bodyClassName: "whats-new-dialog__body",
+    closeIcon: "assets/icons/actions/close/size=24px, style=mono.svg",
+    content: createWhatsNewContent(),
+    closeOnBackdrop: false,
+  });
+  if (!dialog) return;
+  whatsNewDialog = dialog;
+  dialog.addEventListener("close", () => {
+    if (dialog.querySelector("[data-whats-new-dismiss]")?.checked) {
+      try {
+        window.localStorage.setItem(WHATS_NEW_DISMISSAL_KEY, "true");
+      } catch {
+        // Continue without persistence if browser storage is unavailable.
+      }
+    }
+    dialog.remove();
+    if (whatsNewDialog === dialog) whatsNewDialog = null;
+  }, { once: true });
+  window.PlatformModal.open(dialog);
+}
+
 document.addEventListener("click", (event) => {
   const backButton = event.target.closest("[data-flow-history-back]");
   if (!backButton) return;
@@ -1447,6 +1538,7 @@ function ensureFlowToolbarHistoryControls(scope = app) {
 function wireSignIn() {
   app.querySelector("[data-signin-form]").addEventListener("submit", (event) => {
     event.preventDefault();
+    whatsNewEligibleAfterSignIn = true;
     setRoute("dashboard");
   });
   app.querySelector("[data-help]").addEventListener("click", () => helpDialog.showModal());
@@ -2258,6 +2350,22 @@ function miInstrumentDetailRoute(serial) {
 
 function isMiInstrumentDetailRoute(route) {
   return /^instrument-detail-[A-Za-z0-9-]+$/.test(route);
+}
+
+function instrumentDetailParentLabel(route) {
+  if (isMiGroupDetailRoute(route)) {
+    return MI_GROUPS.find((group) => group.id === Number(route.replace(/^group-detail-/, "")))?.name || "My instruments";
+  }
+  if (isMiSystemDetailRoute(route)) {
+    return miFindSystemById(route.replace(/^system-detail-/, ""))?.nickname || "My instruments";
+  }
+  return ROUTES[route]?.title || CUSTOM_ROUTES[route] || "My instruments";
+}
+
+function instrumentDetailParentNavigation() {
+  const parentRoute = window.history.state?.fromRoute;
+  const route = parentRoute && parentRoute !== routeFromHash() ? parentRoute : "my-instruments";
+  return { route, label: instrumentDetailParentLabel(route) };
 }
 
 const MI_OPTIONAL_COLUMNS = ["instrument-images", "nickname", "users", "groups", "type", "model", "coverage", "coverage-end", "added-date"];
@@ -4293,12 +4401,14 @@ function renderMiSystemDetail(route) {
   const systemIsFavorite = miIsFavorite(systemFavoriteKey);
   const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   const systemGroups = MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`));
+  const parentNavigation = instrumentDetailParentNavigation();
   app.innerHTML = `<section class="screen screen--system-detail" aria-label="${system.nickname} system details">
     <div class="flow-toolbar"><button type="button" data-go-back>Back</button><strong>${system.nickname}</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div>
     <div class="id-stage"><div class="mi-shell sd-shell">
       <div data-topbar-sc-mount></div><div data-platform-sidebar-mount></div>
       <main class="platform-page-body sd-main">
         <section class="sd-hero" data-platform-titlebar aria-label="System summary">
+          <button class="sd-parent-navigation" type="button" data-route="${parentNavigation.route}"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" /><span>${parentNavigation.label}</span></button>
           <div class="sd-actions"><button type="button" data-route="consumables">Order consumables</button><div class="sd-action-menu-wrap"><button type="button" data-sd-more-actions aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button><div class="sd-action-menu" role="menu" data-sd-action-menu hidden>
             <button type="button" role="menuitem" data-sd-action="edit-system"><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /><span>Edit system</span></button>
             <button type="button" role="menuitem" data-sd-action="edit-nickname"><img src="assets/icons/actions/edit/size=24px, style=mono.svg" alt="" /><span>Edit nickname</span></button>
@@ -4734,6 +4844,7 @@ function renderInstrumentDetail(serial) {
   const owningSystem = miCurrentSystems().find((system) => system.components.includes(instrument.serial));
   const instrumentFavoriteKey = `instrument:${instrument.serial}`;
   const instrumentIsFavorite = miIsFavorite(instrumentFavoriteKey);
+  const parentNavigation = instrumentDetailParentNavigation();
   app.innerHTML = `<section class="screen screen--instrument-detail" aria-label="Instrument ${instrument.serial} details">
     <div class="flow-toolbar">
       <button type="button" data-go-back>Back</button>
@@ -4745,6 +4856,7 @@ function renderInstrumentDetail(serial) {
       <div data-platform-sidebar-mount></div>
       <main class="platform-page-body id-main">
         <section class="id-hero" data-platform-titlebar aria-label="Instrument summary">
+          <button class="id-parent-navigation" type="button" data-id-parent-navigation data-route="${parentNavigation.route}"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" /><span>${parentNavigation.label}</span></button>
           <div class="id-hero__actions">
             <div class="id-actions"><button class="id-more-actions" type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" data-mi-action-menu-context="detail" aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div>
             <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
@@ -6006,7 +6118,7 @@ function renderTicketSummary(route) {
   const titleDate = `<div class="ts-title-date"><span>Scheduled start date</span><time>${scheduledStartDate}</time></div>`;
   app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
     <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
-    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}" data-platform-go-top-anchor>${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><button class="ts-parent-navigation" type="button" data-route="support-history" data-platform-go-top-anchor><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />Support history</button><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
   if (submittedNotice) {
     const notice = document.createElement("section");
     notice.className = "ts-notice ts-notice--submitted";
@@ -8458,6 +8570,16 @@ function renderServicePlanContacts() {
 
 function wireContactPage() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("service-plan-contacts"));
+  app.querySelectorAll("[data-contact-group-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!button.dataset.contactGroupToggle) return;
+      const isOpen = button.getAttribute("aria-expanded") === "true";
+      const targetRows = app.querySelectorAll("[data-contact-group-row]");
+      button.setAttribute("aria-expanded", String(!isOpen));
+      button.querySelector("img").src = `assets/icons/directions/chevron ${isOpen ? "down" : "up"}/size=16px, style=mono.svg`;
+      targetRows.forEach((row) => { row.hidden = isOpen; });
+    });
+  });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
@@ -8469,7 +8591,7 @@ function renderContactPage() {
   mountPlatformSidebar("service-plan-contacts");
   mountFooter();
   wireContactPage();
-  document.title = "Sebastien Martin — Service plan contacts";
+  document.title = "Molly Hartman — Service plan contacts";
 }
 
 function createConsumablesSupportPortalPreference() {
@@ -9666,6 +9788,7 @@ function render() {
   syncFlowToolbarTitle();
   window.PlatformTitlebar?.wire(app);
   window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  showWhatsNewIfNeeded();
 }
 
 FLOW_MENU.forEach(({ label, mode, route, region, placeholder }) => {
