@@ -49,6 +49,37 @@ final result: blocked
 
 ---
 
+# Contact Detail parent navigation design QA
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Coverage contacts - Contact detail page.png`.
+- Implementation: `http://localhost:4174/?contactParentNavigation=v1#contact-page`, browser-rendered at the desktop application viewport.
+- State: expanded titlebar and compact-on-scroll titlebar.
+
+**Findings and resolution**
+
+- [P1 resolved] Contact Detail previously used a single-line "Service plan contacts" title without a parent control. The expanded titlebar now uses the reference hierarchy: blue `← Service plan contacts` parent navigation above `Service plan contact detail`, with Scheduling support retained at the right.
+- [P1 resolved] Contact Detail had no compact titlebar. At scroll, it now keeps the parent navigation in the first row and places the page title with Go to top in the second row, while retaining the right-side action.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: parent navigation is 14px, blue, and bold; expanded/compact page titles use the existing 32px/20px page-header hierarchy.
+- Spacing and layout rhythm: expanded titlebar is 114px; compact titlebar is an 88px two-row grid, matching the established installation FAQ compact pattern.
+- Colors and visual tokens: existing patterned pale titlebar background, primary blue navigation, and disabled gray Scheduling support action are retained.
+- Image and copy fidelity: the existing mono left-arrow asset is used; parent and title copy match the supplied Contact Detail reference.
+
+**Interaction verification**
+
+- Browser check: parent control is visible and enabled; it routes to `#service-plan-contacts`.
+- Scroll check: `.contact-main` enters compact mode at `scrollTop: 27.5px`; titlebar measures `88px`, with parent navigation on row one and Go to top on row two.
+- Browser console: no errors.
+- Focused shell tests and `git diff --check`: pass.
+
+final result: passed
+
+---
+
 # Request qualification table design QA
 
 **Comparison target**
@@ -101,6 +132,30 @@ final result: blocked
 - Quote controls display an in-app confirmation toast.
 - At 900px, the right rail follows the request list without document-width overflow.
 - Browser console: no errors.
+
+final result: passed
+
+---
+
+# First-visit “New on Services Central” modal QA
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/WhatsNew modal.png` (1100 × 540 px).
+- Implementation: `http://localhost:4173/?showWhatsNew=1#my-instruments`, captured in the in-app browser at 1280 × 720 CSS px.
+- Same-state comparison: the supplied modal reference and the forced first-visit browser capture were compared in their desktop modal states.
+
+**Findings and resolution**
+
+- The implementation uses the existing shared modal surface and backdrop, preserving the app’s dialog focus and close behavior.
+- The 1100px desktop modal follows the reference’s light feature area, 40px heading, two balanced feature columns, close icon, and separated white preference area.
+- Existing user-add and support-tool icons are used rather than introducing replacement artwork.
+
+**Interaction checks**
+
+- A successful sign-in submission opens the modal after the user is routed to Dashboard; direct landing routes do not trigger it.
+- The close button dismisses the modal without affecting the current route.
+- Checking “Don’t show this again” before closing persists the preference; a new `#support-history` app load did not reopen the modal.
+- `?showWhatsNew=1` provides a non-destructive preview path even after the preference has been stored.
+- `tests/whats-new-modal.test.sh` and `git diff --check` passed.
 
 final result: passed
 
@@ -1064,5 +1119,38 @@ final result: passed
 - Table: 1320px wide; header: 45px; rows: 41px; the component introduces no new horizontal page overflow.
 - All, Open, In progress, Closed; persistent checked states; live OR filtering; search/date AND composition; outside click; Escape; Tab; Arrow keys; Enter; Space; badge removal; and Clear filters pass.
 - Browser regressions passed for the reusable component, Status integration, date range, quote tooltip, and visit tooltip. Focused Support History shell checks, JavaScript syntax checks, and `git diff --check` passed.
+
+final result: passed
+
+---
+
+# Molly Hartman Contact Detail: coverage table
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Coverage contacts - Contact detail page.png` (1456 × 1202 px).
+- Implementation: `http://localhost:4173/?mollyContactQa=1#contact-page`, captured in the in-app browser at 1440 × 1200 CSS px, device scale factor 1. The close dimensions were compared as a desktop content region; no density normalization was needed.
+- State: Molly Hartman detail route, “Instruments with no service plan” expanded.
+- Full-view and focused comparison: the reference and browser-rendered capture were compared together, covering the titlebar, Molly-specific breadcrumb and description, coverage groups, system row, badges, and serial/nickname cells.
+
+**Findings**
+
+- [P1, fixed] System and lock icons clipped in the narrow table icon column.
+  Evidence: the first implementation capture truncated the paired icons; the reference displays both before the Serial number column.
+  Fix: widened `.contact-col-kind` and reduced the adjacent serial track to preserve the overall table width.
+  Post-fix evidence: the final capture shows the full system and lock icons, the linked “System” serial value, and the Alpine nickname without clipping.
+- No remaining actionable P0/P1/P2 differences were found in the requested content region. The existing prototype flow toolbar remains outside the referenced app content and was not changed by this scoped detail-table update.
+
+**Interaction checks**
+
+- The initial no-service-plan group is expanded with six visible rows.
+- Its control collapses to zero visible rows and re-expands to six rows; the chevron and `aria-expanded` state change with the control.
+- Browser console errors: none.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: existing product font, breadcrumb hierarchy, table headers, and badge weights follow the reference hierarchy.
+- Spacing and layout rhythm: the coverage rows, group dividers, icon/serial relationship, and table tracks align with the reference content region.
+- Colors and visual tokens: existing Services Central blue links, green warranty badges, and red expiry badges are retained.
+- Image quality and asset fidelity: existing system, lock, branch, and instrument assets are reused; no substitute artwork was introduced.
+- Copy and content: Molly’s email, description, coverage groups, serials, and nicknames now match the reference.
 
 final result: passed
