@@ -4634,9 +4634,33 @@ const SYSTEM_MANUALS = [
   ["tsq.png", "80111-97047 - Rev A - TSQ Series II Mass Spectrometers Hardware Manual"],
 ];
 
-function systemDetailSupportMarkup() {
+function systemDetailTicketData(ticketRow, system) {
+  const [status, tone, ticket, type, created, closed, serial, model, subject, contact] = ticketRow;
+  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial) || {
+    serial,
+    model,
+    nickname: "—",
+    group: "—",
+    image: model.startsWith("MST") ? "tsq.png" : model.startsWith("QEX") ? "q-exactive.png" : "vanquish-detector.png",
+  };
+  return {
+    status, tone, ticket, type, created, closed, serial, model, subject, contact,
+    nickname: instrument.nickname,
+    group: instrument.group === "—" ? "" : instrument.group,
+    image: instrument.image,
+    catalogName: instrumentCatalogName(instrument),
+    instrumentType: miInstrumentType(instrument),
+    returnRoute: `system-detail-${system.id}`,
+    returnLabel: system.nickname,
+  };
+}
+
+function systemDetailSupportMarkup(system) {
   const sort = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
-  const rows = SYSTEM_SUPPORT_ROWS.map(([status, tone, ticket, type, created, closed, serial, model, subject, contact], index) => `<tr><td>${index === 1 ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket" />' : ""}</td><td><span class="sd-ticket-status sd-ticket-status--${tone}">${status}</span></td><td><button type="button" data-mi-toast="Ticket ${ticket} opened">${ticket}</button></td><td>${type}</td><td>${created}</td><td>${closed}</td><td><button type="button" data-route="${miInstrumentDetailRoute(serial)}">${serial}</button></td><td title="${model}">${model}</td><td title="${subject}">${subject}</td><td>${contact}</td></tr>`).join("");
+  const rows = SYSTEM_SUPPORT_ROWS.map((ticketRow, index) => {
+    const { status, tone, ticket, type, created, closed, serial, model, subject, contact } = systemDetailTicketData(ticketRow, system);
+    return `<tr><td>${index === 1 ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket" />' : ""}</td><td><span class="sd-ticket-status sd-ticket-status--${tone}">${status}</span></td><td><button type="button" data-sd-ticket-index="${index}">${ticket}</button></td><td>${type}</td><td>${created}</td><td>${closed}</td><td><button type="button" data-route="${miInstrumentDetailRoute(serial)}">${serial}</button></td><td title="${model}">${model}</td><td title="${subject}">${subject}</td><td>${contact}</td></tr>`;
+  }).join("");
   return `<section class="sd-panel sd-support-panel" aria-labelledby="sd-support-title"><header><h2 id="sd-support-title">Components support history</h2><div class="sd-filters"><strong>Filter by:</strong><select aria-label="Ticket status"><option>Ticket status</option><option>Open</option><option>In progress</option><option>Closed</option></select><select aria-label="Ticket type"><option>Ticket type</option><option>Service Request</option><option>PM (Contract)</option></select><select aria-label="Ticket contact"><option>Ticket contact</option><option>Alma Malmberg</option><option>Tyler Durden</option></select></div></header><div class="sd-support-table"><table><colgroup><col class="sd-col-icon"><col class="sd-col-status"><col class="sd-col-ticket"><col class="sd-col-type"><col class="sd-col-date"><col class="sd-col-date"><col class="sd-col-serial"><col class="sd-col-model"><col class="sd-col-subject"><col class="sd-col-contact"></colgroup><thead><tr><th></th><th>Status ${sort}</th><th>Ticket no. ${sort}</th><th>Ticket type ${sort}</th><th>Created ${sort}</th><th>Closed ${sort}</th><th>Serial no. ${sort}</th><th>Catalog no. ${sort}</th><th>Subject ${sort}</th><th>Ticket contact ${sort}</th></tr></thead><tbody>${rows}</tbody></table></div>${systemPaginationMarkup()}</section>`;
 }
 
@@ -4688,7 +4712,7 @@ function systemDetailActivityMarkup() {
 }
 
 function systemDetailTabMarkup(tab, components, system) {
-  if (tab === "support") return systemDetailSupportMarkup();
+  if (tab === "support") return systemDetailSupportMarkup(system);
   if (tab === "coverage") return systemDetailCoverageMarkup(components);
   if (tab === "knowledge") return systemDetailKnowledgeMarkup(false);
   if (tab === "users") return systemDetailUsersMarkup(system);
@@ -4711,6 +4735,10 @@ function wireSystemTabContent(tab, system) {
     });
   }
   const content = app.querySelector(".sd-tab-content");
+  if (tab === "support") content.querySelectorAll("[data-sd-ticket-index]").forEach((button) => button.addEventListener("click", () => {
+    const ticket = systemDetailTicketData(SYSTEM_SUPPORT_ROWS[Number(button.dataset.sdTicketIndex)], system);
+    setRoute(summaryRouteForTicket(ticket), ticket);
+  }));
   if (tab === "users") wireMiRoleSelectors(content, (role, email) => {
     if (email === MI_CURRENT_USER_EMAIL) {
       renderMiSystemDetail(routeFromHash());
@@ -6178,8 +6206,8 @@ function renderTicketSummary(route) {
     if (contactDetails[1]) contactDetails[1].textContent = ticketPhone;
     if (contactDetails[2]) contactDetails[2].textContent = ticketEmail;
   }
-  const fromInstrumentDetail = ticket.returnRoute.startsWith("instrument-");
-  mountNativePageChrome(fromInstrumentDetail ? "my-instruments" : "support-history", { title: ticket.title, backRoute: ticket.returnRoute });
+  const fromAssetDetail = ticket.returnRoute.startsWith("instrument-") || ticket.returnRoute.startsWith("system-detail-");
+  mountNativePageChrome(fromAssetDetail ? "my-instruments" : "support-history", { title: ticket.title, backRoute: ticket.returnRoute });
   const summaryCloseRoute = ticket.submitted ? "request-support" : ticket.returnRoute;
   const closeBar = window.PlatformActionBar?.create({ closeOnly: true, closeRoute: summaryCloseRoute });
   closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
