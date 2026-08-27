@@ -4724,13 +4724,32 @@ function wireSystemTabContent(tab, system) {
   wireRouteControls(content);
 }
 
-function instrument1009996TicketRows() {
-  return INSTRUMENT_1009996_TICKETS.map(([tone, status, ticket, type, created, closed, subject, contact, hasIcon]) => `<tr>
+function instrumentDetailTicketData(ticketRow, instrument) {
+  const [tone, status, ticket, type, created, closed, subject, contact, hasIcon] = ticketRow;
+  return {
+    tone, status, ticket, type, created, closed, subject, contact, hasIcon,
+    serial: instrument.serial,
+    model: instrument.model,
+    nickname: instrument.nickname,
+    group: instrument.group === "—" ? "" : instrument.group,
+    image: instrument.image,
+    catalogName: instrumentCatalogName(instrument),
+    instrumentType: miInstrumentType(instrument),
+    returnRoute: instrument.serial === "1009996" ? "instrument-1009996" : `instrument-detail-${instrument.serial}`,
+    returnLabel: instrument.nickname === "—" ? instrument.serial : instrument.nickname,
+  };
+}
+
+function instrumentDetailTicketRows(instrument) {
+  return INSTRUMENT_1009996_TICKETS.map((ticketRow, index) => {
+    const { tone, status, ticket, type, created, closed, subject, contact, hasIcon } = instrumentDetailTicketData(ticketRow, instrument);
+    return `<tr>
     <td>${hasIcon ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket document" />' : ""}</td>
     <td><span class="id-status id-status--${tone}">${status}</span></td>
-    <td><button type="button" data-route="ticket-detail">${ticket}</button></td>
+    <td><button type="button" data-id-ticket-index="${index}">${ticket}</button></td>
     <td>${type}</td><td>${created}</td><td>${closed}</td><td title="${subject}">${subject}</td><td>${contact}</td>
-  </tr>`).join("");
+  </tr>`;
+  }).join("");
 }
 
 function instrumentCoverageStatusClass(instrument) {
@@ -4889,13 +4908,13 @@ function renderInstrumentDetail(serial) {
 
         <aside class="id-pm" aria-labelledby="id-pm-title">
           <img class="id-pm__art" src="assets/instruments/preventive-maintenance.svg" alt="" />
-          <div><h2 id="id-pm-title">Preventive Maintenance</h2><p>Thermo Fisher will schedule your next preventive maintenance on ticket <button type="button" data-route="ticket-detail">46927364</button>.<br />This information will be updated when the scheduling timeframe approaches.</p></div>
+          <div><h2 id="id-pm-title">Preventive Maintenance</h2><p>Thermo Fisher will schedule your next preventive maintenance on ticket <button type="button" data-id-ticket-index="2">46927364</button>.<br />This information will be updated when the scheduling timeframe approaches.</p></div>
           <button class="id-secondary" type="button" data-route="request-support">Request PM Scheduling</button>
         </aside>
 
         <section class="id-support" aria-labelledby="id-support-title">
           <header><h1 id="id-support-title">Support history</h1><div class="id-filters"><strong>Filter by:</strong><label><span class="sr-only">Ticket status</span><select><option>Ticket status</option><option>Open</option><option>In progress</option><option>Closed</option></select></label><label><span class="sr-only">Ticket type</span><select><option>Ticket type</option><option>Service Request</option><option>PM (Contract)</option><option>Inquiry</option></select></label><label><span class="sr-only">Ticket contact</span><select><option>Ticket contact</option><option>Alma Malmbe</option><option>Tyler Durden</option></select></label></div></header>
-          <div class="id-table-wrap"><table aria-label="Support history"><colgroup><col class="id-col-icon" /><col class="id-col-status" /><col class="id-col-ticket" /><col class="id-col-type" /><col class="id-col-created" /><col class="id-col-closed" /><col class="id-col-subject" /><col class="id-col-contact" /></colgroup><thead><tr><th></th><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Closed <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket contact <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>${instrument1009996TicketRows()}</tbody></table></div>
+          <div class="id-table-wrap"><table aria-label="Support history"><colgroup><col class="id-col-icon" /><col class="id-col-status" /><col class="id-col-ticket" /><col class="id-col-type" /><col class="id-col-created" /><col class="id-col-closed" /><col class="id-col-subject" /><col class="id-col-contact" /></colgroup><thead><tr><th></th><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Closed <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket contact <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>${instrumentDetailTicketRows(instrument)}</tbody></table></div>
           <div class="id-pagination"><div>Results per page <button type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> of <strong>267</strong></div><nav aria-label="Support history pagination"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><span>…</span><button type="button">9</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button><label>Go to: <input type="text" inputmode="numeric" aria-label="Go to page" placeholder="#" /></label></nav></div>
         </section>
       </main>
@@ -4927,6 +4946,10 @@ function renderInstrumentDetail(serial) {
   app.querySelectorAll("[data-id-tab]").forEach((button) => button.addEventListener("click", () => showInstrumentTab(button.dataset.idTab)));
   app.querySelectorAll("[data-id-open-knowledge]").forEach((button) => button.addEventListener("click", () => {
     showInstrumentTab("knowledge");
+  }));
+  app.querySelectorAll("[data-id-ticket-index]").forEach((button) => button.addEventListener("click", () => {
+    const ticket = instrumentDetailTicketData(INSTRUMENT_1009996_TICKETS[Number(button.dataset.idTicketIndex)], instrument);
+    setRoute(summaryRouteForTicket(ticket), ticket);
   }));
   app.querySelector("[data-id-browse-knowledge-external]")?.addEventListener("click", () => window.open("https://knowledge1.thermofisher.com/", "_blank", "noopener"));
   wireMiActionMenus(app);
@@ -5783,11 +5806,11 @@ const SUPPORT_HISTORY_SUMMARY_ROUTES = {
 
 function summaryRouteForTicket(ticket) {
   if (!ticket) return null;
-  if (ticket.status === "Closed" && ["Tech Support", "Service Request", "Depot Repair", "Inquiry", "PM (Contract)"].includes(ticket.type)) return "closed-summary";
+  if (ticket.status === "Closed") return "closed-summary";
   if (ticket.type === "Tech Support") return "tech-support-summary";
   if (["Service Request", "Depot Repair", "Inquiry"].includes(ticket.type)) return "service-requests-summary";
   if (ticket.type === "PM (Contract)") return "pm-summary";
-  return null;
+  return "service-requests-summary";
 }
 
 const TICKET_SUMMARIES = {
@@ -6110,8 +6133,13 @@ function renderTicketSummary(route) {
     phone: historyTicket.phone || "",
     email: historyTicket.email || "",
     submitted: historyTicket.submitted === true,
+    image: historyTicket.image || baseTicket.image || "vanquish-detector.png",
+    catalogName: historyTicket.catalogName || baseTicket.catalogName || "Vanquish™ Variable Wavelength Detector F",
+    instrumentType: historyTicket.instrumentType || baseTicket.instrumentType || "HPLC",
+    returnRoute: historyTicket.returnRoute || "support-history",
+    returnLabel: historyTicket.returnLabel || "Support history",
     selectedFromHistory: true,
-  } : baseTicket;
+  } : { ...baseTicket, returnRoute: "support-history", returnLabel: "Support history" };
   const isTechSupport = ticket.isTechSupport === true;
   const titleMeta = `<p class="ts-titlebar__metadata"><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`;
   const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
@@ -6122,10 +6150,10 @@ function renderTicketSummary(route) {
   const submittedNotice = ticket.submitted
     ? `<img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><p><strong>Request submitted:</strong> A representative will respond to your request as soon as possible.<br />When processing is complete your ticket will be updated with the appropriate status.</p>`
     : "";
-  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
   const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl>`;
   const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
-  const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
   const quoteContent = `<article class="ts-card ts-card--standard ts-card--quote">${contactMarkup}<div class="ts-summary-split"><section>${requestMarkup}</section><section class="ts-quotes"><header><h2>Quote(s)</h2><span>Prices are subject to change</span></header><article class="ts-quote"><img src="assets/icons/general/quote/size=24px, style=mono.svg" alt="" /><div><span><b>Quote:</b> <span class="ts-quote__number">17171847</span></span><span><b>Created:</b> 11 Apr 2023</span><span><b>Total:</b> $10,285</span></div><div class="ts-quote__actions"><button class="mi-button" type="button">View quote</button><button class="mi-button" type="button">Place order</button></div></article></section></div><section class="ts-service ts-service--quote"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 30 Apr 2023</dd></div></dl></section></article>${instrumentMarkup}`;
   const preventiveContent = `<article class="ts-card ts-card--standard ts-card--preventive">${contactMarkup}${requestMarkup}<section class="ts-service ts-service--preventive"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 12 May 2023</dd></div></dl></section></article>${instrumentMarkup}`;
   const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
@@ -6135,7 +6163,7 @@ function renderTicketSummary(route) {
   const titleDate = `<div class="ts-title-date"><span>Scheduled start date</span><time>${scheduledStartDate}</time></div>`;
   app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
     <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
-    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><button class="ts-parent-navigation" type="button" data-route="support-history" data-platform-go-top-anchor><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />Support history</button><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><button class="ts-parent-navigation" type="button" data-route="${ticket.returnRoute}" data-platform-go-top-anchor><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />${ticket.returnLabel}</button><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
   if (submittedNotice) {
     const notice = document.createElement("section");
     notice.className = "ts-notice ts-notice--submitted";
@@ -6150,8 +6178,9 @@ function renderTicketSummary(route) {
     if (contactDetails[1]) contactDetails[1].textContent = ticketPhone;
     if (contactDetails[2]) contactDetails[2].textContent = ticketEmail;
   }
-  mountNativePageChrome("support-history", { title: ticket.title, backRoute: "support-history" });
-  const summaryCloseRoute = ticket.submitted ? "request-support" : "support-history";
+  const fromInstrumentDetail = ticket.returnRoute.startsWith("instrument-");
+  mountNativePageChrome(fromInstrumentDetail ? "my-instruments" : "support-history", { title: ticket.title, backRoute: ticket.returnRoute });
+  const summaryCloseRoute = ticket.submitted ? "request-support" : ticket.returnRoute;
   const closeBar = window.PlatformActionBar?.create({ closeOnly: true, closeRoute: summaryCloseRoute });
   closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
   const action = closeBar?.querySelector('[data-actionbar-action="close"], [data-actionbar-action="cancel"]');
@@ -6167,7 +6196,7 @@ function renderTicketSummary(route) {
     closeBar.replaceChildren(trailing);
   }
   app.querySelector("[data-footer-mount]")?.before(closeBar);
-  app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute("support-history"));
+  app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute(ticket.returnRoute));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
   document.title = `${ticket.title} — Services Central`;
