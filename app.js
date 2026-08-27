@@ -4650,8 +4650,6 @@ function systemDetailTicketData(ticketRow, system) {
     image: instrument.image,
     catalogName: instrumentCatalogName(instrument),
     instrumentType: miInstrumentType(instrument),
-    returnRoute: `system-detail-${system.id}`,
-    returnLabel: system.nickname,
   };
 }
 
@@ -4763,8 +4761,6 @@ function instrumentDetailTicketData(ticketRow, instrument) {
     image: instrument.image,
     catalogName: instrumentCatalogName(instrument),
     instrumentType: miInstrumentType(instrument),
-    returnRoute: instrument.serial === "1009996" ? "instrument-1009996" : `instrument-detail-${instrument.serial}`,
-    returnLabel: instrument.nickname === "—" ? instrument.serial : instrument.nickname,
   };
 }
 
@@ -6164,10 +6160,8 @@ function renderTicketSummary(route) {
     image: historyTicket.image || baseTicket.image || "vanquish-detector.png",
     catalogName: historyTicket.catalogName || baseTicket.catalogName || "Vanquish™ Variable Wavelength Detector F",
     instrumentType: historyTicket.instrumentType || baseTicket.instrumentType || "HPLC",
-    returnRoute: historyTicket.returnRoute || "support-history",
-    returnLabel: historyTicket.returnLabel || "Support history",
     selectedFromHistory: true,
-  } : { ...baseTicket, returnRoute: "support-history", returnLabel: "Support history" };
+  } : baseTicket;
   const isTechSupport = ticket.isTechSupport === true;
   const titleMeta = `<p class="ts-titlebar__metadata"><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`;
   const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
@@ -6191,7 +6185,7 @@ function renderTicketSummary(route) {
   const titleDate = `<div class="ts-title-date"><span>Scheduled start date</span><time>${scheduledStartDate}</time></div>`;
   app.innerHTML = `<section class="screen screen--ticket-summary"><div class="mi-stage"><div class="mi-shell ts-shell ${route === "tech-support-summary" ? "ts-shell--tech" : "ts-shell--standard"}">
     <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
-    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><button class="ts-parent-navigation" type="button" data-route="${ticket.returnRoute}" data-platform-go-top-anchor><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />${ticket.returnLabel}</button><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
+    <div data-platform-sidebar-mount></div><main class="mi-main ts-main"><section class="ts-titlebar"><div class="ts-titlebar__details"><button class="ts-parent-navigation" type="button" data-route="support-history" data-platform-go-top-anchor><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />Support history</button><h1>${ticket.title}</h1><span class="ts-state ts-state--${ticket.state.toLowerCase().replaceAll(" ", "-")}">${ticket.state}</span>${titleMeta}</div>${titleDate}</section><section class="ts-content">${isTechSupport ? techContent : defaultContent}</section></main><footer class="mi-footer"><span>© 2025 - Thermo Fisher Scientific</span><i></i><a href="#privacy">Privacy policy</a><a href="#terms">Terms of use</a></footer></div></div></section>`;
   if (submittedNotice) {
     const notice = document.createElement("section");
     notice.className = "ts-notice ts-notice--submitted";
@@ -6206,9 +6200,8 @@ function renderTicketSummary(route) {
     if (contactDetails[1]) contactDetails[1].textContent = ticketPhone;
     if (contactDetails[2]) contactDetails[2].textContent = ticketEmail;
   }
-  const fromAssetDetail = ticket.returnRoute.startsWith("instrument-") || ticket.returnRoute.startsWith("system-detail-");
-  mountNativePageChrome(fromAssetDetail ? "my-instruments" : "support-history", { title: ticket.title, backRoute: ticket.returnRoute });
-  const summaryCloseRoute = ticket.submitted ? "request-support" : ticket.returnRoute;
+  mountNativePageChrome("support-history", { title: ticket.title, backRoute: "support-history" });
+  const summaryCloseRoute = ticket.submitted ? "request-support" : "support-history";
   const closeBar = window.PlatformActionBar?.create({ closeOnly: true, closeRoute: summaryCloseRoute });
   closeBar?.classList.add("platform-actionbar--native-flow", "platform-actionbar--submitted-summary");
   const action = closeBar?.querySelector('[data-actionbar-action="close"], [data-actionbar-action="cancel"]');
@@ -6224,7 +6217,7 @@ function renderTicketSummary(route) {
     closeBar.replaceChildren(trailing);
   }
   app.querySelector("[data-footer-mount]")?.before(closeBar);
-  app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute(ticket.returnRoute));
+  app.querySelector("[data-go-back]")?.addEventListener("click", () => setRoute("support-history"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
   document.title = `${ticket.title} — Services Central`;
