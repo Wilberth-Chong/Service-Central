@@ -1715,7 +1715,7 @@ function dashboardReportCell(ticket) {
 }
 
 function dashboardClosedTicketRow(ticket) {
-  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#ticket-detail">${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
+  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#support-history" data-db-ticket-link>${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
 }
 
 function renderDashboardClosedTicketTable() {
@@ -1723,7 +1723,39 @@ function renderDashboardClosedTicketTable() {
 }
 
 function dashboardVisitRow(visit) {
-  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+}
+
+function dashboardTicketDataFromRow(row) {
+  const cells = row.cells;
+  const isVisit = row.closest("table")?.classList.contains("db-table--visits");
+  const isClosed = row.closest("table")?.classList.contains("db-table--closed");
+  const ticketIndex = isVisit ? 2 : 1;
+  const dateIndex = isVisit ? 0 : 2;
+  const subjectIndex = isVisit ? 4 : 3;
+  const serialIndex = isVisit ? 6 : 5;
+  const modelIndex = isVisit ? 7 : 6;
+  const subject = cells[subjectIndex]?.textContent.trim() || "Support request";
+  const serial = cells[serialIndex]?.textContent.trim() || "—";
+  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial);
+  const image = cells[serialIndex]?.querySelector("img")?.getAttribute("src")?.split("/").pop() || instrument?.image || "vanquish-detector.png";
+  const type = isVisit ? cells[3]?.textContent.trim() : subject.toLowerCase().includes("calibration") ? "PM (Contract)" : subject.toLowerCase().includes("repair") ? "Service Request" : "Tech Support";
+  return {
+    status: isClosed ? "Closed" : cells[isVisit ? 1 : 0]?.textContent.trim() || "In progress",
+    ticket: cells[ticketIndex]?.textContent.trim(),
+    type,
+    subject,
+    serial,
+    model: cells[modelIndex]?.textContent.trim() || instrument?.model || "—",
+    nickname: instrument?.nickname || "—",
+    group: instrument?.group === "—" ? "" : instrument?.group || "",
+    contact: "Alma Duncan",
+    created: isClosed ? cells[dateIndex]?.textContent.trim() : cells[dateIndex]?.textContent.trim(),
+    closed: isClosed ? cells[dateIndex]?.textContent.trim() : "---",
+    image,
+    catalogName: instrument ? instrumentCatalogName(instrument) : "Instrument",
+    instrumentType: instrument ? miInstrumentType(instrument) : image.startsWith("vanquish") ? "HPLC" : "Mass Spec Life Science",
+  };
 }
 
 function renderDashboardVisitsTable() {
@@ -1849,6 +1881,13 @@ function wireDashboard() {
     closed: { count: "8 tickets closed within the last 30 days", markup: renderDashboardClosedTicketTable() },
     visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
   };
+  tableWrap?.addEventListener("click", (event) => {
+    const ticketLink = event.target.closest("[data-db-ticket-link]");
+    if (!ticketLink) return;
+    event.preventDefault();
+    const ticket = dashboardTicketDataFromRow(ticketLink.closest("tr"));
+    setRoute(summaryRouteForTicket(ticket), ticket);
+  });
   const showTicketTable = (state) => {
     const table = ticketTables[state] || ticketTables.active;
     if (ticketCount) ticketCount.textContent = table.count;
