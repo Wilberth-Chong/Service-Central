@@ -5429,10 +5429,27 @@ function aiSummaryNotAddedMarkup(instruments, noteOverride = "") {
   return `<section class="ai-summary-section ai-summary-section--not-added"><h2>Instrument(s) not added</h2><div class="ai-summary-not-added-wrap"><table class="ai-summary-not-added"><colgroup><col class="ai-summary-not-added-item" /><col class="ai-summary-not-added-serial" /><col class="ai-summary-not-added-nickname" /><col /></colgroup><thead><tr><th>Item</th><th>Serial number</th><th>Nickname</th><th>Notes</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "")}</td><td>${aiEscapeHtml(noteOverride || aiSummaryNotAddedNote(instrument))}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 
-function aiInstrumentSupportMailto(instruments) {
+function aiInstrumentSupportTextTable(instruments, { includeNickname = true, blankRows = 0 } = {}) {
+  const columns = [
+    { label: "Serial number", value: (instrument) => instrument.serial || "" },
+    ...(includeNickname ? [{ label: "Nickname", value: (instrument) => instrument.nickname === "—" ? "" : instrument.nickname || "" }] : []),
+    { label: "Notes", value: (instrument) => instrument.notes || "" },
+  ];
+  const rows = instruments.map((instrument) => columns.map((column) => String(column.value(instrument))));
+  while (rows.length < blankRows) rows.push(columns.map(() => ""));
+  const widths = columns.map((column, index) => Math.max(column.label.length, ...rows.map((row) => row[index].length)) + 4);
+  const formatRow = (values) => values.map((value, index) => index === values.length - 1 ? value : value.padEnd(widths[index])).join("");
+  return [formatRow(columns.map((column) => column.label)), ...rows.map(formatRow)].join("\r\n");
+}
+
+function aiInstrumentSupportMailto(instruments, options = {}) {
   const subject = "Add instrument support request";
-  const serialRows = instruments.map((instrument) => `${instrument.serial}\t`).join("\r\n");
-  const body = `Add instrument support request for the following instruments:\r\n\r\nSerial number*\tNotes (optional)\r\n${serialRows}${serialRows ? "\r\n" : ""}\r\n*Required`;
+  const tableInstruments = instruments.map((instrument) => ({
+    serial: instrument.serial,
+    nickname: instrument.nickname,
+    notes: instrument.notes || aiSummaryNotAddedNote(instrument),
+  }));
+  const body = `Add instrument support request for the following instruments:\r\n\r\n${aiInstrumentSupportTextTable(tableInstruments, options)}`;
   return `mailto:ServicesCentralSupport@thermofisher.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -10094,6 +10111,7 @@ addUserOrderDialog.querySelector("[data-add-user-form]").addEventListener("submi
   showToast("Email notification sent to User(s).", { title: "Success:", variant: "success", duration: 6000 });
 });
 addUserOrderDialog.querySelectorAll("[data-add-user-users]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.addUserUsers} users on this order`)));
+servicesHelpDialog.querySelector("[data-ai-instrument-support-email]").href = aiInstrumentSupportMailto([], { includeNickname: false, blankRows: 5 });
 servicesHelpDialog.querySelectorAll("[data-services-help-action]").forEach((control) => {
   control.addEventListener("click", () => {
     const action = control.dataset.servicesHelpAction;
