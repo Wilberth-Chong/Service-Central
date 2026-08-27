@@ -2716,6 +2716,12 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .splan-card > footer button:last-child img { width: 24px; height: 24px; }
 .splan-card > footer button > img.splan-card__edit-icon { filter: brightness(0) saturate(100%) invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
 .splan-content { width: 1320px; margin: 0 32px; padding-top: 32px; }
+.splan-search { width: 642px; margin-bottom: 32px; }
+.splan-no-results { display: flex; width: 1320px; min-height: 348px; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #ccc; color: #2b2b30; background: #fff; }
+.splan-no-results[hidden] { display: none; }
+.splan-no-results > img { width: 89px; height: 89px; margin-bottom: 20px; }
+.splan-no-results h2 { margin: 0 0 12px; font-size: 20px; font-weight: 500; line-height: 24px; }
+.splan-no-results p { margin: 0; color: #54545c; font-size: 14px; line-height: 22px; }
 .splan-group { width: 1320px; margin-top: 0; }
 .splan-group + .splan-group { margin-top: 24px; }
 .splan-group__toggle { display: flex; width: 100%; min-height: 52px; align-items: flex-start; gap: 12px; border: 0; padding: 0; background: transparent; text-align: left; cursor: pointer; }
@@ -5877,16 +5883,6 @@ checklist-upload-note { display: block; width: 100%; }
   pointer-events: none;
 }
 
-/* The Service Plan Contacts titlebar reduces from 357px to 56px in its
-   compact state. Keep equivalent scroll clearance so the scroll position
-   is not clamped to zero while the sticky titlebar compacts. */
-.screen--service-plan-contacts .splan-main::after {
-  display: block;
-  height: 301px;
-  content: "";
-  pointer-events: none;
-}
-
 .isup-main::after {
   display: block;
   height: calc(var(--isup-scroll-content-height, 822px) - var(--isup-titlebar-flow-height));
@@ -7371,6 +7367,75 @@ checklist-upload-note { display: block; width: 100%; }
   transition:
     height 180ms cubic-bezier(.2, 0, 0, 1),
     padding 180ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.platform-titlebar--deferred-source[data-platform-titlebar] {
+  position: static;
+}
+
+.platform-titlebar__deferred {
+  --platform-titlebar-trigger-gap: 0px;
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  display: flex;
+  height: 56px;
+  min-height: 56px;
+  box-sizing: border-box;
+  align-items: center;
+  margin-top: calc(-1 * var(--platform-titlebar-trigger-gap));
+  margin-bottom: calc(var(--platform-titlebar-trigger-gap) - 56px);
+  padding: 13px 32px;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.platform-titlebar__deferred.is-visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.platform-titlebar__deferred h1 {
+  overflow: hidden;
+  font-size: 20px;
+  line-height: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platform-titlebar__deferred .platform-titlebar__go-top {
+  display: inline-flex;
+  height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: 16px;
+  border: 0;
+  padding: 0;
+  color: var(--Global-Colors-Primary-Blue---Blue-40, #0071d0);
+  background: transparent;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.splan-top.platform-titlebar__deferred .splan-heading {
+  width: 100%;
+  align-items: center;
+}
+
+.splan-top.platform-titlebar__deferred .splan-heading > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.splan-top.platform-titlebar__deferred .splan-primary {
+  height: 30px;
+  padding: 0 40px;
 }
 
 [data-platform-titlebar] h1 {

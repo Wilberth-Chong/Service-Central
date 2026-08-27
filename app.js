@@ -8454,23 +8454,103 @@ function renderRequestInstallation() {
   document.title = "Installation support — Services Central";
 }
 
+function setServicePlanGroupExpanded(group, expanded) {
+  const toggle = group.querySelector("[data-splan-toggle]");
+  toggle.setAttribute("aria-expanded", String(expanded));
+  group.classList.toggle("is-expanded", expanded);
+  group.classList.toggle("is-collapsed", !expanded);
+  toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
+}
+
+function filterServicePlanContacts(query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  const noResults = app.querySelector("[data-splan-no-results]");
+  let totalMatches = 0;
+
+  app.querySelectorAll("[data-splan-group]").forEach((group) => {
+    const tbody = group.querySelector(".splan-table tbody");
+    const rows = [...tbody.rows];
+    const title = group.querySelector(".splan-group__toggle strong");
+    const selectAll = group.querySelector("[data-splan-select-all]");
+    if (!normalizedQuery) {
+      rows.forEach((row) => { row.hidden = false; });
+      group.hidden = false;
+      title.textContent = title.dataset.splanOriginalText;
+      selectAll.textContent = selectAll.dataset.splanOriginalText;
+      selectAll.dataset.splanSelectTotal = selectAll.dataset.splanOriginalTotal;
+      setServicePlanGroupExpanded(group, group.dataset.splanDefaultExpanded === "true");
+      return;
+    }
+
+    const matchingRows = new Set(
+      rows.filter((row) => row.dataset.splanSearch?.toLowerCase().includes(normalizedQuery)),
+    );
+    const matchCount = matchingRows.size;
+    const visibleRows = new Set(matchingRows);
+    totalMatches += matchCount;
+
+    rows.forEach((row, index) => {
+      if (!row.classList.contains("splan-row--system")) return;
+      const childRows = [];
+      for (let childIndex = index + 1; childIndex < rows.length; childIndex += 1) {
+        if (!rows[childIndex].classList.contains("splan-row--child")) break;
+        childRows.push(rows[childIndex]);
+      }
+      if (visibleRows.has(row)) childRows.forEach((childRow) => visibleRows.add(childRow));
+      else if (childRows.some((childRow) => visibleRows.has(childRow))) visibleRows.add(row);
+    });
+
+    rows.forEach((row, index) => {
+      if (!row.classList.contains("splan-row--group")) return;
+      const nextGroupIndex = rows.findIndex((candidate, candidateIndex) => candidateIndex > index && candidate.classList.contains("splan-row--group"));
+      const groupRows = rows.slice(index + 1, nextGroupIndex === -1 ? rows.length : nextGroupIndex);
+      if (groupRows.some((groupRow) => visibleRows.has(groupRow))) visibleRows.add(row);
+    });
+
+    rows.forEach((row) => { row.hidden = !visibleRows.has(row); });
+    group.hidden = matchCount === 0;
+    if (matchCount > 0) setServicePlanGroupExpanded(group, true);
+    title.textContent = title.dataset.splanOriginalText.replace(/^\d+/, String(matchCount));
+    selectAll.textContent = `Select all ${matchCount} instrument${matchCount === 1 ? "" : "s"}`;
+    selectAll.dataset.splanSelectTotal = String(matchCount);
+  });
+
+  if (!normalizedQuery) {
+    noResults.hidden = true;
+    return;
+  }
+  noResults.hidden = totalMatches !== 0;
+}
+
 function wireServicePlanContacts() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
+  app.querySelectorAll("[data-splan-group]").forEach((group) => {
+    const title = group.querySelector(".splan-group__toggle strong");
+    const selectAll = group.querySelector("[data-splan-select-all]");
+    group.dataset.splanDefaultExpanded = String(group.classList.contains("is-expanded"));
+    title.dataset.splanOriginalText = title.textContent;
+    selectAll.dataset.splanOriginalText = selectAll.textContent;
+    selectAll.dataset.splanOriginalTotal = selectAll.dataset.splanSelectTotal;
+  });
+  const search = app.querySelector("[data-splan-search]");
+  search?.addEventListener("input", () => filterServicePlanContacts(search.value));
   app.querySelectorAll("[data-splan-toggle]").forEach((toggle) => {
     toggle.addEventListener("click", () => {
       const group = toggle.closest("[data-splan-group]");
       const expanded = toggle.getAttribute("aria-expanded") !== "true";
-      toggle.setAttribute("aria-expanded", String(expanded));
-      group.classList.toggle("is-expanded", expanded);
-      group.classList.toggle("is-collapsed", !expanded);
-      const icon = toggle.querySelector("img");
-      icon.src = `assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=24px, style=mono.svg`;
+      setServicePlanGroupExpanded(group, expanded);
     });
   });
   app.querySelectorAll("[data-splan-select-all]").forEach((button) => {
     button.addEventListener("click", (event) => {
       const group = event.currentTarget.closest("[data-splan-group]");
-      const checks = [...(group || app).querySelectorAll("[data-splan-check]")];
+      const normalizedQuery = search?.value.trim().toLowerCase();
+      const filteredRows = normalizedQuery
+        ? [...group.querySelectorAll("tr[data-splan-search]")].filter((row) => row.dataset.splanSearch.toLowerCase().includes(normalizedQuery))
+        : [];
+      const checks = filteredRows.length
+        ? filteredRows.map((row) => row.querySelector("[data-splan-check]")).filter(Boolean)
+        : [...(group || app).querySelectorAll("[data-splan-check]")];
       const select = checks.some((check) => !check.checked);
       const total = event.currentTarget.dataset.splanSelectTotal || checks.length;
       checks.forEach((check) => { check.checked = select; });

@@ -30,6 +30,40 @@
     });
   }
 
+  function wireDeferredTitlebar(titlebar, scrollContainer, triggerSelector) {
+    const trigger = titlebar.querySelector(triggerSelector);
+    if (!trigger) return false;
+
+    const clone = titlebar.cloneNode(true);
+    clone.removeAttribute("data-platform-titlebar");
+    clone.removeAttribute("data-platform-titlebar-trigger");
+    clone.removeAttribute("data-platform-titlebar-wired");
+    clone.querySelectorAll("[data-platform-titlebar-deferred-hide]").forEach((element) => element.remove());
+    clone.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+    clone.classList.add("platform-titlebar__deferred");
+    titlebar.classList.add("platform-titlebar--deferred-source");
+    titlebar.insertAdjacentElement("afterend", clone);
+    addGoToTop(clone, scrollContainer);
+
+    let frame = 0;
+    const update = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const triggerRect = trigger.getBoundingClientRect();
+        const sourceRect = titlebar.getBoundingClientRect();
+        const triggerGap = Math.max(0, sourceRect.bottom - triggerRect.bottom);
+        const triggerIsOutOfView = trigger.getBoundingClientRect().bottom <= scrollContainer.getBoundingClientRect().top;
+        clone.style.setProperty("--platform-titlebar-trigger-gap", `${triggerGap}px`);
+        clone.classList.toggle("is-visible", triggerIsOutOfView);
+      });
+    };
+
+    scrollContainer.addEventListener("scroll", update, { passive: true });
+    update();
+    return true;
+  }
+
   function wire(root = document) {
     root.querySelectorAll(TITLEBAR_SELECTOR).forEach((titlebar) => {
       if (titlebar.dataset.platformTitlebarWired === "true") return;
@@ -38,6 +72,9 @@
       if (!scrollContainer) return;
 
       titlebar.dataset.platformTitlebarWired = "true";
+      const triggerSelector = titlebar.dataset.platformTitlebarTrigger;
+      if (triggerSelector && wireDeferredTitlebar(titlebar, scrollContainer, triggerSelector)) return;
+
       addGoToTop(titlebar, scrollContainer);
       let frame = 0;
       const update = () => {
