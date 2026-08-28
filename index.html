@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260828-system-multi-contact-card" />
+    <link rel="stylesheet" href="styles.css?v=20260828-virtual-assistant-europe-le-visibility-v17" />
     <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
@@ -94,7 +94,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main db-main">
-            <section class="mi-titlebar db-titlebar" data-platform-titlebar><h1>Services Central Dashboard</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
+            <section class="mi-titlebar db-titlebar" data-platform-titlebar><h1>Services Central Dashboard</h1><div class="db-titlebar__actions"><button class="mi-button db-titlebar__assistant" type="button" data-dashboard-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button><span class="db-titlebar__divider" aria-hidden="true"></span><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></div></section>
             <section class="ai-banner db-banner" aria-label="Dashboard notifications">
               <button class="ai-banner__arrow" type="button" data-db-banner-prev aria-label="Previous notification"><img src="assets/icons/directions/chevron left/size=24px, style=mono.svg" alt="" /></button>
               <div class="ai-banner__content">
@@ -114,16 +114,16 @@
               <div class="db-tabs" role="tablist"><button class="is-active" type="button" role="tab" aria-selected="true" data-ticket-state="active">Active tickets</button><button type="button" role="tab" aria-selected="false" data-ticket-state="closed">Recently closed tickets <em>2</em></button><button type="button" role="tab" aria-selected="false" data-ticket-state="visits">Upcoming on-site visits <em>3</em></button></div>
               <div class="db-ticketbar"><h3 data-ticket-count>16 active tickets</h3><label data-db-ticket-filter>Filter by: <select aria-label="Filter tickets"><option>All status</option></select></label></div>
               <div class="db-table-wrap" data-db-ticket-table><table class="db-table db-table--active"><colgroup><col class="db-col-status" /><col class="db-col-ticket" /><col class="db-col-created" /><col class="db-col-subject" /><col class="db-col-system" /><col class="db-col-serial" /><col class="db-col-model" /></colgroup><thead><tr><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th class="db-ticket-system-heading"></th><th>Serial no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>
-                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#ticket-detail">19602494</a></td><td>20 Jul 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-detector.png" alt="" /><a href="#instrument-access">1009996</a></span></td><td>VQF0000DET</td></tr>
-                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#ticket-detail">12670950</a></td><td>18 Jul 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-column.png" alt="" /><a href="#instrument-access">1009999</a></span></td><td>VQH0000VEN</td></tr>
-                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#ticket-detail">12861716</a></td><td>25 May 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-sampler.png" alt="" /><a href="#instrument-access">1009998</a></span></td><td>VQF00SAMPL</td></tr>
-                <tr><td><span class="db-row-icon"><img src="assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg" alt="" /></span><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">15429289</a></td><td>7 May 2024</td><td>Repair 0000123459 instrument parts</td><td class="db-ticket-system-cell"><img class="db-ticket-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-pump.png" alt="" /><a href="#instrument-access">1009997</a></span></td><td>VQF000PUMP</td></tr>
-                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">15907622</a></td><td>30 Apr 2024</td><td>Repair 0000123459 instrument parts</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12345</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
-                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">14440778</a></td><td>24 Apr 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12346</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
-                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">16144558</a></td><td>12 Apr 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12347</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
-                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">17595437</a></td><td>11 Mar 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12348</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
-                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">12211704</a></td><td>10 Mar 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/q-exactive.png" alt="" /><a href="#instrument-access">SN98355W</a></span></td><td>QEXAC00001</td></tr>
-                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">11800931</a></td><td>6 Jan 2024</td><td>Need calibration</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/q-exactive.png" alt="" /><a href="#instrument-access">SN98356W</a></span></td><td>QEXAC00001</td></tr>
+                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#support-history" data-db-ticket-link>19602494</a></td><td>20 Jul 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-detector.png" alt="" /><a href="#instrument-access">1009996</a></span></td><td>VQF0000DET</td></tr>
+                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#support-history" data-db-ticket-link>12670950</a></td><td>18 Jul 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-column.png" alt="" /><a href="#instrument-access">1009999</a></span></td><td>VQH0000VEN</td></tr>
+                <tr><td><span class="db-status db-status--open">Open</span></td><td><a href="#support-history" data-db-ticket-link>12861716</a></td><td>25 May 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-sampler.png" alt="" /><a href="#instrument-access">1009998</a></span></td><td>VQF00SAMPL</td></tr>
+                <tr><td><span class="db-row-icon"><img src="assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg" alt="" /></span><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>15429289</a></td><td>7 May 2024</td><td>Repair 0000123459 instrument parts</td><td class="db-ticket-system-cell"><img class="db-ticket-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/vanquish-pump.png" alt="" /><a href="#instrument-access">1009997</a></span></td><td>VQF000PUMP</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>15907622</a></td><td>30 Apr 2024</td><td>Repair 0000123459 instrument parts</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12345</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>14440778</a></td><td>24 Apr 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12346</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>16144558</a></td><td>12 Apr 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12347</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>17595437</a></td><td>11 Mar 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/tsq.png" alt="" /><a href="#instrument-access">TSQ-Z-12348</a></span></td><td>MSTSQQUANTISPLUS</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>12211704</a></td><td>10 Mar 2024</td><td>Need support for unknown instrument error</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/q-exactive.png" alt="" /><a href="#instrument-access">SN98355W</a></span></td><td>QEXAC00001</td></tr>
+                <tr><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>11800931</a></td><td>6 Jan 2024</td><td>Need calibration</td><td class="db-ticket-system-cell"></td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img src="assets/instruments/q-exactive.png" alt="" /><a href="#instrument-access">SN98356W</a></span></td><td>QEXAC00001</td></tr>
               </tbody></table></div><nav class="db-pagination" data-db-ticket-pagination aria-label="Ticket pages"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button></nav>
             </section>
             <section class="db-section db-favorites" aria-labelledby="db-favorites-title"><header class="db-section__header"><h2 id="db-favorites-title">My favorite instruments</h2><button type="button" data-route="my-instruments">View all my instruments</button></header><div class="db-section__rule"></div><div class="db-cards" data-dashboard-favorite-cards></div></section>
@@ -153,7 +153,7 @@
             <main class="platform-page-body mi-main">
               <section class="mi-titlebar" data-platform-titlebar>
                 <h1>Instruments</h1>
-                <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
+                <div class="mi-titlebar__actions"><button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button><span class="platform-titlebar__divider" data-virtual-assistant-separator aria-hidden="true"></span><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></div>
               </section>
               <nav class="mi-tabs" aria-label="Instrument sections" role="tablist">
                 <button class="is-active" type="button" role="tab" aria-selected="true" aria-controls="mi-instruments-panel" id="mi-instruments-tab" data-mi-tab="instruments">My Instruments</button>
@@ -184,6 +184,13 @@
                   </div>
                 </div>
 
+                <div class="sh-applied-filters mi-applied-filters" data-mi-applied-filters aria-label="Instrument filters" hidden>
+                  <div data-mi-filter="groups"></div>
+                  <div data-mi-filter="type"></div>
+                  <div data-mi-filter="model"></div>
+                  <div data-mi-filter="coverage"></div>
+                  <button class="sh-clear-filters" type="button" data-mi-clear-filters hidden>Clear filter(s)</button>
+                </div>
                 <div class="mi-table-scroll">
                   <table class="mi-table">
                     <colgroup><col class="mi-col-check" /><col class="mi-col-favorite" /><col class="mi-col-hierarchy" /><col class="mi-col-asset" data-mi-table-column="instrument-images" /><col class="mi-col-lock" data-mi-table-column="instrument-images" /><col class="mi-col-serial" /><col class="mi-col-nickname" data-mi-table-column="nickname" /><col class="mi-col-users" data-mi-table-column="users" /><col class="mi-col-groups" data-mi-table-column="groups" /><col class="mi-col-type" data-mi-table-column="type" /><col class="mi-col-model" data-mi-table-column="model" /><col class="mi-col-coverage" data-mi-table-column="coverage" /><col class="mi-col-end" data-mi-table-column="coverage-end" /><col class="mi-col-added" data-mi-table-column="added-date" /><col class="mi-col-actions" /></colgroup>
@@ -193,10 +200,10 @@
                       <th>Serial number <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
                       <th data-mi-table-column="nickname">Nickname <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
                       <th data-mi-table-column="users">Users <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
-                      <th data-mi-table-column="groups"><button class="mi-header-select" type="button">Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
-                      <th data-mi-table-column="type"><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
-                      <th data-mi-table-column="model"><button class="mi-header-select platform-table-catalog-filter" type="button"><span class="platform-table-catalog-filter__label" title="Catalog no.">Catalog no.</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
-                      <th data-mi-table-column="coverage"><button class="mi-header-select" type="button">Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th>
+                      <th data-mi-table-column="groups"><div data-mi-filter-trigger="groups"></div></th>
+                      <th data-mi-table-column="type"><div data-mi-filter-trigger="type"></div></th>
+                      <th data-mi-table-column="model"><div data-mi-filter-trigger="model"></div></th>
+                      <th data-mi-table-column="coverage"><div data-mi-filter-trigger="coverage"></div></th>
                       <th data-mi-table-column="coverage-end">Coverage end <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
                       <th data-mi-table-column="added-date">Added date <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th>
                       <th>Actions</th>
@@ -206,11 +213,12 @@
                 </div>
                 <section class="mi-grid-view" data-mi-grid-view aria-label="Instruments grid" hidden>
                   <div class="mi-grid-filters" aria-label="Filter instruments">
-                    <button type="button">Types<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button>
-                    <button class="platform-table-catalog-filter" type="button"><span class="platform-table-catalog-filter__label" title="Catalog no.">Catalog no.</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button>
-                    <button type="button">Coverage<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button>
-                    <button type="button">Groups<img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button>
+                    <div data-mi-grid-filter-trigger="type"></div>
+                    <div data-mi-grid-filter-trigger="model"></div>
+                    <div data-mi-grid-filter-trigger="coverage"></div>
+                    <div data-mi-grid-filter-trigger="groups"></div>
                   </div>
+                  <div data-mi-grid-filter="type" hidden></div><div data-mi-grid-filter="model" hidden></div><div data-mi-grid-filter="coverage" hidden></div><div data-mi-grid-filter="groups" hidden></div>
                   <div class="mi-grid-cards" data-mi-grid-cards></div>
                 </section>
               </section>
@@ -342,7 +350,7 @@
           <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main rs-main">
-            <section class="mi-titlebar rs-titlebar" data-platform-titlebar><h1>Request support</h1></section>
+            <section class="mi-titlebar rs-titlebar" data-platform-titlebar><h1>Request support</h1><div class="mi-titlebar__actions"><button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button></div></section>
             <section class="rs-content" aria-labelledby="rs-heading">
               <div class="rs-intro"><h2 id="rs-heading">Submit a request for your instrument(s)</h2><p>Select the type of request you would like to submit for your instrument(s).</p></div>
               <div class="rs-layout">
@@ -556,7 +564,7 @@
           <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
           <div data-platform-sidebar-mount></div>
           <main class="mi-main iss-main">
-            <section class="iss-titlebar"><h1>Open a support ticket</h1></section>
+            <section class="iss-titlebar"><h1>Open a support ticket</h1><div class="iss-titlebar__actions"><button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button></div></section>
             <div data-ticket-step-viewer></div>
             <section class="iss-content" aria-labelledby="iss-description"><p id="iss-description">Request troubleshooting, diagnosis and repair to resolve an issue with your instrument.</p>
               <article class="iss-card"><header><h2>Instrument selection</h2><p>Support requests can only be submitted for one instrument.</p></header>
@@ -599,7 +607,7 @@
           <header class="mi-header"><div class="mi-header__left"><button class="mi-icon-button" type="button" aria-label="Open menu"><img src="assets/icons/navigation/hamburger/size=24px, style=mono.svg" alt="" /></button><img class="mi-brand" src="assets/instruments/thermo-fisher-mark.png" alt="Thermo Fisher Scientific" /><span class="mi-header__label">Connect Platform</span><strong class="mi-header__product">Services Central</strong></div><div class="mi-header__right"><button class="mi-icon-button mi-notifications" type="button" aria-label="Notifications"><img src="assets/icons/notifications/bell/size=24px, style=mono.svg" alt="" /><span>2</span></button><button class="mi-icon-button" type="button" aria-label="User profile"><img src="assets/icons/users/profile/size=24px, style=mono.svg" alt="" /></button></div></header>
           <div data-platform-sidebar-mount></div>
           <main class="mi-main isd-main">
-            <section class="iss-titlebar"><h1>Open a support ticket</h1></section>
+            <section class="iss-titlebar"><h1>Open a support ticket</h1><div class="iss-titlebar__actions"><button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button></div></section>
             <div data-ticket-step-viewer></div>
             <section class="isd-content">
               <article class="isd-card"><header><h2>Support request details</h2><p>Please provide details for your support request below.</p></header>
@@ -651,7 +659,7 @@
           <div data-topbar-sc-mount></div>
           <div data-platform-sidebar-mount></div>
           <main class="platform-page-body mi-main sh-main">
-            <section class="mi-titlebar sh-titlebar" data-platform-titlebar><h1>Support request history</h1><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></section>
+            <section class="mi-titlebar sh-titlebar" data-platform-titlebar><h1>Support request history</h1><div class="mi-titlebar__actions"><button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button><span class="platform-titlebar__divider" data-virtual-assistant-separator aria-hidden="true"></span><button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button></div></section>
             <section class="sh-content" aria-labelledby="sh-ticket-heading">
               <div class="sh-top">
                 <h2 id="sh-ticket-heading">Support request tickets <span data-sh-count>100</span></h2>
@@ -1725,7 +1733,7 @@
               <tbody>
                 <tr data-mi-column-row data-search="serial number"><td>Serial number</td><td><input type="checkbox" checked disabled data-mi-column="serial-number" aria-label="Serial number is always displayed" /></td></tr>
                 <tr data-mi-column-row data-search="favorites"><td>Favorites</td><td><input type="checkbox" checked disabled data-mi-column="favorites" aria-label="Favorites are always displayed" /></td></tr>
-                <tr data-mi-column-row data-search="instrument images"><td>Instrument images</td><td><input type="checkbox" checked data-mi-column="instrument-images" aria-label="Display instrument images" /></td></tr>
+                <tr data-mi-column-row data-search="instrument images"><td>Instrument images</td><td><input type="checkbox" checked disabled data-mi-column="instrument-images" aria-label="Instrument images are always displayed" /></td></tr>
                 <tr data-mi-column-row data-search="nickname"><td>Nickname</td><td><input type="checkbox" checked data-mi-column="nickname" aria-label="Display nickname" /></td></tr>
                 <tr data-mi-column-row data-search="users"><td>Users</td><td><input type="checkbox" checked data-mi-column="users" aria-label="Display users" /></td></tr>
                 <tr data-mi-column-row data-search="groups"><td>Groups</td><td><input type="checkbox" checked data-mi-column="groups" aria-label="Display groups" /></td></tr>
@@ -2098,7 +2106,7 @@
               <div><h3>Contact us</h3><p>If you have any trouble using the Services Central platform, feel free to contact us.</p></div>
               <div class="services-help-card__actions">
                 <a class="services-help-card__action" href="mailto:ServicesCentralSupport@thermofisher.com" data-services-help-action="general-assistance">General assistance</a>
-                <a class="services-help-card__action" href="mailto:ServicesCentralSupport@thermofisher.com?subject=Add%20instrument%20support%20request&amp;body=Add%20instrument%20support%20request%20for%20the%20following%20instruments%3A%0D%0A%0D%0ASerial%20number%2A%09Notes%20%28optional%29%0D%0A%09%0D%0A%09%0D%0A%09%0D%0A%09%0D%0A%09%0D%0A%0D%0A%2ARequired" data-services-help-action="add-instrument-support">Add instrument support</a>
+                <a class="services-help-card__action" href="mailto:ServicesCentralSupport@thermofisher.com" data-services-help-action="add-instrument-support" data-ai-instrument-support-email>Add instrument support</a>
               </div>
             </div>
           </article>
@@ -2170,6 +2178,6 @@
     <script src="date-range-picker.js?v=20260814-support-history"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
     <script src="vendor/jszip.min.js?v=3.10.1"></script>
-    <script src="app.js?v=20260828-system-multi-contact-card"></script>
+    <script src="app.js?v=20260828-virtual-assistant-unmapped-v13"></script>
   </body>
 </html>

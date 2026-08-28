@@ -368,6 +368,10 @@ function isEuropeLePrototype() {
   return new URL(window.location.href).searchParams.get("prototype-region") === "europe-le";
 }
 
+function shouldHideVirtualAssistant() {
+  return isEuropeLePrototype() || isUnmappedPrototypeUser();
+}
+
 function isMainPrototype() {
   return new URL(window.location.href).searchParams.get("prototype-experience") === "main";
 }
@@ -1499,6 +1503,16 @@ function addScreenSpecificHotspots(canvas, route, screen) {
 function wireRouteControls(scope = app) {
   hideMiUsersTooltip();
   ensureFlowToolbarHistoryControls(scope);
+  const virtualAssistantButton = '<button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button>';
+  const virtualAssistantDivider = '<span class="platform-titlebar__divider" data-virtual-assistant-separator aria-hidden="true"></span>';
+  scope.querySelectorAll(".screen--open-support-ticket-contact .iss-titlebar, .screen--open-support-ticket-review .iss-titlebar").forEach((titlebar) => {
+    if (!titlebar.querySelector("[data-virtual-assistant]")) titlebar.insertAdjacentHTML("beforeend", `<div class="iss-titlebar__actions">${virtualAssistantButton}</div>`);
+  });
+  scope.querySelectorAll(".id-hero__actions, .sd-actions").forEach((actions) => {
+    if (!actions.querySelector("[data-virtual-assistant]")) actions.insertAdjacentHTML("afterbegin", `${virtualAssistantButton}${virtualAssistantDivider}`);
+  });
+  const hideVirtualAssistant = shouldHideVirtualAssistant();
+  scope.querySelectorAll("[data-virtual-assistant], [data-virtual-assistant-separator]").forEach((control) => control.toggleAttribute("hidden", hideVirtualAssistant));
   scope.querySelectorAll("[data-route]").forEach((control) => {
     control.addEventListener("click", () => {
       if (control.hasAttribute("data-installation-email-entry")) installationWelcomeFromEmail = true;
@@ -1715,7 +1729,7 @@ function dashboardReportCell(ticket) {
 }
 
 function dashboardClosedTicketRow(ticket) {
-  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#ticket-detail">${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
+  return `<tr${ticket.highlighted ? ' class="is-highlighted"' : ""}><td><span class="db-status db-status--closed">Closed</span></td><td><a href="#support-history" data-db-ticket-link>${ticket.ticket}</a></td><td>${ticket.closed}</td><td>${ticket.subject}</td>${dashboardSerialCell(ticket)}<td>${ticket.model}</td>${dashboardReportCell(ticket)}</tr>`;
 }
 
 function renderDashboardClosedTicketTable() {
@@ -1723,7 +1737,39 @@ function renderDashboardClosedTicketTable() {
 }
 
 function dashboardVisitRow(visit) {
-  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#ticket-detail">${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+  return `<tr${visit.highlighted ? ' class="is-highlighted"' : ""}><td class="db-ticket-date"><span class="db-ticket-date-content"><img src="${DASHBOARD_VISIT_ICON}" alt="" />${visit.scheduled}</span></td><td><span class="db-status db-status--progress">In progress</span></td><td><a href="#support-history" data-db-ticket-link>${visit.ticket}</a></td><td>${visit.type}</td><td>${visit.subject}</td>${dashboardSerialCell(visit)}<td>${visit.model}</td></tr>`;
+}
+
+function dashboardTicketDataFromRow(row) {
+  const cells = row.cells;
+  const isVisit = row.closest("table")?.classList.contains("db-table--visits");
+  const isClosed = row.closest("table")?.classList.contains("db-table--closed");
+  const ticketIndex = isVisit ? 2 : 1;
+  const dateIndex = isVisit ? 0 : 2;
+  const subjectIndex = isVisit ? 4 : 3;
+  const serialIndex = isVisit ? 6 : 5;
+  const modelIndex = isVisit ? 7 : 6;
+  const subject = cells[subjectIndex]?.textContent.trim() || "Support request";
+  const serial = cells[serialIndex]?.textContent.trim() || "—";
+  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial);
+  const image = cells[serialIndex]?.querySelector("img")?.getAttribute("src")?.split("/").pop() || instrument?.image || "vanquish-detector.png";
+  const type = isVisit ? cells[3]?.textContent.trim() : subject.toLowerCase().includes("calibration") ? "PM (Contract)" : subject.toLowerCase().includes("repair") ? "Service Request" : "Tech Support";
+  return {
+    status: isClosed ? "Closed" : cells[isVisit ? 1 : 0]?.textContent.trim() || "In progress",
+    ticket: cells[ticketIndex]?.textContent.trim(),
+    type,
+    subject,
+    serial,
+    model: cells[modelIndex]?.textContent.trim() || instrument?.model || "—",
+    nickname: instrument?.nickname || "—",
+    group: instrument?.group === "—" ? "" : instrument?.group || "",
+    contact: "Alma Duncan",
+    created: isClosed ? cells[dateIndex]?.textContent.trim() : cells[dateIndex]?.textContent.trim(),
+    closed: isClosed ? cells[dateIndex]?.textContent.trim() : "---",
+    image,
+    catalogName: instrument ? instrumentCatalogName(instrument) : "Instrument",
+    instrumentType: instrument ? miInstrumentType(instrument) : image.startsWith("vanquish") ? "HPLC" : "Mass Spec Life Science",
+  };
 }
 
 function renderDashboardVisitsTable() {
@@ -1826,6 +1872,9 @@ function createDashboardSystemQuickViewModal() {
 
 function wireDashboard() {
   app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
+  const hideVirtualAssistant = shouldHideVirtualAssistant();
+  app.querySelector("[data-dashboard-virtual-assistant]")?.toggleAttribute("hidden", hideVirtualAssistant);
+  app.querySelector(".db-titlebar__divider")?.toggleAttribute("hidden", hideVirtualAssistant);
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
@@ -1849,6 +1898,13 @@ function wireDashboard() {
     closed: { count: "8 tickets closed within the last 30 days", markup: renderDashboardClosedTicketTable() },
     visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
   };
+  tableWrap?.addEventListener("click", (event) => {
+    const ticketLink = event.target.closest("[data-db-ticket-link]");
+    if (!ticketLink) return;
+    event.preventDefault();
+    const ticket = dashboardTicketDataFromRow(ticketLink.closest("tr"));
+    setRoute(summaryRouteForTicket(ticket), ticket);
+  });
   const showTicketTable = (state) => {
     const table = ticketTables[state] || ticketTables.active;
     if (ticketCount) ticketCount.textContent = table.count;
@@ -2763,7 +2819,7 @@ const supportHistoryVisibleColumns = new Set(SUPPORT_HISTORY_COLUMNS.map(({ key 
 function instrumentRowMarkup(instrument) {
   const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
   const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
-  return `<tr class="${instrument.pendingNew ? "is-new" : ""}" data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+  return `<tr class="${instrument.pendingNew ? "is-new" : ""}" data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}" data-groups="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}">
     <td><input type="checkbox" data-mi-checkbox aria-label="Select ${instrument.serial}" /></td>
     <td>${miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`)}</td>
     <td></td>
@@ -2786,13 +2842,13 @@ function miCreatedSystemRowsMarkup(system, expanded = true) {
   const key = `my-system-${system.id}`;
   const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
-  const parent = `<tr class="mi-system-row ${system.pendingNew ? "is-new" : ""}" data-mi-row data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
+  const parent = `<tr class="mi-system-row ${system.pendingNew ? "is-new" : ""}" data-mi-row data-mi-system-parent="${key}" data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
     <td><input type="checkbox" data-mi-checkbox aria-label="Select ${system.nickname} system" /></td>
     <td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td>
     <td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="${expanded}" aria-label="${expanded ? "Collapse" : "Expand"} ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td>
-    <td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>—</td><td>${system.typeCode}</td><td>—</td><td>—</td><td>—</td><td>17 Aug 2026</td><td>${miMoreButton(system.nickname, "system", system.id)}</td>
+    <td data-mi-table-column="instrument-images"><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td data-mi-table-column="instrument-images">${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td data-mi-table-column="nickname">${system.nickname}</td><td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td data-mi-table-column="groups">—</td><td data-mi-table-column="type">${system.typeCode}</td><td data-mi-table-column="model">—</td><td data-mi-table-column="coverage">—</td><td data-mi-table-column="coverage-end">—</td><td data-mi-table-column="added-date">17 Aug 2026</td><td>${miMoreButton(system.nickname, "system", system.id)}</td>
   </tr>`;
-  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"${expanded ? "" : " hidden"}><td></td><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td>${instrument.group}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td>10 May 2022</td><td></td></tr>`).join("");
+  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}" data-groups="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}"${expanded ? "" : " hidden"}><td></td><td></td><td>${miBranchIcon}</td><td data-mi-table-column="instrument-images"><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td data-mi-table-column="instrument-images"></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td data-mi-table-column="nickname">${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td data-mi-table-column="groups">${instrument.group}</td><td data-mi-table-column="type">${miInstrumentType(instrument)}</td><td data-mi-table-column="model">${instrument.model}</td><td data-mi-table-column="coverage">${instrument.coverage}</td><td data-mi-table-column="coverage-end">${instrument.end}</td><td data-mi-table-column="added-date">10 May 2022</td><td></td></tr>`).join("");
   return parent + children;
 }
 
@@ -2918,7 +2974,7 @@ function miGridCardMarkup(instrument, { favoritable = true } = {}) {
   const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
   const groups = miCardGroupNames(`instrument:${instrument.serial}`, instrument.group);
   const ticketCount = miInstrumentTicketCount(instrument);
-  return `<article class="mi-instrument-card" data-mi-grid-card data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+  return `<article class="mi-instrument-card" data-mi-grid-card data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}" data-groups="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}">
     <div class="mi-card-surface">
       <header class="mi-card-top mi-card-top--instrument">
         <div class="mi-card-icons">${favoritable ? miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`) : ""}${favoritable ? miLockMarkup(instrument.locked) : ""}<button class="mi-card-users" type="button" data-mi-toast="Users opened" aria-label="${instrument.users} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${instrument.users}</span></button></div>
@@ -2936,7 +2992,7 @@ function miCreatedSystemCardMarkup(system) {
   const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
   const groups = miCardGroupNames(`system:${system.id}`);
   const ticketCount = Number(system.tickets ?? (system.id === "alpine" ? 16 : 0));
-  return `<article class="mi-instrument-card mi-system-card" data-mi-grid-card data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
+  return `<article class="mi-instrument-card mi-system-card" data-mi-grid-card data-mi-grid-system="${system.id}" data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
     <span class="mi-card-stack mi-card-stack--back" aria-hidden="true"></span><span class="mi-card-stack mi-card-stack--middle" aria-hidden="true"></span>
     <div class="mi-card-surface">
       <header class="mi-card-top"><span class="mi-card-badge">${system.typeCode}</span><div class="mi-card-icons">${miFavoriteButton(system.nickname, false, `system:${system.id}`)}${miLockMarkup(system.locked)}<button class="mi-card-users" type="button" data-mi-toast="Users opened" aria-label="${miSystemUserCount(system)} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${miSystemUserCount(system)}</span></button></div><button class="mi-card-title" type="button" data-route="system-detail-${system.id}">${system.nickname}</button></header>
@@ -4410,6 +4466,7 @@ function applyMiColumnVisibility() {
     element.hidden = !visible;
     if (element.tagName === "COL") element.style.display = visible ? "" : "none";
   });
+  table.classList.toggle("mi-table--dynamic-columns", miVisibleColumns.size < MI_OPTIONAL_COLUMNS.length);
   table.style.width = "100%";
 }
 
@@ -4453,27 +4510,91 @@ function wireMyInstruments() {
     miEditColumnsDialog.querySelector("[data-mi-column-search]").focus({ preventScroll: true });
   });
   applyMiColumnVisibility();
-  app.querySelector("[data-mi-search]").addEventListener("input", (event) => {
-    const query = event.currentTarget.value.trim().toLowerCase();
-    app.querySelectorAll("[data-mi-row]").forEach((row) => {
-      row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query);
+  const miFilterConfig = [
+    { key: "groups", label: "Groups", values: miCurrentInstruments().map((instrument) => instrument.group) },
+    { key: "type", label: "Type", values: miCurrentInstruments().map(miInstrumentType) },
+    { key: "model", label: "Catalog no.", values: miCurrentInstruments().map((instrument) => instrument.model) },
+    { key: "coverage", label: "Coverage", values: miCurrentInstruments().map((instrument) => instrument.coverage) },
+  ];
+  const createMiFilters = (controlAttribute, hostAttribute) => miFilterConfig.map(({ key, label, values }) => {
+    const root = app.querySelector(`[${hostAttribute}="${key}"]`);
+    const controlHost = app.querySelector(`[${controlAttribute}="${key}"]`);
+    return { key, root, filter: new window.MultiSelectFilter(root, {
+      label,
+      allLabel: "All",
+      options: [...new Set(values.filter(Boolean))],
+      controlHost,
+      menuStyle: "figma-column",
+    }) };
+  });
+  const miFilters = createMiFilters("data-mi-filter-trigger", "data-mi-filter");
+  const miGridFilters = createMiFilters("data-mi-grid-filter-trigger", "data-mi-grid-filter");
+  const syncMiFilterValues = (source, target) => target.forEach(({ key, filter }) => {
+    filter.setValues(source.find((candidate) => candidate.key === key).filter.values);
+  });
+  const appliedFilters = app.querySelector("[data-mi-applied-filters]");
+  const clearFiltersButton = app.querySelector("[data-mi-clear-filters]");
+  const updateAppliedFilters = () => {
+    const hasFilters = miFilters.some(({ filter }) => filter.values.length > 0);
+    appliedFilters.hidden = !hasFilters;
+    clearFiltersButton.hidden = !hasFilters;
+  };
+  const filterRows = () => {
+    const query = app.querySelector("[data-mi-search]").value.trim().toLowerCase();
+    const columnMatches = (candidate) => miFilters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(candidate.dataset[key]));
+    const rowMatches = (row) => {
+      const textMatches = !query || row.dataset.search.toLowerCase().includes(query);
+      return textMatches && columnMatches(row);
+    };
+    app.querySelectorAll("[data-mi-row]:not(.mi-system-row)").forEach((row) => {
+      row.hidden = !rowMatches(row);
     });
     const collapsedSystems = new Set([...app.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
     app.querySelectorAll("[data-mi-system-component]").forEach((row) => {
-      const hiddenBySearch = query !== "" && !row.dataset.search.toLowerCase().includes(query);
-      row.hidden = hiddenBySearch || collapsedSystems.has(row.dataset.miSystemComponent);
+      row.dataset.miFilterMatch = String(rowMatches(row));
+      row.hidden = row.dataset.miFilterMatch !== "true" || collapsedSystems.has(row.dataset.miSystemComponent);
     });
+    app.querySelectorAll("[data-mi-system-parent]").forEach((row) => {
+      const systemKey = row.dataset.miSystemParent;
+      row.hidden = ![...app.querySelectorAll(`[data-mi-system-component="${systemKey}"]`)].some((child) => child.dataset.miFilterMatch === "true");
+    });
+    const gridCardMatches = (card) => {
+      const textMatches = !query || card.dataset.search.toLowerCase().includes(query);
+      if (!textMatches) return false;
+      if (!card.dataset.miGridSystem) return columnMatches(card);
+      const system = systems.find((candidate) => candidate.id === card.dataset.miGridSystem);
+      return system?.components
+        .map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial))
+        .filter(Boolean)
+        .some((instrument) => miFilters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(String({
+          groups: instrument.group,
+          type: miInstrumentType(instrument),
+          model: instrument.model,
+          coverage: instrument.coverage,
+        }[key]))));
+    };
     app.querySelectorAll("[data-mi-grid-card]").forEach((card) => {
-      card.hidden = query !== "" && !card.dataset.search.toLowerCase().includes(query);
+      card.hidden = !gridCardMatches(card);
     });
     updateCount();
-  });
+    updateAppliedFilters();
+  };
+  app.querySelector("[data-mi-search]").addEventListener("input", filterRows);
+  miFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", () => {
+    syncMiFilterValues(miFilters, miGridFilters);
+    filterRows();
+  }));
+  miGridFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", () => {
+    syncMiFilterValues(miGridFilters, miFilters);
+    filterRows();
+  }));
+  clearFiltersButton.addEventListener("click", () => miFilters.forEach(({ filter }) => filter.clear()));
   wireMiTableSelection(app.querySelector(".mi-table"));
   app.querySelectorAll("[data-mi-system-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
     const expanded = toggle.getAttribute("aria-expanded") === "true";
     toggle.setAttribute("aria-expanded", String(!expanded));
     toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${toggle.dataset.miSystemLabel} system components`);
-    app.querySelector("[data-mi-search]").dispatchEvent(new Event("input"));
+    filterRows();
   }));
   app.querySelectorAll("[data-mi-system-quickview]").forEach((button) => button.addEventListener("click", () => {
     const system = miFindSystemById(button.dataset.miSystemQuickview);
@@ -4493,7 +4614,6 @@ function wireMyInstruments() {
       app.querySelector("[data-mi-grid-view]").hidden = !gridSelected;
     });
   });
-  app.querySelectorAll(".mi-grid-filters button").forEach((button) => button.addEventListener("click", () => showToast(`${button.textContent.trim()} filter opened`)));
   wireMiActionMenus(app);
   wireMyInstrumentActions();
   app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
@@ -5006,9 +5126,31 @@ const SYSTEM_MANUALS = [
   ["tsq.png", "80111-97047 - Rev A - TSQ Series II Mass Spectrometers Hardware Manual"],
 ];
 
-function systemDetailSupportMarkup() {
+function systemDetailTicketData(ticketRow, system) {
+  const [status, tone, ticket, type, created, closed, serial, model, subject, contact] = ticketRow;
+  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial) || {
+    serial,
+    model,
+    nickname: "—",
+    group: "—",
+    image: model.startsWith("MST") ? "tsq.png" : model.startsWith("QEX") ? "q-exactive.png" : "vanquish-detector.png",
+  };
+  return {
+    status, tone, ticket, type, created, closed, serial, model, subject, contact,
+    nickname: instrument.nickname,
+    group: instrument.group === "—" ? "" : instrument.group,
+    image: instrument.image,
+    catalogName: instrumentCatalogName(instrument),
+    instrumentType: miInstrumentType(instrument),
+  };
+}
+
+function systemDetailSupportMarkup(system) {
   const sort = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
-  const rows = SYSTEM_SUPPORT_ROWS.map(([status, tone, ticket, type, created, closed, serial, model, subject, contact], index) => `<tr><td>${index === 1 ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket" />' : ""}</td><td><span class="sd-ticket-status sd-ticket-status--${tone}">${status}</span></td><td><button type="button" data-mi-toast="Ticket ${ticket} opened">${ticket}</button></td><td>${type}</td><td>${created}</td><td>${closed}</td><td><button type="button" data-route="${miInstrumentDetailRoute(serial)}">${serial}</button></td><td title="${model}">${model}</td><td title="${subject}">${subject}</td><td>${contact}</td></tr>`).join("");
+  const rows = SYSTEM_SUPPORT_ROWS.map((ticketRow, index) => {
+    const { status, tone, ticket, type, created, closed, serial, model, subject, contact } = systemDetailTicketData(ticketRow, system);
+    return `<tr><td>${index === 1 ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket" />' : ""}</td><td><span class="sd-ticket-status sd-ticket-status--${tone}">${status}</span></td><td><button type="button" data-sd-ticket-index="${index}">${ticket}</button></td><td>${type}</td><td>${created}</td><td>${closed}</td><td><button type="button" data-route="${miInstrumentDetailRoute(serial)}">${serial}</button></td><td title="${model}">${model}</td><td title="${subject}">${subject}</td><td>${contact}</td></tr>`;
+  }).join("");
   return `<section class="sd-panel sd-support-panel" aria-labelledby="sd-support-title"><header><h2 id="sd-support-title">Components support history</h2><div class="sd-filters"><strong>Filter by:</strong><select aria-label="Ticket status"><option>Ticket status</option><option>Open</option><option>In progress</option><option>Closed</option></select><select aria-label="Ticket type"><option>Ticket type</option><option>Service Request</option><option>PM (Contract)</option></select><select aria-label="Ticket contact"><option>Ticket contact</option><option>Alma Malmberg</option><option>Tyler Durden</option></select></div></header><div class="sd-support-table"><table><colgroup><col class="sd-col-icon"><col class="sd-col-status"><col class="sd-col-ticket"><col class="sd-col-type"><col class="sd-col-date"><col class="sd-col-date"><col class="sd-col-serial"><col class="sd-col-model"><col class="sd-col-subject"><col class="sd-col-contact"></colgroup><thead><tr><th></th><th>Status ${sort}</th><th>Ticket no. ${sort}</th><th>Ticket type ${sort}</th><th>Created ${sort}</th><th>Closed ${sort}</th><th>Serial no. ${sort}</th><th>Catalog no. ${sort}</th><th>Subject ${sort}</th><th>Ticket contact ${sort}</th></tr></thead><tbody>${rows}</tbody></table></div>${systemPaginationMarkup()}</section>`;
 }
 
@@ -5120,8 +5262,8 @@ function systemDetailActivityMarkup() {
 }
 
 function systemDetailTabMarkup(tab, components, system) {
-  if (tab === "support") return systemDetailSupportMarkup();
-  if (tab === "coverage") return systemDetailCoverageMarkup(components, system);
+  if (tab === "support") return systemDetailSupportMarkup(system);
+  if (tab === "coverage") return systemDetailCoverageMarkup(components);
   if (tab === "knowledge") return systemDetailKnowledgeMarkup(false);
   if (tab === "users") return systemDetailUsersMarkup(system);
   if (tab === "activity") return systemDetailActivityMarkup();
@@ -5143,19 +5285,10 @@ function wireSystemTabContent(tab, system) {
     });
   }
   const content = app.querySelector(".sd-tab-content");
-  content.querySelectorAll("[data-sd-contact-toggle]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const expanded = button.getAttribute("aria-expanded") === "true";
-      const nextExpanded = !expanded;
-      const panel = button.closest("[data-sd-contact-group]")?.querySelector("[data-sd-contact-panel]");
-      const icon = button.querySelector("img");
-      const label = button.querySelector("[data-sd-contact-toggle-label]");
-      button.setAttribute("aria-expanded", String(nextExpanded));
-      if (panel) panel.hidden = !nextExpanded;
-      if (icon) icon.src = `assets/icons/directions/chevron ${nextExpanded ? "down" : "right"}/size=16px, style=mono.svg`;
-      if (label) label.textContent = `${nextExpanded ? "Hide" : "Show"} ${button.dataset.sdContactLabel}`;
-    });
-  });
+  if (tab === "support") content.querySelectorAll("[data-sd-ticket-index]").forEach((button) => button.addEventListener("click", () => {
+    const ticket = systemDetailTicketData(SYSTEM_SUPPORT_ROWS[Number(button.dataset.sdTicketIndex)], system);
+    setRoute(summaryRouteForTicket(ticket), ticket);
+  }));
   if (tab === "users") wireMiRoleSelectors(content, (role, email) => {
     if (email === MI_CURRENT_USER_EMAIL) {
       renderMiSystemDetail(routeFromHash());
@@ -5169,13 +5302,30 @@ function wireSystemTabContent(tab, system) {
   wireRouteControls(content);
 }
 
-function instrument1009996TicketRows() {
-  return INSTRUMENT_1009996_TICKETS.map(([tone, status, ticket, type, created, closed, subject, contact, hasIcon]) => `<tr>
+function instrumentDetailTicketData(ticketRow, instrument) {
+  const [tone, status, ticket, type, created, closed, subject, contact, hasIcon] = ticketRow;
+  return {
+    tone, status, ticket, type, created, closed, subject, contact, hasIcon,
+    serial: instrument.serial,
+    model: instrument.model,
+    nickname: instrument.nickname,
+    group: instrument.group === "—" ? "" : instrument.group,
+    image: instrument.image,
+    catalogName: instrumentCatalogName(instrument),
+    instrumentType: miInstrumentType(instrument),
+  };
+}
+
+function instrumentDetailTicketRows(instrument) {
+  return INSTRUMENT_1009996_TICKETS.map((ticketRow, index) => {
+    const { tone, status, ticket, type, created, closed, subject, contact, hasIcon } = instrumentDetailTicketData(ticketRow, instrument);
+    return `<tr>
     <td>${hasIcon ? '<img src="assets/icons/general/ticket/size=24px, style=mono.svg" alt="Ticket document" />' : ""}</td>
     <td><span class="id-status id-status--${tone}">${status}</span></td>
-    <td><button type="button" data-route="ticket-detail">${ticket}</button></td>
+    <td><button type="button" data-id-ticket-index="${index}">${ticket}</button></td>
     <td>${type}</td><td>${created}</td><td>${closed}</td><td title="${subject}">${subject}</td><td>${contact}</td>
-  </tr>`).join("");
+  </tr>`;
+  }).join("");
 }
 
 function instrumentCoverageStatusClass(instrument) {
@@ -5334,13 +5484,13 @@ function renderInstrumentDetail(serial) {
 
         <aside class="id-pm" aria-labelledby="id-pm-title">
           <img class="id-pm__art" src="assets/instruments/preventive-maintenance.svg" alt="" />
-          <div><h2 id="id-pm-title">Preventive Maintenance</h2><p>Thermo Fisher will schedule your next preventive maintenance on ticket <button type="button" data-route="ticket-detail">46927364</button>.<br />This information will be updated when the scheduling timeframe approaches.</p></div>
+          <div><h2 id="id-pm-title">Preventive Maintenance</h2><p>Thermo Fisher will schedule your next preventive maintenance on ticket <button type="button" data-id-ticket-index="2">46927364</button>.<br />This information will be updated when the scheduling timeframe approaches.</p></div>
           <button class="id-secondary" type="button" data-route="request-support">Request PM Scheduling</button>
         </aside>
 
         <section class="id-support" aria-labelledby="id-support-title">
           <header><h1 id="id-support-title">Support history</h1><div class="id-filters"><strong>Filter by:</strong><label><span class="sr-only">Ticket status</span><select><option>Ticket status</option><option>Open</option><option>In progress</option><option>Closed</option></select></label><label><span class="sr-only">Ticket type</span><select><option>Ticket type</option><option>Service Request</option><option>PM (Contract)</option><option>Inquiry</option></select></label><label><span class="sr-only">Ticket contact</span><select><option>Ticket contact</option><option>Alma Malmbe</option><option>Tyler Durden</option></select></label></div></header>
-          <div class="id-table-wrap"><table aria-label="Support history"><colgroup><col class="id-col-icon" /><col class="id-col-status" /><col class="id-col-ticket" /><col class="id-col-type" /><col class="id-col-created" /><col class="id-col-closed" /><col class="id-col-subject" /><col class="id-col-contact" /></colgroup><thead><tr><th></th><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Closed <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket contact <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>${instrument1009996TicketRows()}</tbody></table></div>
+          <div class="id-table-wrap"><table aria-label="Support history"><colgroup><col class="id-col-icon" /><col class="id-col-status" /><col class="id-col-ticket" /><col class="id-col-type" /><col class="id-col-created" /><col class="id-col-closed" /><col class="id-col-subject" /><col class="id-col-contact" /></colgroup><thead><tr><th></th><th>Status <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Created <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Closed <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Subject <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Ticket contact <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>${instrumentDetailTicketRows(instrument)}</tbody></table></div>
           <div class="id-pagination"><div>Results per page <button type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> of <strong>267</strong></div><nav aria-label="Support history pagination"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><span>…</span><button type="button">9</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button><label>Go to: <input type="text" inputmode="numeric" aria-label="Go to page" placeholder="#" /></label></nav></div>
         </section>
       </main>
@@ -5372,6 +5522,10 @@ function renderInstrumentDetail(serial) {
   app.querySelectorAll("[data-id-tab]").forEach((button) => button.addEventListener("click", () => showInstrumentTab(button.dataset.idTab)));
   app.querySelectorAll("[data-id-open-knowledge]").forEach((button) => button.addEventListener("click", () => {
     showInstrumentTab("knowledge");
+  }));
+  app.querySelectorAll("[data-id-ticket-index]").forEach((button) => button.addEventListener("click", () => {
+    const ticket = instrumentDetailTicketData(INSTRUMENT_1009996_TICKETS[Number(button.dataset.idTicketIndex)], instrument);
+    setRoute(summaryRouteForTicket(ticket), ticket);
   }));
   app.querySelector("[data-id-browse-knowledge-external]")?.addEventListener("click", () => window.open("https://knowledge1.thermofisher.com/", "_blank", "noopener"));
   wireMiActionMenus(app);
@@ -5874,10 +6028,27 @@ function aiSummaryNotAddedMarkup(instruments, noteOverride = "") {
   return `<section class="ai-summary-section ai-summary-section--not-added"><h2>Instrument(s) not added</h2><div class="ai-summary-not-added-wrap"><table class="ai-summary-not-added"><colgroup><col class="ai-summary-not-added-item" /><col class="ai-summary-not-added-serial" /><col class="ai-summary-not-added-nickname" /><col /></colgroup><thead><tr><th>Item</th><th>Serial number</th><th>Nickname</th><th>Notes</th></tr></thead><tbody>${instruments.map((instrument, index) => `<tr><td>${instrument.item ?? index + 1}</td><td>${aiEscapeHtml(instrument.serial)}</td><td>${aiEscapeHtml(instrument.nickname || "")}</td><td>${aiEscapeHtml(noteOverride || aiSummaryNotAddedNote(instrument))}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 
-function aiInstrumentSupportMailto(instruments) {
+function aiInstrumentSupportTextTable(instruments, { includeNickname = true, blankRows = 0 } = {}) {
+  const columns = [
+    { label: "Serial number", value: (instrument) => instrument.serial || "" },
+    ...(includeNickname ? [{ label: "Nickname", value: (instrument) => instrument.nickname === "—" ? "" : instrument.nickname || "" }] : []),
+    { label: "Notes", value: (instrument) => instrument.notes || "" },
+  ];
+  const rows = instruments.map((instrument) => columns.map((column) => String(column.value(instrument))));
+  while (rows.length < blankRows) rows.push(columns.map(() => ""));
+  const widths = columns.map((column, index) => Math.max(column.label.length, ...rows.map((row) => row[index].length)) + 4);
+  const formatRow = (values) => values.map((value, index) => index === values.length - 1 ? value : value.padEnd(widths[index])).join("");
+  return [formatRow(columns.map((column) => column.label)), ...rows.map(formatRow)].join("\r\n");
+}
+
+function aiInstrumentSupportMailto(instruments, options = {}) {
   const subject = "Add instrument support request";
-  const serialRows = instruments.map((instrument) => `${instrument.serial}\t`).join("\r\n");
-  const body = `Add instrument support request for the following instruments:\r\n\r\nSerial number*\tNotes (optional)\r\n${serialRows}${serialRows ? "\r\n" : ""}\r\n*Required`;
+  const tableInstruments = instruments.map((instrument) => ({
+    serial: instrument.serial,
+    nickname: instrument.nickname,
+    notes: instrument.notes || aiSummaryNotAddedNote(instrument),
+  }));
+  const body = `Add instrument support request for the following instruments:\r\n\r\n${aiInstrumentSupportTextTable(tableInstruments, options)}`;
   return `mailto:ServicesCentralSupport@thermofisher.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -6211,11 +6382,11 @@ const SUPPORT_HISTORY_SUMMARY_ROUTES = {
 
 function summaryRouteForTicket(ticket) {
   if (!ticket) return null;
-  if (ticket.status === "Closed" && ["Tech Support", "Service Request", "Depot Repair", "Inquiry", "PM (Contract)"].includes(ticket.type)) return "closed-summary";
+  if (ticket.status === "Closed") return "closed-summary";
   if (ticket.type === "Tech Support") return "tech-support-summary";
   if (["Service Request", "Depot Repair", "Inquiry"].includes(ticket.type)) return "service-requests-summary";
   if (ticket.type === "PM (Contract)") return "pm-summary";
-  return null;
+  return "service-requests-summary";
 }
 
 const TICKET_SUMMARIES = {
@@ -6538,6 +6709,9 @@ function renderTicketSummary(route) {
     phone: historyTicket.phone || "",
     email: historyTicket.email || "",
     submitted: historyTicket.submitted === true,
+    image: historyTicket.image || baseTicket.image || "vanquish-detector.png",
+    catalogName: historyTicket.catalogName || baseTicket.catalogName || "Vanquish™ Variable Wavelength Detector F",
+    instrumentType: historyTicket.instrumentType || baseTicket.instrumentType || "HPLC",
     selectedFromHistory: true,
   } : baseTicket;
   const isTechSupport = ticket.isTechSupport === true;
@@ -6550,10 +6724,10 @@ function renderTicketSummary(route) {
   const submittedNotice = ticket.submitted
     ? `<img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><p><strong>Request submitted:</strong> A representative will respond to your request as soon as possible.<br />When processing is complete your ticket will be updated with the appropriate status.</p>`
     : "";
-  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
   const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl>`;
   const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
-  const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/vanquish-detector.png" alt="Vanquish variable wavelength detector" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>HPLC</dd></div><div><dt>Catalog name</dt><dd>Vanquish™ Variable Wavelength Detector F</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "HPLC 2B Sys., Global Research and Development..."}</dd></div><div><dt>Notes</dt><dd>Vanquish HPLC System, Lab 2B</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
   const quoteContent = `<article class="ts-card ts-card--standard ts-card--quote">${contactMarkup}<div class="ts-summary-split"><section>${requestMarkup}</section><section class="ts-quotes"><header><h2>Quote(s)</h2><span>Prices are subject to change</span></header><article class="ts-quote"><img src="assets/icons/general/quote/size=24px, style=mono.svg" alt="" /><div><span><b>Quote:</b> <span class="ts-quote__number">17171847</span></span><span><b>Created:</b> 11 Apr 2023</span><span><b>Total:</b> $10,285</span></div><div class="ts-quote__actions"><button class="mi-button" type="button">View quote</button><button class="mi-button" type="button">Place order</button></div></article></section></div><section class="ts-service ts-service--quote"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 30 Apr 2023</dd></div></dl></section></article>${instrumentMarkup}`;
   const preventiveContent = `<article class="ts-card ts-card--standard ts-card--preventive">${contactMarkup}${requestMarkup}<section class="ts-service ts-service--preventive"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 12 May 2023</dd></div></dl></section></article>${instrumentMarkup}`;
   const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
@@ -10358,6 +10532,9 @@ miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListene
   }
   miVisibleColumns.clear();
   miEditColumnsDialog.querySelectorAll("[data-mi-column]:not(:disabled):checked").forEach((checkbox) => miVisibleColumns.add(checkbox.dataset.miColumn));
+  miEditColumnsDialog.querySelectorAll("[data-mi-column]:disabled").forEach((checkbox) => {
+    if (MI_OPTIONAL_COLUMNS.includes(checkbox.dataset.miColumn)) miVisibleColumns.add(checkbox.dataset.miColumn);
+  });
   applyMiColumnVisibility();
   showToast("Column preferences updated");
 });
@@ -10619,6 +10796,7 @@ addUserOrderDialog.querySelector("[data-add-user-form]").addEventListener("submi
   showToast("Email notification sent to User(s).", { title: "Success:", variant: "success", duration: 6000 });
 });
 addUserOrderDialog.querySelectorAll("[data-add-user-users]").forEach((button) => button.addEventListener("click", () => showToast(`${button.dataset.addUserUsers} users on this order`)));
+servicesHelpDialog.querySelector("[data-ai-instrument-support-email]").href = aiInstrumentSupportMailto([], { includeNickname: false, blankRows: 5 });
 servicesHelpDialog.querySelectorAll("[data-services-help-action]").forEach((control) => {
   control.addEventListener("click", () => {
     const action = control.dataset.servicesHelpAction;
