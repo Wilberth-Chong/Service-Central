@@ -368,6 +368,10 @@ function isEuropeLePrototype() {
   return new URL(window.location.href).searchParams.get("prototype-region") === "europe-le";
 }
 
+function shouldHideVirtualAssistant() {
+  return isEuropeLePrototype() || isUnmappedPrototypeUser();
+}
+
 function isMainPrototype() {
   return new URL(window.location.href).searchParams.get("prototype-experience") === "main";
 }
@@ -1499,6 +1503,16 @@ function addScreenSpecificHotspots(canvas, route, screen) {
 function wireRouteControls(scope = app) {
   hideMiUsersTooltip();
   ensureFlowToolbarHistoryControls(scope);
+  const virtualAssistantButton = '<button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button>';
+  const virtualAssistantDivider = '<span class="platform-titlebar__divider" data-virtual-assistant-separator aria-hidden="true"></span>';
+  scope.querySelectorAll(".screen--open-support-ticket-contact .iss-titlebar, .screen--open-support-ticket-review .iss-titlebar").forEach((titlebar) => {
+    if (!titlebar.querySelector("[data-virtual-assistant]")) titlebar.insertAdjacentHTML("beforeend", `<div class="iss-titlebar__actions">${virtualAssistantButton}</div>`);
+  });
+  scope.querySelectorAll(".id-hero__actions, .sd-actions").forEach((actions) => {
+    if (!actions.querySelector("[data-virtual-assistant]")) actions.insertAdjacentHTML("afterbegin", `${virtualAssistantButton}${virtualAssistantDivider}`);
+  });
+  const hideVirtualAssistant = shouldHideVirtualAssistant();
+  scope.querySelectorAll("[data-virtual-assistant], [data-virtual-assistant-separator]").forEach((control) => control.toggleAttribute("hidden", hideVirtualAssistant));
   scope.querySelectorAll("[data-route]").forEach((control) => {
     control.addEventListener("click", () => {
       if (control.hasAttribute("data-installation-email-entry")) installationWelcomeFromEmail = true;
@@ -1858,6 +1872,9 @@ function createDashboardSystemQuickViewModal() {
 
 function wireDashboard() {
   app.querySelector("[data-back-to-signin]")?.addEventListener("click", () => setRoute("signin"));
+  const hideVirtualAssistant = shouldHideVirtualAssistant();
+  app.querySelector("[data-dashboard-virtual-assistant]")?.toggleAttribute("hidden", hideVirtualAssistant);
+  app.querySelector(".db-titlebar__divider")?.toggleAttribute("hidden", hideVirtualAssistant);
   app.querySelector("[data-dashboard-search]")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") setRoute("my-instruments");
   });
@@ -2430,7 +2447,7 @@ const supportHistoryVisibleColumns = new Set(SUPPORT_HISTORY_COLUMNS.map(({ key 
 function instrumentRowMarkup(instrument) {
   const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
   const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
-  return `<tr class="${instrument.pendingNew ? "is-new" : ""}" data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+  return `<tr class="${instrument.pendingNew ? "is-new" : ""}" data-mi-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}" data-groups="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}">
     <td><input type="checkbox" data-mi-checkbox aria-label="Select ${instrument.serial}" /></td>
     <td>${miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`)}</td>
     <td></td>
@@ -2453,13 +2470,13 @@ function miCreatedSystemRowsMarkup(system, expanded = true) {
   const key = `my-system-${system.id}`;
   const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter(Boolean);
   const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
-  const parent = `<tr class="mi-system-row ${system.pendingNew ? "is-new" : ""}" data-mi-row data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
+  const parent = `<tr class="mi-system-row ${system.pendingNew ? "is-new" : ""}" data-mi-row data-mi-system-parent="${key}" data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
     <td><input type="checkbox" data-mi-checkbox aria-label="Select ${system.nickname} system" /></td>
     <td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td>
     <td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="${expanded}" aria-label="${expanded ? "Collapse" : "Expand"} ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td>
-    <td><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>—</td><td>${system.typeCode}</td><td>—</td><td>—</td><td>—</td><td>17 Aug 2026</td><td>${miMoreButton(system.nickname, "system", system.id)}</td>
+    <td data-mi-table-column="instrument-images"><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td data-mi-table-column="instrument-images">${miLockMarkup(system.locked)}</td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td data-mi-table-column="nickname">${system.nickname}</td><td class="mi-users-cell" data-mi-table-column="users">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td data-mi-table-column="groups">—</td><td data-mi-table-column="type">${system.typeCode}</td><td data-mi-table-column="model">—</td><td data-mi-table-column="coverage">—</td><td data-mi-table-column="coverage-end">—</td><td data-mi-table-column="added-date">17 Aug 2026</td><td>${miMoreButton(system.nickname, "system", system.id)}</td>
   </tr>`;
-  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"${expanded ? "" : " hidden"}><td></td><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td>${instrument.group}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${instrument.coverage}</td><td>${instrument.end}</td><td>10 May 2022</td><td></td></tr>`).join("");
+  const children = components.map((instrument, index) => `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""} ${system.pendingNew ? "is-new" : ""}" data-mi-system-component="${key}" data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}" data-groups="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}"${expanded ? "" : " hidden"}><td></td><td></td><td>${miBranchIcon}</td><td data-mi-table-column="instrument-images"><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td data-mi-table-column="instrument-images"></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td data-mi-table-column="nickname">${instrument.nickname}</td><td class="mi-users-cell" data-mi-table-column="users"></td><td data-mi-table-column="groups">${instrument.group}</td><td data-mi-table-column="type">${miInstrumentType(instrument)}</td><td data-mi-table-column="model">${instrument.model}</td><td data-mi-table-column="coverage">${instrument.coverage}</td><td data-mi-table-column="coverage-end">${instrument.end}</td><td data-mi-table-column="added-date">10 May 2022</td><td></td></tr>`).join("");
   return parent + children;
 }
 
@@ -2585,7 +2602,7 @@ function miGridCardMarkup(instrument, { favoritable = true } = {}) {
   const instrumentRoute = miInstrumentDetailRoute(instrument.serial);
   const groups = miCardGroupNames(`instrument:${instrument.serial}`, instrument.group);
   const ticketCount = miInstrumentTicketCount(instrument);
-  return `<article class="mi-instrument-card" data-mi-grid-card data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}">
+  return `<article class="mi-instrument-card" data-mi-grid-card data-search="${instrument.serial} ${instrument.nickname} ${instrument.group} ${instrument.model}" data-groups="${instrument.group}" data-type="${miInstrumentType(instrument)}" data-model="${instrument.model}" data-coverage="${instrument.coverage}">
     <div class="mi-card-surface">
       <header class="mi-card-top mi-card-top--instrument">
         <div class="mi-card-icons">${favoritable ? miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`) : ""}${favoritable ? miLockMarkup(instrument.locked) : ""}<button class="mi-card-users" type="button" data-mi-toast="Users opened" aria-label="${instrument.users} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${instrument.users}</span></button></div>
@@ -2603,7 +2620,7 @@ function miCreatedSystemCardMarkup(system) {
   const searchable = components.map((instrument) => `${instrument.serial} ${instrument.nickname}`).join(" ");
   const groups = miCardGroupNames(`system:${system.id}`);
   const ticketCount = Number(system.tickets ?? (system.id === "alpine" ? 16 : 0));
-  return `<article class="mi-instrument-card mi-system-card" data-mi-grid-card data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
+  return `<article class="mi-instrument-card mi-system-card" data-mi-grid-card data-mi-grid-system="${system.id}" data-search="System ${system.nickname} ${system.typeCode} ${searchable}">
     <span class="mi-card-stack mi-card-stack--back" aria-hidden="true"></span><span class="mi-card-stack mi-card-stack--middle" aria-hidden="true"></span>
     <div class="mi-card-surface">
       <header class="mi-card-top"><span class="mi-card-badge">${system.typeCode}</span><div class="mi-card-icons">${miFavoriteButton(system.nickname, false, `system:${system.id}`)}${miLockMarkup(system.locked)}<button class="mi-card-users" type="button" data-mi-toast="Users opened" aria-label="${miSystemUserCount(system)} users"><img src="assets/icons/general/2 users/size=16px, style=mono.svg" alt="" /><span>${miSystemUserCount(system)}</span></button></div><button class="mi-card-title" type="button" data-route="system-detail-${system.id}">${system.nickname}</button></header>
@@ -4077,6 +4094,7 @@ function applyMiColumnVisibility() {
     element.hidden = !visible;
     if (element.tagName === "COL") element.style.display = visible ? "" : "none";
   });
+  table.classList.toggle("mi-table--dynamic-columns", miVisibleColumns.size < MI_OPTIONAL_COLUMNS.length);
   table.style.width = "100%";
 }
 
@@ -4120,27 +4138,91 @@ function wireMyInstruments() {
     miEditColumnsDialog.querySelector("[data-mi-column-search]").focus({ preventScroll: true });
   });
   applyMiColumnVisibility();
-  app.querySelector("[data-mi-search]").addEventListener("input", (event) => {
-    const query = event.currentTarget.value.trim().toLowerCase();
-    app.querySelectorAll("[data-mi-row]").forEach((row) => {
-      row.hidden = query !== "" && !row.dataset.search.toLowerCase().includes(query);
+  const miFilterConfig = [
+    { key: "groups", label: "Groups", values: miCurrentInstruments().map((instrument) => instrument.group) },
+    { key: "type", label: "Type", values: miCurrentInstruments().map(miInstrumentType) },
+    { key: "model", label: "Catalog no.", values: miCurrentInstruments().map((instrument) => instrument.model) },
+    { key: "coverage", label: "Coverage", values: miCurrentInstruments().map((instrument) => instrument.coverage) },
+  ];
+  const createMiFilters = (controlAttribute, hostAttribute) => miFilterConfig.map(({ key, label, values }) => {
+    const root = app.querySelector(`[${hostAttribute}="${key}"]`);
+    const controlHost = app.querySelector(`[${controlAttribute}="${key}"]`);
+    return { key, root, filter: new window.MultiSelectFilter(root, {
+      label,
+      allLabel: "All",
+      options: [...new Set(values.filter(Boolean))],
+      controlHost,
+      menuStyle: "figma-column",
+    }) };
+  });
+  const miFilters = createMiFilters("data-mi-filter-trigger", "data-mi-filter");
+  const miGridFilters = createMiFilters("data-mi-grid-filter-trigger", "data-mi-grid-filter");
+  const syncMiFilterValues = (source, target) => target.forEach(({ key, filter }) => {
+    filter.setValues(source.find((candidate) => candidate.key === key).filter.values);
+  });
+  const appliedFilters = app.querySelector("[data-mi-applied-filters]");
+  const clearFiltersButton = app.querySelector("[data-mi-clear-filters]");
+  const updateAppliedFilters = () => {
+    const hasFilters = miFilters.some(({ filter }) => filter.values.length > 0);
+    appliedFilters.hidden = !hasFilters;
+    clearFiltersButton.hidden = !hasFilters;
+  };
+  const filterRows = () => {
+    const query = app.querySelector("[data-mi-search]").value.trim().toLowerCase();
+    const columnMatches = (candidate) => miFilters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(candidate.dataset[key]));
+    const rowMatches = (row) => {
+      const textMatches = !query || row.dataset.search.toLowerCase().includes(query);
+      return textMatches && columnMatches(row);
+    };
+    app.querySelectorAll("[data-mi-row]:not(.mi-system-row)").forEach((row) => {
+      row.hidden = !rowMatches(row);
     });
     const collapsedSystems = new Set([...app.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
     app.querySelectorAll("[data-mi-system-component]").forEach((row) => {
-      const hiddenBySearch = query !== "" && !row.dataset.search.toLowerCase().includes(query);
-      row.hidden = hiddenBySearch || collapsedSystems.has(row.dataset.miSystemComponent);
+      row.dataset.miFilterMatch = String(rowMatches(row));
+      row.hidden = row.dataset.miFilterMatch !== "true" || collapsedSystems.has(row.dataset.miSystemComponent);
     });
+    app.querySelectorAll("[data-mi-system-parent]").forEach((row) => {
+      const systemKey = row.dataset.miSystemParent;
+      row.hidden = ![...app.querySelectorAll(`[data-mi-system-component="${systemKey}"]`)].some((child) => child.dataset.miFilterMatch === "true");
+    });
+    const gridCardMatches = (card) => {
+      const textMatches = !query || card.dataset.search.toLowerCase().includes(query);
+      if (!textMatches) return false;
+      if (!card.dataset.miGridSystem) return columnMatches(card);
+      const system = systems.find((candidate) => candidate.id === card.dataset.miGridSystem);
+      return system?.components
+        .map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial))
+        .filter(Boolean)
+        .some((instrument) => miFilters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(String({
+          groups: instrument.group,
+          type: miInstrumentType(instrument),
+          model: instrument.model,
+          coverage: instrument.coverage,
+        }[key]))));
+    };
     app.querySelectorAll("[data-mi-grid-card]").forEach((card) => {
-      card.hidden = query !== "" && !card.dataset.search.toLowerCase().includes(query);
+      card.hidden = !gridCardMatches(card);
     });
     updateCount();
-  });
+    updateAppliedFilters();
+  };
+  app.querySelector("[data-mi-search]").addEventListener("input", filterRows);
+  miFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", () => {
+    syncMiFilterValues(miFilters, miGridFilters);
+    filterRows();
+  }));
+  miGridFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", () => {
+    syncMiFilterValues(miGridFilters, miFilters);
+    filterRows();
+  }));
+  clearFiltersButton.addEventListener("click", () => miFilters.forEach(({ filter }) => filter.clear()));
   wireMiTableSelection(app.querySelector(".mi-table"));
   app.querySelectorAll("[data-mi-system-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
     const expanded = toggle.getAttribute("aria-expanded") === "true";
     toggle.setAttribute("aria-expanded", String(!expanded));
     toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${toggle.dataset.miSystemLabel} system components`);
-    app.querySelector("[data-mi-search]").dispatchEvent(new Event("input"));
+    filterRows();
   }));
   app.querySelectorAll("[data-mi-system-quickview]").forEach((button) => button.addEventListener("click", () => {
     const system = miFindSystemById(button.dataset.miSystemQuickview);
@@ -4160,7 +4242,6 @@ function wireMyInstruments() {
       app.querySelector("[data-mi-grid-view]").hidden = !gridSelected;
     });
   });
-  app.querySelectorAll(".mi-grid-filters button").forEach((button) => button.addEventListener("click", () => showToast(`${button.textContent.trim()} filter opened`)));
   wireMiActionMenus(app);
   wireMyInstrumentActions();
   app.querySelectorAll("[data-mi-toast]").forEach((button) => button.addEventListener("click", () => showToast(button.dataset.miToast)));
@@ -9939,6 +10020,9 @@ miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListene
   }
   miVisibleColumns.clear();
   miEditColumnsDialog.querySelectorAll("[data-mi-column]:not(:disabled):checked").forEach((checkbox) => miVisibleColumns.add(checkbox.dataset.miColumn));
+  miEditColumnsDialog.querySelectorAll("[data-mi-column]:disabled").forEach((checkbox) => {
+    if (MI_OPTIONAL_COLUMNS.includes(checkbox.dataset.miColumn)) miVisibleColumns.add(checkbox.dataset.miColumn);
+  });
   applyMiColumnVisibility();
   showToast("Column preferences updated");
 });
