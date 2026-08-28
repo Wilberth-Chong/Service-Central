@@ -2073,7 +2073,129 @@ function mountTicketStepViewer(currentStep, options = {}) {
   window.TicketStepViewer?.mount(app.querySelector("[data-ticket-step-viewer]"), { currentStep, ...options });
 }
 
+function parseSpcContactEmails(value = "") {
+  return value.split("|").map((email) => email.trim()).filter(Boolean);
+}
+
+function formatSpcContactEmail(email) {
+  const separator = email.indexOf("@");
+  if (separator < 1 || separator === email.length - 1) return email;
+  return `${email.slice(0, separator)}@${email.slice(separator + 1, separator + 4)}...`;
+}
+
+function formatSpcContactList(emails) {
+  if (emails.length < 2) return emails[0] || "—";
+  return emails.map(formatSpcContactEmail).join(", ");
+}
+
+function wireSpcContactTooltips(scope) {
+  const triggers = [...scope.querySelectorAll("[data-spc-contact-emails]")];
+  if (!triggers.length) return;
+
+  document.querySelector("#spc-contact-tooltip")?.remove();
+  const tooltip = document.createElement("div");
+  tooltip.className = "spc-contact-tooltip";
+  tooltip.id = "spc-contact-tooltip";
+  tooltip.setAttribute("role", "tooltip");
+  tooltip.hidden = true;
+  document.body.append(tooltip);
+
+  const hide = (trigger) => {
+    tooltip.hidden = true;
+    trigger.removeAttribute("aria-describedby");
+  };
+
+  const position = (trigger) => {
+    const triggerRect = trigger.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportPadding = 16;
+    const anchorCenter = triggerRect.left + triggerRect.width / 2;
+    const left = Math.max(
+      viewportPadding,
+      Math.min(window.innerWidth - tooltipRect.width - viewportPadding, anchorCenter - tooltipRect.width / 2),
+    );
+    const showAbove = triggerRect.bottom + tooltipRect.height + 12 > window.innerHeight;
+    const top = showAbove ? triggerRect.top - tooltipRect.height - 12 : triggerRect.bottom + 12;
+    tooltip.classList.toggle("spc-contact-tooltip--above", showAbove);
+    tooltip.style.left = `${Math.round(left)}px`;
+    tooltip.style.top = `${Math.round(Math.max(viewportPadding, top))}px`;
+    tooltip.style.setProperty(
+      "--spc-contact-tooltip-arrow-left",
+      `${Math.round(Math.max(16, Math.min(tooltipRect.width - 16, anchorCenter - left)))}px`,
+    );
+  };
+
+  const show = (trigger, emails) => {
+    const title = document.createElement("strong");
+    title.textContent = "Service plan contact(s)";
+    const emailList = document.createElement("span");
+    emailList.className = "spc-contact-tooltip__emails";
+    emails.forEach((email) => {
+      const item = document.createElement("span");
+      item.dataset.spcContactTooltipEmail = "";
+      item.textContent = email;
+      emailList.append(item);
+    });
+    tooltip.replaceChildren(title, emailList);
+    tooltip.hidden = false;
+    trigger.setAttribute("aria-describedby", tooltip.id);
+    position(trigger);
+  };
+
+  triggers.forEach((trigger) => {
+    const emails = parseSpcContactEmails(trigger.dataset.spcContactEmails);
+    trigger.textContent = formatSpcContactList(emails);
+    if (emails.length < 2) return;
+
+    trigger.tabIndex = 0;
+    trigger.setAttribute("aria-label", emails.join(", "));
+    trigger.addEventListener("mouseenter", () => show(trigger, emails));
+    trigger.addEventListener("mouseleave", () => hide(trigger));
+    trigger.addEventListener("focus", () => show(trigger, emails));
+    trigger.addEventListener("blur", () => hide(trigger));
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") hide(trigger);
+    });
+  });
+}
+
+const SPC_SELECTION_CONTACT_COMBINATIONS = Object.freeze({
+  "plan-0040111111": [["jon.doe@company.com", "molly.hartman@company.com"]],
+  "plan-0040222222": [
+    ["gerard.campbell@company.com"],
+    ["mary.smith@company.com"],
+    ["thomas.mayer@company.com"],
+    ["veronica.walker@company.com"],
+  ],
+  "plan-0040333333": [["mary.smith@company.com"]],
+  "no-service-plan": [],
+  alpine: [],
+});
+
+const SPC_CONTACT_INSTRUMENTS = Object.freeze([
+  { serial: "1009996", nickname: "Detector-2B", child: true },
+  { serial: "1009999", nickname: "Column-2B", child: true },
+  { serial: "1009998", nickname: "Sampler-2B", child: true },
+  { serial: "1009997", nickname: "Pump-2B", child: true },
+  { serial: "TSQ-Z-12346", nickname: "TSQ-0", child: true },
+  { serial: "TSQ-Z-12347", nickname: "TSQ-1" },
+  { serial: "TSQ-Z-12348", nickname: "TSQ-2" },
+  { serial: "TSQ-Z-12349", nickname: "TSQ-3" },
+  { serial: "SN98355W", nickname: "QEXACTIVE_30" },
+  { serial: "SN98356W", nickname: "QEXACTIVE_31" },
+]);
+
+const SPC_CONTACT_DIRECTORY = Object.freeze([
+  { email: "gerard.campbell@company.com", instrumentIndexes: [0, 1, 2, 3, 4] },
+  { email: "jon.doe@company.com", instrumentIndexes: [5, 6, 7, 8] },
+  { email: "mary.smith@company.com", instrumentIndexes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] },
+  { email: "molly.hartman@company.com", instrumentIndexes: [0, 1, 2, 3, 4, 5, 6], system: true },
+  { email: "thomas.mayer@company.com", instrumentIndexes: [0, 1, 2, 3, 4, 5, 6, 7] },
+  { email: "veronica.walker@company.com", instrumentIndexes: [8, 9] },
+]);
+
 function wireEditSpc() {
+  const loggedInUserEmail = "sebastien.martin@companyname.com";
   const screen = app.querySelector(".screen--spc");
   const main = app.querySelector(".spc-main");
   const stepper = app.querySelector(".spc-stepper");
@@ -2084,8 +2206,16 @@ function wireEditSpc() {
   const continueButton = app.querySelector("[data-spc-continue]");
   const backButton = app.querySelector("[data-spc-back]");
   const closeButton = app.querySelector("[data-spc-close]");
-  const contactEmail = app.querySelector("[data-spc-contact-email]");
+  const contactEmails = [...app.querySelectorAll("[data-spc-contact-email]")];
+  const contactReplacementNotice = app.querySelector("[data-spc-contact-replacement-notice]");
+  const mixedContactWarning = app.querySelector("[data-spc-mixed-contact-warning]");
+  const currentContacts = app.querySelector("[data-spc-current-contacts]");
+  const currentContactList = app.querySelector("[data-spc-current-contact-list]");
+  const currentContactsMore = app.querySelector("[data-spc-current-contacts-more]");
   const contactConfirmationNotice = app.querySelector("[data-spc-contact-confirmation-notice]");
+  const reviewEmailList = app.querySelector("[data-spc-review-email-list]");
+  const summaryEmailList = app.querySelector("[data-spc-summary-email-list]");
+  const successMessage = app.querySelector("[data-spc-success-message]");
   const selectedToggle = app.querySelector("[data-spc-selected-toggle]");
   const selectedToggleLabel = app.querySelector("[data-spc-selected-label]");
   const selectedPanel = app.querySelector("[data-spc-selected-panel]");
@@ -2096,6 +2226,183 @@ function wireEditSpc() {
   const summaryToggleLabel = app.querySelector("[data-spc-summary-label]");
   const summaryPanel = app.querySelector("[data-spc-summary-panel]");
   let currentStep = 1;
+  let isMixedContactScenario = false;
+
+  document.querySelector("#spc-current-contacts-tooltip")?.remove();
+  const currentContactsTooltip = document.createElement("div");
+  currentContactsTooltip.className = "spc-contact-tooltip spc-current-contacts-tooltip";
+  currentContactsTooltip.id = "spc-current-contacts-tooltip";
+  currentContactsTooltip.setAttribute("role", "tooltip");
+  currentContactsTooltip.hidden = true;
+  document.body.append(currentContactsTooltip);
+
+  const contactModalContent = document.createElement("div");
+  const contactInstrumentsModal = window.PlatformModal?.mount('[data-modal-mount="spc-contact-instruments-modal"]', {
+    id: "spc-contact-instruments-modal",
+    title: "Service plan contact instruments",
+    size: "md",
+    closeButton: true,
+    closeOnBackdrop: true,
+    className: "spc-contact-instruments-modal",
+    bodyClassName: "spc-contact-instruments-modal__body",
+    content: contactModalContent,
+  });
+
+  const profileForContact = (email) => {
+    const profile = SPC_CONTACT_DIRECTORY.find((item) => item.email === email);
+    if (!profile) return { email, instruments: [], system: false };
+    return {
+      email: profile.email,
+      system: Boolean(profile.system),
+      instruments: profile.instrumentIndexes.map((index) => SPC_CONTACT_INSTRUMENTS[index]),
+    };
+  };
+
+  const createModalHierarchyCell = (icon, className) => {
+    const cell = document.createElement("td");
+    if (!icon) return cell;
+    const image = document.createElement("img");
+    image.className = className;
+    image.src = icon;
+    image.alt = "";
+    cell.append(image);
+    return cell;
+  };
+
+  const openContactInstrumentsModal = (email) => {
+    if (!contactInstrumentsModal) return;
+    const profile = profileForContact(email);
+    contactInstrumentsModal.querySelector(".modal__title").textContent = `${email} instrument(s)`;
+
+    const table = document.createElement("table");
+    table.className = "spc-contact-instruments-table";
+    table.setAttribute("aria-label", `Instruments assigned to ${email}`);
+    const head = document.createElement("thead");
+    head.innerHTML = `
+      <tr>
+        <th></th>
+        <th>Serial number <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px,%20Style=Mono.svg" alt="" /></th>
+        <th>Nickname <img class="mi-sort" src="assets/icons/actions/arrows/Size=16px,%20Style=Mono.svg" alt="" /></th>
+        <th>Service plan contact(s)</th>
+      </tr>
+    `;
+    const body = document.createElement("tbody");
+
+    if (profile.system) {
+      const systemRow = document.createElement("tr");
+      systemRow.className = "spc-contact-instruments-table__system";
+      const toggleCell = document.createElement("td");
+      const toggleButton = document.createElement("button");
+      const toggleIcon = document.createElement("span");
+      toggleButton.type = "button";
+      toggleButton.className = "spc-contact-instruments-table__toggle";
+      toggleButton.dataset.spcSystemToggle = "";
+      toggleButton.setAttribute("aria-expanded", "true");
+      toggleButton.setAttribute("aria-label", "Collapse System instruments");
+      toggleIcon.className = "spc-contact-instruments-table__toggle-icon";
+      toggleIcon.setAttribute("aria-hidden", "true");
+      toggleButton.append(toggleIcon);
+      toggleButton.addEventListener("click", () => {
+        const expanded = toggleButton.getAttribute("aria-expanded") === "true";
+        toggleButton.setAttribute("aria-expanded", String(!expanded));
+        toggleButton.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} System instruments`);
+        body.querySelectorAll(".spc-contact-instruments-table__child").forEach((row) => {
+          row.hidden = expanded;
+        });
+      });
+      toggleCell.append(toggleButton);
+      systemRow.append(toggleCell);
+      ["System", "HPLC 2B Sys.", email].forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        systemRow.append(cell);
+      });
+      body.append(systemRow);
+    }
+
+    profile.instruments.forEach((instrument) => {
+      const row = document.createElement("tr");
+      row.dataset.spcContactModalInstrument = "";
+      row.classList.add(
+        instrument.child && profile.system
+          ? "spc-contact-instruments-table__child"
+          : "spc-contact-instruments-table__standalone",
+      );
+      row.append(createModalHierarchyCell(
+        instrument.child && profile.system ? "assets/icons/general/arrow/size=16px.svg" : "",
+        "spc-contact-instruments-table__branch",
+      ));
+      [instrument.serial, instrument.nickname, email].forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.append(cell);
+      });
+      body.append(row);
+    });
+
+    table.append(head, body);
+    contactModalContent.replaceChildren(table);
+    window.PlatformModal.open(contactInstrumentsModal);
+  };
+
+  const createInstrumentCountButton = (profile, parenthesized = false) => {
+    const button = document.createElement("button");
+    const count = profile.instruments.length;
+    button.type = "button";
+    button.className = "spc-current-contact__count";
+    button.dataset.spcContactInstrumentCount = profile.email;
+    button.textContent = `${parenthesized ? "(" : ""}${count} instrument${count === 1 ? "" : "s"}${parenthesized ? ")" : ""}`;
+    button.addEventListener("click", () => openContactInstrumentsModal(profile.email));
+    return button;
+  };
+
+  const createCurrentContact = (profile, tooltip = false) => {
+    const item = document.createElement("div");
+    item.className = tooltip ? "spc-current-contacts-tooltip__contact" : "spc-current-contact";
+    item.dataset[tooltip ? "spcCurrentContactTooltip" : "spcCurrentContact"] = "";
+    const email = document.createElement("span");
+    email.textContent = profile.email;
+    item.append(email, createInstrumentCountButton(profile, !tooltip));
+    return item;
+  };
+
+  let currentContactsTooltipCloseTimer;
+  const hideCurrentContactsTooltip = () => {
+    currentContactsTooltip.hidden = true;
+    currentContactsMore?.removeAttribute("aria-describedby");
+  };
+  const scheduleCurrentContactsTooltipClose = () => {
+    clearTimeout(currentContactsTooltipCloseTimer);
+    currentContactsTooltipCloseTimer = setTimeout(hideCurrentContactsTooltip, 120);
+  };
+  const positionCurrentContactsTooltip = () => {
+    if (!currentContactsMore) return;
+    const triggerRect = currentContactsMore.getBoundingClientRect();
+    const tooltipRect = currentContactsTooltip.getBoundingClientRect();
+    const left = Math.max(16, Math.min(window.innerWidth - tooltipRect.width - 16, triggerRect.right - tooltipRect.width));
+    currentContactsTooltip.style.left = `${Math.round(left)}px`;
+    currentContactsTooltip.style.top = `${Math.round(triggerRect.bottom + 12)}px`;
+    currentContactsTooltip.style.setProperty(
+      "--spc-contact-tooltip-arrow-left",
+      `${Math.round(Math.max(16, Math.min(tooltipRect.width - 16, triggerRect.left + triggerRect.width / 2 - left)))}px`,
+    );
+  };
+  const showCurrentContactsTooltip = () => {
+    clearTimeout(currentContactsTooltipCloseTimer);
+    currentContactsTooltip.hidden = false;
+    currentContactsMore?.setAttribute("aria-describedby", currentContactsTooltip.id);
+    positionCurrentContactsTooltip();
+  };
+
+  currentContactsMore?.addEventListener("mouseenter", showCurrentContactsTooltip);
+  currentContactsMore?.addEventListener("mouseleave", scheduleCurrentContactsTooltipClose);
+  currentContactsMore?.addEventListener("focus", showCurrentContactsTooltip);
+  currentContactsMore?.addEventListener("blur", scheduleCurrentContactsTooltipClose);
+  currentContactsMore?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hideCurrentContactsTooltip();
+  });
+  currentContactsTooltip.addEventListener("mouseenter", () => clearTimeout(currentContactsTooltipCloseTimer));
+  currentContactsTooltip.addEventListener("mouseleave", scheduleCurrentContactsTooltipClose);
 
   const setStep = (step) => {
     currentStep = step;
@@ -2136,6 +2443,7 @@ function wireEditSpc() {
     if (continueButton) {
       continueButton.hidden = false;
       continueButton.textContent = step === 3 ? "Confirm" : "Continue";
+      if (step !== 2) continueButton.disabled = false;
     }
     if (closeButton) {
       closeButton.hidden = true;
@@ -2171,39 +2479,93 @@ function wireEditSpc() {
     main?.scrollTo({ top: 0, behavior: "auto" });
   };
 
-  const isAssigningSomeoneElse = () => app.querySelector("[data-spc-contact-assignment][value='someone-else']")?.checked;
+  const currentContactEmails = () => contactEmails.map((input) => input.value.trim()).filter(Boolean);
 
-  const updateContactConfirmationNotice = () => {
-    if (contactConfirmationNotice) {
-      contactConfirmationNotice.hidden = !isAssigningSomeoneElse();
-    }
+  const hasContactOutsideLoggedInUser = () => currentContactEmails().some(
+    (email) => email.toLowerCase() !== loggedInUserEmail.toLowerCase(),
+  );
+
+  const renderContactEmailList = (target, useContactLabels = false) => {
+    if (!target) return;
+    target.replaceChildren();
+    const emails = currentContactEmails();
+    target.classList.toggle("spc-contact-email-list--multiple", emails.length > 1);
+    emails.forEach((email, index) => {
+      const term = document.createElement("dt");
+      const label = useContactLabels ? "Contact email" : "Email";
+      term.textContent = index === 0 ? label : `${label} ${index + 1}`;
+      const description = document.createElement("dd");
+      description.dataset.spcReviewEmail = "";
+      description.textContent = email;
+      target.append(term, description);
+    });
+  };
+
+  const selectedContactCombinations = () => [...app.querySelectorAll(".spc-table tbody input[type='checkbox']:checked")]
+    .flatMap((checkbox) => {
+      const selectionId = checkbox.dataset.spcSelectionId;
+      if (selectionId && Object.hasOwn(SPC_SELECTION_CONTACT_COMBINATIONS, selectionId)) {
+        return SPC_SELECTION_CONTACT_COMBINATIONS[selectionId];
+      }
+      const rowEmails = parseSpcContactEmails(
+        checkbox.closest("tr")?.querySelector("[data-spc-contact-emails]")?.dataset.spcContactEmails || "",
+      );
+      return rowEmails.length ? [rowEmails] : [];
+    });
+
+  const renderCurrentContactSummary = (emails) => {
+    if (!currentContacts || !currentContactList || !currentContactsMore) return;
+    const profiles = SPC_CONTACT_DIRECTORY
+      .filter((item) => emails.includes(item.email))
+      .map((item) => profileForContact(item.email));
+    const visibleProfiles = profiles.slice(0, 3);
+    const remainingProfiles = profiles.slice(3);
+    currentContacts.hidden = !isMixedContactScenario;
+    currentContactList.replaceChildren(...visibleProfiles.map((profile) => createCurrentContact(profile)));
+    currentContactsMore.hidden = remainingProfiles.length === 0;
+    currentContactsMore.textContent = remainingProfiles.length ? `+${remainingProfiles.length} more` : "";
+    currentContactsMore.setAttribute("aria-label", `Show ${remainingProfiles.length} more service plan contacts`);
+
+    const tooltipTitle = document.createElement("strong");
+    tooltipTitle.textContent = "Current Service plan contact(s)";
+    const tooltipList = document.createElement("div");
+    tooltipList.className = "spc-current-contacts-tooltip__list";
+    tooltipList.append(...remainingProfiles.map((profile) => createCurrentContact(profile, true)));
+    currentContactsTooltip.replaceChildren(tooltipTitle, tooltipList);
+    hideCurrentContactsTooltip();
+  };
+
+  const updateContactState = () => {
+    const hasEmail = currentContactEmails().length > 0;
+    const hasExternalContact = hasContactOutsideLoggedInUser();
+    if (currentStep === 2 && continueButton) continueButton.disabled = !hasEmail;
+    if (mixedContactWarning) mixedContactWarning.hidden = !isMixedContactScenario;
+    if (contactReplacementNotice) contactReplacementNotice.hidden = isMixedContactScenario || !hasExternalContact;
+    if (contactConfirmationNotice) contactConfirmationNotice.hidden = !hasExternalContact;
+  };
+
+  const initializeContactEmails = () => {
+    const combinations = selectedContactCombinations();
+    const signatures = new Set(combinations.map((emails) => [...emails].sort().join("|")));
+    const uniqueEmails = [...new Set(combinations.flat())];
+    isMixedContactScenario = signatures.size > 1;
+    const defaults = isMixedContactScenario ? [] : uniqueEmails.length ? uniqueEmails.slice(0, 2) : [loggedInUserEmail];
+    contactEmails.forEach((input, index) => { input.value = defaults[index] || ""; });
+    renderCurrentContactSummary(uniqueEmails);
+    updateContactState();
   };
 
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
+  wireSpcContactTooltips(app);
   app.querySelectorAll("[data-spc-filter]").forEach((button) => {
     button.addEventListener("click", () => {
       app.querySelectorAll("[data-spc-filter]").forEach((filter) => filter.classList.remove("is-selected"));
       button.classList.add("is-selected");
     });
   });
-  app.querySelectorAll("[data-spc-contact-assignment]").forEach((radio) => {
-    radio.addEventListener("change", () => {
-      if (!contactEmail || !radio.checked) return;
-      if (radio.value === "myself") {
-        contactEmail.value = "sebastien.martin@companyname.com";
-        contactEmail.readOnly = true;
-        contactEmail.removeAttribute("placeholder");
-      } else {
-        contactEmail.value = "";
-        contactEmail.readOnly = false;
-        contactEmail.placeholder = "name@companyname.com";
-        contactEmail.focus();
-      }
-      updateContactConfirmationNotice();
-    });
-  });
+  contactEmails.forEach((input) => input.addEventListener("input", updateContactState));
   selectedToggle?.addEventListener("click", () => {
     const expanded = selectedToggle.getAttribute("aria-expanded") === "true";
     const nextExpanded = !expanded;
@@ -2225,7 +2587,7 @@ function wireEditSpc() {
     const icon = reviewToggle.querySelector("img");
     reviewToggle.setAttribute("aria-expanded", String(nextExpanded));
     if (icon) {
-      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "up"}/size=24px, style=mono.svg`;
+      icon.src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=24px, style=mono.svg`;
     }
     if (reviewToggleLabel) {
       reviewToggleLabel.textContent = nextExpanded ? "Hide selected instrument(s)" : "Show selected instrument(s)";
@@ -2251,13 +2613,23 @@ function wireEditSpc() {
   });
   continueButton?.addEventListener("click", () => {
     if (currentStep === 1) {
+      initializeContactEmails();
       setStep(2);
+      updateContactState();
       return;
     }
     if (currentStep === 2) {
-      updateContactConfirmationNotice();
+      if (!currentContactEmails().length) return;
+      renderContactEmailList(reviewEmailList, true);
+      updateContactState();
       setStep(3);
       return;
+    }
+    renderContactEmailList(summaryEmailList, true);
+    if (successMessage) {
+      successMessage.textContent = hasContactOutsideLoggedInUser()
+        ? "Invitation sent. Waiting for the user to confirm."
+        : "Service plan contact updated.";
     }
     showSummary();
   });
@@ -4644,9 +5016,69 @@ function systemPaginationMarkup() {
   return `<div class="id-pagination sd-pagination"><div>Results per page <button type="button">20 <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button> of <strong>267</strong></div><nav aria-label="Pagination"><button type="button" disabled aria-label="Previous page"><img src="assets/icons/directions/chevron left/size=16px, style=mono.svg" alt="" /></button><button class="is-current" type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><span>…</span><button type="button">9</button><button type="button" aria-label="Next page"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button><label>Go to: <input type="text" inputmode="numeric" aria-label="Go to page" placeholder="#" /></label></nav></div>`;
 }
 
-function systemDetailCoverageMarkup(components) {
+function systemContactInstrumentTableMarkup(instruments) {
+  const rows = instruments.map((instrument) => `<tr>
+    <td><img src="${instrument.system ? "assets/icons/science/system/size=24px, style=mono.svg" : `assets/instruments/${instrument.image}`}" alt="" /></td>
+    <td>${instrument.serial}</td>
+    <td>${instrument.nickname}</td>
+  </tr>`).join("");
+  return `<div class="sd-contact-group__panel" data-sd-contact-panel>
+    <table class="sd-contact-instruments-table" aria-label="Instruments for this service plan contact combination">
+      <colgroup><col class="sd-contact-instruments-table__image" /><col /><col /></colgroup>
+      <thead><tr><th></th><th>Serial number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Nickname <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function systemContactGroupMarkup({ contacts = [], instruments, suffix = "" }) {
+  const countLabel = `${instruments.length} instrument(s)${suffix}`;
+  const contactDetails = contacts.length ? `<dl><div><dt>Name</dt>${contacts.map((contact) => `<dd>${contact.name}</dd>`).join("")}</div><div><dt>Email</dt>${contacts.map((contact) => `<dd>${contact.email}</dd>`).join("")}</div></dl>` : "";
+  return `<section class="sd-contact-group" data-sd-contact-group>
+    ${contactDetails}
+    <button class="sd-contact-group__toggle" type="button" aria-expanded="true" data-sd-contact-toggle data-sd-contact-label="${countLabel}">
+      <img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" />
+      <span data-sd-contact-toggle-label>Hide ${countLabel}</span>
+    </button>
+    ${systemContactInstrumentTableMarkup(instruments)}
+  </section>`;
+}
+
+function systemDetailCoverageMarkup(components, system) {
   const cards = components.slice(0, 2).map((instrument, index) => `<article class="sd-coverage-card"><header><h2>Instrument coverage</h2><span>Under contract</span></header><dl><div><dt>Service Plan Number</dt><dd>${index ? "MAN68668686868" : "MANIS3333333333"}</dd></div><div><dt>Service Plan Type</dt><dd>Essential Service Plan</dd></div><div><dt>Coverage Start</dt><dd>22 Jul 2020</dd></div><div><dt>Coverage End</dt><dd>22 Jul 2024</dd></div></dl><button type="button" data-mi-toast="Coverage instruments opened">›&nbsp; Show ${Math.min(3, components.length)} instrument(s)</button><footer><button type="button" data-mi-toast="Service plan details opened">›&nbsp; What’s included in the Essential Service Plan</button></footer></article>`).join("");
-  return `<section class="sd-panel sd-coverage-panel"><div class="sd-coverage-list">${cards || '<p>No coverage information available.</p>'}</div><article class="sd-contact-card"><header><h2><img src="assets/icons/general/coverage contact/ size=24px, style=mono.svg" alt="" />Service plan contact</h2><button type="button" data-mi-toast="Edit contact opened">Edit contact</button></header><div class="sd-contact-row"><dl><div><dt>Name</dt><dd>Molly Hartman</dd></div><div><dt>Email</dt><dd>molly.hartman@company.com</dd></div></dl><button type="button" data-mi-toast="Contact instruments opened">›&nbsp; Show 3 instrument(s)</button></div><div class="sd-contact-row"><dl><div><dt>Name</dt><dd>Sebastien Martin</dd></div><div><dt>Email</dt><dd>sebastien.martin@company.com</dd></div></dl><button type="button" data-mi-toast="Contact instruments opened">›&nbsp; Show 1 instrument(s)</button></div><footer><button type="button" data-mi-toast="Unassigned instruments opened">›&nbsp; Show 2 instrument(s) with no service plan contact</button></footer></article></section>`;
+  const componentRows = components.map((instrument) => ({
+    serial: instrument.serial,
+    nickname: instrument.nickname,
+    image: instrument.image,
+  }));
+  const sharedContactRows = [
+    ...componentRows.slice(0, 3),
+    { serial: "System", nickname: system.nickname, system: true },
+  ];
+  const jonContactRows = componentRows.slice(3, 5);
+  const unassignedRows = [
+    { serial: "TSQ-H-11111", nickname: "TSQ-11", image: "tsq.png" },
+    { serial: "TSQ-H-22222", nickname: "TSQ-22", image: "tsq.png" },
+    { serial: "TSQ-H-33333", nickname: "TSQ-33", image: "tsq.png" },
+  ];
+  const contactGroups = [
+    systemContactGroupMarkup({
+      contacts: [
+        { name: "Jon Doe", email: "jon.doe@company.com" },
+        { name: "Molly Hartman", email: "molly.hartman@company.com" },
+      ],
+      instruments: sharedContactRows,
+    }),
+    systemContactGroupMarkup({
+      contacts: [{ name: "Jon Doe", email: "jon.doe@company.com" }],
+      instruments: jonContactRows,
+    }),
+    systemContactGroupMarkup({
+      instruments: unassignedRows,
+      suffix: " with no service plan contact",
+    }),
+  ].join("");
+  return `<section class="sd-panel sd-coverage-panel"><div class="sd-coverage-list">${cards || '<p>No coverage information available.</p>'}</div><article class="sd-contact-card sd-contact-card--multiple"><header><h2><img src="assets/icons/general/coverage contact/ size=24px, style=mono.svg" alt="" />Service plan contact(s)</h2><button type="button" data-mi-toast="Edit contact opened"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" />Edit contact</button></header>${contactGroups}</article></section>`;
 }
 
 function systemDetailKnowledgeMarkup(hasSearch = false) {
@@ -4689,7 +5121,7 @@ function systemDetailActivityMarkup() {
 
 function systemDetailTabMarkup(tab, components, system) {
   if (tab === "support") return systemDetailSupportMarkup();
-  if (tab === "coverage") return systemDetailCoverageMarkup(components);
+  if (tab === "coverage") return systemDetailCoverageMarkup(components, system);
   if (tab === "knowledge") return systemDetailKnowledgeMarkup(false);
   if (tab === "users") return systemDetailUsersMarkup(system);
   if (tab === "activity") return systemDetailActivityMarkup();
@@ -4711,6 +5143,19 @@ function wireSystemTabContent(tab, system) {
     });
   }
   const content = app.querySelector(".sd-tab-content");
+  content.querySelectorAll("[data-sd-contact-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const expanded = button.getAttribute("aria-expanded") === "true";
+      const nextExpanded = !expanded;
+      const panel = button.closest("[data-sd-contact-group]")?.querySelector("[data-sd-contact-panel]");
+      const icon = button.querySelector("img");
+      const label = button.querySelector("[data-sd-contact-toggle-label]");
+      button.setAttribute("aria-expanded", String(nextExpanded));
+      if (panel) panel.hidden = !nextExpanded;
+      if (icon) icon.src = `assets/icons/directions/chevron ${nextExpanded ? "down" : "right"}/size=16px, style=mono.svg`;
+      if (label) label.textContent = `${nextExpanded ? "Hide" : "Show"} ${button.dataset.sdContactLabel}`;
+    });
+  });
   if (tab === "users") wireMiRoleSelectors(content, (role, email) => {
     if (email === MI_CURRENT_USER_EMAIL) {
       renderMiSystemDetail(routeFromHash());
@@ -4761,7 +5206,7 @@ function instrumentDetailCoverageMarkup(instrument) {
         <dl><div><dt>Service Plan Number</dt><dd>${planNumber}</dd></div><div><dt>Service Plan Type</dt><dd>Essential Service Plan</dd></div><div><dt>Coverage Start</dt><dd>22 Jul 2020</dd></div><div><dt>Coverage End</dt><dd>${instrument.end}</dd></div></dl>
         <div class="id-plan-details"><h3><img src="assets/icons/directions/chevron up/size=16px, style=mono.svg" alt="" />What's included in the Essential Service Plan</h3><ul><li>2 business day on-site response</li><li>Immediate Tech support <img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" /></li><li>Annual preventive maintenance</li><li>Highest Priority parts/support/service</li><li>Unlimited Remote Diagnosis/Repair</li><li>On-site corrective maintenance fully covered</li></ul></div>
       </article>
-      <article class="id-contact-card"><header><h2><img src="assets/icons/general/coverage contact/ size=24px, style=mono.svg" alt="" />Service plan contact</h2><button type="button" data-mi-toast="Edit contact opened"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" />Edit contact</button></header><dl><div><dt>Name</dt><dd>Molly Hartman</dd></div><div><dt>Email</dt><dd>molly.hartman@company.com</dd></div></dl></article>
+      <article class="id-contact-card"><header><h2><img src="assets/icons/general/coverage contact/ size=24px, style=mono.svg" alt="" />Service plan contact(s)</h2><button type="button" data-mi-toast="Edit contact opened"><img src="assets/icons/actions/edit/size=16px, style=mono.svg" alt="" />Edit contact</button></header><dl><div><dt>Name</dt><dd>Jon Doe</dd><dd>Molly Hartman</dd></div><div><dt>Email</dt><dd>jon.doe@company.com</dd><dd>molly.hartman@company.com</dd></div></dl></article>
     </div>
   </section>`;
 }

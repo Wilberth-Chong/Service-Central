@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260827-contact-page-parent-navigation-v20" />
+    <link rel="stylesheet" href="styles.css?v=20260828-system-multi-contact-card" />
     <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
@@ -1121,7 +1121,7 @@
               </div>
               <div class="spc-step" data-spc-step="2">
                 <span class="spc-step__number">2</span>
-                <span>Edit service plan contact</span>
+                <span>Edit service plan contacts</span>
               </div>
               <div class="spc-step" data-spc-step="3">
                 <span class="spc-step__number">3</span>
@@ -1175,36 +1175,36 @@
                       <th></th>
                       <th>Serial number</th>
                       <th>Nickname</th>
-                      <th>Service plan contact</th>
+                      <th>Service plan contact(s)</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr class="spc-row spc-row--group">
-                      <td><input type="checkbox" checked aria-label="Select Essential Service Plan - 0040111111" /></td>
+                      <td><input type="checkbox" checked aria-label="Select Essential Service Plan - 0040111111" data-spc-selection-id="plan-0040111111" /></td>
                       <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron right/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Essential Service Plan - 0040111111</strong></td>
-                      <td>-</td>
+                      <td data-spc-contact-emails="jon.doe@company.com|molly.hartman@company.com"></td>
                     </tr>
                     <tr class="spc-row spc-row--group">
-                      <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040222222" /></td>
+                      <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040222222" data-spc-selection-id="plan-0040222222" /></td>
                       <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron right/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Essential Service Plan - 0040222222</strong></td>
-                      <td>-</td>
+                      <td data-spc-contact-emails="gerard.campbell@company.com|mary.smith@company.com|thomas.mayer@company.com|veronica.walker@company.com"></td>
                     </tr>
                     <tr class="spc-row spc-row--group">
-                      <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040333333" /></td>
+                      <td><input type="checkbox" aria-label="Select Essential Service Plan - 0040333333" data-spc-selection-id="plan-0040333333" /></td>
                       <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron right/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Essential Service Plan - 0040333333</strong></td>
-                      <td>-</td>
+                      <td>—</td>
                     </tr>
                     <tr class="spc-row spc-row--group">
-                      <td><input type="checkbox" aria-label="Select Instruments with no service plan" /></td>
+                      <td><input type="checkbox" aria-label="Select Instruments with no service plan" data-spc-selection-id="no-service-plan" /></td>
                       <td><img class="spc-chevron-icon" src="assets/icons/directions/chevron down/size=16px,%20style=mono.svg" alt="" /></td>
                       <td colspan="5"><strong>Instruments with no service plan</strong></td>
                       <td></td>
                     </tr>
                     <tr class="spc-row">
-                      <td><input type="checkbox" aria-label="Select Alpine system" /></td>
+                      <td><input type="checkbox" aria-label="Select Alpine system" data-spc-selection-id="alpine" /></td>
                       <td></td>
                       <td>-</td>
                       <td><img class="spc-system-icon" src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td>
@@ -1322,35 +1322,42 @@
 
             <section class="spc-contact-step" data-spc-panel="2" aria-labelledby="edit-service-plan-contact-title" hidden>
               <header class="spc-contact-step__intro">
-                <h2 id="edit-service-plan-contact-title">Edit service plan contact</h2>
-                <p>
-                  Enter the contact information of the person you want to designate as a service plan contact. This user will be the contact
-                  for any service plan notifications or to renew your plan.
-                </p>
+                <h2 id="edit-service-plan-contact-title">Edit service plan contact(s)</h2>
+                <p>You may enter one or two contacts. User(s) will be the contact for any service plan notifications or to renew your plans.</p>
               </header>
 
+              <section class="spc-current-contacts" aria-labelledby="spc-current-contacts-title" data-spc-current-contacts hidden>
+                <h3 id="spc-current-contacts-title">Current service plan contact(s) for selected instruments</h3>
+                <div class="spc-current-contacts__content">
+                  <div class="spc-current-contacts__list" data-spc-current-contact-list></div>
+                  <button class="spc-current-contacts__more" type="button" data-spc-current-contacts-more hidden></button>
+                </div>
+              </section>
+
               <section class="spc-contact-card" aria-label="Service plan contact details">
-                <div class="spc-warning" role="status">
+                <div class="spc-warning" role="status" data-spc-mixed-contact-warning hidden>
                   <img src="assets/icons/notifications/warning/size=24px, style=bold.svg" alt="" />
-                  <p><strong>Warning:</strong> This will override the existing service plan contact(s).</p>
+                  <p>
+                    <strong>Warning:</strong> Some instruments have multiple contacts. Continuing will overwrite their existing contact information.
+                    To edit or remove specific contacts, use the contact cards on the <a href="#service-plan-contacts">Service plan contact page</a>
+                  </p>
                 </div>
 
-                <fieldset class="spc-contact-options">
-                  <legend class="sr-only">Assign service plan contact</legend>
-                  <label class="spc-radio">
-                    <input type="radio" name="spc-contact-assignment" value="myself" checked data-spc-contact-assignment />
-                    <span>Assign myself</span>
-                  </label>
-                  <label class="spc-radio">
-                    <input type="radio" name="spc-contact-assignment" value="someone-else" data-spc-contact-assignment />
-                    <span>Assign someone else</span>
-                  </label>
-                </fieldset>
+                <div class="spc-warning spc-warning--info" role="status" data-spc-contact-replacement-notice hidden>
+                  <img src="assets/icons/notifications/info/size=24px, style=bold-blue.svg" alt="" />
+                  <p><strong>Note:</strong> This action will replace the existing service plan contacts.</p>
+                </div>
 
-                <label class="spc-contact-email">
-                  <span>Contact email<sup>*</sup></span>
-                  <input type="email" value="sebastien.martin@companyname.com" data-spc-contact-email readonly />
-                </label>
+                <div class="spc-contact-fields">
+                  <label class="spc-contact-email">
+                    <span>Contact email</span>
+                    <input type="email" autocomplete="email" placeholder="Enter email address" data-spc-contact-email="1" />
+                  </label>
+                  <label class="spc-contact-email">
+                    <span>Contact email 2 <small>(Optional)</small></span>
+                    <input type="email" autocomplete="email" placeholder="Enter email address" data-spc-contact-email="2" />
+                  </label>
+                </div>
 
                 <button class="spc-selected-toggle" type="button" aria-expanded="false" data-spc-selected-toggle>
                   <img src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" />
@@ -1456,6 +1463,7 @@
                   </table>
                 </div>
               </section>
+              <div data-modal-mount="spc-contact-instruments-modal"></div>
             </section>
 
             <section class="spc-review-step" data-spc-panel="3" aria-labelledby="review-service-plan-contact-title" hidden>
@@ -1473,16 +1481,13 @@
               </div>
 
               <section class="spc-review-contact-card" aria-labelledby="review-contact-title">
-                <h3 id="review-contact-title">Service plan contact</h3>
-                <dl>
-                  <dt>Email</dt>
-                  <dd>sebastien.martin@companyname.com</dd>
-                </dl>
+                <h3 id="review-contact-title">Service plan contact(s)</h3>
+                <dl data-spc-review-email-list></dl>
               </section>
 
               <section class="spc-review-selected-card" aria-label="Selected instruments review">
                 <button class="spc-selected-toggle spc-selected-toggle--review" type="button" aria-expanded="true" data-spc-review-toggle>
-                  <img src="assets/icons/directions/chevron up/size=24px, style=mono.svg" alt="" />
+                  <img src="assets/icons/directions/chevron down/size=24px, style=mono.svg" alt="" />
                   <span data-spc-review-label>Hide selected instrument(s)</span>
                 </button>
 
@@ -1580,17 +1585,14 @@
             <section class="spc-summary-page" aria-labelledby="spc-summary-title" data-spc-summary hidden>
               <div class="spc-success" role="status">
                 <img src="assets/icons/notifications/success/size=24px,%20style=bold.svg" alt="" />
-                <p><strong>Success:</strong> Invitation successfully sent. Waiting for the user to confirm.</p>
+                <p><strong>Success:</strong> <span data-spc-success-message>Invitation sent. Waiting for the user to confirm.</span></p>
               </div>
 
               <h2 id="spc-summary-title">Summary</h2>
 
               <section class="spc-review-contact-card spc-summary-contact-card" aria-labelledby="spc-summary-contact-title">
-                <h3 id="spc-summary-contact-title">Service plan contact</h3>
-                <dl>
-                  <dt>Email</dt>
-                  <dd>sebastien.martin@companyname.com</dd>
-                </dl>
+                <h3 id="spc-summary-contact-title">Service plan contact(s)</h3>
+                <dl data-spc-summary-email-list></dl>
                 <button class="spc-button spc-button--secondary spc-summary-review-button" type="button" data-route="service-plan-contacts">
                   Review service plan contacts
                 </button>
@@ -2168,6 +2170,6 @@
     <script src="date-range-picker.js?v=20260814-support-history"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
     <script src="vendor/jszip.min.js?v=3.10.1"></script>
-    <script src="app.js?v=20260827-contact-page-parent-navigation-v20"></script>
+    <script src="app.js?v=20260828-system-multi-contact-card"></script>
   </body>
 </html>
