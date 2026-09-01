@@ -2146,7 +2146,7 @@ function formatSpcContactList(emails) {
 
 function wireSpcContactTooltips(scope) {
   const triggers = [...scope.querySelectorAll("[data-spc-contact-emails]")];
-  if (!triggers.length) return;
+  if (!triggers.length) return null;
 
   document.querySelector("#spc-contact-tooltip")?.remove();
   const tooltip = document.createElement("div");
@@ -2198,21 +2198,38 @@ function wireSpcContactTooltips(scope) {
     position(trigger);
   };
 
-  triggers.forEach((trigger) => {
+  const sync = (trigger) => {
     const emails = parseSpcContactEmails(trigger.dataset.spcContactEmails);
     trigger.textContent = formatSpcContactList(emails);
-    if (emails.length < 2) return;
-
+    if (emails.length < 2) {
+      trigger.removeAttribute("tabindex");
+      trigger.removeAttribute("aria-label");
+      if (trigger.getAttribute("aria-describedby") === tooltip.id) hide(trigger);
+      return emails;
+    }
     trigger.tabIndex = 0;
     trigger.setAttribute("aria-label", emails.join(", "));
-    trigger.addEventListener("mouseenter", () => show(trigger, emails));
+    return emails;
+  };
+
+  triggers.forEach((trigger) => {
+    sync(trigger);
+    trigger.addEventListener("mouseenter", () => {
+      const emails = sync(trigger);
+      if (emails.length > 1) show(trigger, emails);
+    });
     trigger.addEventListener("mouseleave", () => hide(trigger));
-    trigger.addEventListener("focus", () => show(trigger, emails));
+    trigger.addEventListener("focus", () => {
+      const emails = sync(trigger);
+      if (emails.length > 1) show(trigger, emails);
+    });
     trigger.addEventListener("blur", () => hide(trigger));
     trigger.addEventListener("keydown", (event) => {
       if (event.key === "Escape") hide(trigger);
     });
   });
+
+  return Object.freeze({ sync });
 }
 
 const SPC_SELECTION_CONTACT_COMBINATIONS = Object.freeze({
@@ -2250,8 +2267,24 @@ const SPC_CONTACT_DIRECTORY = Object.freeze([
   { email: "veronica.walker@company.com", instrumentIndexes: [8, 9] },
 ]);
 
+const SPC_CONTACT_EMAIL_SUGGESTIONS = Object.freeze([
+  "andrew.lechner@company.com",
+  "annie.boron@company.com",
+  "holly.hattaway@company.com",
+  "ines.mitchell@company.com",
+  "jon.doe@company.com",
+  "miroslava.hernandez@company.com",
+  "molly.hartman@company.com",
+  "niranjan.kumar@company.com",
+  "patrick.bell@company.com",
+  "patty.jones@company.com",
+  "paul.verhallen@company.com",
+  "sebastien.martin@company.com",
+  "wilberth.chong@company.com",
+]);
+
 function wireEditSpc() {
-  const loggedInUserEmail = "sebastien.martin@companyname.com";
+  const loggedInUserEmail = "my_name.lastname@company.com";
   const screen = app.querySelector(".screen--spc");
   const main = app.querySelector(".spc-main");
   const stepper = app.querySelector(".spc-stepper");
@@ -2275,14 +2308,25 @@ function wireEditSpc() {
   const selectedToggle = app.querySelector("[data-spc-selected-toggle]");
   const selectedToggleLabel = app.querySelector("[data-spc-selected-label]");
   const selectedPanel = app.querySelector("[data-spc-selected-panel]");
+  const selectedContactCells = [...(selectedPanel?.querySelectorAll("tbody tr > td:last-child") || [])];
   const reviewToggle = app.querySelector("[data-spc-review-toggle]");
   const reviewToggleLabel = app.querySelector("[data-spc-review-label]");
   const reviewPanel = app.querySelector("[data-spc-review-panel]");
+  const reviewContactCells = [...app.querySelectorAll("[data-spc-review-contact]")];
   const summaryToggle = app.querySelector("[data-spc-summary-toggle]");
   const summaryToggleLabel = app.querySelector("[data-spc-summary-label]");
   const summaryPanel = app.querySelector("[data-spc-summary-panel]");
+  const summaryContactCells = [...app.querySelectorAll("[data-spc-summary-contact]")];
   let currentStep = 1;
   let isMixedContactScenario = false;
+  let contactTooltipController;
+
+  selectedContactCells.forEach((cell) => {
+    cell.dataset.spcContactEmails = cell.textContent.trim();
+  });
+  [...reviewContactCells, ...summaryContactCells].forEach((cell) => {
+    cell.dataset.spcContactEmails = "";
+  });
 
   document.querySelector("#spc-current-contacts-tooltip")?.remove();
   const currentContactsTooltip = document.createElement("div");
@@ -2537,6 +2581,108 @@ function wireEditSpc() {
 
   const currentContactEmails = () => contactEmails.map((input) => input.value.trim()).filter(Boolean);
 
+  const renderEmailValidation = (input) => {
+    const error = app.querySelector(`[data-spc-email-error="${input.dataset.spcContactEmail}"]`);
+    const isInvalid = input.validity.typeMismatch;
+    input.setAttribute("aria-invalid", String(isInvalid));
+    if (error) error.hidden = !isInvalid;
+    return !isInvalid;
+  };
+
+  const validateContactEmails = () => contactEmails.every(renderEmailValidation);
+
+  const closeEmailSuggestions = (input, suggestions) => {
+    suggestions.hidden = true;
+    input.setAttribute("aria-expanded", "false");
+    input.removeAttribute("aria-activedescendant");
+  };
+
+  const wireEmailSuggestions = (input) => {
+    const fieldId = input.dataset.spcContactEmail;
+    const suggestions = app.querySelector(`[data-spc-email-suggestions="${fieldId}"]`);
+    const control = input.closest(".spc-contact-email__control");
+    if (!suggestions || !control) return;
+
+    let activeIndex = -1;
+
+    const suggestionButtons = () => [...suggestions.querySelectorAll("[data-spc-email-suggestion]")];
+
+    const setActiveSuggestion = (nextIndex) => {
+      const buttons = suggestionButtons();
+      if (!buttons.length) return;
+      activeIndex = (nextIndex + buttons.length) % buttons.length;
+      buttons.forEach((button, index) => {
+        const active = index === activeIndex;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", String(active));
+      });
+      const activeButton = buttons[activeIndex];
+      input.setAttribute("aria-activedescendant", activeButton.id);
+      activeButton.scrollIntoView({ block: "nearest" });
+    };
+
+    const selectSuggestion = (email) => {
+      input.value = email;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      closeEmailSuggestions(input, suggestions);
+      input.focus();
+    };
+
+    const renderSuggestions = () => {
+      const query = input.value.trim().toLowerCase();
+      const matches = query
+        ? SPC_CONTACT_EMAIL_SUGGESTIONS.filter((email) => {
+          const searchableValue = query.includes("@") ? email : email.split("@")[0];
+          return searchableValue.includes(query);
+        })
+        : [];
+      activeIndex = -1;
+      suggestions.replaceChildren(...matches.map((email, index) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.id = `spc-contact-email-${fieldId}-suggestion-${index}`;
+        option.dataset.spcEmailSuggestion = email;
+        option.setAttribute("role", "option");
+        option.setAttribute("aria-selected", "false");
+        option.textContent = email;
+        option.addEventListener("click", () => selectSuggestion(email));
+        return option;
+      }));
+      suggestions.hidden = matches.length === 0;
+      input.setAttribute("aria-expanded", String(matches.length > 0));
+      input.removeAttribute("aria-activedescendant");
+    };
+
+    input.addEventListener("input", renderSuggestions);
+    input.addEventListener("keydown", (event) => {
+      if (suggestions.hidden) return;
+      const buttons = suggestionButtons();
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActiveSuggestion(activeIndex + 1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActiveSuggestion(activeIndex <= 0 ? buttons.length - 1 : activeIndex - 1);
+      } else if (event.key === "Enter" && activeIndex >= 0) {
+        event.preventDefault();
+        selectSuggestion(buttons[activeIndex].dataset.spcEmailSuggestion);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        closeEmailSuggestions(input, suggestions);
+      } else if (event.key === "Tab") {
+        closeEmailSuggestions(input, suggestions);
+      }
+    });
+    input.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        if (!control.contains(document.activeElement)) closeEmailSuggestions(input, suggestions);
+      }, 0);
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (!control.contains(event.target)) closeEmailSuggestions(input, suggestions);
+    });
+  };
+
   const hasContactOutsideLoggedInUser = () => currentContactEmails().some(
     (email) => email.toLowerCase() !== loggedInUserEmail.toLowerCase(),
   );
@@ -2554,6 +2700,14 @@ function wireEditSpc() {
       description.dataset.spcReviewEmail = "";
       description.textContent = email;
       target.append(term, description);
+    });
+  };
+
+  const renderContactColumn = (cells) => {
+    const emails = currentContactEmails();
+    cells.forEach((cell) => {
+      cell.dataset.spcContactEmails = emails.join("|");
+      contactTooltipController?.sync(cell);
     });
   };
 
@@ -2593,8 +2747,9 @@ function wireEditSpc() {
 
   const updateContactState = () => {
     const hasEmail = currentContactEmails().length > 0;
+    const hasInvalidEmail = contactEmails.some((input) => input.validity.typeMismatch);
     const hasExternalContact = hasContactOutsideLoggedInUser();
-    if (currentStep === 2 && continueButton) continueButton.disabled = !hasEmail;
+    if (currentStep === 2 && continueButton) continueButton.disabled = !hasEmail || hasInvalidEmail;
     if (mixedContactWarning) mixedContactWarning.hidden = !isMixedContactScenario;
     if (contactReplacementNotice) contactReplacementNotice.hidden = isMixedContactScenario || !hasExternalContact;
     if (contactConfirmationNotice) contactConfirmationNotice.hidden = !hasExternalContact;
@@ -2607,6 +2762,8 @@ function wireEditSpc() {
     isMixedContactScenario = signatures.size > 1;
     const defaults = isMixedContactScenario ? [] : uniqueEmails.length ? uniqueEmails.slice(0, 2) : [loggedInUserEmail];
     contactEmails.forEach((input, index) => { input.value = defaults[index] || ""; });
+    validateContactEmails();
+    renderContactColumn(selectedContactCells);
     renderCurrentContactSummary(uniqueEmails);
     updateContactState();
   };
@@ -2614,14 +2771,19 @@ function wireEditSpc() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
-  wireSpcContactTooltips(app);
+  contactTooltipController = wireSpcContactTooltips(app);
   app.querySelectorAll("[data-spc-filter]").forEach((button) => {
     button.addEventListener("click", () => {
       app.querySelectorAll("[data-spc-filter]").forEach((filter) => filter.classList.remove("is-selected"));
       button.classList.add("is-selected");
     });
   });
-  contactEmails.forEach((input) => input.addEventListener("input", updateContactState));
+  contactEmails.forEach((input) => input.addEventListener("input", () => {
+    renderEmailValidation(input);
+    updateContactState();
+    renderContactColumn(selectedContactCells);
+  }));
+  contactEmails.forEach(wireEmailSuggestions);
   selectedToggle?.addEventListener("click", () => {
     const expanded = selectedToggle.getAttribute("aria-expanded") === "true";
     const nextExpanded = !expanded;
@@ -2675,13 +2837,15 @@ function wireEditSpc() {
       return;
     }
     if (currentStep === 2) {
-      if (!currentContactEmails().length) return;
+      if (!currentContactEmails().length || !validateContactEmails()) return;
       renderContactEmailList(reviewEmailList, true);
+      renderContactColumn(reviewContactCells);
       updateContactState();
       setStep(3);
       return;
     }
     renderContactEmailList(summaryEmailList, true);
+    renderContactColumn(summaryContactCells);
     if (successMessage) {
       successMessage.textContent = hasContactOutsideLoggedInUser()
         ? "Invitation sent. Waiting for the user to confirm."

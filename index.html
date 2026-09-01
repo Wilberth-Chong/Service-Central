@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260828-virtual-assistant-europe-le-visibility-v17" />
+    <link rel="stylesheet" href="styles.css?v=20260901-spc-email-suggestions" />
     <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
@@ -1357,14 +1357,22 @@
                 </div>
 
                 <div class="spc-contact-fields">
-                  <label class="spc-contact-email">
-                    <span>Contact email</span>
-                    <input type="email" autocomplete="email" placeholder="Enter email address" data-spc-contact-email="1" />
-                  </label>
-                  <label class="spc-contact-email">
-                    <span>Contact email 2 <small>(Optional)</small></span>
-                    <input type="email" autocomplete="email" placeholder="Enter email address" data-spc-contact-email="2" />
-                  </label>
+                  <div class="spc-contact-email">
+                    <label for="spc-contact-email-1">Contact email</label>
+                    <span class="spc-contact-email__control">
+                      <input id="spc-contact-email-1" type="email" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="spc-contact-email-suggestions-1" autocomplete="off" placeholder="Enter email address" aria-describedby="spc-contact-email-error-1" data-spc-contact-email="1" />
+                      <span class="spc-contact-email__suggestions" id="spc-contact-email-suggestions-1" role="listbox" aria-label="Contact email suggestions" data-spc-email-suggestions="1" hidden></span>
+                      <span class="spc-contact-email__error" id="spc-contact-email-error-1" data-spc-email-error="1" hidden><img src="assets/icons/notifications/warning/size=16px,%20style=bold.svg" alt="" /><span>Please enter valid email address(es) within your organization. If this problem persists, please contact support.</span></span>
+                    </span>
+                  </div>
+                  <div class="spc-contact-email">
+                    <label for="spc-contact-email-2">Contact email 2 <small>(Optional)</small></label>
+                    <span class="spc-contact-email__control">
+                      <input id="spc-contact-email-2" type="email" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="spc-contact-email-suggestions-2" autocomplete="off" placeholder="Enter email address" aria-describedby="spc-contact-email-error-2" data-spc-contact-email="2" />
+                      <span class="spc-contact-email__suggestions" id="spc-contact-email-suggestions-2" role="listbox" aria-label="Contact email 2 suggestions" data-spc-email-suggestions="2" hidden></span>
+                      <span class="spc-contact-email__error" id="spc-contact-email-error-2" data-spc-email-error="2" hidden><img src="assets/icons/notifications/warning/size=16px,%20style=bold.svg" alt="" /><span>Please enter valid email address(es) within your organization. If this problem persists, please contact support.</span></span>
+                    </span>
+                  </div>
                 </div>
 
                 <button class="spc-selected-toggle" type="button" aria-expanded="false" data-spc-selected-toggle>
@@ -1502,12 +1510,13 @@
                 <div class="spc-selected-panel spc-review-selected-panel" data-spc-review-panel>
                   <table class="spc-selected-table spc-review-table" aria-label="Selected instruments review">
                     <colgroup>
-                      <col class="spc-review-col-plan-type" />
-                      <col class="spc-review-col-plan-number" />
-                      <col class="spc-review-col-kind" />
-                      <col class="spc-review-col-image" />
-                      <col class="spc-review-col-serial" />
-                      <col class="spc-review-col-nickname" />
+                      <col class="spc-selected-col-plan-type" />
+                      <col class="spc-selected-col-plan-number" />
+                      <col class="spc-selected-col-kind" />
+                      <col class="spc-selected-col-image" />
+                      <col class="spc-selected-col-serial" />
+                      <col class="spc-selected-col-nickname" />
+                      <col class="spc-selected-col-contact" />
                     </colgroup>
                     <thead>
                       <tr>
@@ -1517,6 +1526,7 @@
                         <th></th>
                         <th>Serial number</th>
                         <th>Nickname</th>
+                        <th>Service plan contact(s)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1527,6 +1537,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
                         <td>TSQ-Z-12347</td>
                         <td>TSQ-1</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr>
                         <td>Essential Service Plan</td>
@@ -1535,6 +1546,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
                         <td>TSQ-Z-12348</td>
                         <td>TSQ-2</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr>
                         <td>Essential Service Plan</td>
@@ -1543,6 +1555,7 @@
                         <td></td>
                         <td>System</td>
                         <td>Alpine 11</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child">
                         <td>Essential Service Plan</td>
@@ -1551,6 +1564,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-detector.png" alt="" /></td>
                         <td>1009996</td>
                         <td>Detector-2B</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child">
                         <td>Essential Service Plan</td>
@@ -1559,6 +1573,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-column.png" alt="" /></td>
                         <td>1009999</td>
                         <td>Column-2B</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child">
                         <td>Essential Service Plan</td>
@@ -1567,6 +1582,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-sampler.png" alt="" /></td>
                         <td>1009998</td>
                         <td>Sampler-2B</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child spc-selected-row--last-child">
                         <td>Essential Service Plan</td>
@@ -1575,6 +1591,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-pump.png" alt="" /></td>
                         <td>10099967</td>
                         <td>Pump-2B</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                       <tr>
                         <td>Essential Service Plan</td>
@@ -1583,6 +1600,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
                         <td>TSQ-Z-12346</td>
                         <td>TSQ-0</td>
+                        <td data-spc-review-contact></td>
                       </tr>
                     </tbody>
                   </table>
@@ -1615,12 +1633,13 @@
                 <div class="spc-selected-panel spc-review-selected-panel" data-spc-summary-panel>
                   <table class="spc-selected-table spc-review-table" aria-label="Selected instruments summary">
                     <colgroup>
-                      <col class="spc-review-col-plan-type" />
-                      <col class="spc-review-col-plan-number" />
-                      <col class="spc-review-col-kind" />
-                      <col class="spc-review-col-image" />
-                      <col class="spc-review-col-serial" />
-                      <col class="spc-review-col-nickname" />
+                      <col class="spc-selected-col-plan-type" />
+                      <col class="spc-selected-col-plan-number" />
+                      <col class="spc-selected-col-kind" />
+                      <col class="spc-selected-col-image" />
+                      <col class="spc-selected-col-serial" />
+                      <col class="spc-selected-col-nickname" />
+                      <col class="spc-selected-col-contact" />
                     </colgroup>
                     <thead>
                       <tr>
@@ -1630,6 +1649,7 @@
                         <th></th>
                         <th>Serial number</th>
                         <th>Nickname</th>
+                        <th>Service plan contact(s)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1640,6 +1660,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
                         <td>TSQ-Z-12347</td>
                         <td>TSQ-1</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr>
                         <td>Essential Service Plan</td>
@@ -1648,6 +1669,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
                         <td>TSQ-Z-12348</td>
                         <td>TSQ-2</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr>
                         <td>Essential Service Plan</td>
@@ -1656,6 +1678,7 @@
                         <td></td>
                         <td>System</td>
                         <td>Alpine 11</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child">
                         <td>Essential Service Plan</td>
@@ -1664,6 +1687,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-detector.png" alt="" /></td>
                         <td>1009996</td>
                         <td>Detector-2B</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child">
                         <td>Essential Service Plan</td>
@@ -1672,6 +1696,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-column.png" alt="" /></td>
                         <td>1009999</td>
                         <td>Column-2B</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child">
                         <td>Essential Service Plan</td>
@@ -1680,6 +1705,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-sampler.png" alt="" /></td>
                         <td>1009998</td>
                         <td>Sampler-2B</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr class="spc-selected-row--child spc-selected-row--last-child">
                         <td>Essential Service Plan</td>
@@ -1688,6 +1714,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/vanquish-pump.png" alt="" /></td>
                         <td>10099967</td>
                         <td>Pump-2B</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                       <tr>
                         <td>Essential Service Plan</td>
@@ -1696,6 +1723,7 @@
                         <td><img class="spc-selected-image" src="assets/instruments/tsq.png" alt="" /></td>
                         <td>TSQ-Z-12346</td>
                         <td>TSQ-0</td>
+                        <td data-spc-summary-contact></td>
                       </tr>
                     </tbody>
                   </table>
@@ -2178,6 +2206,6 @@
     <script src="date-range-picker.js?v=20260814-support-history"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
     <script src="vendor/jszip.min.js?v=3.10.1"></script>
-    <script src="app.js?v=20260828-virtual-assistant-unmapped-v13"></script>
+    <script src="app.js?v=20260901-spc-email-suggestions"></script>
   </body>
 </html>
