@@ -1500,6 +1500,266 @@ function addScreenSpecificHotspots(canvas, route, screen) {
   (extras[route] || []).forEach((hotspot) => addHotspot(canvas, screen, hotspot));
 }
 
+function positionVirtualAssistantChat(panel) {
+  const shell = app.querySelector(".mi-shell, .db-shell");
+  if (!shell) return;
+
+  const shellRect = shell.getBoundingClientRect();
+  panel.style.setProperty("--virtual-assistant-right", `${Math.max(32, window.innerWidth - shellRect.right + 32)}px`);
+
+  const footer = [...shell.querySelectorAll("footer, .mi-footer, .db-footer, .platform-footer")]
+    .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+    .filter(({ rect }) => rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight)
+    .sort((left, right) => right.rect.top - left.rect.top)[0];
+  panel.style.setProperty("--virtual-assistant-bottom", `${footer ? Math.max(20, window.innerHeight - footer.rect.top + 20) : 60}px`);
+}
+
+function ensureVirtualAssistantChat() {
+  let panel = document.querySelector("[data-virtual-assistant-chat]");
+  if (panel) return panel;
+
+  let selectedSerial = null;
+  let selectedView = false;
+  const supportedInstruments = () => MY_INSTRUMENTS.filter((instrument) => ["1009996", "1009999", "1009998", "1009997", "SN98356W"].includes(instrument.serial));
+  const instrumentTitle = (instrument) => ({
+    "1009996": "Vanquish™ Variable Wavelength Detector F",
+    "1009999": "Vanquish™ Column Compartment H",
+    "1009998": "Vanquish™ Split Sampler H",
+    "1009997": "Vanquish™ Pump F",
+    SN98356W: "Q Exactive™ Mass Spectrometer",
+  }[instrument.serial] || instrument.nickname);
+  const catalogNumber = (instrument) => instrument.model;
+
+  panel = document.createElement("aside");
+  panel.className = "virtual-assistant-chat";
+  panel.dataset.virtualAssistantChat = "";
+  panel.setAttribute("aria-label", "Services Central Virtual Assistant");
+  panel.hidden = true;
+  panel.innerHTML = `<header class="virtual-assistant-chat__header">
+    <div class="virtual-assistant-chat__identity"><img src="assets/icons/sc virtual assistant/Size=24px, Style=Bold.svg" alt="" /><div><div class="virtual-assistant-chat__title">Services Central Virtual Assistant <span>Beta</span></div><p>Supports Chromatography and Mass Spectrometry instruments</p></div></div>
+    <div class="virtual-assistant-chat__actions"><button type="button" data-virtual-assistant-chat-new><img src="assets/icons/actions/refresh/size=24px, style=mono.svg" alt="" />New chat</button><button type="button" data-virtual-assistant-chat-collapse aria-expanded="true" aria-label="Minimize chat"><img src="assets/icons/directions/chevron down/size=24px, style=mono.svg" alt="" /><span class="virtual-assistant-chat__action-tooltip" role="tooltip">Minimize chat</span></button><button type="button" data-virtual-assistant-chat-close aria-label="Close chat"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /><span class="virtual-assistant-chat__action-tooltip" role="tooltip">Close chat</span></button></div>
+  </header>
+  <div class="virtual-assistant-chat__body" data-virtual-assistant-chat-body></div>`;
+  document.body.append(panel);
+
+  const dialog = document.createElement("dialog");
+  dialog.className = "virtual-assistant-instrument-modal";
+  dialog.dataset.virtualAssistantInstrumentModal = "";
+  dialog.setAttribute("data-virtual-assistant-instrument-modal", "");
+  document.body.append(dialog);
+
+  const conversationConfirmation = document.createElement("div");
+  conversationConfirmation.className = "virtual-assistant-confirmation-modal";
+  conversationConfirmation.dataset.virtualAssistantConversationConfirm = "";
+  conversationConfirmation.hidden = true;
+  panel.append(conversationConfirmation);
+
+  const prototypeRouteDialog = document.createElement("dialog");
+  prototypeRouteDialog.className = "virtual-assistant-route-dialog flows-dialog";
+  prototypeRouteDialog.dataset.virtualAssistantRouteDialog = "";
+  document.body.append(prototypeRouteDialog);
+
+  const userPromptRouteDialog = document.createElement("dialog");
+  userPromptRouteDialog.className = "virtual-assistant-route-dialog flows-dialog";
+  userPromptRouteDialog.dataset.virtualAssistantUserPromptRouteDialog = "";
+  document.body.append(userPromptRouteDialog);
+
+  const formatChatTime = (date = new Date()) => new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+  const chatTimestamp = (date = new Date()) => `${new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(date)} • ${formatChatTime(date)}`;
+
+  const renderWelcome = () => {
+    selectedSerial = null;
+    selectedView = false;
+    panel.classList.remove("virtual-assistant-chat--selected");
+    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__welcome"><h2>Hi John, how can I assist you with your <strong>Chromatography and Mass Spectrometry instruments?</strong></h2><p>I can help you find manual(s), explore the manual(s), fix error(s), or walk you through setup and troubleshooting.</p><p>I’m continuously learning and expanding my capabilities, so you’ll see new features and content added over time to better support you.</p><p>To get started, please <strong>select the instrument</strong> you’d like help with using the button below.</p><button class="virtual-assistant-chat__select" type="button" data-virtual-assistant-chat-select-instrument>Select instrument</button></div>`;
+    panel.querySelector("[data-virtual-assistant-chat-select-instrument]").addEventListener("click", openInstrumentModal);
+  };
+
+  const renderSelected = (accountRoute = "liu-account") => {
+    const instrument = supportedInstruments().find((item) => item.serial === selectedSerial) || supportedInstruments()[0];
+    const now = new Date();
+    const assistantResponse = accountRoute === "liu-account"
+      ? `<article class="virtual-assistant-chat__assistant-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>What can I help you with regarding your selected instrument?</p><p>Ask a question about setup, operation, maintenance, troubleshooting, or other topics covered in your instrument's operator manual.</p></div><button type="button" aria-label="Copy assistant response"><img src="assets/icons/actions/copy/Size=16px, Style=Mono.svg" alt="" /></button></article>`
+      : `<article class="virtual-assistant-chat__assistant-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>Instrument selected is not part of your account, Please add the instrument to proceed</p></div><button class="virtual-assistant-chat__account-add" type="button" data-virtual-assistant-account-add>Add instrument</button></article>`;
+    selectedView = true;
+    panel.classList.add("virtual-assistant-chat--selected");
+    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__conversation"><div class="virtual-assistant-chat__timestamp">${chatTimestamp(now)}</div><div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><article class="virtual-assistant-chat__selection"><p>Instrument selected:</p><div><img src="assets/icons/science/new instrument/Size=24px, style=mono, type=Instrument.svg" alt="" /><section><strong>${instrumentTitle(instrument)}</strong><dl><div><dt>Serial number</dt><dd>${instrument.serial}</dd></div><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Catalog no.</dt><dd>${catalogNumber(instrument)}</dd></div></dl></section></div></article>${assistantResponse}</div><form class="virtual-assistant-chat__composer"><input aria-label="Chat prompt" placeholder="Type your prompt here" /><button type="submit" aria-label="Send prompt"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button></form><p class="virtual-assistant-chat__disclaimer">ⓘ Chat history will not be saved. This is an AI-powered and might not always be accurate. <a href="#provide-feedback">Provide feedback</a></p>`;
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    conversation.scrollTop = conversation.scrollHeight;
+    panel.querySelector(".virtual-assistant-chat__composer").addEventListener("submit", (event) => {
+      event.preventDefault();
+      openUserPromptRouteDialog();
+    });
+    panel.querySelector("[data-virtual-assistant-account-add]")?.addEventListener("click", () => {
+      setCollapsed(false);
+      renderWelcome();
+      panel.hidden = true;
+      setRoute("add-instruments");
+    });
+  };
+
+  const openPrototypeRouteDialog = () => {
+    prototypeRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close prototype route" data-virtual-assistant-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-route-title">Prototype route 1</h2><p>Prototype-only route selector. Choose the account scenario to test the Virtual Assistant’s next guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-route-option="liu-account">Instr. part of the user account</button><button class="flow-link" type="button" data-virtual-assistant-route-option="outside-liu-account">Instr. not part of the user account</button></div>`;
+    prototypeRouteDialog.querySelector("[data-virtual-assistant-route-close]").addEventListener("click", () => prototypeRouteDialog.close());
+    prototypeRouteDialog.querySelectorAll("[data-virtual-assistant-route-option]").forEach((option) => option.addEventListener("click", () => {
+      prototypeRouteDialog.close();
+      renderSelected(option.dataset.virtualAssistantRouteOption);
+    }));
+    prototypeRouteDialog.showModal();
+  };
+
+  const openUserPromptRouteDialog = () => {
+    userPromptRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close user prompt route" data-virtual-assistant-user-prompt-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-user-prompt-route-title">Select user prompt route</h2><p>Prototype-only route selector. Choose a sample customer prompt to test the matching guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-account">Enter serial number 1099955 (part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-outside-account">Enter serial number 1099965 (not part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="error-33">My instrument shows an Error 33 message</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="coverage-end">When does coverage end for my instrument</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="sky-blue">Why sky is blue</button></div>`;
+    userPromptRouteDialog.querySelector("[data-virtual-assistant-user-prompt-route-close]").addEventListener("click", () => userPromptRouteDialog.close());
+    userPromptRouteDialog.querySelectorAll("[data-virtual-assistant-user-prompt-route-option]").forEach((option) => option.addEventListener("click", () => userPromptRouteDialog.close()));
+    userPromptRouteDialog.showModal();
+  };
+
+  const instrumentCatalog = (instrument) => instrument.serial.startsWith("SN") ? "Mass Spec Life Science" : "HPLC";
+  const overflowMarkup = (value) => `<span class="virtual-assistant-instrument-modal__overflow" data-va-overflow tabindex="0"><span>${value}</span><span class="virtual-assistant-instrument-modal__tooltip" role="tooltip" hidden>${value}</span></span>`;
+  const rowMarkup = (instrument, nested = false) => `<tr data-va-instrument-row ${nested ? "data-va-system-member" : ""} data-va-search="${instrument.serial} ${instrument.nickname} ${instrumentCatalog(instrument)} ${instrument.model}" data-va-catalog="${instrumentCatalog(instrument)}" data-va-model="${instrument.model}"><td><input type="radio" name="virtual-assistant-instrument" value="${instrument.serial}" ${selectedSerial === instrument.serial ? "checked" : ""} /></td><td>${nested ? '<img class="virtual-assistant-instrument-modal__branch" src="assets/icons/general/arrow/size=16px.svg" alt="" />' : ""}</td><td><img class="virtual-assistant-instrument-modal__instrument-image" src="assets/instruments/${instrument.image}" alt="" /></td><td>${overflowMarkup(instrument.serial)}</td><td>${overflowMarkup(instrument.nickname)}</td><td>${overflowMarkup(instrumentCatalog(instrument))}</td><td>${overflowMarkup(instrument.model)}</td></tr>`;
+  const wireVirtualAssistantInstrumentTooltips = () => {
+    dialog.querySelectorAll("[data-va-overflow]").forEach((overflow) => {
+      const tooltip = overflow.querySelector("[role='tooltip']");
+      const cell = overflow.closest("td");
+      const show = () => {
+        const isTruncated = overflow.firstElementChild.scrollWidth > overflow.firstElementChild.clientWidth;
+        tooltip.hidden = !isTruncated;
+        cell?.classList.toggle("is-tooltip-visible", isTruncated);
+      };
+      const hide = () => {
+        tooltip.hidden = true;
+        cell?.classList.remove("is-tooltip-visible");
+      };
+      overflow.addEventListener("mouseenter", show);
+      overflow.addEventListener("focus", show);
+      overflow.addEventListener("mouseleave", hide);
+      overflow.addEventListener("blur", hide);
+    });
+  };
+  const renderInstrumentModal = () => {
+    const instruments = supportedInstruments();
+    const standalone = ["1009997", "1009998"].map((serial) => instruments.find((instrument) => instrument.serial === serial)).filter(Boolean);
+    const systemMembers = instruments.filter((instrument) => ["1009996", "1009999", "1009998", "1009997"].includes(instrument.serial));
+    const afterSystem = instruments.filter((instrument) => instrument.serial === "SN98356W");
+    dialog.innerHTML = `<form method="dialog" class="virtual-assistant-instrument-modal__content"><header><div><h2>Select instrument</h2><p>Below is your list of instruments supported by the Virtual Assistant. Select the instrument you’d like to ask about.</p></div><button type="button" data-virtual-assistant-instrument-close aria-label="Close"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><label class="virtual-assistant-instrument-modal__search"><input type="search" placeholder="Search by instrument serial number or nickname" data-virtual-assistant-instrument-search /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label><div class="virtual-assistant-instrument-modal__filter-host" data-va-filter-applied="catalog"></div><div class="virtual-assistant-instrument-modal__filter-host" data-va-filter-applied="model"></div><div class="virtual-assistant-instrument-modal__table-wrap"><table><colgroup><col class="virtual-assistant-instrument-modal__select-column" /><col class="virtual-assistant-instrument-modal__tree-column" /><col class="virtual-assistant-instrument-modal__image-column" /><col class="virtual-assistant-instrument-modal__serial-column" /><col class="virtual-assistant-instrument-modal__nickname-column" /><col class="virtual-assistant-instrument-modal__catalog-column" /><col class="virtual-assistant-instrument-modal__model-column" /></colgroup><thead><tr><th></th><th></th><th></th><th>Serial number</th><th>Nickname</th><th><div data-va-filter-trigger="catalog"></div></th><th><div data-va-filter-trigger="model"></div></th></tr></thead><tbody>${standalone.map((instrument) => rowMarkup(instrument)).join("")}<tr class="virtual-assistant-instrument-modal__system" data-va-system-row><td></td><td><button type="button" class="mi-row-chevron" data-virtual-assistant-system-toggle aria-expanded="true"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td>${overflowMarkup("System")}</td><td>${overflowMarkup("Apline")}</td><td>${overflowMarkup("LCMS")}</td><td>—</td></tr>${systemMembers.map((instrument) => rowMarkup(instrument, true)).join("")}${afterSystem.map((instrument) => rowMarkup(instrument)).join("")}</tbody></table></div><footer><button type="button" class="mi-dialog-button mi-dialog-button--secondary" data-virtual-assistant-instrument-add>Add new instrument</button><button type="button" class="mi-dialog-button mi-dialog-button--primary" data-virtual-assistant-instrument-continue disabled>Continue</button></footer></form>`;
+    const appliedFilters = document.createElement("div");
+    appliedFilters.className = "virtual-assistant-instrument-modal__applied-filters";
+    appliedFilters.dataset.virtualAssistantAppliedFilters = "";
+    appliedFilters.hidden = true;
+    dialog.querySelectorAll("[data-va-filter-applied]").forEach((host) => appliedFilters.append(host));
+    appliedFilters.insertAdjacentHTML("beforeend", '<button class="sh-clear-filters" type="button" data-virtual-assistant-clear-filters hidden>Clear filter(s)</button>');
+    dialog.querySelector(".virtual-assistant-instrument-modal__search").after(appliedFilters);
+    dialog.querySelector("[data-virtual-assistant-instrument-close]").addEventListener("click", () => dialog.close());
+    const continueButton = dialog.querySelector("[data-virtual-assistant-instrument-continue]");
+    const updateContinueState = () => { continueButton.disabled = !selectedSerial; };
+    dialog.querySelectorAll("input[name='virtual-assistant-instrument']").forEach((input) => input.addEventListener("change", () => {
+      selectedSerial = input.value;
+      updateContinueState();
+    }));
+    updateContinueState();
+    const catalogFilter = new window.MultiSelectFilter(dialog.querySelector("[data-va-filter-applied='catalog']"), { label: "Catalog no.", controlLabel: "Catalog no.", options: [...new Set(instruments.map(instrumentCatalog))], controlHost: dialog.querySelector("[data-va-filter-trigger='catalog']"), menuStyle: "figma-column" });
+    const modelFilter = new window.MultiSelectFilter(dialog.querySelector("[data-va-filter-applied='model']"), { label: "Model", controlLabel: "Model", options: [...new Set(instruments.map((instrument) => instrument.model))], controlHost: dialog.querySelector("[data-va-filter-trigger='model']"), menuStyle: "figma-column" });
+    const clearFiltersButton = dialog.querySelector("[data-virtual-assistant-clear-filters]");
+    const updateAppliedFilters = () => {
+      const hasFilters = catalogFilter.values.length > 0 || modelFilter.values.length > 0;
+      appliedFilters.hidden = !hasFilters;
+      clearFiltersButton.hidden = !hasFilters;
+    };
+    let systemExpanded = true;
+    const applyFilters = () => {
+      const search = dialog.querySelector("[data-virtual-assistant-instrument-search]").value.trim().toLowerCase();
+      const catalogValues = catalogFilter.values;
+      const modelValues = modelFilter.values;
+      const matches = (row) => (!search || row.dataset.vaSearch.toLowerCase().includes(search)) && (!catalogValues.length || catalogValues.includes(row.dataset.vaCatalog)) && (!modelValues.length || modelValues.includes(row.dataset.vaModel));
+      dialog.querySelectorAll("[data-va-instrument-row]").forEach((row) => { row.hidden = !matches(row) || (row.hasAttribute("data-va-system-member") && !systemExpanded); });
+      const systemMembersVisible = [...dialog.querySelectorAll("[data-va-system-member]")].some((row) => matches(row));
+      dialog.querySelector("[data-va-system-row]").hidden = !systemMembersVisible;
+    };
+    dialog.querySelector("[data-virtual-assistant-instrument-search]").addEventListener("input", applyFilters);
+    dialog.querySelector("[data-va-filter-applied='catalog']").addEventListener("multiselect-filter-change", () => { applyFilters(); updateAppliedFilters(); });
+    dialog.querySelector("[data-va-filter-applied='model']").addEventListener("multiselect-filter-change", () => { applyFilters(); updateAppliedFilters(); });
+    clearFiltersButton.addEventListener("click", () => { catalogFilter.clear(); modelFilter.clear(); });
+    dialog.querySelector("[data-virtual-assistant-system-toggle]").addEventListener("click", (event) => {
+      systemExpanded = !systemExpanded;
+      dialog.classList.toggle("is-system-collapsed", !systemExpanded);
+      event.currentTarget.setAttribute("aria-expanded", String(systemExpanded));
+      applyFilters();
+    });
+    dialog.querySelector("[data-virtual-assistant-instrument-add]").addEventListener("click", () => { dialog.close(); panel.hidden = true; setRoute("add-instruments"); });
+    continueButton.addEventListener("click", () => {
+      if (!selectedSerial) return;
+      dialog.close();
+      openPrototypeRouteDialog();
+    });
+    wireVirtualAssistantInstrumentTooltips();
+  };
+  const openInstrumentModal = () => {
+    renderInstrumentModal();
+    if (!dialog.open) dialog.showModal();
+  };
+
+  const setCollapsed = (collapsed) => {
+    panel.classList.toggle("is-collapsed", collapsed);
+    const control = panel.querySelector("[data-virtual-assistant-chat-collapse]");
+    control.querySelector("img").src = collapsed
+      ? "assets/icons/directions/chevron up/size=24px, style=bold.svg"
+      : "assets/icons/directions/chevron down/size=24px, style=mono.svg";
+    control.setAttribute("aria-expanded", String(!collapsed));
+    control.setAttribute("aria-label", `${collapsed ? "Expand" : "Minimize"} chat`);
+  };
+  const confirmConversationAction = (action) => {
+    const createsNewChat = action === "new";
+    const title = createsNewChat ? "Create new chat?" : "Close chat?";
+    const confirmLabel = createsNewChat ? "Yes, create" : "Yes, close";
+    conversationConfirmation.innerHTML = `<div class="virtual-assistant-confirmation-modal__overlay"><section class="virtual-assistant-confirmation-modal__content" role="dialog" aria-modal="true" aria-labelledby="virtual-assistant-confirmation-title"><header><h2 id="virtual-assistant-confirmation-title">${title}</h2><button type="button" aria-label="Close" data-virtual-assistant-confirmation-dismiss><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><p>Are you sure you want to ${createsNewChat ? "create a new chat" : "close the chat"}? Please note that <strong>current chat history will not be saved.</strong> Any progress made in this chat will be lost.</p><footer><button type="button" class="mi-dialog-button mi-dialog-button--primary" data-virtual-assistant-confirmation-dismiss>No, stay</button><button type="button" class="mi-dialog-button mi-dialog-button--secondary" data-virtual-assistant-conversation-confirm>${confirmLabel}</button></footer></section></div>`;
+    conversationConfirmation.querySelectorAll("[data-virtual-assistant-confirmation-dismiss]").forEach((button) => button.addEventListener("click", () => { conversationConfirmation.hidden = true; }));
+    conversationConfirmation.querySelector("[data-virtual-assistant-conversation-confirm]").addEventListener("click", () => {
+      conversationConfirmation.hidden = true;
+      if (createsNewChat || action === "close") {
+        setCollapsed(false);
+        renderWelcome();
+      }
+    });
+    conversationConfirmation.hidden = false;
+  };
+  panel.querySelector("[data-virtual-assistant-chat-close]").addEventListener("click", () => {
+    if (selectedView) confirmConversationAction("close");
+    else panel.hidden = true;
+  });
+  panel.querySelector("[data-virtual-assistant-chat-collapse]").addEventListener("click", () => setCollapsed(!panel.classList.contains("is-collapsed")));
+  panel.querySelector("[data-virtual-assistant-chat-new]").addEventListener("click", () => {
+    if (selectedView) confirmConversationAction("new");
+    else {
+      setCollapsed(false);
+      renderWelcome();
+    }
+  });
+  panel.addEventListener("click", (event) => {
+    if (panel.classList.contains("is-collapsed") && !event.target.closest("[data-virtual-assistant-chat-collapse]")) setCollapsed(false);
+  });
+  window.addEventListener("resize", () => positionVirtualAssistantChat(panel));
+  renderWelcome();
+  return panel;
+}
+
+function openVirtualAssistantChat() {
+  const panel = ensureVirtualAssistantChat();
+  positionVirtualAssistantChat(panel);
+  panel.hidden = false;
+  panel.classList.remove("is-collapsed");
+  const collapseControl = panel.querySelector("[data-virtual-assistant-chat-collapse]");
+  collapseControl.querySelector("img").src = "assets/icons/directions/chevron down/size=24px, style=mono.svg";
+  collapseControl.setAttribute("aria-expanded", "true");
+}
+
 function wireRouteControls(scope = app) {
   hideMiUsersTooltip();
   ensureFlowToolbarHistoryControls(scope);
@@ -1513,6 +1773,11 @@ function wireRouteControls(scope = app) {
   });
   const hideVirtualAssistant = shouldHideVirtualAssistant();
   scope.querySelectorAll("[data-virtual-assistant], [data-virtual-assistant-separator]").forEach((control) => control.toggleAttribute("hidden", hideVirtualAssistant));
+  const openVirtualAssistant = document.querySelector("[data-virtual-assistant-chat]");
+  if (openVirtualAssistant && !openVirtualAssistant.hidden) positionVirtualAssistantChat(openVirtualAssistant);
+  scope.querySelectorAll("[data-virtual-assistant], [data-dashboard-virtual-assistant]").forEach((control) => {
+    control.addEventListener("click", openVirtualAssistantChat);
+  });
   scope.querySelectorAll("[data-route]").forEach((control) => {
     control.addEventListener("click", () => {
       if (control.hasAttribute("data-installation-email-entry")) installationWelcomeFromEmail = true;

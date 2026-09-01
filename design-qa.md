@@ -80,6 +80,103 @@ final result: passed
 
 ---
 
+# Virtual Assistant: Select instrument modal table QA
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/SC virtual assistant - selecting instruments.png`.
+- Implementation: `http://localhost:4173/?prototype-experience=main#my-instruments`, with the Virtual Assistant open and the Select instrument dialog displayed.
+- Same-state evidence: the source and implementation captures were emitted together in one visual comparison input.
+
+**Findings and resolution**
+
+- [P1 resolved] The dialog now uses the Instruments table’s separate selection, hierarchy, image, serial, nickname, catalog, and model tracks. System chevrons, the mono system icon, return/branch icons, row striping, and radio treatment follow the existing table conventions.
+- [P1 resolved] Catalog no. and Model now use the reusable multi-select control, including working dropdown lists and live filtering. Menus sit above the table without horizontal scrolling.
+- [P2 resolved] Truncated cell content has a hover/focus tooltip, and Add new instrument closes the dialog and routes to Add instruments.
+
+**Interaction verification**
+
+- Modal opens from the Virtual Assistant; Catalog no. and Model controls render; the Catalog list contains two choices.
+- Selecting HPLC filters the modal to six matching instrument rows and hides the Mass Spec row.
+- Radio selection retains the selected serial; the default visible selection is `1009997`.
+- Add new instrument routes to `#add-instruments`.
+- Browser console errors: none. `tests/virtual-assistant-chat.test.sh` and `git diff --check` pass.
+
+final result: passed
+
+---
+
+# Virtual Assistant: Select instrument modal QA
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/SC virtual assistant - selecting instruments.png`.
+- Implementation: `http://localhost:4173/?prototype-experience=main#my-instruments`, with the Virtual Assistant and Select instrument dialog open.
+- Browser evidence: captured from the local prototype after the row-order and column-track correction.
+
+**Findings and resolution**
+
+- [P1 resolved] The initial implementation placed Pump-2B after Sampler-2B. The standalone rows now follow the reference order: Pump-2B, then Sampler-2B, followed by the Alpine system and its expanded members.
+- [P1 resolved] The selector header and cell text collided because the table had no stable column tracks. A six-column colgroup now reserves independent selection, image, serial, nickname, catalog, and model columns.
+- The dialog retains the supplied reference treatment: 766px desktop width, 48px content inset, purple border, dimmed backdrop, 40px search, expanded System row, and paired secondary/primary footer actions.
+
+**Interaction verification**
+
+- Virtual Assistant opens the chat; Select instrument opens the dialog.
+- The radio selection, search filtering, System expand/collapse control, Close action, and Continue action remain wired.
+- Browser DOM verifies the reference row order and independent Catalog no./Model controls.
+
+final result: passed
+
+---
+
+# Virtual Assistant instrument selection and selected-chat states
+
+**Comparison target**
+
+- Source visual truth: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/SC virtual assistant - my instruments -  minimized.png`, `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/SC virtual assistant - selecting instruments.png`, and `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Chatbot/Chatbox.png`.
+- Intended implementation route and state: `http://localhost:4173/?prototype-experience=main#my-instruments`; assistant expanded, assistant collapsed, instrument selector dialog open, and selected-instrument chat state.
+- Viewport: source references are 1440 × 1200 px for the dock and selector, plus 750 × 1048 px for the selected-chat panel. No density normalization was required for the source captures.
+
+**Interaction coverage completed in code**
+
+- Collapse transforms the assistant into the compact dock; expand restores the panel.
+- Select instrument opens the single-selection dialog; its search, system expansion control, radio selection, close control, and Continue transition are wired.
+- Continue renders the selected instrument’s real serial, nickname, and catalog number in the conversation card; New chat restores the welcome state.
+
+**Findings**
+
+- [P1] Browser-rendered implementation capture unavailable.
+  Evidence: the in-app browser session returned stale tab handles while attempting to navigate to the local implementation (`Unknown tab`), so no reliable screenshot can be paired with the three reference captures.
+  Impact: the requested visual comparison cannot be completed without implementation evidence at matching states.
+  Fix: reconnect the in-app browser session, capture all three states at the intended viewport, compare each paired state, and resolve any visible P0/P1/P2 differences.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: implemented against the provided 10px support label, 14px controls, 14px message content, and compact dock hierarchy; browser computation still needs capture.
+- Spacing and layout rhythm: panel, compact dock, dialog, selection card, composer, and footer spacing are implemented from the source references; browser capture is pending.
+- Colors and visual tokens: reuses the existing assistant purple border, application red primary action, blue selection radio, and shared modal overlay.
+- Image quality and asset fidelity: existing assistant, system, instrument, search, chevron, refresh, and close assets are reused; no handcrafted vector or substitute raster is introduced.
+- Copy and content: modal, welcome, selected-instrument card, and disclaimer copy follow the supplied states; selected row data is dynamic.
+
+final result: blocked
+
+---
+
+# Virtual assistant chat design QA
+
+- Source visual: `/Users/niranjan.kumarm/Library/CloudStorage/OneDrive-ThermoFisherScientific/Desktop/Chatbot/Open.png`
+- Implementation screenshot: `/Users/niranjan.kumarm/Sc/Service-Central/artifacts/virtual-assistant-chat.png`
+- Viewport: 1280 × 720 (in-app browser)
+
+**Validation**
+
+- The panel is right-aligned with a 32px edge offset, thin purple border, and 3px corner radius.
+- Header hierarchy, Beta badge, refresh/New chat, collapse, and close controls match the reference treatment.
+- The welcome copy, emphasis, and red Select instrument CTA follow the supplied layout.
+- The overlay does not alter underlying title-bar or compact-title-bar behavior.
+- Open, collapse, New chat reset, and close controls were exercised in the browser; the console had no errors.
+
+final result: passed
+
+---
+
 # Request qualification table design QA
 
 **Comparison target**
