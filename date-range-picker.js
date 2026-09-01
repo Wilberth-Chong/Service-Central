@@ -45,7 +45,7 @@
         <strong class="date-range-picker__label">Date range</strong>
         <button class="date-range-picker__trigger" type="button" data-date-range-trigger aria-haspopup="dialog" aria-expanded="false">
           <span data-date-range-label>Select a date range</span>
-          <img src="/assets/icons/features/calendar/size=24px, style=mono.svg" alt="" />
+          <img src="assets/icons/features/calendar/size=24px, style=mono.svg" alt="" />
         </button>
         <div class="date-range-picker__dialog" data-date-range-dialog role="dialog" aria-label="Select created date range" hidden>
           <header class="date-range-picker__header">

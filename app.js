@@ -262,6 +262,10 @@ function isInstallationShellDetailRoute(route) {
   return /^installation-shell-\d+$/.test(route);
 }
 
+function isOtherRequestDetailRoute(route) {
+  return /^other-request-detail-[a-z0-9-]+$/.test(route);
+}
+
 function isInstallationsSectionRoute(route) {
   return route === "installations" || route === "installations-expanded" || route === "installations-progress" || route === "installations-no-checklist" || route === "installation-faqs" || isInstallationShellDetailRoute(route);
 }
@@ -273,7 +277,7 @@ const ROUTES = {
   "add-instruments": { title: "Add instruments", src: "assets/flows/add-instruments.png", width: 1440, height: 1460, kind: "app" },
   installations: { title: "Installations", src: "assets/flows/installations.png", width: 1440, height: 2900, kind: "app" },
   "installations-expanded": { title: "Installations — order 9012611245", src: "assets/flows/installations-expanded.png", width: 1440, height: 2900, kind: "app" },
-  "support-history": { title: "Support request history", src: "assets/flows/support-history.png", width: 1440, height: 1460, kind: "app" },
+  "support-history": { title: "Request history", src: "assets/flows/support-history.png", width: 1440, height: 1460, kind: "app" },
   "service-plan-contacts": { title: "Service plan contacts", src: "assets/flows/service-plan-contacts.png", width: 1440, height: 1800, kind: "app" },
   "request-support": { title: "Request support", src: "assets/flows/request-support.png", width: 1440, height: 1460, kind: "app" },
   "request-pm": { title: "Request PM scheduling", src: "assets/flows/request-pm.png", width: 1440, height: 1500, kind: "app" },
@@ -500,7 +504,7 @@ const DASHBOARD_HOTSPOTS = [
   { label: "Browse education", route: "education", x: 426, y: 452, w: 304, h: 128 },
   { label: "Request service plan", x: 764, y: 452, w: 304, h: 128 },
   { label: "Request maintenance or support", route: "request-support", x: 1102, y: 452, w: 304, h: 128 },
-  { label: "Support request history", route: "support-history", x: 365, y: 870, w: 235, h: 42 },
+  { label: "Request history", route: "support-history", x: 365, y: 870, w: 235, h: 42 },
   { label: "View all my instruments", route: "my-instruments", x: 360, y: 1846, w: 240, h: 42 },
 ];
 
@@ -1315,7 +1319,7 @@ window.ServicesHelpModal = Object.freeze({
 
 function routeFromHash() {
   const route = window.location.hash.replace(/^#\/?/, "");
-  if (route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route)) return route;
+  if (route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isOtherRequestDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route)) return route;
   return "signin";
 }
 
@@ -1329,7 +1333,7 @@ function setRoute(route, summaryTicket = null) {
     installationSupportReturnRoute = isInstallationsSectionRoute(fromRoute) ? "installations" : "request-support";
   }
   selectedSupportHistoryTicket = summaryTicket;
-  const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route) ? route : "signin";
+  const safeRoute = route === "dashboard" || route === "signin" || ROUTES[route] || CUSTOM_ROUTES[route] || isInstallationShellDetailRoute(route) || isOtherRequestDetailRoute(route) || isMiUserDetailRoute(route) || isMiGroupDetailRoute(route) || isMiSystemDetailRoute(route) || isMiInstrumentDetailRoute(route) ? route : "signin";
   const nextHash = `#${safeRoute}`;
   const nextUrl = new URL(window.location.href);
   nextUrl.hash = nextHash;
@@ -1712,13 +1716,17 @@ const DASHBOARD_ONSITE_VISITS = [
   { scheduled: "08 Mar 2024", ticket: "441582732", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", system: true },
 ];
 
+const DASHBOARD_DETAIL_INSTRUMENTS = [
+  { image: "tsq.png", serial: "TSQ-Z-12345", nickname: "TSQ", users: "3", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2025" },
+];
+
 function dashboardTableHeader(label) {
   return `<th>${label} ${DASHBOARD_SORT_ICON}</th>`;
 }
 
 function dashboardSerialCell(ticket) {
   const systemIcon = ticket.system ? `<img class="db-ticket-system-icon" src="${DASHBOARD_SYSTEM_ICON}" alt="" />` : "";
-  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#instrument-access">${ticket.serial}</a></span></td>`;
+  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#${miInstrumentDetailRoute(ticket.serial)}" data-db-instrument-link="${ticket.serial}">${ticket.serial}</a></span></td>`;
 }
 
 function dashboardReportCell(ticket) {
@@ -1899,6 +1907,12 @@ function wireDashboard() {
     visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
   };
   tableWrap?.addEventListener("click", (event) => {
+    const instrumentLink = event.target.closest("[data-db-instrument-link]");
+    if (instrumentLink) {
+      event.preventDefault();
+      setRoute(miInstrumentDetailRoute(instrumentLink.dataset.dbInstrumentLink));
+      return;
+    }
     const ticketLink = event.target.closest("[data-db-ticket-link]");
     if (!ticketLink) return;
     event.preventDefault();
@@ -2000,7 +2014,7 @@ const ZERO_STATE_CONTENT = {
   },
   history: {
     image: "assets/zero-states/support-history.png",
-    title: "Welcome to your support request history",
+    title: "Welcome to your request history",
     body: "This page will show you current and closed support tickets for all the instruments added to your account",
   },
   request: {
@@ -2916,6 +2930,11 @@ function miCurrentInstruments() {
   return isMainPrototype() ? MAIN_INSTRUMENTS : MY_INSTRUMENTS;
 }
 
+function instrumentForDetail(serial) {
+  return miCurrentInstruments().find((candidate) => candidate.serial === serial)
+    || DASHBOARD_DETAIL_INSTRUMENTS.find((candidate) => candidate.serial === serial);
+}
+
 const MI_USERS = [
   { email: "holly.hartman@company.com", instruments: [5, 6, 7] },
   { email: "sebastien.martin@company.com", instruments: [0, 4, 8, 11] },
@@ -2945,6 +2964,7 @@ function isMiInstrumentDetailRoute(route) {
 }
 
 function instrumentDetailParentLabel(route) {
+  if (route === "dashboard") return "Dashboard";
   if (isMiGroupDetailRoute(route)) {
     return MI_GROUPS.find((group) => group.id === Number(route.replace(/^group-detail-/, "")))?.name || "My instruments";
   }
@@ -2955,9 +2975,7 @@ function instrumentDetailParentLabel(route) {
 }
 
 function instrumentDetailParentNavigation() {
-  const parentRoute = window.history.state?.fromRoute;
-  const route = parentRoute && parentRoute !== routeFromHash() ? parentRoute : "my-instruments";
-  return { route, label: instrumentDetailParentLabel(route) };
+  return { route: "my-instruments", label: "My instruments" };
 }
 
 const MI_OPTIONAL_COLUMNS = ["instrument-images", "nickname", "users", "groups", "type", "model", "coverage", "coverage-end", "added-date"];
@@ -5594,7 +5612,7 @@ function wireInstrumentDetailTabContent(tab, instrument) {
 }
 
 function renderInstrumentDetail(serial) {
-  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial);
+  const instrument = instrumentForDetail(serial);
   if (!instrument || MI_REMOVED_INSTRUMENTS.has(instrument.serial)) {
     setRoute("my-instruments");
     return;
@@ -5615,7 +5633,7 @@ function renderInstrumentDetail(serial) {
       <div data-platform-sidebar-mount></div>
       <main class="platform-page-body id-main">
         <section class="id-hero" data-platform-titlebar aria-label="Instrument summary">
-          <button class="id-parent-navigation" type="button" data-id-parent-navigation data-route="${parentNavigation.route}"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" /><span>${parentNavigation.label}</span></button>
+          <button class="id-parent-navigation" type="button" data-id-parent-navigation data-route="${parentNavigation.route}" data-platform-titlebar-compact-label="${owningSystem ? owningSystem.nickname : "My instruments"}" data-platform-titlebar-compact-route="${owningSystem ? `system-detail-${owningSystem.id}` : "my-instruments"}"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" /><span>${parentNavigation.label}</span></button>
           <div class="id-hero__actions">
             <div class="id-actions"><button class="id-more-actions" type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" data-mi-action-menu-context="detail" aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div>
             <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
@@ -6537,6 +6555,166 @@ const SUPPORT_HISTORY_TICKETS = [
   { status: "Closed", ticket: "46434295", type: "Installation", subject: "Need support", serial: "SN98361W", model: "QEXAC00001", nickname: "", group: "Global...", contact: "Tyler Durden", created: "23 Jan 2019", closed: "23 Jan 2019" },
 ];
 
+const OTHER_REQUEST_DETAILS = "Fusce efficitur urna felis, a varius sapien egestas ac. Nulla facilisi. Integer auctor sit amet.";
+const OTHER_REQUEST_LONG_DETAILS = "Fusce efficitur urna felis, a varius sapien egestas ac. Nulla facilisi. Integer auctor sit amet mauris nec vehicula. Sed convallis, velit nec tincidunt maximus, turpis massa tristique odio, eget sollicitudin quam odio sit amet risus. Praesent placerat ac.";
+const OTHER_REQUEST_INSTRUMENTS = [
+  { serial: "1009997", nickname: "Pump-2B", type: "HPLC", model: "VQF000PUMP", image: "vanquish-pump.png" },
+  { serial: "1009998", nickname: "Sampler-2B", type: "HPLC", model: "VQF00SAMPL", image: "vanquish-sampler.png" },
+  { serial: "System", nickname: "Alpine", type: "LCMS", model: "—", system: true },
+  { serial: "1009996", nickname: "Detector-2B", type: "HPLC", model: "VQF0000DET", image: "vanquish-detector.png", child: true },
+  { serial: "1009999", nickname: "Column-2B", type: "HPLC", model: "VQH000OVEN", image: "vanquish-column.png", child: true },
+  { serial: "1009998", nickname: "Sampler-2B", type: "HPLC", model: "VQF00SAMPL", image: "vanquish-sampler.png", child: true },
+  { serial: "1009997", nickname: "Pump-2B", type: "HPLC", model: "VQF000PUMP", image: "vanquish-pump.png", child: true },
+  { serial: "SN98356W", nickname: "", type: "Mass Spec Life Science", model: "QEXAC00001", image: "q-exactive.png" },
+  { serial: "1009997", nickname: "Pump-2B", type: "HPLC", model: "VQF000PUMP", image: "vanquish-pump.png" },
+  { serial: "1009998", nickname: "Sampler-2B", type: "HPLC", model: "VQF00SAMPL", image: "vanquish-sampler.png" },
+];
+const SUPPORT_HISTORY_OTHER_REQUESTS = [
+  { id: "quote-molly-25", type: "Service plan quote", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Molly Hartman", created: "25 May 2026" },
+  { id: "calibration-molly-24", type: "Calibration service", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Molly Hartman", created: "24 May 2026" },
+  { id: "qualification-molly-23", type: "Qualification service", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Molly Hartman", created: "23 May 2026" },
+  { id: "pm-molly-22", type: "Preventive maintenance", details: "—", instruments: "—", contact: "Molly Hartman", created: "22 May 2026", children: [
+    { type: "Scheduling request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+    { type: "PM request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+  ] },
+  { id: "pm-jon-21", type: "Preventive maintenance", details: "—", instruments: "—", contact: "Jon Doe", created: "21 May 2026", children: [
+    { type: "Scheduling request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+  ] },
+  { id: "quote-jon-20", type: "Service plan quote", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Jon Doe", created: "20 May 2026" },
+  { id: "calibration-jon-19", type: "Calibration service", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Jon Doe", created: "19 May 2026" },
+  { id: "qualification-jon-18", type: "Qualification service", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Jon Doe", created: "18 May 2026" },
+  { id: "pm-jon-17", type: "Preventive maintenance", details: "—", instruments: "—", contact: "Jon Doe", created: "17 May 2026", children: [
+    { type: "Scheduling request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+    { type: "PM request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+  ] },
+  { id: "quote-molly-16", type: "Service plan quote", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Molly Hartman", created: "16 May 2026" },
+  { id: "calibration-molly-15", type: "Calibration service", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Molly Hartman", created: "15 May 2026" },
+  { id: "qualification-molly-14", type: "Qualification service", details: OTHER_REQUEST_DETAILS, instruments: "10", contact: "Molly Hartman", created: "14 May 2026" },
+  { id: "pm-molly-13", type: "Preventive maintenance", details: "—", instruments: "—", contact: "Molly Hartman", created: "13 May 2026", children: [
+    { type: "Scheduling request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+  ] },
+  { id: "pm-molly-12", type: "Preventive maintenance", details: "—", instruments: "—", contact: "Molly Hartman", created: "12 May 2026", children: [
+    { type: "Scheduling request", details: OTHER_REQUEST_DETAILS, instruments: "10" },
+  ] },
+];
+
+let supportHistoryActiveTab = "instrument";
+
+function otherRequestForRoute(route) {
+  const requestId = route.replace(/^other-request-detail-/, "");
+  return SUPPORT_HISTORY_OTHER_REQUESTS.find((request) => request.id === requestId) || null;
+}
+
+function otherRequestContactMarkup(request) {
+  const isJon = request.contact === "Jon Doe";
+  const email = isJon ? "jon.doe@thermofisher.com" : "molly.hartman@thermofisher.com";
+  return `<article class="or-detail-card or-detail-contact"><h2>Contact information</h2><dl>
+    <div><dt>Name</dt><dd>${request.contact}</dd></div>
+    <div><dt>Phone number</dt><dd>123-456-7890</dd></div>
+    <div><dt>Email</dt><dd>${email}</dd></div>
+    <div><dt>Company</dt><dd>${isJon ? "Company name" : "Thermo Fisher"}</dd></div>
+    <div class="or-detail-contact__address"><dt>Service address</dt><dd>123 Blueberry Lane<br />Carlsbad, California, USA, CP: 93047</dd></div>
+  </dl></article>`;
+}
+
+function otherRequestSelectedInstrumentsMarkup(key) {
+  const rows = OTHER_REQUEST_INSTRUMENTS.filter((instrument) => !instrument.system && !instrument.child).slice(0, 3).map((instrument) => `<tr><td><img src="assets/instruments/${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname || "—"}</td><td>${instrument.type}</td><td>${instrument.model}</td></tr>`).join("");
+  return `<button class="or-detail-selected-toggle" type="button" aria-expanded="false" data-other-request-selected-toggle="${key}"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /><span>Show selected instrument(s)</span></button>
+    <div class="or-detail-selected" data-other-request-selected-panel="${key}" hidden><table><thead><tr><th></th><th>Serial number</th><th>Nickname</th><th>Type</th><th>Catalog no.</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function otherRequestDetailsCardMarkup(request, title = "Request details", key = "request") {
+  return `<article class="or-detail-card or-detail-request"><h2>${title}</h2><h3>Additional details</h3><p>${OTHER_REQUEST_LONG_DETAILS}</p>${otherRequestSelectedInstrumentsMarkup(key)}</article>`;
+}
+
+function otherRequestNeedsMarkup(request) {
+  if (request.type === "Service plan quote") {
+    return `<article class="or-detail-card or-detail-needs"><h2>Service coverage needs</h2><dl><div><dt>Significant downtime</dt><dd>Minor</dd></div><div><dt>Other important things</dt><dd>Software / firmware updates<br />Preventive Maintenance<br />Same day, remote technical support</dd></div></dl></article>`;
+  }
+  if (request.type === "Calibration service") {
+    return `<article class="or-detail-card or-detail-needs"><h2>Calibration service needs</h2><dl><div><dt>Calibration service level</dt><dd>ISO 17025 - certification with uncertainties</dd></div><div><dt>Calibration interval</dt><dd>12 months</dd></div></dl></article>`;
+  }
+  return "";
+}
+
+function otherRequestDetailContentMarkup(request) {
+  if (request.type === "Preventive maintenance") {
+    const cards = request.children?.map((child, index) => otherRequestDetailsCardMarkup(request, `${child.type} details`, `pm-${index}`)).join("") || otherRequestDetailsCardMarkup(request);
+    return `${cards}${otherRequestContactMarkup(request)}`;
+  }
+  return `${otherRequestDetailsCardMarkup(request)}${otherRequestNeedsMarkup(request)}${otherRequestContactMarkup(request)}`;
+}
+
+function otherRequestInstrumentRowsMarkup() {
+  return OTHER_REQUEST_INSTRUMENTS.map((instrument) => {
+    if (instrument.system) {
+      return `<tr class="other-request-instruments-table__system" data-other-request-instrument-row><td><button type="button" data-other-request-system-toggle aria-expanded="true" aria-label="Collapse Alpine system instruments"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${instrument.type}</td><td>${instrument.model}</td></tr>`;
+    }
+    const hierarchy = instrument.child ? '<img class="other-request-instruments-table__branch" src="assets/icons/general/arrow/size=16px.svg" alt="" />' : "";
+    return `<tr class="${instrument.child ? "other-request-instruments-table__child" : "other-request-instruments-table__standalone"}" data-other-request-instrument-row${instrument.child ? " data-other-request-system-component" : ""}><td>${hierarchy}</td><td><img class="other-request-instruments-table__product" src="assets/instruments/${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td title="${instrument.type}">${instrument.type}</td><td>${instrument.model}</td></tr>`;
+  }).join("");
+}
+
+function openOtherRequestInstrumentsModal() {
+  if (!window.PlatformModal) return;
+  const content = document.createElement("div");
+  content.className = "other-request-instruments-modal__content";
+  content.innerHTML = `<div class="other-request-instruments-modal__table-wrap"><table class="other-request-instruments-table"><thead><tr><th></th><th></th><th>Serial number <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Nickname <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Type <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th><th>Catalog no. <img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></th></tr></thead><tbody>${otherRequestInstrumentRowsMarkup()}</tbody></table></div>`;
+  const dialog = window.PlatformModal.create({
+    id: "other-request-instruments-modal",
+    title: "Instrument(s)",
+    description: "This is a snapshot of when you make the request",
+    size: "md",
+    className: "other-request-instruments-modal",
+    bodyClassName: "other-request-instruments-modal__body",
+    content,
+    actions: [{ label: "Close", variant: "primary", closes: true }],
+  });
+  document.body.append(dialog);
+  dialog.addEventListener("close", () => dialog.remove(), { once: true });
+  const toggle = dialog.querySelector("[data-other-request-system-toggle]");
+  toggle?.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} Alpine system instruments`);
+    toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=16px, style=mono.svg`;
+    dialog.querySelectorAll("[data-other-request-system-component]").forEach((row) => { row.hidden = expanded; });
+  });
+  window.PlatformModal.open(dialog);
+}
+
+function renderOtherRequestDetail(route) {
+  const request = otherRequestForRoute(route);
+  if (!request) {
+    setRoute("support-history");
+    return;
+  }
+  app.innerHTML = `<section class="screen screen--other-request-detail"><div class="flow-toolbar"><button type="button" data-other-request-back>Back</button><strong>${request.type}</strong><div class="flow-toolbar__actions"><button type="button" data-route="dashboard">Dashboard</button><button type="button" data-open-flows>All flows</button></div></div><div class="mi-stage"><div class="mi-shell or-detail-shell">
+    <div data-topbar-sc-mount></div><div data-platform-sidebar-mount></div>
+    <main class="platform-page-body mi-main or-detail-main"><section class="or-detail-hero" data-platform-titlebar><button class="or-detail-back" type="button" data-other-request-back><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" />Request history</button><div class="or-detail-heading"><h1 data-other-request-detail-title>${request.type}</h1><p><strong>Date created:</strong> <span data-other-request-created>${request.created}</span></p></div></section><section class="or-detail-content">${otherRequestDetailContentMarkup(request)}</section></main>
+    <div data-footer-mount></div>
+  </div></div></section>`;
+  mountTopbarSc();
+  mountPlatformSidebar("support-history");
+  mountFooter();
+  app.querySelectorAll("[data-other-request-back]").forEach((button) => button.addEventListener("click", () => {
+    supportHistoryActiveTab = "other";
+    setRoute("support-history");
+  }));
+  app.querySelectorAll("[data-other-request-selected-toggle]").forEach((toggle) => toggle.addEventListener("click", () => {
+    const key = toggle.dataset.otherRequestSelectedToggle;
+    const panel = app.querySelector(`[data-other-request-selected-panel="${key}"]`);
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!expanded));
+    toggle.querySelector("span").textContent = `${expanded ? "Show" : "Hide"} selected instrument(s)`;
+    toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=16px, style=mono.svg`;
+    panel.hidden = expanded;
+  }));
+  window.PlatformSidebar?.wire(app);
+  wireRouteControls();
+  document.title = `${request.type} — Services Central`;
+}
+
 const SUPPORT_HISTORY_SUMMARY_ROUTES = {
   "5551726344": "tech-support-summary",
   "46521863": "service-requests-summary",
@@ -6708,6 +6886,125 @@ function openSupportHistoryColumnDialog() {
   miEditColumnsDialog.querySelector("[data-mi-column-search]").focus({ preventScroll: true });
 }
 
+function otherRequestChildRowMarkup(parent, child) {
+  const search = `${parent.type} ${child.type} ${child.details} ${parent.contact}`.toLowerCase();
+  return `<tr class="sh-other-child-row" data-sh-other-row data-sh-other-child="${parent.id}" data-search="${search}">
+    <td>${child.type}</td>
+    <td title="${child.details}">${child.details}</td>
+    <td><button class="sh-other-link" type="button" data-sh-other-instruments="${parent.id}" aria-label="View ${child.instruments} instruments for ${child.type}">${child.instruments}</button></td>
+    <td>—</td><td>—</td><td>—</td>
+  </tr>`;
+}
+
+function otherRequestRowMarkup(request, expanded) {
+  const hasChildren = Boolean(request.children?.length);
+  const search = [request.type, request.details, request.contact, ...(request.children || []).flatMap((child) => [child.type, child.details])].join(" ").toLowerCase();
+  const requestType = hasChildren ? `<button class="sh-other-toggle" type="button" aria-expanded="${expanded}" data-sh-other-toggle="${request.id}" aria-label="${expanded ? "Collapse" : "Expand"} ${request.type} requests"><img src="assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=16px, style=mono.svg" alt="" /><span>${request.type}</span></button>` : request.type;
+  const parent = `<tr data-sh-other-row data-sh-other-parent="${request.id}" data-search="${search}" data-type="${request.type}" data-contact="${request.contact}" data-created="${request.created}">
+    <td>${requestType}</td>
+    <td title="${request.details}">${request.details}</td>
+    <td>${request.instruments === "—" ? "—" : `<button class="sh-other-link" type="button" data-sh-other-instruments="${request.id}" aria-label="View ${request.instruments} instruments for ${request.type}">${request.instruments}</button>`}</td>
+    <td>${request.contact}</td><td>${request.created}</td>
+    <td><button class="mi-button sh-other-details" type="button" data-sh-other-details="${request.id}">View details</button></td>
+  </tr>`;
+  if (!hasChildren) return parent;
+  return parent + request.children.map((child) => otherRequestChildRowMarkup(request, child)).join("");
+}
+
+function wireRequestHistoryTabs() {
+  const tabs = [...app.querySelectorAll("[data-sh-tab]")];
+  const panels = [...app.querySelectorAll("[data-sh-panel]")];
+  const selectTab = (name) => {
+    tabs.forEach((candidate) => {
+      const selected = candidate.dataset.shTab === name;
+      candidate.classList.toggle("is-active", selected);
+      candidate.setAttribute("aria-selected", String(selected));
+      candidate.tabIndex = selected ? 0 : -1;
+    });
+    panels.forEach((panel) => { panel.hidden = panel.dataset.shPanel !== name; });
+  };
+  tabs.forEach((tab) => tab.addEventListener("click", () => {
+    supportHistoryActiveTab = tab.dataset.shTab;
+    selectTab(supportHistoryActiveTab);
+  }));
+  selectTab(supportHistoryActiveTab);
+}
+
+function wireOtherRequests() {
+  const tbody = app.querySelector("[data-sh-other-rows]");
+  const searchInput = app.querySelector("[data-sh-other-search]");
+  const typeFilter = app.querySelector("[data-sh-other-type-filter]");
+  const contactFilter = app.querySelector("[data-sh-other-contact-filter]");
+  const count = app.querySelector("[data-sh-other-count]");
+  const datePickerRoot = app.querySelector("[data-sh-other-date-picker]");
+  const expandedGroups = new Set(SUPPORT_HISTORY_OTHER_REQUESTS.filter((request) => request.children?.length).map((request) => request.id));
+  let appliedStart = "";
+  let appliedEnd = "";
+  let sortKey = "";
+  let sortDirection = 1;
+
+  new window.DateRangePicker(datePickerRoot);
+
+  const filteredRequests = () => {
+    const query = searchInput.value.trim().toLowerCase();
+    const type = typeFilter.value;
+    const contact = contactFilter.value;
+    return SUPPORT_HISTORY_OTHER_REQUESTS.filter((request) => {
+      const search = [request.type, request.details, request.contact, ...(request.children || []).flatMap((child) => [child.type, child.details])].join(" ").toLowerCase();
+      return (!query || search.includes(query))
+        && (!type || request.type === type)
+        && (!contact || request.contact === contact)
+        && supportHistoryDateInRange(request.created, appliedStart, appliedEnd);
+    });
+  };
+
+  const renderRows = () => {
+    const requests = filteredRequests();
+    if (sortKey) {
+      requests.sort((left, right) => {
+        const leftValue = sortKey === "created" ? parseSupportHistoryDate(left.created)?.getTime() || 0 : left[sortKey];
+        const rightValue = sortKey === "created" ? parseSupportHistoryDate(right.created)?.getTime() || 0 : right[sortKey];
+        return sortDirection * String(leftValue).localeCompare(String(rightValue), undefined, { numeric: true });
+      });
+    }
+    tbody.innerHTML = requests.map((request) => otherRequestRowMarkup(request, expandedGroups.has(request.id))).join("");
+    tbody.querySelectorAll("[data-sh-other-child]").forEach((row) => { row.hidden = !expandedGroups.has(row.dataset.shOtherChild); });
+    const filtering = searchInput.value.trim() || typeFilter.value || contactFilter.value || (appliedStart && appliedEnd);
+    count.textContent = filtering ? String(requests.length) : "100";
+  };
+
+  tbody.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-sh-other-toggle]");
+    if (toggle) {
+      const id = toggle.dataset.shOtherToggle;
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} Preventive maintenance requests`);
+      toggle.querySelector("img").src = `assets/icons/directions/chevron ${expanded ? "right" : "down"}/size=16px, style=mono.svg`;
+      tbody.querySelectorAll(`[data-sh-other-child="${id}"]`).forEach((row) => { row.hidden = expanded; });
+      if (expanded) expandedGroups.delete(id); else expandedGroups.add(id);
+    }
+    const details = event.target.closest("[data-sh-other-details]");
+    if (details) setRoute(`other-request-detail-${details.dataset.shOtherDetails}`);
+    if (event.target.closest("[data-sh-other-instruments]")) openOtherRequestInstrumentsModal();
+  });
+  searchInput.addEventListener("input", renderRows);
+  typeFilter.addEventListener("change", renderRows);
+  contactFilter.addEventListener("change", renderRows);
+  datePickerRoot.addEventListener("date-range-change", (event) => {
+    appliedStart = event.detail.start;
+    appliedEnd = event.detail.end;
+    renderRows();
+  });
+  app.querySelectorAll("[data-sh-other-sort]").forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.shOtherSort;
+    sortDirection = sortKey === key ? -sortDirection : 1;
+    sortKey = key;
+    renderRows();
+  }));
+  renderRows();
+}
+
 function wireSupportHistory() {
   const tbody = app.querySelector("[data-sh-rows]");
   const datePickerRoot = app.querySelector("[data-sh-date-picker]");
@@ -6746,6 +7043,8 @@ function wireSupportHistory() {
   let tickets = [...SUPPORT_HISTORY_TICKETS];
   let appliedStart = "";
   let appliedEnd = "";
+  wireRequestHistoryTabs();
+  wireOtherRequests();
   new window.DateRangePicker(datePickerRoot);
   const renderRows = () => {
     tbody.innerHTML = tickets.map(supportHistoryRowMarkup).join("");
@@ -6847,7 +7146,7 @@ function renderSupportHistory() {
   } else {
     wireSupportHistory();
   }
-  document.title = "Support request history — Services Central";
+  document.title = "Request history — Services Central";
 }
 
 function renderTicketSummary(route) {
@@ -10579,6 +10878,8 @@ function render() {
     renderInstallationShellDetail(route);
   } else if (route === "support-history") {
     renderSupportHistory();
+  } else if (isOtherRequestDetailRoute(route)) {
+    renderOtherRequestDetail(route);
   } else if (TICKET_SUMMARIES[route]) {
     renderTicketSummary(route);
   } else if (route === "request-support") {
