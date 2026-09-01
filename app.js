@@ -1716,13 +1716,17 @@ const DASHBOARD_ONSITE_VISITS = [
   { scheduled: "08 Mar 2024", ticket: "441582732", type: "PM (Contract)", subject: "Need support for unknown instrument error", serial: "TSQ-Z-12348", model: "MSTSQQUANTISPLUS", image: "tsq.png", system: true },
 ];
 
+const DASHBOARD_DETAIL_INSTRUMENTS = [
+  { image: "tsq.png", serial: "TSQ-Z-12345", nickname: "TSQ", users: "3", group: "—", model: "MSTSQQUANTISPLUS", coverage: "Under contract", end: "29 Mar 2025" },
+];
+
 function dashboardTableHeader(label) {
   return `<th>${label} ${DASHBOARD_SORT_ICON}</th>`;
 }
 
 function dashboardSerialCell(ticket) {
   const systemIcon = ticket.system ? `<img class="db-ticket-system-icon" src="${DASHBOARD_SYSTEM_ICON}" alt="" />` : "";
-  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#instrument-access">${ticket.serial}</a></span></td>`;
+  return `<td class="db-ticket-system-cell">${systemIcon}</td><td class="db-ticket-serial"><span class="db-ticket-serial-content"><img class="db-ticket-thumb" src="assets/instruments/${ticket.image}" alt="" /><a href="#${miInstrumentDetailRoute(ticket.serial)}" data-db-instrument-link="${ticket.serial}">${ticket.serial}</a></span></td>`;
 }
 
 function dashboardReportCell(ticket) {
@@ -1903,6 +1907,12 @@ function wireDashboard() {
     visits: { count: "5 upcoming on-site visits", markup: renderDashboardVisitsTable() },
   };
   tableWrap?.addEventListener("click", (event) => {
+    const instrumentLink = event.target.closest("[data-db-instrument-link]");
+    if (instrumentLink) {
+      event.preventDefault();
+      setRoute(miInstrumentDetailRoute(instrumentLink.dataset.dbInstrumentLink));
+      return;
+    }
     const ticketLink = event.target.closest("[data-db-ticket-link]");
     if (!ticketLink) return;
     event.preventDefault();
@@ -2756,6 +2766,11 @@ function miCurrentInstruments() {
   return isMainPrototype() ? MAIN_INSTRUMENTS : MY_INSTRUMENTS;
 }
 
+function instrumentForDetail(serial) {
+  return miCurrentInstruments().find((candidate) => candidate.serial === serial)
+    || DASHBOARD_DETAIL_INSTRUMENTS.find((candidate) => candidate.serial === serial);
+}
+
 const MI_USERS = [
   { email: "holly.hartman@company.com", instruments: [5, 6, 7] },
   { email: "sebastien.martin@company.com", instruments: [0, 4, 8, 11] },
@@ -2785,6 +2800,7 @@ function isMiInstrumentDetailRoute(route) {
 }
 
 function instrumentDetailParentLabel(route) {
+  if (route === "dashboard") return "Dashboard";
   if (isMiGroupDetailRoute(route)) {
     return MI_GROUPS.find((group) => group.id === Number(route.replace(/^group-detail-/, "")))?.name || "My instruments";
   }
@@ -2795,9 +2811,7 @@ function instrumentDetailParentLabel(route) {
 }
 
 function instrumentDetailParentNavigation() {
-  const parentRoute = window.history.state?.fromRoute;
-  const route = parentRoute && parentRoute !== routeFromHash() ? parentRoute : "my-instruments";
-  return { route, label: instrumentDetailParentLabel(route) };
+  return { route: "my-instruments", label: "My instruments" };
 }
 
 const MI_OPTIONAL_COLUMNS = ["instrument-images", "nickname", "users", "groups", "type", "model", "coverage", "coverage-end", "added-date"];
@@ -5434,7 +5448,7 @@ function wireInstrumentDetailTabContent(tab, instrument) {
 }
 
 function renderInstrumentDetail(serial) {
-  const instrument = miCurrentInstruments().find((candidate) => candidate.serial === serial);
+  const instrument = instrumentForDetail(serial);
   if (!instrument || MI_REMOVED_INSTRUMENTS.has(instrument.serial)) {
     setRoute("my-instruments");
     return;
@@ -5455,7 +5469,7 @@ function renderInstrumentDetail(serial) {
       <div data-platform-sidebar-mount></div>
       <main class="platform-page-body id-main">
         <section class="id-hero" data-platform-titlebar aria-label="Instrument summary">
-          <button class="id-parent-navigation" type="button" data-id-parent-navigation data-route="${parentNavigation.route}"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" /><span>${parentNavigation.label}</span></button>
+          <button class="id-parent-navigation" type="button" data-id-parent-navigation data-route="${parentNavigation.route}" data-platform-titlebar-compact-label="${owningSystem ? owningSystem.nickname : "My instruments"}" data-platform-titlebar-compact-route="${owningSystem ? `system-detail-${owningSystem.id}` : "my-instruments"}"><img src="assets/icons/directions/arrow left/size=16px, style=mono.svg" alt="" /><span>${parentNavigation.label}</span></button>
           <div class="id-hero__actions">
             <div class="id-actions"><button class="id-more-actions" type="button" data-mi-action-menu-kind="instrument" data-mi-action-menu-id="${instrument.serial}" data-mi-action-menu-label="${instrument.serial}" data-mi-action-menu-context="detail" aria-haspopup="menu" aria-expanded="false">More actions <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></div>
             <button class="mi-button mi-button--primary" type="button" data-route="request-support">Start a request</button>
