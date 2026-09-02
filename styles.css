@@ -681,6 +681,18 @@ button {
 .virtual-assistant-chat__assistant-response > button { display: grid; width: 24px; height: 24px; margin-top: 6px; place-items: center; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .virtual-assistant-chat__assistant-response > button img { width: 16px; height: 16px; opacity: .65; }
 .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add { display: inline-flex; width: auto; height: 40px; margin-top: 10px; align-items: center; justify-content: center; border: 1px solid #8d8d96; border-radius: 3px; padding: 0 24px; color: #0071d0; background: #fff; font: 700 14px/22px inherit; }
+.virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add:disabled { border-color: #d7d7dc; color: #92929e; background: #f7f7f7; cursor: not-allowed; }
+.virtual-assistant-chat__user-message { align-self: flex-end; margin: 0 0 16px; padding: 10px 12px; color: #54545c; background: #f7f7f7; font-size: 14px; line-height: 22px; }
+.virtual-assistant-chat__instrument-match { margin-top: 0; }
+.virtual-assistant-chat__match-card { width: min(346px, 100%); margin-top: 10px; padding: 12px 10px; background: #fff; }
+.virtual-assistant-chat__match-card strong { display: flex; align-items: flex-start; gap: 10px; color: #54545c; font-size: 14px; font-weight: 700; line-height: 22px; }
+.virtual-assistant-chat__match-card strong img { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 3px; }
+.virtual-assistant-chat__match-card dl { display: grid; gap: 4px; margin: 10px 0 0 26px; }
+.virtual-assistant-chat__match-card dl div { display: grid; grid-template-columns: 100px 1fr; gap: 8px; }
+.virtual-assistant-chat__match-card dt, .virtual-assistant-chat__match-card dd { margin: 0; color: #54545c; font-size: 14px; line-height: 18px; }
+.virtual-assistant-chat__match-actions { display: flex; gap: 8px; margin-top: 10px; }
+.virtual-assistant-chat__match-actions button { height: 40px; border: 1px solid #8d8d96; border-radius: 3px; padding: 0 16px; color: #0071d0; background: #fff; font: 700 14px/22px inherit; cursor: pointer; }
+.virtual-assistant-chat__match-actions button:disabled { border-color: #d7d7dc; color: #92929e; background: #f7f7f7; cursor: not-allowed; }
 .virtual-assistant-chat__composer { display: flex; height: 48px; flex: 0 0 48px; border-top: 1px solid #ccc; }
 .virtual-assistant-chat__composer input { min-width: 0; flex: 1; border: 0; padding: 0 16px; color: #54545c; font: 14px/22px inherit; outline: 0; }
 .virtual-assistant-chat__composer button { display: grid; width: 48px; place-items: center; border: 0; background: #fff; cursor: pointer; }

@@ -1520,6 +1520,7 @@ function ensureVirtualAssistantChat() {
 
   let selectedSerial = null;
   let selectedView = false;
+  let promptScenario = 2;
   const supportedInstruments = () => MY_INSTRUMENTS.filter((instrument) => ["1009996", "1009999", "1009998", "1009997", "SN98356W"].includes(instrument.serial));
   const instrumentTitle = (instrument) => ({
     "1009996": "Vanquish™ Variable Wavelength Detector F",
@@ -1577,9 +1578,10 @@ function ensureVirtualAssistantChat() {
   const renderWelcome = () => {
     selectedSerial = null;
     selectedView = false;
+    promptScenario = 2;
     panel.classList.remove("virtual-assistant-chat--selected");
     panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__welcome"><h2>Hi John, how can I assist you with your <strong>Chromatography and Mass Spectrometry instruments?</strong></h2><p>I can help you find manual(s), explore the manual(s), fix error(s), or walk you through setup and troubleshooting.</p><p>I’m continuously learning and expanding my capabilities, so you’ll see new features and content added over time to better support you.</p><p>To get started, please <strong>select the instrument</strong> you’d like help with using the button below.</p><button class="virtual-assistant-chat__select" type="button" data-virtual-assistant-chat-select-instrument>Select instrument</button></div>`;
-    panel.querySelector("[data-virtual-assistant-chat-select-instrument]").addEventListener("click", openInstrumentModal);
+    panel.querySelector("[data-virtual-assistant-chat-select-instrument]").addEventListener("click", () => openInstrumentModal("route"));
   };
 
   const renderSelected = (accountRoute = "liu-account") => {
@@ -1590,12 +1592,17 @@ function ensureVirtualAssistantChat() {
       : `<article class="virtual-assistant-chat__assistant-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>Instrument selected is not part of your account, Please add the instrument to proceed</p></div><button class="virtual-assistant-chat__account-add" type="button" data-virtual-assistant-account-add>Add instrument</button></article>`;
     selectedView = true;
     panel.classList.add("virtual-assistant-chat--selected");
-    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__conversation"><div class="virtual-assistant-chat__timestamp">${chatTimestamp(now)}</div><div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><article class="virtual-assistant-chat__selection"><p>Instrument selected:</p><div><img src="assets/icons/science/new instrument/Size=24px, style=mono, type=Instrument.svg" alt="" /><section><strong>${instrumentTitle(instrument)}</strong><dl><div><dt>Serial number</dt><dd>${instrument.serial}</dd></div><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Catalog no.</dt><dd>${catalogNumber(instrument)}</dd></div></dl></section></div></article>${assistantResponse}</div><form class="virtual-assistant-chat__composer"><input aria-label="Chat prompt" placeholder="Type your prompt here" /><button type="submit" aria-label="Send prompt"><img src="assets/icons/directions/chevron right/size=16px, style=mono.svg" alt="" /></button></form><p class="virtual-assistant-chat__disclaimer">ⓘ Chat history will not be saved. This is an AI-powered and might not always be accurate. <a href="#provide-feedback">Provide feedback</a></p>`;
+    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__conversation"><div class="virtual-assistant-chat__timestamp">${chatTimestamp(now)}</div><div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><article class="virtual-assistant-chat__selection"><p>Instrument selected:</p><div><img src="assets/icons/science/new instrument/Size=24px, style=mono, type=Instrument.svg" alt="" /><section><strong>${instrumentTitle(instrument)}</strong><dl><div><dt>Serial number</dt><dd>${instrument.serial}</dd></div><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Catalog no.</dt><dd>${catalogNumber(instrument)}</dd></div></dl></section></div></article>${assistantResponse}</div><form class="virtual-assistant-chat__composer"><input aria-label="Chat prompt" placeholder="Type your prompt here" /><button type="submit" aria-label="Send prompt"><img src="assets/icons/send-prompt.svg" alt="" /></button></form><p class="virtual-assistant-chat__disclaimer">ⓘ Chat history will not be saved. This is an AI-powered and might not always be accurate. <a href="#provide-feedback">Provide feedback</a></p>`;
     const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
     conversation.scrollTop = conversation.scrollHeight;
-    panel.querySelector(".virtual-assistant-chat__composer").addEventListener("submit", (event) => {
+    const composer = panel.querySelector(".virtual-assistant-chat__composer");
+    composer.addEventListener("submit", (event) => {
       event.preventDefault();
-      openUserPromptRouteDialog();
+      openActivePromptRouteDialog();
+    });
+    composer.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      openActivePromptRouteDialog();
     });
     panel.querySelector("[data-virtual-assistant-account-add]")?.addEventListener("click", () => {
       setCollapsed(false);
@@ -1605,8 +1612,116 @@ function ensureVirtualAssistantChat() {
     });
   };
 
+  const renderSerialNumberAccountPrompt = () => {
+    promptScenario = 2;
+    const assistantGuidance = (date = new Date()) => `<article class="virtual-assistant-chat__assistant-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(date)}</p><div class="virtual-assistant-chat__assistant-message"><p>What can I help you with regarding your selected instrument?</p><p>Ask a question about setup, operation, maintenance, troubleshooting, or other topics covered in your instrument's operator manual.</p></div><button type="button" aria-label="Copy assistant response"><img src="assets/icons/actions/copy/Size=16px, Style=Mono.svg" alt="" /></button></article>`;
+    const serialNumberAccountPromptMarkup = (date) => `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(date)}</div><p class="virtual-assistant-chat__user-message">My instrument serial number is 1099955</p><article class="virtual-assistant-chat__assistant-response virtual-assistant-chat__instrument-match"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(date)}</p><div class="virtual-assistant-chat__assistant-message"><p>Is this the instrument you are looking for?</p><section class="virtual-assistant-chat__match-card"><strong><img src="assets/icons/science/new instrument/Size=24px, style=mono, type=Instrument.svg" alt="" />Vanquish™ Variable Wavelength Detector F</strong><dl><div><dt>Serial number</dt><dd>1099955</dd></div><div><dt>Nickname</dt><dd>Detector-2B</dd></div><div><dt>Catalog no.</dt><dd>VQF0000DET</dd></div></dl></section></div><div class="virtual-assistant-chat__match-actions"><button type="button" data-virtual-assistant-prompt-confirm>Yes</button><button type="button" data-virtual-assistant-prompt-select-instrument>No, select instrument</button></div></article>`;
+    const wireSerialNumberAccountPrompt = (conversation) => {
+      const disablePromptMatchActions = () => {
+        panel.querySelectorAll("[data-virtual-assistant-prompt-confirm], [data-virtual-assistant-prompt-select-instrument]").forEach((button) => {
+          button.disabled = true;
+        });
+      };
+      panel.querySelector("[data-virtual-assistant-prompt-confirm]").addEventListener("click", () => {
+        disablePromptMatchActions();
+        const responseTime = new Date();
+        conversation.insertAdjacentHTML("beforeend", `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(responseTime)}</div><p class="virtual-assistant-chat__user-message">Yes</p>${assistantGuidance(responseTime)}`);
+        promptScenario = 3;
+        conversation.scrollTop = conversation.scrollHeight;
+      });
+      panel.querySelector("[data-virtual-assistant-prompt-select-instrument]").addEventListener("click", () => {
+        disablePromptMatchActions();
+        selectedSerial = null;
+        openInstrumentModal("append");
+      });
+    };
+    const appendSerialNumberAccountPrompt = () => {
+      const existingConversation = panel.querySelector(".virtual-assistant-chat__conversation");
+      if (!existingConversation) return false;
+      const now = new Date();
+      selectedView = true;
+      panel.classList.add("virtual-assistant-chat--selected");
+      existingConversation.insertAdjacentHTML("beforeend", serialNumberAccountPromptMarkup(now));
+      wireSerialNumberAccountPrompt(existingConversation);
+      existingConversation.scrollTop = existingConversation.scrollHeight;
+      return true;
+    };
+    if (appendSerialNumberAccountPrompt()) return;
+    const now = new Date();
+    selectedView = true;
+    panel.classList.add("virtual-assistant-chat--selected");
+    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__conversation"><div class="virtual-assistant-chat__timestamp">${chatTimestamp(now)}</div>${assistantGuidance(now)}${serialNumberAccountPromptMarkup(now)}</div><form class="virtual-assistant-chat__composer"><input aria-label="Chat prompt" placeholder="Type your prompt here" /><button type="submit" aria-label="Send prompt"><img src="assets/icons/send-prompt.svg" alt="" /></button></form><p class="virtual-assistant-chat__disclaimer">ⓘ Chat history will not be saved. This is an AI-powered and might not always be accurate. <a href="#provide-feedback">Provide feedback</a></p>`;
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    const composer = panel.querySelector(".virtual-assistant-chat__composer");
+    composer.addEventListener("submit", (event) => {
+      event.preventDefault();
+      openActivePromptRouteDialog();
+    });
+    composer.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      openActivePromptRouteDialog();
+    });
+    wireSerialNumberAccountPrompt(conversation);
+    conversation.scrollTop = conversation.scrollHeight;
+  };
+
+  const appendSelectedInstrumentToConversation = () => {
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    if (!conversation) {
+      renderSelected();
+      return;
+    }
+    const instrument = supportedInstruments().find((item) => item.serial === selectedSerial) || supportedInstruments()[0];
+    const now = new Date();
+    conversation.insertAdjacentHTML("beforeend", `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><article class="virtual-assistant-chat__selection"><p>Instrument selected:</p><div><img src="assets/icons/science/new instrument/Size=24px, style=mono, type=Instrument.svg" alt="" /><section><strong>${instrumentTitle(instrument)}</strong><dl><div><dt>Serial number</dt><dd>${instrument.serial}</dd></div><div><dt>Nickname</dt><dd>${instrument.nickname}</dd></div><div><dt>Catalog no.</dt><dd>${catalogNumber(instrument)}</dd></div></dl></section></div></article><article class="virtual-assistant-chat__assistant-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>What can I help you with regarding your selected instrument?</p><p>Ask a question about setup, operation, maintenance, troubleshooting, or other topics covered in your instrument's operator manual.</p></div><button type="button" aria-label="Copy assistant response"><img src="assets/icons/actions/copy/Size=16px, Style=Mono.svg" alt="" /></button></article>`);
+    promptScenario = 3;
+    conversation.scrollTop = conversation.scrollHeight;
+  };
+
+  const appendSerialNumberOutsideAccountPrompt = () => {
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    if (!conversation) return;
+    const now = new Date();
+    promptScenario = 2;
+    conversation.insertAdjacentHTML("beforeend", `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><p class="virtual-assistant-chat__user-message">My instrument serial number is 1099965</p><article class="virtual-assistant-chat__assistant-response virtual-assistant-chat__outside-account-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>Select an instrument already linked to your account.</p></div><button class="virtual-assistant-chat__account-add" type="button" data-virtual-assistant-outside-account-select-instrument>Select instrument</button></article>`);
+    const outsideAccountSelect = panel.querySelector("[data-virtual-assistant-outside-account-select-instrument]");
+    outsideAccountSelect.addEventListener("click", () => {
+      outsideAccountSelect.disabled = true;
+      selectedSerial = null;
+      openInstrumentModal("append");
+    });
+    conversation.scrollTop = conversation.scrollHeight;
+  };
+
+  const appendCoverageEndResponse = () => {
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    if (!conversation) return;
+    const now = new Date();
+    promptScenario = 3;
+    conversation.insertAdjacentHTML("beforeend", `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><p class="virtual-assistant-chat__user-message">When does coverage end for my instrument</p><article class="virtual-assistant-chat__assistant-response virtual-assistant-chat__coverage-end-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>The information which you're looking for is currently not supported by the assistant.<br />Please let me know if I can help you with anything else</p></div></article>`);
+    conversation.scrollTop = conversation.scrollHeight;
+  };
+
+  const appendSkyBlueResponse = () => {
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    if (!conversation) return;
+    const now = new Date();
+    promptScenario = 3;
+    conversation.insertAdjacentHTML("beforeend", `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><p class="virtual-assistant-chat__user-message">why the sky is blue</p><article class="virtual-assistant-chat__assistant-response virtual-assistant-chat__sky-blue-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><p>I don’t know from the provided Thermo Fisher Scientific documentation, as the retrieved Vanquish UHPLC and HPLC Systems Operating Manual excerpts do not cover why the sky is blue. Please visit the Thermo Fisher documentation website for instrument-related documentation: <a href="https://docs.thermofisher.com" target="_blank" rel="noreferrer">https://docs.thermofisher.com</a>.</p></div><button type="button" aria-label="Copy assistant response"><img src="assets/icons/actions/copy/Size=16px, Style=Mono.svg" alt="" /></button></article>`);
+    conversation.scrollTop = conversation.scrollHeight;
+  };
+
+  const appendError33Response = () => {
+    const conversation = panel.querySelector(".virtual-assistant-chat__conversation");
+    if (!conversation) return;
+    const now = new Date();
+    promptScenario = 3;
+    conversation.insertAdjacentHTML("beforeend", `<div class="virtual-assistant-chat__message-time">Jane Doe ${formatChatTime(now)}</div><p class="virtual-assistant-chat__user-message">My instrument shows an Error 33 message.</p><article class="virtual-assistant-chat__assistant-response virtual-assistant-chat__error-response"><p class="virtual-assistant-chat__assistant-meta"><img src="assets/icons/ai-badge.svg" alt="" />Services Central Virtual Assistant ${formatChatTime(now)}</p><div class="virtual-assistant-chat__assistant-message"><ul><li>First cause</li><li>Second cause</li><li>Third cause</li></ul><p>To resolve it, please follow these steps:</p><p>[Describe the steps here]</p><p>[Follow-up question]</p><p class="virtual-assistant-chat__source">ⓘ Source: <a href="#thermo-fisher-documentation">Thermo Fisher Documentation (2025)…</a></p></div><button type="button" aria-label="Copy assistant response"><img src="assets/icons/actions/copy/Size=16px, Style=Mono.svg" alt="" /></button></article>`);
+    conversation.scrollTop = conversation.scrollHeight;
+  };
+
   const openPrototypeRouteDialog = () => {
-    prototypeRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close prototype route" data-virtual-assistant-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-route-title">Prototype route 1</h2><p>Prototype-only route selector. Choose the account scenario to test the Virtual Assistant’s next guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-route-option="liu-account">Instr. part of the user account</button><button class="flow-link" type="button" data-virtual-assistant-route-option="outside-liu-account">Instr. not part of the user account</button></div>`;
+    prototypeRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close prototype route" data-virtual-assistant-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-route-title">Instr. scenario selection 1</h2><p>Prototype-only route selector. Choose the account scenario to test the Virtual Assistant’s next guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-route-option="liu-account">Instr. part of the user account</button><button class="flow-link" type="button" data-virtual-assistant-route-option="outside-liu-account">Instr. not part of the user account</button></div>`;
     prototypeRouteDialog.querySelector("[data-virtual-assistant-route-close]").addEventListener("click", () => prototypeRouteDialog.close());
     prototypeRouteDialog.querySelectorAll("[data-virtual-assistant-route-option]").forEach((option) => option.addEventListener("click", () => {
       prototypeRouteDialog.close();
@@ -1616,10 +1731,34 @@ function ensureVirtualAssistantChat() {
   };
 
   const openUserPromptRouteDialog = () => {
-    userPromptRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close user prompt route" data-virtual-assistant-user-prompt-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-user-prompt-route-title">Select user prompt route</h2><p>Prototype-only route selector. Choose a sample customer prompt to test the matching guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-account">Enter serial number 1099955 (part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-outside-account">Enter serial number 1099965 (not part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="error-33">My instrument shows an Error 33 message</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="coverage-end">When does coverage end for my instrument</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="sky-blue">Why sky is blue</button></div>`;
+    userPromptRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close user prompt route" data-virtual-assistant-user-prompt-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-user-prompt-route-title">Prompt scenario selection 2</h2><p>Prototype-only route selector. Choose a sample customer prompt to test the matching guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-account">Enter serial number 1099955 (part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-outside-account">Enter serial number 1099965 (not part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="error-33">My instrument shows an Error 33 message</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="coverage-end">When does coverage end for my instrument</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="sky-blue">Why sky is blue</button></div>`;
     userPromptRouteDialog.querySelector("[data-virtual-assistant-user-prompt-route-close]").addEventListener("click", () => userPromptRouteDialog.close());
-    userPromptRouteDialog.querySelectorAll("[data-virtual-assistant-user-prompt-route-option]").forEach((option) => option.addEventListener("click", () => userPromptRouteDialog.close()));
+    userPromptRouteDialog.querySelectorAll("[data-virtual-assistant-user-prompt-route-option]").forEach((option) => option.addEventListener("click", () => {
+      userPromptRouteDialog.close();
+      if (option.dataset.virtualAssistantUserPromptRouteOption === "serial-number-account") renderSerialNumberAccountPrompt();
+      if (option.dataset.virtualAssistantUserPromptRouteOption === "serial-number-outside-account") appendSerialNumberOutsideAccountPrompt();
+      if (option.dataset.virtualAssistantUserPromptRouteOption === "coverage-end") appendCoverageEndResponse();
+      if (option.dataset.virtualAssistantUserPromptRouteOption === "sky-blue") appendSkyBlueResponse();
+      if (option.dataset.virtualAssistantUserPromptRouteOption === "error-33") appendError33Response();
+    }));
     userPromptRouteDialog.showModal();
+  };
+
+  const openFollowupPromptRouteDialog = () => {
+    userPromptRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close follow-up prompt route" data-virtual-assistant-followup-prompt-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-followup-prompt-route-title">Prompt scenario selection 3</h2><p>Prototype-only route selector. Choose a follow-up customer prompt to test the next guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-followup-prompt-route-option="error-33">My instrument shows an Error 33 message</button><button class="flow-link" type="button" data-virtual-assistant-followup-prompt-route-option="coverage-end">When does coverage end for my instrument</button><button class="flow-link" type="button" data-virtual-assistant-followup-prompt-route-option="sky-blue">Why sky is blue</button></div>`;
+    userPromptRouteDialog.querySelector("[data-virtual-assistant-followup-prompt-route-close]").addEventListener("click", () => userPromptRouteDialog.close());
+    userPromptRouteDialog.querySelectorAll("[data-virtual-assistant-followup-prompt-route-option]").forEach((option) => option.addEventListener("click", () => {
+      userPromptRouteDialog.close();
+      if (option.dataset.virtualAssistantFollowupPromptRouteOption === "coverage-end") appendCoverageEndResponse();
+      if (option.dataset.virtualAssistantFollowupPromptRouteOption === "sky-blue") appendSkyBlueResponse();
+      if (option.dataset.virtualAssistantFollowupPromptRouteOption === "error-33") appendError33Response();
+    }));
+    userPromptRouteDialog.showModal();
+  };
+
+  const openActivePromptRouteDialog = () => {
+    if (promptScenario === 3) openFollowupPromptRouteDialog();
+    else openUserPromptRouteDialog();
   };
 
   const instrumentCatalog = (instrument) => instrument.serial.startsWith("SN") ? "Mass Spec Life Science" : "HPLC";
@@ -1644,7 +1783,7 @@ function ensureVirtualAssistantChat() {
       overflow.addEventListener("blur", hide);
     });
   };
-  const renderInstrumentModal = () => {
+  const renderInstrumentModal = (continuation = "route") => {
     const instruments = supportedInstruments();
     const standalone = ["1009997", "1009998"].map((serial) => instruments.find((instrument) => instrument.serial === serial)).filter(Boolean);
     const systemMembers = instruments.filter((instrument) => ["1009996", "1009999", "1009998", "1009997"].includes(instrument.serial));
@@ -1697,12 +1836,13 @@ function ensureVirtualAssistantChat() {
     continueButton.addEventListener("click", () => {
       if (!selectedSerial) return;
       dialog.close();
-      openPrototypeRouteDialog();
+      if (continuation === "append") appendSelectedInstrumentToConversation();
+      else openPrototypeRouteDialog();
     });
     wireVirtualAssistantInstrumentTooltips();
   };
-  const openInstrumentModal = () => {
-    renderInstrumentModal();
+  const openInstrumentModal = (continuation = "route") => {
+    renderInstrumentModal(continuation);
     if (!dialog.open) dialog.showModal();
   };
 
@@ -1726,6 +1866,7 @@ function ensureVirtualAssistantChat() {
       if (createsNewChat || action === "close") {
         setCollapsed(false);
         renderWelcome();
+        if (action === "close") panel.hidden = true;
       }
     });
     conversationConfirmation.hidden = false;
