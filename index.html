@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>Services Central</title>
-    <link rel="stylesheet" href="styles.css?v=20260831-request-history-remove-header-ellipsis" />
-    <link rel="stylesheet" href="date-range-picker.css?v=20260814-support-history" />
+    <link rel="stylesheet" href="styles.css?v=20260902-request-detail-titlebar-v5" />
+    <link rel="stylesheet" href="date-range-picker.css?v=20260902-request-history-calendar" />
     <link rel="stylesheet" href="multi-select-filter.css?v=20260814-figma-column-menu" />
   </head>
   <body>
@@ -701,13 +701,19 @@
                 <label class="sh-search"><strong>Search</strong><span><input type="search" data-sh-other-search placeholder="Search by request type, request details, or contact" /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></span></label>
                 <div class="sh-date date-range-picker" data-sh-other-date-picker></div>
               </div>
+              <div class="sh-applied-filters sh-other-applied-filters" aria-label="Other request filters">
+                <div data-sh-other-type-filter></div>
+                <div data-sh-other-contact-filter></div>
+                <button class="sh-clear-filters" type="button" data-sh-other-clear-filters hidden>Clear filter(s)</button>
+              </div>
               <div class="sh-other-table-wrap"><table class="sh-other-table">
-                <colgroup><col class="sh-other-col-type" /><col class="sh-other-col-details" /><col class="sh-other-col-instruments" /><col class="sh-other-col-contact" /><col class="sh-other-col-created" /><col class="sh-other-col-action" /></colgroup>
+                <colgroup><col class="sh-other-col-chevron" /><col class="sh-other-col-type" /><col class="sh-other-col-details" /><col class="sh-other-col-instruments" /><col class="sh-other-col-contact" /><col class="sh-other-col-created" /><col class="sh-other-col-action" /></colgroup>
                 <thead><tr>
-                  <th><select aria-label="Filter by request type" data-sh-other-type-filter><option value="">Request type</option><option>Service plan quote</option><option>Calibration service</option><option>Qualification service</option><option>Preventive maintenance</option></select></th>
+                  <th aria-label="Expand request"></th>
+                  <th><div data-sh-other-column-filter-trigger="type"></div></th>
                   <th><button type="button" data-sh-other-sort="details">Request details<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
                   <th><button type="button" data-sh-other-sort="instruments">Instruments<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
-                  <th><select aria-label="Filter by contact" data-sh-other-contact-filter><option value="">Contact</option><option>Molly Hartman</option><option>Jon Doe</option></select></th>
+                  <th><div data-sh-other-column-filter-trigger="contact"></div></th>
                   <th><button type="button" data-sh-other-sort="created">Created<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" /></button></th>
                   <th>Action</th>
                 </tr></thead>
@@ -2198,9 +2204,9 @@
     <script src="ticket-step-viewer.js?v=20260822-request-pm-status-v2"></script>
     <script src="footer.js?v=20260812-footer"></script>
     <script src="modal.js?v=20260818-modal-component"></script>
-    <script src="date-range-picker.js?v=20260901-request-history-calendar"></script>
+    <script src="date-range-picker.js?v=20260902-request-history-calendar"></script>
     <script src="multi-select-filter.js?v=20260814-figma-column-menu"></script>
     <script src="vendor/jszip.min.js?v=3.10.1"></script>
-    <script src="app.js?v=20260831-other-request-link-modal-md"></script>
+    <script src="app.js?v=20260902-icon-columns-v3"></script>
   </body>
 </html>
