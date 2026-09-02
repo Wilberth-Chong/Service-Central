@@ -30,19 +30,58 @@
     });
   }
 
-  function wireDeferredTitlebar(titlebar, scrollContainer, triggerSelector) {
-    const trigger = titlebar.querySelector(triggerSelector);
+  function wireCloneControls(titlebar, clone) {
+    const sourceControls = titlebar.querySelectorAll("button, a");
+    const cloneControls = clone.querySelectorAll("button, a");
+
+    cloneControls.forEach((control, index) => {
+      const sourceControl = sourceControls[index];
+      if (!sourceControl) return;
+
+      control.addEventListener("click", (event) => {
+        event.preventDefault();
+        const sourceRoute = sourceControl.getAttribute("data-route");
+        const compactRoute = control.getAttribute("data-route");
+
+        if (compactRoute) sourceControl.setAttribute("data-route", compactRoute);
+        sourceControl.click();
+        if (sourceRoute === null) sourceControl.removeAttribute("data-route");
+        else sourceControl.setAttribute("data-route", sourceRoute);
+      });
+    });
+  }
+
+  function applyCompactOverrides(clone) {
+    clone.querySelectorAll("[data-platform-titlebar-compact-label]").forEach((control) => {
+      const label = control.dataset.platformTitlebarCompactLabel;
+      const labelTarget = control.querySelector("span") || control;
+      labelTarget.textContent = label;
+
+      const route = control.dataset.platformTitlebarCompactRoute;
+      if (route) control.dataset.route = route;
+    });
+  }
+
+  function wireStickyTitlebar(titlebar, scrollContainer, triggerSelector) {
+    const trigger = triggerSelector ? titlebar.querySelector(triggerSelector) : titlebar;
     if (!trigger) return false;
 
     const clone = titlebar.cloneNode(true);
-    clone.removeAttribute("data-platform-titlebar");
+    applyCompactOverrides(clone);
+    wireCloneControls(titlebar, clone);
     clone.removeAttribute("data-platform-titlebar-trigger");
-    clone.removeAttribute("data-platform-titlebar-wired");
+    clone.dataset.platformTitlebarWired = "true";
     clone.querySelectorAll("[data-platform-titlebar-deferred-hide]").forEach((element) => element.remove());
     clone.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
     clone.classList.add("platform-titlebar__deferred");
+
+    const host = document.createElement("div");
+    host.className = `platform-titlebar__sticky-host ${COMPACT_CLASS}`;
+    host.setAttribute("aria-hidden", "true");
+    host.append(clone);
+
     titlebar.classList.add("platform-titlebar--deferred-source");
-    titlebar.insertAdjacentElement("afterend", clone);
+    titlebar.insertAdjacentElement("afterend", host);
     addGoToTop(clone, scrollContainer);
 
     let frame = 0;
@@ -53,9 +92,10 @@
         const triggerRect = trigger.getBoundingClientRect();
         const sourceRect = titlebar.getBoundingClientRect();
         const triggerGap = Math.max(0, sourceRect.bottom - triggerRect.bottom);
-        const triggerIsOutOfView = trigger.getBoundingClientRect().bottom <= scrollContainer.getBoundingClientRect().top;
-        clone.style.setProperty("--platform-titlebar-trigger-gap", `${triggerGap}px`);
-        clone.classList.toggle("is-visible", triggerIsOutOfView);
+        const triggerIsOutOfView = triggerRect.bottom <= scrollContainer.getBoundingClientRect().top;
+        host.style.setProperty("--platform-titlebar-trigger-gap", `${triggerGap}px`);
+        host.classList.toggle("is-visible", triggerIsOutOfView);
+        host.setAttribute("aria-hidden", String(!triggerIsOutOfView));
       });
     };
 
@@ -73,20 +113,7 @@
 
       titlebar.dataset.platformTitlebarWired = "true";
       const triggerSelector = titlebar.dataset.platformTitlebarTrigger;
-      if (triggerSelector && wireDeferredTitlebar(titlebar, scrollContainer, triggerSelector)) return;
-
-      addGoToTop(titlebar, scrollContainer);
-      let frame = 0;
-      const update = () => {
-        if (frame) return;
-        frame = window.requestAnimationFrame(() => {
-          frame = 0;
-          scrollContainer.classList.toggle(COMPACT_CLASS, scrollContainer.scrollTop > 0);
-        });
-      };
-
-      scrollContainer.addEventListener("scroll", update, { passive: true });
-      update();
+      wireStickyTitlebar(titlebar, scrollContainer, triggerSelector);
     });
   }
 
