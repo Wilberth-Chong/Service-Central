@@ -2179,19 +2179,17 @@
       </div>
     </dialog>
 
-    <dialog class="installation-status-scenarios-dialog" id="installation-status-scenarios-dialog" aria-labelledby="installation-status-scenarios-title" aria-describedby="installation-status-scenarios-description">
-      <section class="installation-status-scenarios-modal">
-        <header>
-          <div><h2 id="installation-status-scenarios-title">Status change</h2><p id="installation-status-scenarios-description">Select an installation status scenario to simulate offline installation events.</p></div>
-          <button type="button" data-close-installation-status-scenarios aria-label="Close status change"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button>
-        </header>
-        <div class="installation-status-scenarios-modal__options">
-          <button type="button" data-installation-status-scenario="in-progress"><strong>No line items scheduled</strong><span>If the order is in progress, but no scheduled dates are confirmed yet.</span></button>
-          <button type="button" data-installation-status-scenario="some-scheduled"><strong>Some line items scheduled</strong><span>Some line items change to “Install scheduled.”</span></button>
-          <button type="button" data-installation-status-scenario="some-installed"><strong>Some line items installed</strong><span>Some line items remain “Install scheduled” while others change to “Install complete.”</span></button>
-          <button type="button" data-installation-status-scenario="all-installed"><strong>All applicable line items installed</strong><span>Every applicable line item changes to “Install complete.” Non-applicable items remain unchanged.</span></button>
-        </div>
-      </section>
+    <dialog class="installation-status-scenarios-dialog virtual-assistant-route-dialog flows-dialog" id="installation-status-scenarios-dialog" aria-labelledby="installation-status-scenarios-title" aria-describedby="installation-status-scenarios-description">
+      <button class="dialog-close" type="button" data-close-installation-status-scenarios aria-label="Close status change">×</button>
+      <p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p>
+      <h2 id="installation-status-scenarios-title">Status change</h2>
+      <p id="installation-status-scenarios-description">Select an installation status scenario to simulate offline installation events.</p>
+      <div class="installation-status-scenarios-modal__options flows-grid">
+        <button class="flow-link" type="button" data-installation-status-scenario="in-progress"><strong>No line items scheduled</strong><span>If the order is in progress, but no scheduled dates are confirmed yet.</span></button>
+        <button class="flow-link" type="button" data-installation-status-scenario="some-scheduled"><strong>Some line items scheduled</strong><span>Some line items change to “Install scheduled.”</span></button>
+        <button class="flow-link" type="button" data-installation-status-scenario="some-installed"><strong>Some line items installed</strong><span>Some line items remain “Install scheduled” while others change to “Install complete.”</span></button>
+        <button class="flow-link" type="button" data-installation-status-scenario="all-installed"><strong>All applicable line items installed</strong><span>Every applicable line item changes to “Install complete.” Non-applicable items remain unchanged.</span></button>
+      </div>
     </dialog>
 
     <dialog class="installation-activity-dialog" id="installation-activity-dialog" aria-labelledby="installation-activity-title" aria-describedby="installation-activity-description">

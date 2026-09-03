@@ -64,7 +64,7 @@ let whatsNewDialog = null;
 let whatsNewEligibleAfterSignIn = false;
 let selectedInstallationShellContext = null;
 const whiteGloveOrderStates = new Map([
-  ["1901126245", { expanded: false, status: "default" }],
+  ["1901126245", { expanded: false, status: "default", scenario: "in-progress", scenarioSelected: false }],
 ]);
 const PREINSTALL_CHECKLISTS = [
   { id: "hplc", name: "HPLC template long name", instruments: "4 instrument(s)", submittedBy: "cameron.williamson@companyname.com", submittedOn: "01 Jul 2025", items: [["10", "2", "VN-P10-A-01", "Vanquish binary pump N"], ["11", "2", "6252.1940", "Vanquish split sampler NT"]] },
@@ -366,6 +366,20 @@ const FLOW_MENU = [
 
 function isUnmappedPrototypeUser() {
   return new URL(window.location.href).searchParams.get("prototype-user") === "unmapped";
+}
+
+function ensurePrototypeFlowContext() {
+  const nextUrl = new URL(window.location.href);
+  const params = nextUrl.searchParams;
+  const hasNamedFlow = params.has("prototype-experience")
+    || params.has("prototype-user")
+    || params.has("prototype-region")
+    || params.has("prototype-flow");
+  if (hasNamedFlow) return;
+
+  params.set("prototype-experience", "main");
+  if (!nextUrl.hash) nextUrl.hash = "#signin";
+  window.history.replaceState({ flow: "main" }, "", nextUrl);
 }
 
 function isEuropeLePrototype() {
@@ -1132,10 +1146,8 @@ function updateInstallationOrderStatus() {
   if (completeNotice) completeNotice.hidden = !installationComplete || !orderExpanded;
   const statusScenarioButton = app.querySelector("[data-open-installation-status-scenarios]");
   if (statusScenarioButton) {
-    statusScenarioButton.disabled = !allStepsComplete;
-    statusScenarioButton.title = allStepsComplete
-      ? "Simulate installation status change"
-      : "Complete all three installation steps to change status";
+    statusScenarioButton.disabled = false;
+    statusScenarioButton.title = "Simulate installation status change";
   }
 }
 
@@ -1212,7 +1224,9 @@ function getInstallationStatusScenarioForOrder(orderNumber) {
   if (orderNumber === "7659430547") return progressInstallationStatusScenario;
   if (orderNumber === "4827316059") return noChecklistOrderState.statusScenario;
   if (whiteGloveOrderStates.has(orderNumber)) {
-    const status = whiteGloveOrderStates.get(orderNumber)?.status || "default";
+    const state = whiteGloveOrderStates.get(orderNumber);
+    if (state?.scenario) return state.scenario;
+    const status = state?.status || "default";
     if (status === "scheduled") return "some-scheduled";
     if (status === "complete") return "all-installed";
     return "in-progress";
@@ -1223,7 +1237,6 @@ function getInstallationStatusScenarioForOrder(orderNumber) {
 function openInstallationStatusScenarios(event) {
   const trigger = event?.currentTarget;
   installationStatusTargetOrder = trigger?.dataset.statusOrder || "9012611245";
-  if (installationStatusTargetOrder === "9012611245" && !areInstallationStepsComplete()) return;
   const currentScenario = getInstallationStatusScenarioForOrder(installationStatusTargetOrder);
   installationStatusScenariosDialog.querySelectorAll("[data-installation-status-scenario]").forEach((option) => {
     option.setAttribute("aria-pressed", String(option.dataset.installationStatusScenario === currentScenario));
@@ -1234,6 +1247,11 @@ function openInstallationStatusScenarios(event) {
 
 function applyInstallationStatusScenario(scenario) {
   if (installationStatusTargetOrder === "7659430547") {
+    PROGRESS_PREINSTALL_CHECKLISTS.forEach((checklist) => {
+      if (!submittedProgressPreInstallChecklists.some((submitted) => submitted.id === checklist.id)) {
+        submittedProgressPreInstallChecklists.push({ ...checklist, submittedBy: DEFAULT_INSTALLATION_USER_EMAIL });
+      }
+    });
     progressInstallationStatusScenario = scenario;
     updateProgressOrderCompletionState();
     installationStatusScenariosDialog.close();
@@ -1249,13 +1267,26 @@ function applyInstallationStatusScenario(scenario) {
   }
   if (whiteGloveOrderStates.has(installationStatusTargetOrder)) {
     const state = whiteGloveOrderStates.get(installationStatusTargetOrder);
-    state.status = scenario === "in-progress" ? "default" : scenario === "some-scheduled" ? "scheduled" : "complete";
+    state.scenario = scenario;
+    state.scenarioSelected = true;
+    state.status = scenario === "all-installed" ? "complete" : scenario === "in-progress" ? "default" : "scheduled";
     const order = app.querySelector(`[data-wg-order-number="${installationStatusTargetOrder}"]`);
     if (order) renderWhiteGloveOrderState(order);
     installationStatusScenariosDialog.close();
     return;
   }
+  preferredDeliveryDatesSubmitted = true;
+  deliveryChecklistSubmitted = true;
+  PREINSTALL_CHECKLISTS.forEach((checklist) => {
+    if (!submittedPreInstallChecklists.some((submitted) => submitted.id === checklist.id)) {
+      submittedPreInstallChecklists.push({ ...checklist, submittedBy: DEFAULT_INSTALLATION_USER_EMAIL });
+    }
+  });
+  preInstallChecklistsUploaded = submittedPreInstallChecklists.length;
   installationStatusScenario = scenario;
+  setPreferredDeliveryDatesComplete(true);
+  setDeliveryChecklistComplete(true);
+  setPreInstallChecklistComplete(true);
   updateInstallationItemStatuses();
   updateInstallationOrderStatus();
   installationStatusScenariosDialog.close();
@@ -1263,9 +1294,8 @@ function applyInstallationStatusScenario(scenario) {
 
 function wireInstallationStatusScenarioTrigger(scope = document) {
   scope.querySelectorAll("[data-open-installation-status-scenarios]").forEach((button) => {
-    const orderNumber = button.dataset.statusOrder || "9012611245";
-    button.disabled = orderNumber === "9012611245" && !areInstallationStepsComplete();
-    button.title = button.disabled ? "Complete all three installation steps to change status" : "Change line item statuses";
+    button.disabled = false;
+    button.title = "Change line item statuses";
     button.addEventListener("click", openInstallationStatusScenarios);
   });
 }
@@ -1525,14 +1555,21 @@ function ensureVirtualAssistantChat() {
   let selectedSerial = null;
   let selectedView = false;
   let promptScenario = 2;
-  const supportedInstruments = () => MY_INSTRUMENTS.filter((instrument) => ["1009996", "1009999", "1009998", "1009997", "SN98356W"].includes(instrument.serial));
+  const supportedInstruments = () => miCurrentInstruments().filter((instrument) => !MI_REMOVED_INSTRUMENTS.has(instrument.serial) && !instrument.image.startsWith("le/"));
+  const supportedSystems = () => {
+    const supportedBySerial = new Map(supportedInstruments().map((instrument) => [instrument.serial, instrument]));
+    return miCurrentSystems().map((system) => ({
+      ...system,
+      supportedComponents: system.components.map((serial) => supportedBySerial.get(serial)).filter(Boolean),
+    })).filter((system) => system.supportedComponents.length > 0);
+  };
   const instrumentTitle = (instrument) => ({
     "1009996": "Vanquish™ Variable Wavelength Detector F",
     "1009999": "Vanquish™ Column Compartment H",
     "1009998": "Vanquish™ Split Sampler H",
     "1009997": "Vanquish™ Pump F",
     SN98356W: "Q Exactive™ Mass Spectrometer",
-  }[instrument.serial] || instrument.nickname);
+  }[instrument.serial] || instrumentCatalogName(instrument));
   const catalogNumber = (instrument) => instrument.model;
 
   panel = document.createElement("aside");
@@ -1558,11 +1595,6 @@ function ensureVirtualAssistantChat() {
   conversationConfirmation.dataset.virtualAssistantConversationConfirm = "";
   conversationConfirmation.hidden = true;
   panel.append(conversationConfirmation);
-
-  const prototypeRouteDialog = document.createElement("dialog");
-  prototypeRouteDialog.className = "virtual-assistant-route-dialog flows-dialog";
-  prototypeRouteDialog.dataset.virtualAssistantRouteDialog = "";
-  document.body.append(prototypeRouteDialog);
 
   const userPromptRouteDialog = document.createElement("dialog");
   userPromptRouteDialog.className = "virtual-assistant-route-dialog flows-dialog";
@@ -1724,18 +1756,8 @@ function ensureVirtualAssistantChat() {
     conversation.scrollTop = conversation.scrollHeight;
   };
 
-  const openPrototypeRouteDialog = () => {
-    prototypeRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close prototype route" data-virtual-assistant-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-route-title">Instr. scenario selection 1</h2><p>Prototype-only route selector. Choose the account scenario to test the Virtual Assistant’s next guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-route-option="liu-account">Instr. part of the user account</button><button class="flow-link" type="button" data-virtual-assistant-route-option="outside-liu-account">Instr. not part of the user account</button></div>`;
-    prototypeRouteDialog.querySelector("[data-virtual-assistant-route-close]").addEventListener("click", () => prototypeRouteDialog.close());
-    prototypeRouteDialog.querySelectorAll("[data-virtual-assistant-route-option]").forEach((option) => option.addEventListener("click", () => {
-      prototypeRouteDialog.close();
-      renderSelected(option.dataset.virtualAssistantRouteOption);
-    }));
-    prototypeRouteDialog.showModal();
-  };
-
   const openUserPromptRouteDialog = () => {
-    userPromptRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close user prompt route" data-virtual-assistant-user-prompt-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-user-prompt-route-title">Prompt scenario selection 2</h2><p>Prototype-only route selector. Choose a sample customer prompt to test the matching guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-account">Enter serial number 1099955 (part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-outside-account">Enter serial number 1099965 (not part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="error-33">My instrument shows an Error 33 message</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="coverage-end">When does coverage end for my instrument</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="sky-blue">Why sky is blue</button></div>`;
+    userPromptRouteDialog.innerHTML = `<button class="dialog-close" type="button" aria-label="Close user prompt route" data-virtual-assistant-user-prompt-route-close>×</button><p class="virtual-assistant-route-dialog__eyebrow">Prototype routing</p><h2 id="virtual-assistant-user-prompt-route-title">Prompt scenario selection</h2><p>Prototype-only route selector. Choose a sample customer prompt to test the matching guidance; this selection is not part of the application interaction.</p><div class="flows-grid"><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-account">Enter serial number 1099955 (part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="serial-number-outside-account">Enter serial number 1099965 (not part of user account)</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="error-33">My instrument shows an Error 33 message</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="coverage-end">When does coverage end for my instrument</button><button class="flow-link" type="button" data-virtual-assistant-user-prompt-route-option="sky-blue">Why sky is blue</button></div>`;
     userPromptRouteDialog.querySelector("[data-virtual-assistant-user-prompt-route-close]").addEventListener("click", () => userPromptRouteDialog.close());
     userPromptRouteDialog.querySelectorAll("[data-virtual-assistant-user-prompt-route-option]").forEach((option) => option.addEventListener("click", () => {
       userPromptRouteDialog.close();
@@ -1765,9 +1787,16 @@ function ensureVirtualAssistantChat() {
     else openUserPromptRouteDialog();
   };
 
-  const instrumentCatalog = (instrument) => instrument.serial.startsWith("SN") ? "Mass Spec Life Science" : "HPLC";
+  const instrumentCatalog = (instrument) => miInstrumentType(instrument);
   const overflowMarkup = (value) => `<span class="virtual-assistant-instrument-modal__overflow" data-va-overflow tabindex="0"><span>${value}</span><span class="virtual-assistant-instrument-modal__tooltip" role="tooltip" hidden>${value}</span></span>`;
-  const rowMarkup = (instrument, nested = false) => `<tr data-va-instrument-row ${nested ? "data-va-system-member" : ""} data-va-search="${instrument.serial} ${instrument.nickname} ${instrumentCatalog(instrument)} ${instrument.model}" data-va-catalog="${instrumentCatalog(instrument)}" data-va-model="${instrument.model}"><td><input type="radio" name="virtual-assistant-instrument" value="${instrument.serial}" ${selectedSerial === instrument.serial ? "checked" : ""} /></td><td>${nested ? '<img class="virtual-assistant-instrument-modal__branch" src="assets/icons/general/arrow/size=16px.svg" alt="" />' : ""}</td><td><img class="virtual-assistant-instrument-modal__instrument-image" src="assets/instruments/${instrument.image}" alt="" /></td><td>${overflowMarkup(instrument.serial)}</td><td>${overflowMarkup(instrument.nickname)}</td><td>${overflowMarkup(instrumentCatalog(instrument))}</td><td>${overflowMarkup(instrument.model)}</td></tr>`;
+  const rowMarkup = (instrument, systemKey = "") => {
+    const serial = aiEscapeHtml(instrument.serial);
+    const nickname = aiEscapeHtml(instrument.nickname || "—");
+    const catalog = aiEscapeHtml(instrumentCatalog(instrument));
+    const model = aiEscapeHtml(instrument.model);
+    const nested = Boolean(systemKey);
+    return `<tr data-va-instrument-row ${nested ? `data-va-system-member="${systemKey}"` : ""} data-va-search="${serial} ${nickname} ${catalog} ${model}" data-va-catalog="${catalog}" data-va-model="${model}"><td><input type="radio" name="virtual-assistant-instrument" value="${serial}" ${selectedSerial === instrument.serial ? "checked" : ""} /></td><td>${nested ? '<img class="virtual-assistant-instrument-modal__branch" src="assets/icons/general/arrow/size=16px.svg" alt="" />' : ""}</td><td><img class="virtual-assistant-instrument-modal__instrument-image" src="assets/instruments/${aiEscapeHtml(instrument.image)}" alt="" /></td><td>${overflowMarkup(serial)}</td><td>${overflowMarkup(nickname)}</td><td>${overflowMarkup(catalog)}</td><td>${overflowMarkup(model)}</td></tr>`;
+  };
   const wireVirtualAssistantInstrumentTooltips = () => {
     dialog.querySelectorAll("[data-va-overflow]").forEach((overflow) => {
       const tooltip = overflow.querySelector("[role='tooltip']");
@@ -1789,13 +1818,20 @@ function ensureVirtualAssistantChat() {
   };
   const renderInstrumentModal = (continuation = "route") => {
     const instruments = supportedInstruments();
-    const standalone = ["1009997", "1009998"].map((serial) => instruments.find((instrument) => instrument.serial === serial)).filter(Boolean);
-    const systemMembers = instruments.filter((instrument) => ["1009996", "1009999", "1009998", "1009997"].includes(instrument.serial));
-    const afterSystem = instruments.filter((instrument) => instrument.serial === "SN98356W");
-    dialog.innerHTML = `<form method="dialog" class="virtual-assistant-instrument-modal__content"><header><div><h2>Select instrument</h2><p>Below is your list of instruments supported by the Virtual Assistant. Select the instrument you’d like to ask about.</p></div><button type="button" data-virtual-assistant-instrument-close aria-label="Close"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><label class="virtual-assistant-instrument-modal__search"><input type="search" placeholder="Search by instrument serial number or nickname" data-virtual-assistant-instrument-search /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label><div class="virtual-assistant-instrument-modal__filter-host" data-va-filter-applied="catalog"></div><div class="virtual-assistant-instrument-modal__filter-host" data-va-filter-applied="model"></div><div class="virtual-assistant-instrument-modal__table-wrap"><table><colgroup><col class="virtual-assistant-instrument-modal__select-column" /><col class="virtual-assistant-instrument-modal__tree-column" /><col class="virtual-assistant-instrument-modal__image-column" /><col class="virtual-assistant-instrument-modal__serial-column" /><col class="virtual-assistant-instrument-modal__nickname-column" /><col class="virtual-assistant-instrument-modal__catalog-column" /><col class="virtual-assistant-instrument-modal__model-column" /></colgroup><thead><tr><th></th><th></th><th></th><th>Serial number</th><th>Nickname</th><th><div data-va-filter-trigger="catalog"></div></th><th><div data-va-filter-trigger="model"></div></th></tr></thead><tbody>${standalone.map((instrument) => rowMarkup(instrument)).join("")}<tr class="virtual-assistant-instrument-modal__system" data-va-system-row><td></td><td><button type="button" class="mi-row-chevron" data-virtual-assistant-system-toggle aria-expanded="true"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td>${overflowMarkup("System")}</td><td>${overflowMarkup("Apline")}</td><td>${overflowMarkup("LCMS")}</td><td>—</td></tr>${systemMembers.map((instrument) => rowMarkup(instrument, true)).join("")}${afterSystem.map((instrument) => rowMarkup(instrument)).join("")}</tbody></table></div><footer><button type="button" class="mi-dialog-button mi-dialog-button--secondary" data-virtual-assistant-instrument-add>Add new instrument</button><button type="button" class="mi-dialog-button mi-dialog-button--primary" data-virtual-assistant-instrument-continue disabled>Continue</button></footer></form>`;
+    const systems = supportedSystems();
+    const systemComponentSerials = new Set(systems.flatMap((system) => system.supportedComponents.map((instrument) => instrument.serial)));
+    const standalone = instruments.filter((instrument) => !systemComponentSerials.has(instrument.serial));
+    if (!instruments.some((instrument) => instrument.serial === selectedSerial)) selectedSerial = null;
+    const systemRows = systems.map((system, index) => {
+      const systemKey = `va-system-${index}`;
+      const systemSearch = aiEscapeHtml(`${system.nickname} ${system.typeCode}`);
+      return `<tr class="virtual-assistant-instrument-modal__system" data-va-system-row="${systemKey}" data-va-search="${systemSearch}"><td></td><td><button type="button" class="mi-row-chevron" data-virtual-assistant-system-toggle="${systemKey}" aria-expanded="true" aria-label="Collapse ${aiEscapeHtml(system.nickname)} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><img src="assets/icons/science/system/size=24px,%20style=mono.svg" alt="" /></td><td>${overflowMarkup("System")}</td><td>${overflowMarkup(aiEscapeHtml(system.nickname))}</td><td>${overflowMarkup(aiEscapeHtml(system.typeCode))}</td><td>—</td></tr>${system.supportedComponents.map((instrument) => rowMarkup(instrument, systemKey)).join("")}`;
+    }).join("");
+    const emptyRow = instruments.length ? "" : '<tr class="virtual-assistant-instrument-modal__empty"><td colspan="7">No supported instruments are currently linked to your account.</td></tr>';
+    dialog.innerHTML = `<form method="dialog" class="virtual-assistant-instrument-modal__content"><header><div><h2>Select instrument</h2><p>Below is your list of instruments supported by the Virtual Assistant. Select the instrument you’d like to ask about.</p></div><button type="button" data-virtual-assistant-instrument-close aria-label="Close"><img src="assets/icons/actions/close/size=24px, style=mono.svg" alt="" /></button></header><label class="virtual-assistant-instrument-modal__search"><input type="search" placeholder="Search by instrument serial number or nickname" data-virtual-assistant-instrument-search /><img src="assets/icons/actions/search/size=24px, style=mono.svg" alt="" /></label><div class="virtual-assistant-instrument-modal__filter-host" data-va-filter-applied="catalog"></div><div class="virtual-assistant-instrument-modal__filter-host" data-va-filter-applied="model"></div><div class="virtual-assistant-instrument-modal__table-wrap"><table><colgroup><col class="virtual-assistant-instrument-modal__select-column" /><col class="virtual-assistant-instrument-modal__tree-column" /><col class="virtual-assistant-instrument-modal__image-column" /><col class="virtual-assistant-instrument-modal__serial-column" /><col class="virtual-assistant-instrument-modal__nickname-column" /><col class="virtual-assistant-instrument-modal__catalog-column" /><col class="virtual-assistant-instrument-modal__model-column" /></colgroup><thead><tr><th></th><th></th><th></th><th>Serial number</th><th>Nickname</th><th><div data-va-filter-trigger="catalog"></div></th><th><div data-va-filter-trigger="model"></div></th></tr></thead><tbody>${standalone.map((instrument) => rowMarkup(instrument)).join("")}${systemRows}${emptyRow}</tbody></table></div><footer><button type="button" class="mi-dialog-button mi-dialog-button--secondary" data-virtual-assistant-instrument-add>Add new instrument</button><button type="button" class="mi-dialog-button mi-dialog-button--primary" data-virtual-assistant-instrument-continue disabled>Continue</button></footer></form>`;
     const appliedFilters = document.createElement("div");
     appliedFilters.className = "virtual-assistant-instrument-modal__applied-filters";
-    appliedFilters.dataset.virtualAssistantAppliedFilters = "";
+    appliedFilters.setAttribute("data-virtual-assistant-applied-filters", "");
     appliedFilters.hidden = true;
     dialog.querySelectorAll("[data-va-filter-applied]").forEach((host) => appliedFilters.append(host));
     appliedFilters.insertAdjacentHTML("beforeend", '<button class="sh-clear-filters" type="button" data-virtual-assistant-clear-filters hidden>Clear filter(s)</button>');
@@ -1816,32 +1852,42 @@ function ensureVirtualAssistantChat() {
       appliedFilters.hidden = !hasFilters;
       clearFiltersButton.hidden = !hasFilters;
     };
-    let systemExpanded = true;
+    const systemExpanded = new Map(systems.map((system, index) => [`va-system-${index}`, true]));
     const applyFilters = () => {
       const search = dialog.querySelector("[data-virtual-assistant-instrument-search]").value.trim().toLowerCase();
       const catalogValues = catalogFilter.values;
       const modelValues = modelFilter.values;
-      const matches = (row) => (!search || row.dataset.vaSearch.toLowerCase().includes(search)) && (!catalogValues.length || catalogValues.includes(row.dataset.vaCatalog)) && (!modelValues.length || modelValues.includes(row.dataset.vaModel));
-      dialog.querySelectorAll("[data-va-instrument-row]").forEach((row) => { row.hidden = !matches(row) || (row.hasAttribute("data-va-system-member") && !systemExpanded); });
-      const systemMembersVisible = [...dialog.querySelectorAll("[data-va-system-member]")].some((row) => matches(row));
-      dialog.querySelector("[data-va-system-row]").hidden = !systemMembersVisible;
+      const matchesColumnFilters = (row) => (!catalogValues.length || catalogValues.includes(row.dataset.vaCatalog)) && (!modelValues.length || modelValues.includes(row.dataset.vaModel));
+      dialog.querySelectorAll("[data-va-instrument-row]:not([data-va-system-member])").forEach((row) => {
+        row.hidden = !matchesColumnFilters(row) || (search && !row.dataset.vaSearch.toLowerCase().includes(search));
+      });
+      dialog.querySelectorAll("[data-va-system-row]").forEach((systemRow) => {
+        const key = systemRow.dataset.vaSystemRow;
+        const parentMatchesSearch = !search || systemRow.dataset.vaSearch.toLowerCase().includes(search);
+        const members = [...dialog.querySelectorAll(`[data-va-system-member="${key}"]`)];
+        const matchingMembers = members.filter((row) => matchesColumnFilters(row) && (parentMatchesSearch || row.dataset.vaSearch.toLowerCase().includes(search)));
+        systemRow.hidden = matchingMembers.length === 0;
+        members.forEach((row) => { row.hidden = !systemExpanded.get(key) || !matchingMembers.includes(row); });
+      });
     };
     dialog.querySelector("[data-virtual-assistant-instrument-search]").addEventListener("input", applyFilters);
     dialog.querySelector("[data-va-filter-applied='catalog']").addEventListener("multiselect-filter-change", () => { applyFilters(); updateAppliedFilters(); });
     dialog.querySelector("[data-va-filter-applied='model']").addEventListener("multiselect-filter-change", () => { applyFilters(); updateAppliedFilters(); });
     clearFiltersButton.addEventListener("click", () => { catalogFilter.clear(); modelFilter.clear(); });
-    dialog.querySelector("[data-virtual-assistant-system-toggle]").addEventListener("click", (event) => {
-      systemExpanded = !systemExpanded;
-      dialog.classList.toggle("is-system-collapsed", !systemExpanded);
-      event.currentTarget.setAttribute("aria-expanded", String(systemExpanded));
+    dialog.querySelectorAll("[data-virtual-assistant-system-toggle]").forEach((toggle) => toggle.addEventListener("click", (event) => {
+      const key = event.currentTarget.dataset.virtualAssistantSystemToggle;
+      const expanded = !systemExpanded.get(key);
+      systemExpanded.set(key, expanded);
+      event.currentTarget.setAttribute("aria-expanded", String(expanded));
+      event.currentTarget.setAttribute("aria-label", `${expanded ? "Collapse" : "Expand"} ${event.currentTarget.closest("tr").querySelector("td:nth-child(5)").innerText} system components`);
       applyFilters();
-    });
+    }));
     dialog.querySelector("[data-virtual-assistant-instrument-add]").addEventListener("click", () => { dialog.close(); panel.hidden = true; setRoute("add-instruments"); });
     continueButton.addEventListener("click", () => {
       if (!selectedSerial) return;
       dialog.close();
       if (continuation === "append") appendSelectedInstrumentToConversation();
-      else openPrototypeRouteDialog();
+      else renderSelected("liu-account");
     });
     wireVirtualAssistantInstrumentTooltips();
   };
@@ -10356,8 +10402,11 @@ const WHITE_GLOVE_ORDERS = [
 ];
 
 function getWhiteGloveItemStatus(orderNumber, status, index) {
-  if (!Object.hasOwn(INSTALLATION_SCHEDULE_DETAILS, index) || status === "default") return "—";
-  return status === "scheduled" ? "Install scheduled" : "Install complete";
+  const scenario = whiteGloveOrderStates.get(orderNumber)?.scenario || (status === "complete" ? "all-installed" : status === "scheduled" ? "some-scheduled" : "in-progress");
+  if (!Object.hasOwn(INSTALLATION_SCHEDULE_DETAILS, index) || scenario === "in-progress") return "—";
+  if (scenario === "some-scheduled") return "Install scheduled";
+  if (scenario === "some-installed") return index < 2 ? "Install complete" : "Install scheduled";
+  return "Install complete";
 }
 
 function createWhiteGloveItemRow(orderNumber, status, itemData, index) {
@@ -10387,6 +10436,8 @@ function renderWhiteGloveOrderState(order) {
   const completeNotice = order.querySelector("[data-wg-complete]");
   note.hidden = status === "complete";
   completeNotice.hidden = status !== "complete";
+  const orderStatus = order.querySelector("[data-wg-order-status]");
+  orderStatus.hidden = !state.scenarioSelected || state.scenario === "all-installed";
   const statusButton = order.querySelector("[data-open-installation-status-scenarios]");
   statusButton.setAttribute("aria-label", `Status: ${status === "default" ? "not scheduled" : status}. Open status change modal`);
 
@@ -10416,6 +10467,7 @@ function createWhiteGloveOrder({ number, orderedDate }) {
       <header class="wg-order-head">
         <button class="ins-order-toggle" type="button" data-wg-toggle aria-expanded="false" aria-controls="white-glove-details-${number}"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> ${number}</span></button>
         <span class="wg-premium" data-white-glove-tooltip tabindex="0" aria-label="White Glove order"><img src="assets/icons/general/premium/size=24px, style=bold.svg" alt="" /></span>
+        <span class="ins-badge ins-badge--success" data-wg-order-status hidden><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span>
         <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="${number}">Activity log</button>
       </header>
       <div class="wg-order-summary" data-wg-expanded hidden>
@@ -10471,7 +10523,7 @@ function getInstallationItemStatus(index) {
   const allStepsComplete = preferredDeliveryDatesSubmitted
     && deliveryChecklistSubmitted
     && submittedPreInstallChecklists.length === PREINSTALL_CHECKLISTS.length;
-  if (allStepsComplete) {
+  if (allStepsComplete || installationStatusScenario !== "in-progress") {
     const isApplicable = Object.hasOwn(INSTALLATION_SCHEDULE_DETAILS, index);
     if (!isApplicable || installationStatusScenario === "in-progress") return "—";
     if (installationStatusScenario === "some-scheduled") return "Install scheduled";
@@ -11728,4 +11780,5 @@ servicesHelpDialog.addEventListener("click", (event) => {
 });
 window.addEventListener("popstate", render);
 window.addEventListener("hashchange", render);
+ensurePrototypeFlowContext();
 render();
