@@ -3400,8 +3400,8 @@ const SUPPORT_HISTORY_COLUMNS = [
   { key: "closed", index: 12, label: "Closed date", width: 118 },
 ];
 const SUPPORT_HISTORY_FIXED_COLUMNS = [
-  { index: 0, width: 24 },
-  { index: 5, width: 40 },
+  { index: 0, width: 24, fixed: true },
+  { index: 5, width: 24, fixed: true },
 ];
 const supportHistoryVisibleColumns = new Set(SUPPORT_HISTORY_COLUMNS.map(({ key }) => key));
 function instrumentRowMarkup(instrument) {
@@ -7222,16 +7222,26 @@ function supportHistoryIndicatorMarkup(ticket) {
   </span>`;
 }
 
+function supportHistoryColumnValue(value) {
+  return String(value || "—");
+}
+
+function supportHistoryFilterOptions(items, key) {
+  return [...new Set(items.map((item) => supportHistoryColumnValue(item[key])))]
+    .sort((left, right) => left === "—" ? -1 : right === "—" ? 1 : left.localeCompare(right));
+}
+
 function supportHistoryRowMarkup(ticket) {
   const statusClass = ticket.status === "Open" ? "sh-status--open" : ticket.status === "In progress" ? "sh-status--progress" : "sh-status--closed";
-  return `<tr data-sh-row data-status="${ticket.status}" data-type="${ticket.type}" data-model="${ticket.model}" data-group="${ticket.group}" data-contact="${ticket.contact}" data-search="${supportHistorySearchText(ticket)}" data-created="${supportHistoryDateKey(ticket.created)}">
+  const group = supportHistoryColumnValue(ticket.group);
+  return `<tr data-sh-row data-status="${ticket.status}" data-type="${supportHistoryColumnValue(ticket.type)}" data-model="${supportHistoryColumnValue(ticket.model)}" data-group="${group}" data-contact="${supportHistoryColumnValue(ticket.contact)}" data-search="${supportHistorySearchText(ticket)}" data-created="${supportHistoryDateKey(ticket.created)}">
     <td>${supportHistoryIndicatorMarkup(ticket)}</td>
     <td><span class="sh-status ${statusClass}">${ticket.status}</span></td>
     <td><button class="sh-link" type="button" data-sh-ticket="${ticket.ticket}" data-sh-ticket-index="${SUPPORT_HISTORY_TICKETS.indexOf(ticket)}">${ticket.ticket}</button></td>
     <td>${supportHistoryOverflowMarkup(ticket, "type", ticket.type)}</td><td>${supportHistoryOverflowMarkup(ticket, "subject", ticket.subject)}</td><td>${supportHistorySystemsMarkup(ticket)}</td>
     <td><button class="sh-link" type="button" data-route="instrument-access">${ticket.serial}</button></td>
     <td>${supportHistoryOverflowMarkup(ticket, "model", ticket.model)}</td><td>${supportHistoryOverflowMarkup(ticket, "nickname", ticket.nickname)}</td>
-    <td title="${ticket.group}">${ticket.group ? `<button class="sh-link" type="button" data-sh-group>${ticket.group}</button>` : ""}</td>
+    <td title="${group}">${ticket.group ? `<button class="sh-link" type="button" data-sh-group>${ticket.group}</button>` : "—"}</td>
     <td>${supportHistoryOverflowMarkup(ticket, "contact", ticket.contact)}</td><td>${ticket.created}</td><td>${ticket.closed}</td>
   </tr>`;
 }
@@ -7266,10 +7276,12 @@ function applySupportHistoryColumnVisibility() {
   if (!table) return;
   const visibleColumns = SUPPORT_HISTORY_COLUMNS.filter(({ key }) => supportHistoryVisibleColumns.has(key));
   const activeColumns = [...SUPPORT_HISTORY_FIXED_COLUMNS, ...visibleColumns];
-  const totalWidth = activeColumns.reduce((sum, column) => sum + column.width, 0);
+  const fixedWidth = activeColumns.filter((column) => column.fixed).reduce((sum, column) => sum + column.width, 0);
+  const flexibleWeight = activeColumns.filter((column) => !column.fixed).reduce((sum, column) => sum + column.width, 0);
+  const flexibleWidth = table.clientWidth - fixedWidth;
   const applyColumn = (column, visible) => {
     const columnIndex = column.index + 1;
-    const width = visible ? `${(column.width / totalWidth) * 100}%` : "0";
+    const width = visible ? column.fixed ? `${column.width}px` : `${(column.width / flexibleWeight) * flexibleWidth}px` : "0";
     table.querySelector(`col:nth-child(${columnIndex})`).style.display = visible ? "" : "none";
     table.querySelector(`col:nth-child(${columnIndex})`).style.width = width;
     table.querySelectorAll(`tr > :nth-child(${columnIndex})`).forEach((cell) => { cell.hidden = !visible; });
@@ -7295,6 +7307,7 @@ function openSupportHistoryColumnDialog() {
 function otherRequestChildRowMarkup(parent, child) {
   const search = `${parent.type} ${child.type} ${child.details} ${parent.contact}`.toLowerCase();
   return `<tr class="sh-other-child-row" data-sh-other-row data-sh-other-child="${parent.id}" data-search="${search}">
+    <td></td>
     <td>${child.type}</td>
     <td title="${child.details}">${child.details}</td>
     <td><button class="sh-other-link" type="button" data-sh-other-instruments="${parent.id}" aria-label="View ${child.instruments} instruments for ${child.type}">${child.instruments}</button></td>
@@ -7305,9 +7318,10 @@ function otherRequestChildRowMarkup(parent, child) {
 function otherRequestRowMarkup(request, expanded) {
   const hasChildren = Boolean(request.children?.length);
   const search = [request.type, request.details, request.contact, ...(request.children || []).flatMap((child) => [child.type, child.details])].join(" ").toLowerCase();
-  const requestType = hasChildren ? `<button class="sh-other-toggle" type="button" aria-expanded="${expanded}" data-sh-other-toggle="${request.id}" aria-label="${expanded ? "Collapse" : "Expand"} ${request.type} requests"><img src="assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=16px, style=mono.svg" alt="" /><span>${request.type}</span></button>` : request.type;
+  const requestToggle = hasChildren ? `<button class="sh-other-toggle" type="button" aria-expanded="${expanded}" data-sh-other-toggle="${request.id}" aria-label="${expanded ? "Collapse" : "Expand"} ${request.type} requests"><img src="assets/icons/directions/chevron ${expanded ? "down" : "right"}/size=16px, style=mono.svg" alt="" /></button>` : "";
   const parent = `<tr data-sh-other-row data-sh-other-parent="${request.id}" data-search="${search}" data-type="${request.type}" data-contact="${request.contact}" data-created="${request.created}">
-    <td>${requestType}</td>
+    <td>${requestToggle}</td>
+    <td>${request.type}</td>
     <td title="${request.details}">${request.details}</td>
     <td>${request.instruments === "—" ? "—" : `<button class="sh-other-link" type="button" data-sh-other-instruments="${request.id}" aria-label="View ${request.instruments} instruments for ${request.type}">${request.instruments}</button>`}</td>
     <td>${request.contact}</td><td>${request.created}</td>
@@ -7339,8 +7353,23 @@ function wireRequestHistoryTabs() {
 function wireOtherRequests() {
   const tbody = app.querySelector("[data-sh-other-rows]");
   const searchInput = app.querySelector("[data-sh-other-search]");
-  const typeFilter = app.querySelector("[data-sh-other-type-filter]");
-  const contactFilter = app.querySelector("[data-sh-other-contact-filter]");
+  const typeFilterRoot = app.querySelector("[data-sh-other-type-filter]");
+  const contactFilterRoot = app.querySelector("[data-sh-other-contact-filter]");
+  const typeFilter = new window.MultiSelectFilter(typeFilterRoot, {
+    label: "Request type",
+    controlLabel: "Request ty...",
+    options: supportHistoryFilterOptions(SUPPORT_HISTORY_OTHER_REQUESTS, "type"),
+    controlHost: app.querySelector('[data-sh-other-column-filter-trigger="type"]'),
+    menuStyle: "figma-column",
+  });
+  const contactFilter = new window.MultiSelectFilter(contactFilterRoot, {
+    label: "Contact",
+    options: supportHistoryFilterOptions(SUPPORT_HISTORY_OTHER_REQUESTS, "contact"),
+    controlHost: app.querySelector('[data-sh-other-column-filter-trigger="contact"]'),
+    menuStyle: "figma-column",
+  });
+  const filters = [{ key: "type", root: typeFilterRoot, filter: typeFilter }, { key: "contact", root: contactFilterRoot, filter: contactFilter }];
+  const clearFiltersButton = app.querySelector("[data-sh-other-clear-filters]");
   const count = app.querySelector("[data-sh-other-count]");
   const datePickerRoot = app.querySelector("[data-sh-other-date-picker]");
   const expandedGroups = new Set(SUPPORT_HISTORY_OTHER_REQUESTS.filter((request) => request.children?.length).map((request) => request.id));
@@ -7353,13 +7382,10 @@ function wireOtherRequests() {
 
   const filteredRequests = () => {
     const query = searchInput.value.trim().toLowerCase();
-    const type = typeFilter.value;
-    const contact = contactFilter.value;
     return SUPPORT_HISTORY_OTHER_REQUESTS.filter((request) => {
       const search = [request.type, request.details, request.contact, ...(request.children || []).flatMap((child) => [child.type, child.details])].join(" ").toLowerCase();
       return (!query || search.includes(query))
-        && (!type || request.type === type)
-        && (!contact || request.contact === contact)
+        && filters.every(({ key, filter }) => filter.values.length === 0 || filter.values.includes(supportHistoryColumnValue(request[key])))
         && supportHistoryDateInRange(request.created, appliedStart, appliedEnd);
     });
   };
@@ -7375,8 +7401,8 @@ function wireOtherRequests() {
     }
     tbody.innerHTML = requests.map((request) => otherRequestRowMarkup(request, expandedGroups.has(request.id))).join("");
     tbody.querySelectorAll("[data-sh-other-child]").forEach((row) => { row.hidden = !expandedGroups.has(row.dataset.shOtherChild); });
-    const filtering = searchInput.value.trim() || typeFilter.value || contactFilter.value || (appliedStart && appliedEnd);
-    count.textContent = filtering ? String(requests.length) : "100";
+    count.textContent = String(requests.length);
+    clearFiltersButton.hidden = filters.every(({ filter }) => filter.values.length === 0);
   };
 
   tbody.addEventListener("click", (event) => {
@@ -7395,8 +7421,13 @@ function wireOtherRequests() {
     if (event.target.closest("[data-sh-other-instruments]")) openOtherRequestInstrumentsModal();
   });
   searchInput.addEventListener("input", renderRows);
-  typeFilter.addEventListener("change", renderRows);
-  contactFilter.addEventListener("change", renderRows);
+  filters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", renderRows));
+  filters.forEach(({ key, root }) => root.addEventListener("multiselect-filter-sort", (event) => {
+    sortKey = key;
+    sortDirection = event.detail.direction === "desc" ? -1 : 1;
+    renderRows();
+  }));
+  clearFiltersButton.addEventListener("click", () => filters.forEach(({ filter }) => filter.clear()));
   datePickerRoot.addEventListener("date-range-change", (event) => {
     appliedStart = event.detail.start;
     appliedEnd = event.detail.end;
@@ -7419,8 +7450,9 @@ function wireSupportHistory() {
   const statusFilter = new window.MultiSelectFilter(statusFilterRoot, {
     label: "Status",
     allLabel: "All",
-    options: ["Open", "In progress", "Closed"],
+    options: supportHistoryFilterOptions(SUPPORT_HISTORY_TICKETS, "status"),
     controlHost: statusFilterTriggerRoot,
+    menuStyle: "figma-column",
   });
   const columnFilterConfig = [
     { key: "type", label: "Ticket type" },
@@ -7431,7 +7463,7 @@ function wireSupportHistory() {
   const columnFilters = columnFilterConfig.map(({ key, label }) => {
     const root = app.querySelector(`[data-sh-${key}-filter]`);
     const controlHost = app.querySelector(`[data-sh-column-filter-trigger="${key}"]`);
-    const options = [...new Set(SUPPORT_HISTORY_TICKETS.map((ticket) => ticket[key]).filter(Boolean))];
+    const options = supportHistoryFilterOptions(SUPPORT_HISTORY_TICKETS, key);
     return { key, root, filter: new window.MultiSelectFilter(root, {
       label,
       controlLabel: key === "type" ? "Ticket t..." : label,
@@ -7472,10 +7504,11 @@ function wireSupportHistory() {
       row.hidden = !textMatches || !statusMatches || !columnMatches || !dateMatches;
       if (!row.hidden) visible += 1;
     });
-    app.querySelector("[data-sh-count]").textContent = query || statuses.length || (appliedStart && appliedEnd) ? String(visible) : "100";
+    app.querySelector("[data-sh-count]").textContent = String(visible);
     updateClearFilters();
   };
   renderRows();
+  filterRows();
   tbody.addEventListener("mouseover", (event) => {
     const trigger = event.target.closest("[data-sh-ticket-tip], [data-sh-system-tip], [data-sh-tooltip]");
     if (trigger && canShowSupportHistoryTooltip(trigger)) setSupportHistoryTooltip(trigger, true);
@@ -7503,6 +7536,12 @@ function wireSupportHistory() {
   app.querySelector("[data-sh-search]").addEventListener("input", filterRows);
   statusFilterRoot.addEventListener("multiselect-filter-change", filterRows);
   columnFilters.forEach(({ root }) => root.addEventListener("multiselect-filter-change", filterRows));
+  statusFilterRoot.addEventListener("multiselect-filter-sort", (event) => {
+    const direction = event.detail.direction === "desc" ? -1 : 1;
+    tickets.sort((left, right) => direction * String(left.status).localeCompare(String(right.status)));
+    renderRows();
+    filterRows();
+  });
   columnFilters.forEach(({ key, root }) => root.addEventListener("multiselect-filter-sort", (event) => {
     const direction = event.detail.direction === "desc" ? -1 : 1;
     tickets.sort((left, right) => direction * String(left[key]).localeCompare(String(right[key])));
