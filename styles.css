@@ -67,14 +67,14 @@ button {
    are beta-only and are not bundled with this static prototype, so these classes
    retain the documented structure and variants with native controls. */
 .native-dashboard {
-  --komodo-color-action-primary: #e7131a;
-  --komodo-color-action-primary-hover: #c81016;
-  --komodo-color-action-link: #0781d5;
+  --komodo-color-action-primary: #e71316;
+  --komodo-color-action-primary-hover: #c40003;
+  --komodo-color-action-link: #0071d0;
   --komodo-color-border-subtle: #d7d9dc;
   --komodo-color-surface-information: #edf8ff;
   --komodo-color-text: #28282d;
-  --komodo-radius-small: 3px;
-  --komodo-focus-ring: #0077c8;
+  --komodo-radius-small: 4px;
+  --komodo-focus-ring: #802eff;
 }
 
 .komodo-button { border-radius:var(--komodo-radius-small); font-weight:700; }
@@ -425,6 +425,55 @@ button {
   overflow: visible;
 }
 
+.topbar-sc__right { position: relative; }
+.topbar-sc__profile-menu {
+  position: absolute;
+  z-index: 120;
+  top: 48px;
+  right: 0;
+  width: 320px;
+  border-radius: 3px;
+  color: #1b1b1d;
+  background: #fff;
+  box-shadow: 0 2px 18px rgb(0 0 0 / 18%), 0 4px 6px rgb(0 0 0 / 10%);
+  font-size: 14px;
+}
+.topbar-sc__profile-menu[hidden] { display: none; }
+.mi-header__right > .topbar-sc__profile-menu { top: 64px; }
+.topbar-sc__profile-identity {
+  display: flex;
+  height: 56px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0 16px;
+}
+.topbar-sc__profile-initials { position: relative; display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; color: #fff; font-weight: 500; }
+.topbar-sc__profile-initials img { position: absolute; inset: 0; width: 34px; height: 34px; }
+.topbar-sc__profile-initials span { position: relative; line-height: 20px; }
+.topbar-sc__profile-identity a { color: #1b1b1d; font-weight: 500; text-decoration: none; }
+.topbar-sc__profile-row {
+  display: flex;
+  width: 100%;
+  height: 56px;
+  align-items: center;
+  border: 0;
+  padding: 0 16px;
+  color: #1b1b1d;
+  background: #fff;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+.topbar-sc__profile-row:hover,
+.topbar-sc__profile-row:focus-visible { background: #f7f7f7; }
+.topbar-sc__profile-row:focus-visible { outline: 2px solid #802eff; outline-offset: -2px; }
+.topbar-sc__storage { border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; padding: 24px 16px 18px; }
+.topbar-sc__storage-bar { display: block; height: 12px; border-radius: 6px; background: #f7f7f7; }
+.topbar-sc__storage > div { display: flex; justify-content: space-between; margin-top: 8px; color: #54545c; font-size: 11px; font-weight: 500; line-height: 12px; }
+.topbar-sc__storage button { height: 22px; border: 0; margin-top: 16px; padding: 0; color: #0071d0; background: transparent; font-size: 14px; font-weight: 700; line-height: 22px; cursor: pointer; }
+.topbar-sc__storage button:hover { color: #005daa; }
+
 .topbar-sc__badge {
   position: absolute;
   top: -9px;
@@ -472,7 +521,10 @@ button {
 }
 
 .mi-header__left { gap: 16px; }
-.mi-header__right { gap: 24px; }
+.mi-header__right {
+  position: relative;
+  gap: 24px;
+}
 
 .mi-icon-button {
   position: relative;
@@ -869,6 +921,7 @@ button {
 
 .mi-toolbar__view { position: absolute; right: 0; bottom: 0; display: flex; align-items: center; gap: 24px; }
 .mi-coverage-button { display: flex; width: 163px; height: 40px; align-items: center; gap: 8px; border: 1px solid #ccc; border-radius: 4px; padding: 0 16px; background: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+.mi-coverage-button[hidden] { display: none !important; }
 .mi-coverage-button img { width: 24px; height: 24px; filter: invert(48%) sepia(94%) saturate(3279%) hue-rotate(4deg) brightness(101%) contrast(102%); }
 .mi-view-toggle { display: flex; width: 112px; height: 40px; }
 .mi-view-toggle button { display: grid; width: 56px; height: 40px; place-items: center; border: 1px solid #ccc; border-radius: 4px 0 0 4px; padding: 0; background: #fff; cursor: pointer; }
@@ -1112,6 +1165,25 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .mi-secondary-table th,
 .mi-secondary-table td { height: 41px; border-bottom: 1px solid var(--mi-table-divider); padding: 0 16px; overflow: hidden; text-align: left; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap; }
 .mi-secondary-table th { height: 45px; border-bottom-color: var(--mi-table-divider); color: #2b2b30; background: #fff; font-weight: 500; }
+.mi-secondary-table th:has([data-mi-secondary-filter-trigger]) { overflow: visible; }
+.mi-secondary-table [data-mi-secondary-filter-trigger] .msf__control,
+.mi-secondary-table [data-mi-secondary-filter-trigger] .msf__trigger { width: 100%; }
+.mi-secondary-table [data-mi-secondary-filter-trigger] .msf__trigger {
+  height: 30px;
+  gap: 8px;
+  border: 1px solid #ccc;
+  padding: 0 8px;
+  color: #1b1b1d;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mi-secondary-table [data-mi-secondary-filter-trigger] .msf__trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mi-secondary-table [data-mi-secondary-filter-trigger] .msf__trigger img { width: 8px; height: 8px; }
+.mi-secondary-table [data-mi-secondary-filter-trigger] .msf__menu { z-index: 31; width: max-content; min-width: 200px; max-width: min(360px, calc(100vw - 64px)); overflow-x: hidden; }
+.mi-secondary-table-wrap:has(.msf__menu:not([hidden])) { position: relative; z-index: 32; overflow: visible; }
+.mi-secondary-applied-filters { width: 1320px; }
+.mi-secondary-applied-filters + .mi-secondary-table-wrap { margin-top: 24px; }
 .mi-table tr.is-new td,
 .mi-secondary-table tr.is-new td { background: #f4f4ff; }
 .mi-secondary-table tr.mi-child-row td { background: var(--mi-table-child); }
@@ -1224,9 +1296,13 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .mi-system-toggle img { transition: transform 160ms ease; }
 .mi-system-toggle[aria-expanded="false"] img { transform: rotate(-90deg); }
 .mi-branch img { width: 16px; height: 16px; opacity: .72; }
-.mi-segmented { display: flex; flex: 0 0 auto; gap: 8px; border: 1px solid #ccc; border-radius: 4px; padding: 4px; background: #fff; }
-.mi-segmented button { display: flex; height: 30px; align-items: center; gap: 8px; border: 0; border-radius: 4px; padding: 0 12px; color: #54545c; background: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
+.mi-segmented { display: flex; height: 40px; box-sizing: border-box; flex: 0 0 auto; align-items: center; gap: 8px; border: 0; border-radius: 4px; padding: 4px; background: #fff; box-shadow: inset 0 0 0 1px #ccc; }
+.mi-segmented button { display: flex; height: 32px; align-items: center; gap: 8px; border: 0; border-radius: 4px; padding: 0 12px; color: #54545c; background: transparent; font-size: 14px; font-weight: 500; line-height: 20px; cursor: pointer; }
+.mi-segmented button:hover:not(:disabled):not(.is-selected) { color: #1b1b1d; background: #f2f2f2; }
 .mi-segmented button.is-selected { color: #fff; background: #0071d0; }
+.mi-segmented button.is-selected:hover:not(:disabled) { background: #005daa; }
+.mi-segmented button:disabled { color: #92929e; background: #e5e5e5; cursor: not-allowed; }
+.mi-segmented button:focus-visible { position: relative; z-index: 1; outline: 2px solid #0071d0; outline-offset: 2px; }
 .mi-segmented i { width: 7px; height: 7px; border-radius: 50%; background: #ed1c24; }
 .mi-pending-top { height: 138px; }
 .mi-pending-top .mi-secondary-heading,
@@ -1316,17 +1392,21 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .mi-suggestions-table th:nth-child(1) { width: 52px; }.mi-suggestions-table th:nth-child(2) { width: 48px; }.mi-suggestions-table th:nth-child(3) { width: 72px; }.mi-suggestions-table th:nth-child(4) { width: 210px; }.mi-suggestions-table th:nth-child(5) { width: 302px; }.mi-suggestions-table th:nth-child(6) { width: 200px; }.mi-suggestions-table th:nth-child(7) { width: 200px; }.mi-suggestions-table th:nth-child(8) { width: 188px; }.mi-suggestions-table th:nth-child(9) { width: 48px; }
 .mi-suggestions-table td:nth-child(-n+3),
 .mi-suggestions-table td:last-child { padding: 0; text-align: center; }
-.mi-related-table th:nth-child(1) { width: 52px; }.mi-related-table th:nth-child(2) { width: 40px; }.mi-related-table th:nth-child(3) { width: 48px; }.mi-related-table th:nth-child(4) { width: 145px; }.mi-related-table th:nth-child(5) { width: 185px; }.mi-related-table th:nth-child(6) { width: 85px; }.mi-related-table th:nth-child(7) { width: 200px; }.mi-related-table th:nth-child(8) { width: 180px; }.mi-related-table th:nth-child(9) { width: 150px; }.mi-related-table th:nth-child(10) { width: 165px; }.mi-related-table th:nth-child(11) { width: 48px; }
+.mi-suggestions-table :is(th, td):nth-child(8),
+.mi-related-table :is(th, td):nth-child(10),
+.mi-invites-table :is(th, td):nth-child(9) { padding-right: 14px; padding-left: 14px; text-overflow: clip; }
+.mi-related-table th:nth-child(1) { width: 52px; }.mi-related-table th:nth-child(2) { width: 40px; }.mi-related-table th:nth-child(3) { width: 48px; }.mi-related-table th:nth-child(4) { width: 145px; }.mi-related-table th:nth-child(5) { width: 185px; }.mi-related-table th:nth-child(6) { width: 85px; }.mi-related-table th:nth-child(7) { width: 200px; }.mi-related-table th:nth-child(8) { width: 180px; }.mi-related-table th:nth-child(9) { width: 150px; }.mi-related-table th:nth-child(10) { width: 188px; }.mi-related-table th:nth-child(11) { width: 48px; }
 .mi-related-table td:nth-child(-n+3),
 .mi-related-table td:last-child { padding: 0; text-align: center; }
 .mi-invites-top { height: 128px; }
 .mi-invites-top .mi-secondary-heading { min-height: 76px; }
 .mi-shell .mi-select-all-link { align-self: flex-start; height: 22px; border: 0; padding: 0 8px; color: #0071d0; background: transparent; font-size: 14px; font-weight: 700; line-height: 22px; cursor: pointer; }
 .mi-invites-table-wrap { margin-top: 24px; }
-.mi-invites-table th:nth-child(1) { width: 52px; }.mi-invites-table th:nth-child(2) { width: 40px; }.mi-invites-table th:nth-child(3) { width: 48px; }.mi-invites-table th:nth-child(4) { width: 145px; }.mi-invites-table th:nth-child(5) { width: 330px; }.mi-invites-table th:nth-child(6) { width: 80px; }.mi-invites-table th:nth-child(7) { width: 195px; }.mi-invites-table th:nth-child(8) { width: 185px; }.mi-invites-table th:nth-child(9) { width: 165px; }.mi-invites-table th:nth-child(10) { width: 48px; }
+.mi-invites-table th:nth-child(1) { width: 52px; }.mi-invites-table th:nth-child(2) { width: 40px; }.mi-invites-table th:nth-child(3) { width: 48px; }.mi-invites-table th:nth-child(4) { width: 145px; }.mi-invites-table th:nth-child(5) { width: 330px; }.mi-invites-table th:nth-child(6) { width: 80px; }.mi-invites-table th:nth-child(7) { width: 195px; }.mi-invites-table th:nth-child(8) { width: 185px; }.mi-invites-table th:nth-child(9) { width: 188px; }.mi-invites-table th:nth-child(10) { width: 48px; }
 .mi-invites-table td:nth-child(-n+3),
 .mi-invites-table td:last-child { padding: 0; text-align: center; }
 .mi-invites-table td:nth-child(4) .mi-lock { margin-right: 8px; }
+.table-sort-icon { width: 16px; height: 16px; filter: brightness(0) saturate(100%) invert(80%) !important; }
 .mi-suggestion-ignore-dialog {
   width: min(600px, calc(100vw - 32px));
   height: 282px;
@@ -1829,7 +1909,7 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .sd-tabs > button:not(.sd-favorite) > span { display: grid; min-width: 18px; height: 18px; place-items: center; border-radius: 9px; padding: 0 5px; color: #fff; background: #e71316; font-size: 11px; font-weight: 700; line-height: 1; }
 .sd-tabs .sd-favorite { position: absolute; top: 0; right: 32px; color: #0071d0; }
 .sd-favorite img { width: 24px; height: 24px; filter: invert(37%) sepia(93%) saturate(2039%) hue-rotate(182deg) brightness(90%); }
-.sd-favorite[aria-pressed="true"] img { filter: invert(20%) sepia(78%) saturate(6038%) hue-rotate(352deg) brightness(98%); }
+.sd-favorite[aria-pressed="true"] img { filter: invert(37%) sepia(93%) saturate(2039%) hue-rotate(182deg) brightness(90%); }
 .sd-components { width: 1320px; margin: 64px 32px 120px; }
 .sd-components h2 { display: flex; gap: 8px; margin: 0; color: #1b1b1d; font-size: 22px; font-weight: 500; line-height: 28px; }
 .sd-components h2 span { color: #54545c; }
@@ -2267,19 +2347,56 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .rs-layout { display: grid; grid-template-columns: 870px 420px; gap: 30px; align-items: start; }
 .rs-request-list { display: grid; gap: 16px; }
 .rs-request { display: grid; min-height: 96px; grid-template-columns: minmax(0, 1fr) 206px; align-items: center; gap: 16px; border: 1px solid #d7d7d7; padding: 16px 20px; background: #fff; }
-.rs-request__copy h3, .rs-info-card h3, .rs-promo h3 { margin: 0; color: #242429; font-size: 20px; font-weight: 500; line-height: 28px; }
+.rs-request__copy h3 { margin: 0; color: #242429; font-size: 20px; font-weight: 500; line-height: 28px; }
 .rs-request__copy p { max-width: 570px; margin: 4px 0 0; color: #54545c; font-size: 16px; line-height: 26px; }
 .rs-request .mi-button { width: 206px; height: 40px; padding: 0 16px; color: var(--mi-blue); font-size: 14px; font-weight: 500; }
 .rs-aside { display: grid; gap: 16px; }
-.rs-promo, .rs-info-card { box-sizing: border-box; min-height: 112px; padding: 20px 24px; background: #eff8ff; }
-.rs-promo h3 { font-size: 32px; font-weight: 400; line-height: 40px; }
-.rs-promo p { margin: 8px 0 0; color: #242429; font-size: 14px; line-height: 20px; }
-.rs-promo small, .rs-info-card small { display: block; margin-top: 2px; color: #54545c; font-size: 12px; line-height: 18px; }
-.rs-promo button, .rs-info-card button { border: 0; padding: 0; color: var(--mi-blue); background: transparent; font: inherit; cursor: pointer; text-decoration: none; }
-.rs-info-card { min-height: 164px; border: 0; }
-.rs-info-card h3 { font-size: 32px; font-weight: 400; line-height: 40px; }
-.rs-info-card h3 strong, .rs-info-card p strong { font-weight: 700; }
-.rs-info-card p { margin: 7px 0 0; color: #242429; font-size: 14px; line-height: 20px; }
+.rs-promo-banner {
+  box-sizing: border-box;
+  width: 420px;
+  height: 337px;
+  border: 0;
+  padding: 32px;
+  color: #1b1b1d;
+  background: #f1f9ff;
+  box-shadow: inset 0 0 0 1px #f7f7f7;
+  word-break: break-word;
+}
+.rs-promo-banner:first-child { height: 226px; }
+.rs-promo-banner__main h3 {
+  max-width: 784px;
+  margin: 0;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 40px;
+  letter-spacing: 0;
+}
+.rs-promo-banner__main h3 strong { font-weight: 700; }
+.rs-promo-banner__main p {
+  margin: 0;
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+}
+.rs-promo-banner small {
+  display: block;
+  margin-top: 4px;
+  color: #54545c;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+.rs-promo-banner button {
+  border: 0;
+  padding: 0;
+  color: #0071d0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.rs-promo-banner button:hover { color: #005daa; }
 
 /* Instrument support selection — native implementation of Figma frames 8036:174500 and 8036:178325. */
 .screen--open-support-ticket { min-height: 100vh; background: #ececef; }
@@ -2905,7 +3022,7 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 
 .sh-other-table-wrap { width: 1320px; margin-top: 40px; overflow: hidden; }
 .sh-other-table { width: 1320px; border-collapse: collapse; table-layout: fixed; color: #2b2b30; font-size: 14px; line-height: 22px; }
-.sh-other-col-chevron { width: 24px; }.sh-other-col-type { width: 210px; }.sh-other-col-details { width: 541px; }.sh-other-col-instruments { width: 120px; }.sh-other-col-contact { width: 150px; }.sh-other-col-created { width: 140px; }.sh-other-col-action { width: 135px; }
+.sh-other-col-chevron { width: 24px; }.sh-other-col-type { width: 210px; }.sh-other-col-details { width: 532px; }.sh-other-col-instruments { width: 120px; }.sh-other-col-contact { width: 150px; }.sh-other-col-created { width: 140px; }.sh-other-col-action { width: 144px; }
 .sh-other-table th, .sh-other-table td { height: 41px; border-bottom: 1px solid #e5e5e5; padding: 0 16px; overflow: hidden; text-align: left; text-overflow: ellipsis; vertical-align: middle; white-space: nowrap; }
 .sh-other-table th { box-sizing: border-box; height: 45px; padding: 0 16px; font-weight: 500; }
 .sh-other-table :is(th, td):first-child { width: 24px; min-width: 24px; max-width: 24px; padding: 0; overflow: visible; text-align: center; text-overflow: clip; }
@@ -2926,6 +3043,7 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .mi-shell .sh-other-link { border: 0; padding: 0; color: #0071d0; background: transparent; font: inherit; font-weight: 400; text-decoration: none; cursor: pointer; }
 .mi-shell .sh-other-link:hover { text-decoration: underline; }
 .mi-shell .sh-other-details { width: 112px; height: 30px; padding: 0 16px; font-weight: 500; }
+.sh-other-table td:last-child { overflow: visible; text-overflow: clip; }
 
 /* Other request detail pages and instrument snapshot modal. */
 .screen--other-request-detail { min-height: 100vh; background: #ececef; }
@@ -3158,7 +3276,14 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .splan-heading p { margin: 8px 0 0; color: #54545c; font-size: 14px; line-height: 22px; }
 .splan-heading .splan-primary { width: 210px; height: 40px; border: 0; padding: 0 24px; color: #fff !important; background: var(--mi-red); }
 .splan-heading .splan-primary:hover { background: #c81016; }
-.splan-contact-grid { display: flex; gap: 32px; margin-top: 35px; }
+.splan-contact-grid { display: flex; width: 1320px; align-items: center; gap: 32px; margin-top: 40px; }
+.splan-contact-carousel__control { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; border: 0; padding: 0; color: #0071d0; background: transparent; cursor: pointer; }
+.splan-contact-carousel__control:hover { color: #005daa; }
+.splan-contact-carousel__control:focus-visible { border-radius: 2px; outline: 2px solid #005daa; outline-offset: 2px; }
+.splan-contact-carousel__control img { width: 24px; height: 24px; filter: brightness(0) saturate(100%) invert(32%) sepia(91%) saturate(1277%) hue-rotate(179deg) brightness(93%) contrast(101%); }
+.splan-contact-carousel__viewport { min-width: 0; flex: 1; margin-bottom: -64px; padding-bottom: 64px; overflow: hidden; }
+.splan-contact-carousel__track { display: flex; gap: 32px; transition: transform 220ms ease; }
+.splan-contact-carousel__track .splan-card { width: calc((100% - 96px) / 4); flex: 0 0 calc((100% - 96px) / 4); }
 .splan-approval-banner { display: flex; width: 1384px; height: 112px; align-items: center; justify-content: space-between; padding: 8px 56px 8px 32px; border-radius: 3px; background: #f1f9ff; }
 .splan-approval-banner__content { display: flex; min-width: 0; align-items: center; gap: 24px; }
 .splan-approval-banner__content > img { width: 96px; height: 96px; flex: 0 0 auto; padding: 9px 14px; object-fit: contain; }
@@ -3174,7 +3299,7 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .splan-approval-success__content p > img { width: 24px; height: 24px; margin-left: 2px; vertical-align: middle; filter: brightness(0) saturate(100%); }
 .splan-approval-success > button { display: flex; width: 40px; min-height: 99px; flex: 0 0 40px; align-items: flex-start; justify-content: center; border: 0; padding: 24px 16px 0 0; background: transparent; cursor: pointer; }
 .splan-approval-success > button img { width: 24px; height: 24px; }
-.splan-card { width: 306px; height: 189px; border-radius: 4px; overflow: hidden; background: #fff; }
+.splan-card { position: relative; width: 306px; height: 189px; border-radius: 4px; overflow: visible; background: #fff; }
 .splan-card__person { display: flex; height: 91px; align-items: flex-start; gap: 4px; border: 1px solid #ccc; border-bottom: 0; padding: 24px 16px; }
 .splan-card__person > img { width: 32px; height: 32px; flex: 0 0 auto; }
 .splan-card__person > div { min-width: 0; }
@@ -3186,6 +3311,15 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .splan-card > footer button > img { width: 16px; height: 16px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
 .splan-card > footer button:last-child img { width: 24px; height: 24px; }
 .splan-card > footer button > img.splan-card__edit-icon { filter: brightness(0) saturate(100%) invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
+.splan-contact-action { position: relative; display: inline-flex; width: 24px; height: 24px; }
+.splan-contact-action > button { display: grid !important; width: 24px; height: 24px; place-items: center; }
+.splan-contact-action__popover { position: absolute; z-index: 40; top: calc(100% + 10px); right: -16px; display: block; width: 224px; border: 1px solid #e5e5e5; border-radius: 3px; padding: 4px 0; background: #fff; box-shadow: 0 4px 6px rgb(0 0 0 / 16%); }
+.splan-contact-action__popover[hidden] { display: none; }
+.splan-contact-action__popover::before { position: absolute; top: -9px; right: 20px; width: 16px; height: 16px; border-top: 1px solid #e5e5e5; border-left: 1px solid #e5e5e5; background: #fff; content: ""; transform: rotate(45deg); }
+.splan-contact-action__popover > button { position: relative; z-index: 1; display: flex !important; width: 100%; height: 40px !important; align-items: center; border: 0; padding: 9px 16px !important; color: #1b1b1d !important; background: #fff; font-size: 14px !important; font-weight: 400 !important; line-height: 22px !important; text-align: left; white-space: nowrap; }
+.splan-contact-action__popover > button:hover, .splan-contact-action__popover > button:focus-visible { background: #f7f7f7; outline: none; }
+.splan-remove-contact-dialog .modal__body p { width: 504px; margin: 0; }
+.splan-remove-contact-dialog .modal__footer { gap: 16px; margin: 40px -16px -16px; }
 .splan-content { width: 1320px; margin: 0 32px; padding-top: 32px; }
 .splan-search { width: 642px; margin-bottom: 32px; }
 .splan-no-results { display: flex; width: 1320px; min-height: 348px; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #ccc; color: #2b2b30; background: #fff; }
@@ -3230,6 +3364,8 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .splan-table input[type="checkbox"]:checked { border-color: #0071d0; background: #0071d0 url("assets/icons/actions/checkmark/size=16px, style=bold.svg") center / 16px no-repeat; }
 .splan-table td button { max-width: 100%; border: 0; padding: 0; overflow: hidden; color: #0071d0; background: transparent; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .splan-row--group td { background: #fff; }
+.splan-plan-toggle { display: grid; width: 24px; height: 40px; place-items: center; border: 0; padding: 0; background: transparent; cursor: pointer; }
+.splan-plan-toggle img { width: 16px; height: 16px; }
 .splan-row--group td:nth-child(2) img { width: 16px; height: 16px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
 .splan-row--group strong { font-size: 16px; font-weight: 500; }
 .splan-row--child td { background: #f7f7f7; }
@@ -4134,6 +4270,7 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 
 .ai-banner__art { position: relative; display: block; flex: 0 0 96px; width: 96px; height: 96px; }
 .ai-banner__art > img { position: absolute; top: 11px; left: 13px; width: 76px; height: 74px; }
+.ai-banner__art > img[src$="related-systems-suggestion.png"] { top: 0; left: 0; width: 96px; height: 96px; }
 .ai-banner__art span { position: absolute; top: 8px; left: 46px; display: grid; height: 24px; place-items: center; border-radius: 10px; padding: 0 10px; color: #2c287a; background: #e8e7ff; font-size: 14px; font-weight: 500; line-height: 14px; }
 .ai-banner__copy { margin-left: 24px; }
 .ai-banner__copy h2 { margin: 0; font-size: 18px; font-weight: 500; line-height: 22px; }
@@ -4609,26 +4746,32 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .db-shortcuts img { display: block; width: 80px; height: 80px; flex: 0 0 80px; object-fit: contain; }
 .db-shortcuts strong { margin-left: 24px; color: #1b1b1d; font-size: 22px; font-weight: 500; line-height: 28px; }
 
-.db-promo { position: relative; display: grid; width: 1320px; height: 222px; grid-template-columns: 48px 1fr 218px 180px 48px; align-items: center; margin-top: 24px; padding: 0 16px; background: #f7f7f7; }
-.db-promo__arrow { display: grid; width: 32px; height: 40px; place-items: center; justify-self: center; }
-.db-promo__arrow img { width: 24px; height: 24px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
-.db-promo__copy h2 { margin: 0; font-size: 32px; font-weight: 300; line-height: 40px; }
+.db-promo { position: relative; display: flex; width: 1320px; height: 222px; align-items: center; gap: 32px; border: 1px solid #f7f7f7; margin-top: 24px; padding: 24px 40px; background: #f7f7f7; }
+.db-promo__arrow { display: grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; }
+.db-promo__arrow img { width: 24px; height: 24px; }
+.db-promo__arrow--previous img { filter: invert(73%) sepia(8%) saturate(195%) hue-rotate(202deg) brightness(92%) contrast(88%); }
+.db-promo__arrow--next img { filter: invert(35%) sepia(97%) saturate(1552%) hue-rotate(180deg) brightness(91%) contrast(101%); }
+.db-promo__content { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 48px; }
+.db-promo__copy { display: flex; min-width: 0; max-width: 960px; flex: 1 1 auto; flex-direction: column; align-items: flex-start; gap: 16px; }
+.db-promo__top { display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 4px; }
+.db-promo__copy h2 { width: 100%; max-width: 784px; margin: 0; color: #1b1b1d; font-size: 30px; font-weight: 300; line-height: 40px; }
 .db-promo__copy h2 strong { font-weight: 700; }
-.db-promo__copy p { margin: 4px 0 0; font-size: 14px; line-height: 22px; }
-.db-promo__copy small { color: #54545c; font-size: 12px; line-height: 18px; }
-.db-promo__copy label { display: flex; align-items: center; gap: 12px; margin-top: 16px; font-size: 12px; font-weight: 700; line-height: 18px; }
-.db-promo__copy input { appearance: none; width: 20px; height: 20px; margin: 0; border: 1px solid #ccc; background: #fff; }
-.db-promo__code { align-self: center; color: #54545c; font-size: 14px; line-height: 22px; }
-.db-promo__code b { color: #1b1b1d; }
-.db-promo__code a,
-.db-promo__code-text {
-  margin-left: 8px;
-  color: var(--mi-blue);
-}
-.db-promo__code img { width: 16px; height: 16px; margin-left: 2px; vertical-align: -3px; filter: invert(38%) sepia(91%) saturate(1542%) hue-rotate(177deg) brightness(91%) contrast(102%); }
-.db-promo__code p { margin: 8px 0 0; }
-.db-promo__order { width: 180px; height: 40px; }
-.db-promo__close { position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; color: #54545c !important; font-size: 28px !important; font-weight: 300; line-height: 20px !important; }
+.db-promo__copy p { width: 100%; margin: 0; color: #1b1b1d; font-size: 14px; font-weight: 500; line-height: 22px; }
+.db-promo__copy small { width: 100%; color: #54545c; font-size: 12px; font-weight: 400; line-height: 16px; }
+.db-promo__terms-link { color: #0071d0; }
+.db-promo__copy label { display: flex; align-items: center; gap: 12px; margin: 0; color: #1b1b1d; font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+.db-promo__copy input { appearance: none; width: 20px; height: 20px; flex: 0 0 20px; margin: 0; border: 1px solid #ccc; background: #fff; }
+.db-promo__code { display: flex; width: 182px; flex: 0 0 182px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
+.db-promo__code[hidden] { display: none; }
+.db-promo__code > div { display: flex; align-items: baseline; gap: 8px; color: #1b1b1d; font-size: 14px; line-height: 22px; }
+.db-promo__code strong { font-weight: 700; white-space: nowrap; }
+.db-promo__code > div > span { display: flex; align-items: center; gap: 4px; }
+.db-promo__code-text { color: #0071d0; font-size: 16px; font-weight: 400; line-height: 26px; white-space: nowrap; }
+.db-promo__code img { width: 16px; height: 16px; filter: invert(35%) sepia(97%) saturate(1552%) hue-rotate(180deg) brightness(91%) contrast(101%); }
+.db-promo__code p { width: 100%; margin: 0; color: #54545c; font-size: 14px; font-weight: 400; line-height: 22px; }
+.db-promo__order { width: auto; height: 40px; flex: 0 0 auto; padding-right: 24px !important; padding-left: 24px !important; white-space: nowrap; }
+.db-promo__close { position: absolute; top: 15px; right: 15px; display: grid; width: 16px; height: 16px; place-items: center; }
+.db-promo__close img { width: 16px; height: 16px; filter: invert(31%) sepia(8%) saturate(549%) hue-rotate(201deg) brightness(94%) contrast(88%); }
 
 .db-section { width: 1320px; margin-left: 32px; }
 .db-tickets { margin-top: 40px; }
@@ -4642,10 +4785,29 @@ img[src*="assets/icons/actions/more horizontal/"][src*="size=24px"] {
 .db-tabs em { display: inline-grid; min-width: 18px; height: 18px; place-items: center; border-radius: 9px; padding: 0 4px; color: #fff; background: #e71316; font-size: 11px; font-style: normal; line-height: 1; }
 .db-ticketbar { display: flex; height: 72px; align-items: end; justify-content: space-between; }
 .db-ticketbar h3 { margin: 0 0 4px; font-size: 22px; font-weight: 500; line-height: 28px; }
-.db-ticketbar label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; line-height: 22px; }
-.db-ticketbar select { width: 204px; height: 40px; border: 1px solid #ccc; border-radius: 0; padding: 0 16px; color: #a5a5ae; background: #fff; font-size: 14px; }
+.db-ticket-filter { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; line-height: 22px; }
+.db-ticket-filter[hidden] { display: none; }
+.db-ticket-filter__select { position: relative; width: 220px; font-weight: 400; }
+.db-ticket-filter__trigger { display: flex; width: 100%; height: 40px; align-items: center; justify-content: space-between; border: 1px solid #ccc !important; border-radius: 3px; padding: 0 16px !important; color: #1b1b1d; background: #fff !important; font-size: 14px; font-weight: 400; line-height: 22px; text-align: left; }
+.db-ticket-filter__trigger:hover { border-color: #92929e !important; }
+.db-ticket-filter__trigger[aria-expanded="true"] { border-color: #0071d0 !important; }
+.db-ticket-filter__trigger:focus-visible { outline: 2px solid #0071d0; outline-offset: 2px; }
+.db-ticket-filter__trigger img { width: 8px; height: 8px; flex: 0 0 8px; }
+.db-ticket-filter__menu { position: absolute; z-index: 50; top: 40px; right: 0; width: 100%; border: 1px solid #ccc; border-radius: 0 0 3px 3px; background: #fff; box-shadow: 0 4px 6px rgb(27 27 29 / 10%); }
+.db-ticket-filter__menu[hidden] { display: none; }
+.db-ticket-filter__menu button[hidden] { display: none; }
+.db-ticket-filter__menu button { display: flex; width: 100%; height: 40px; align-items: center; border: 0; padding: 0 16px; color: #1b1b1d; background: #fff; font-size: 14px; font-weight: 400; line-height: 22px; text-align: left; }
+.db-ticket-filter__menu button:hover,
+.db-ticket-filter__menu button:focus-visible { color: #1b1b1d; background: #f1f9ff; outline: 0; }
+.db-ticket-filter__menu button[aria-selected="true"] { font-weight: 500; background: #e5f4fe; }
 
 .db-table-wrap { margin-top: 40px; }
+.db-ticket-empty { display: flex; width: 1320px; height: 446px; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 3px; margin-top: 20px; background: #fff; }
+.db-ticket-empty > div { display: flex; width: 570px; flex-direction: column; align-items: center; color: #1b1b1d; text-align: center; }
+.db-ticket-empty__icon { display: grid; width: 152px; height: 152px; place-items: center; }
+.db-ticket-empty__icon img { width: 89px; height: 89px; }
+.db-ticket-empty h4 { margin: 0; font-size: 22px; font-weight: 500; line-height: 28px; }
+.db-ticket-empty p { margin: 16px 0 0; color: #54545c; font-size: 16px; line-height: 26px; }
 .db-table { width: 1320px; border-collapse: separate; border-spacing: 0; table-layout: fixed; color: #2b2b30; font-size: 14px; line-height: 22px; }
 .db-col-status { width: 164px; }.db-col-ticket { width: 140px; }.db-col-created { width: 140px; }.db-col-subject { width: 438px; }.db-col-system { width: 40px; }.db-col-serial { width: 202px; }.db-col-model { width: 196px; }
 .db-col-closed-status { width: 96px; }.db-col-closed-ticket { width: 140px; }.db-col-closed-date { width: 120px; }.db-col-closed-subject { width: 290px; }.db-col-closed-serial { width: 230px; }.db-col-closed-model { width: 220px; }.db-col-closed-actions { width: 184px; }
@@ -6500,7 +6662,7 @@ checklist-upload-note { display: block; width: 100%; }
 
 .screen--spc [data-spc-panel],
 .screen--spc .spc-summary-page {
-  margin-bottom: 40px;
+  margin-bottom: 48px;
 }
 
 .spc-card {
@@ -6532,30 +6694,57 @@ checklist-upload-note { display: block; width: 100%; }
 
 .spc-segmented {
   display: inline-flex;
-  min-width: 314px;
-  min-height: 42px;
+  width: max-content;
+  height: 40px;
+  min-width: 0;
+  box-sizing: border-box;
   align-items: center;
-  border: 1px solid #9fa3ad;
+  gap: 8px;
+  border: 0;
   border-radius: 4px;
-  padding: 3px;
+  padding: 4px;
   background: #fff;
+  box-shadow: inset 0 0 0 1px #ccc;
 }
 
 .spc-segmented button {
-  height: 34px;
+  height: 32px;
   border: 0;
-  border-radius: 3px;
-  padding: 0 14px;
-  color: #33343a;
+  border-radius: 4px;
+  padding: 0 12px;
+  color: #54545c;
   background: transparent;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
+  line-height: 20px;
   cursor: pointer;
 }
 
 .spc-segmented button.is-selected {
   color: #fff;
   background: #0071d0;
+}
+
+.spc-segmented button:hover:not(:disabled):not(.is-selected) {
+  color: #1b1b1d;
+  background: #f2f2f2;
+}
+
+.spc-segmented button.is-selected:hover:not(:disabled) {
+  background: #005daa;
+}
+
+.spc-segmented button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid #0071d0;
+  outline-offset: 2px;
+}
+
+.spc-segmented button:disabled {
+  color: #92929e;
+  background: #e5e5e5;
+  cursor: not-allowed;
 }
 
 .spc-search {
@@ -6603,18 +6792,7 @@ checklist-upload-note { display: block; width: 100%; }
 .spc-table-wrap {
   position: relative;
   margin-top: 44px;
-  overflow-x: auto;
-}
-
-.spc-table-wrap::after {
-  position: absolute;
-  top: 7px;
-  right: 10px;
-  width: 6px;
-  height: 126px;
-  border-radius: 6px;
-  background: #929292;
-  content: "";
+  overflow: visible;
 }
 
 .spc-table {
@@ -6654,6 +6832,36 @@ checklist-upload-note { display: block; width: 100%; }
 
 .spc-row--group strong {
   font-weight: 700;
+}
+
+.spc-group-toggle {
+  display: grid;
+  width: 34px;
+  height: 42px;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.spc-group-toggle img {
+  width: 16px;
+  height: 16px;
+}
+
+.spc-table td.spc-contact-cell {
+  font-size: 14px;
+  line-height: 22px;
+  text-align: left !important;
+}
+
+.spc-table .spc-row--group > td.spc-contact-cell {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: 43px;
+  padding: 0 10px;
 }
 
 .spc-row--child td {
@@ -7750,11 +7958,10 @@ checklist-upload-note { display: block; width: 100%; }
   margin-top: 32px;
 }
 
-.spc-summary-close {
-  min-width: 86px;
-}
-
 .spc-actionbar {
+  position: sticky;
+  z-index: 12;
+  bottom: 0;
   display: flex;
   flex: 0 0 auto;
   min-height: 78px;
@@ -7766,6 +7973,10 @@ checklist-upload-note { display: block; width: 100%; }
   border-bottom: 1px solid #dedede;
   padding: 0 34px;
   background: #f7f7f7;
+}
+
+.spc-actionbar[hidden] {
+  display: none;
 }
 
 .spc-actionbar__right {
@@ -7803,6 +8014,625 @@ checklist-upload-note { display: block; width: 100%; }
   color: #92929e;
   background: #ccc;
   cursor: not-allowed;
+}
+
+/* Komodo primary-red button compliance.
+   This adapter keeps the prototype's existing button markup while applying the
+   published Komodo regular-size geometry and interaction tokens consistently. */
+:root {
+  --komodo-primary-button-bg: #e71316;
+  --komodo-primary-button-bg-hover: #c40003;
+  --komodo-primary-button-label: #fff;
+  --komodo-primary-button-disabled-bg: #e5e5e5;
+  --komodo-primary-button-disabled-label: #92929e;
+  --komodo-primary-button-focus: #802eff;
+}
+
+:is(
+  .native-dashboard__request,
+  .signin-form button,
+  .komodo-button--primary,
+  .virtual-assistant-chat__select,
+  .mi-button--primary,
+  .mi-pending-actionbar__primary,
+  .mi-suggestion-ignore-dialog__primary,
+  .mi-dialog-button--primary,
+  .mi-edit-columns-modal > footer button:last-child,
+  .sd-primary,
+  .sd-confirm-submit,
+  .id-primary,
+  .splan-primary,
+  .service-plan-approval-modal__primary,
+  .platform-actionbar__button--primary,
+  .platform-actionbar-cancel-modal__confirm,
+  .ai-continue,
+  .modal__button--primary,
+  .installation-welcome-modal__footer button,
+  .add-user-order-modal__confirm,
+  .preferred-delivery-dates-modal__primary,
+  .delivery-checklist-upload-modal__submit,
+  .delivery-checklist-confirmation-modal__confirm,
+  .delivery-dates-confirmation-modal__confirm,
+  .delivery-dates-pause-modal__confirm,
+  .spc-button--primary
+) {
+  display: inline-flex !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  padding: 0 24px !important;
+  overflow: hidden;
+  color: var(--komodo-primary-button-label) !important;
+  background: var(--komodo-primary-button-bg) !important;
+  box-shadow: none;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+:is(
+  .native-dashboard__request,
+  .signin-form button,
+  .komodo-button--primary,
+  .virtual-assistant-chat__select,
+  .mi-button--primary,
+  .mi-pending-actionbar__primary,
+  .mi-suggestion-ignore-dialog__primary,
+  .mi-dialog-button--primary,
+  .mi-edit-columns-modal > footer button:last-child,
+  .sd-primary,
+  .sd-confirm-submit,
+  .id-primary,
+  .splan-primary,
+  .service-plan-approval-modal__primary,
+  .platform-actionbar__button--primary,
+  .platform-actionbar-cancel-modal__confirm,
+  .ai-continue,
+  .modal__button--primary,
+  .installation-welcome-modal__footer button,
+  .add-user-order-modal__confirm,
+  .preferred-delivery-dates-modal__primary,
+  .delivery-checklist-upload-modal__submit,
+  .delivery-checklist-confirmation-modal__confirm,
+  .delivery-dates-confirmation-modal__confirm,
+  .delivery-dates-pause-modal__confirm,
+  .spc-button--primary
+):not(:disabled):hover {
+  background: var(--komodo-primary-button-bg-hover) !important;
+}
+
+:is(
+  .native-dashboard__request,
+  .signin-form button,
+  .komodo-button--primary,
+  .virtual-assistant-chat__select,
+  .mi-button--primary,
+  .mi-pending-actionbar__primary,
+  .mi-suggestion-ignore-dialog__primary,
+  .mi-dialog-button--primary,
+  .mi-edit-columns-modal > footer button:last-child,
+  .sd-primary,
+  .sd-confirm-submit,
+  .id-primary,
+  .splan-primary,
+  .service-plan-approval-modal__primary,
+  .platform-actionbar__button--primary,
+  .platform-actionbar-cancel-modal__confirm,
+  .ai-continue,
+  .modal__button--primary,
+  .installation-welcome-modal__footer button,
+  .add-user-order-modal__confirm,
+  .preferred-delivery-dates-modal__primary,
+  .delivery-checklist-upload-modal__submit,
+  .delivery-checklist-confirmation-modal__confirm,
+  .delivery-dates-confirmation-modal__confirm,
+  .delivery-dates-pause-modal__confirm,
+  .spc-button--primary
+):not(:disabled):active {
+  background: var(--komodo-primary-button-bg-hover) !important;
+  box-shadow: inset 0 4px 4px rgb(0 0 0 / 25%) !important;
+}
+
+:is(
+  .native-dashboard__request,
+  .signin-form button,
+  .komodo-button--primary,
+  .virtual-assistant-chat__select,
+  .mi-button--primary,
+  .mi-pending-actionbar__primary,
+  .mi-suggestion-ignore-dialog__primary,
+  .mi-dialog-button--primary,
+  .mi-edit-columns-modal > footer button:last-child,
+  .sd-primary,
+  .sd-confirm-submit,
+  .id-primary,
+  .splan-primary,
+  .service-plan-approval-modal__primary,
+  .platform-actionbar__button--primary,
+  .platform-actionbar-cancel-modal__confirm,
+  .ai-continue,
+  .modal__button--primary,
+  .installation-welcome-modal__footer button,
+  .add-user-order-modal__confirm,
+  .preferred-delivery-dates-modal__primary,
+  .delivery-checklist-upload-modal__submit,
+  .delivery-checklist-confirmation-modal__confirm,
+  .delivery-dates-confirmation-modal__confirm,
+  .delivery-dates-pause-modal__confirm,
+  .spc-button--primary
+):focus-visible {
+  outline: 2px solid var(--komodo-primary-button-focus) !important;
+  outline-offset: 0 !important;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+
+:is(
+  .native-dashboard__request,
+  .signin-form button,
+  .komodo-button--primary,
+  .virtual-assistant-chat__select,
+  .mi-button--primary,
+  .mi-pending-actionbar__primary,
+  .mi-suggestion-ignore-dialog__primary,
+  .mi-dialog-button--primary,
+  .mi-edit-columns-modal > footer button:last-child,
+  .sd-primary,
+  .sd-confirm-submit,
+  .id-primary,
+  .splan-primary,
+  .service-plan-approval-modal__primary,
+  .platform-actionbar__button--primary,
+  .platform-actionbar-cancel-modal__confirm,
+  .ai-continue,
+  .modal__button--primary,
+  .installation-welcome-modal__footer button,
+  .add-user-order-modal__confirm,
+  .preferred-delivery-dates-modal__primary,
+  .delivery-checklist-upload-modal__submit,
+  .delivery-checklist-confirmation-modal__confirm,
+  .delivery-dates-confirmation-modal__confirm,
+  .delivery-dates-pause-modal__confirm,
+  .spc-button--primary
+):disabled {
+  outline: 1px solid var(--komodo-primary-button-disabled-bg) !important;
+  outline-offset: -1px !important;
+  color: var(--komodo-primary-button-disabled-label) !important;
+  background: var(--komodo-primary-button-disabled-bg) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* Komodo outline button compliance.
+   Existing page-specific classes remain in place so layout widths and button
+   roles are preserved; this adapter standardizes their visual states and maps
+   their former heights to Komodo small, regular, and large sizes. */
+:root {
+  --komodo-outline-button-bg: #fff;
+  --komodo-outline-button-border: #92929e;
+  --komodo-outline-button-label: #0071d0;
+  --komodo-outline-button-hover: #005daa;
+  --komodo-outline-button-disabled-bg: #e5e5e5;
+  --komodo-outline-button-disabled-label: #92929e;
+  --komodo-outline-button-focus: #802eff;
+}
+
+:is(
+  .komodo-button--outline,
+  .dashboard-toolbar button,
+  .flow-toolbar button,
+  .secondary-button,
+  .native-dashboard__pending,
+  .native-dashboard__order,
+  .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add,
+  .virtual-assistant-chat__match-actions button,
+  .mi-button:not(.mi-button--primary):not(.ai-continue):not(.platform-virtual-assistant):not(.db-titlebar__assistant):not(.ins-support):not(.mi-secondary-share),
+  .mi-pending-actionbar button:not(.mi-pending-actionbar__primary),
+  .mi-pending-zero button,
+  .mi-add-button,
+  .mi-suggestion-ignore-dialog footer button:not(.mi-suggestion-ignore-dialog__primary),
+  .mi-dialog-button--secondary,
+  .mi-edit-columns-modal > footer button:first-child,
+  .sd-actions > button:not(.sd-primary):not(.platform-virtual-assistant),
+  .sd-action-menu-wrap > button:not(.sd-primary),
+  .sd-search-results > button,
+  .sd-appslab button,
+  .id-more-actions,
+  .id-coverage-promo > button,
+  .id-contact-card header button,
+  .id-secondary,
+  .splan-approval-banner > button,
+  .service-plan-approval-modal__secondary,
+  .platform-actionbar .platform-actionbar__button:not(.platform-actionbar__button--primary):not(.platform-actionbar__button--link),
+  .ins-view,
+  .ai-small-button,
+  .db-banner__button,
+  .db-report-button,
+  .modal__button--secondary,
+  .add-user-order-modal__cancel,
+  .preferred-delivery-dates-modal__secondary,
+  .delivery-checklist-upload-modal__cancel,
+  .delivery-dates-confirmation-modal__edit,
+  .delivery-dates-pause-modal__cancel,
+  .spc-button--secondary
+) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  outline: 1px solid var(--komodo-outline-button-border) !important;
+  outline-offset: -1px !important;
+  color: var(--komodo-outline-button-label) !important;
+  background: var(--komodo-outline-button-bg) !important;
+  box-shadow: none;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease, outline-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* Regular is the default outline-button size. */
+:is(
+  .komodo-button--outline,
+  .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add,
+  .virtual-assistant-chat__match-actions button,
+  .mi-button:not(.mi-button--primary):not(.ai-continue):not(.platform-virtual-assistant):not(.db-titlebar__assistant):not(.ins-small-button):not(.ins-support):not(.ins-add-user):not(.mi-secondary-share),
+  .mi-pending-actionbar button:not(.mi-pending-actionbar__primary),
+  .mi-pending-zero button,
+  .mi-suggestion-ignore-dialog footer button:not(.mi-suggestion-ignore-dialog__primary),
+  .mi-dialog-button--secondary,
+  .mi-edit-columns-modal > footer button:first-child,
+  .sd-search-results > button,
+  .id-coverage-promo > button,
+  .id-contact-card header button,
+  .service-plan-approval-modal__secondary,
+  .platform-actionbar .platform-actionbar__button:not(.platform-actionbar__button--primary):not(.platform-actionbar__button--link),
+  .modal__button--secondary,
+  .add-user-order-modal__cancel,
+  .preferred-delivery-dates-modal__secondary,
+  .delivery-checklist-upload-modal__cancel,
+  .delivery-dates-confirmation-modal__edit,
+  .delivery-dates-pause-modal__cancel,
+  .spc-button--secondary
+) {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 24px !important;
+}
+
+/* Small outline buttons retain their compact role using Komodo's 32px size. */
+:is(
+  .dashboard-toolbar button,
+  .flow-toolbar button,
+  .secondary-button,
+  .native-dashboard__pending,
+  .native-dashboard__order,
+  .mi-add-button,
+  .mi-button.mi-button--small,
+  .mi-button.ins-small-button,
+  .mi-button.ins-add-user,
+  .sd-actions > button:not(.sd-primary):not(.platform-virtual-assistant),
+  .sd-action-menu-wrap > button:not(.sd-primary),
+  .sd-appslab button,
+  .id-more-actions,
+  .id-secondary,
+  .splan-approval-banner > button,
+  .ins-view,
+  .ai-small-button,
+  .db-banner__button,
+  .db-report-button
+) {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 16px !important;
+}
+
+#app .mi-button.mi-button--small {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 16px !important;
+}
+
+.komodo-button--outline.komodo-button--large,
+[data-komodo-button-variant="outline"][data-komodo-button-size="large"] {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-right: 24px !important;
+  padding-left: 24px !important;
+}
+
+:is(
+  .komodo-button--outline,
+  .dashboard-toolbar button,
+  .flow-toolbar button,
+  .secondary-button,
+  .native-dashboard__pending,
+  .native-dashboard__order,
+  .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add,
+  .virtual-assistant-chat__match-actions button,
+  .mi-button:not(.mi-button--primary):not(.ai-continue):not(.platform-virtual-assistant):not(.db-titlebar__assistant):not(.ins-support):not(.mi-secondary-share),
+  .mi-pending-actionbar button:not(.mi-pending-actionbar__primary),
+  .mi-pending-zero button,
+  .mi-add-button,
+  .mi-suggestion-ignore-dialog footer button:not(.mi-suggestion-ignore-dialog__primary),
+  .mi-dialog-button--secondary,
+  .mi-edit-columns-modal > footer button:first-child,
+  .sd-actions > button:not(.sd-primary):not(.platform-virtual-assistant),
+  .sd-action-menu-wrap > button:not(.sd-primary),
+  .sd-search-results > button,
+  .sd-appslab button,
+  .id-more-actions,
+  .id-coverage-promo > button,
+  .id-contact-card header button,
+  .id-secondary,
+  .splan-approval-banner > button,
+  .service-plan-approval-modal__secondary,
+  .platform-actionbar .platform-actionbar__button:not(.platform-actionbar__button--primary):not(.platform-actionbar__button--link),
+  .ins-view,
+  .ai-small-button,
+  .db-banner__button,
+  .db-report-button,
+  .modal__button--secondary,
+  .add-user-order-modal__cancel,
+  .preferred-delivery-dates-modal__secondary,
+  .delivery-checklist-upload-modal__cancel,
+  .delivery-dates-confirmation-modal__edit,
+  .delivery-dates-pause-modal__cancel,
+  .spc-button--secondary
+):not(:disabled):hover {
+  outline-color: var(--komodo-outline-button-hover) !important;
+  color: var(--komodo-outline-button-hover) !important;
+  background: var(--komodo-outline-button-bg) !important;
+}
+
+:is(
+  .komodo-button--outline,
+  .dashboard-toolbar button,
+  .flow-toolbar button,
+  .secondary-button,
+  .native-dashboard__pending,
+  .native-dashboard__order,
+  .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add,
+  .virtual-assistant-chat__match-actions button,
+  .mi-button:not(.mi-button--primary):not(.ai-continue):not(.platform-virtual-assistant):not(.db-titlebar__assistant):not(.ins-support):not(.mi-secondary-share),
+  .mi-pending-actionbar button:not(.mi-pending-actionbar__primary),
+  .mi-pending-zero button,
+  .mi-add-button,
+  .mi-suggestion-ignore-dialog footer button:not(.mi-suggestion-ignore-dialog__primary),
+  .mi-dialog-button--secondary,
+  .mi-edit-columns-modal > footer button:first-child,
+  .sd-actions > button:not(.sd-primary):not(.platform-virtual-assistant),
+  .sd-action-menu-wrap > button:not(.sd-primary),
+  .sd-search-results > button,
+  .sd-appslab button,
+  .id-more-actions,
+  .id-coverage-promo > button,
+  .id-contact-card header button,
+  .id-secondary,
+  .splan-approval-banner > button,
+  .service-plan-approval-modal__secondary,
+  .platform-actionbar .platform-actionbar__button:not(.platform-actionbar__button--primary):not(.platform-actionbar__button--link),
+  .ins-view,
+  .ai-small-button,
+  .db-banner__button,
+  .db-report-button,
+  .modal__button--secondary,
+  .add-user-order-modal__cancel,
+  .preferred-delivery-dates-modal__secondary,
+  .delivery-checklist-upload-modal__cancel,
+  .delivery-dates-confirmation-modal__edit,
+  .delivery-dates-pause-modal__cancel,
+  .spc-button--secondary
+):not(:disabled):active {
+  outline-color: var(--komodo-outline-button-hover) !important;
+  color: var(--komodo-outline-button-hover) !important;
+  box-shadow: inset 0 2px 5px rgb(34 34 34 / 20%) !important;
+}
+
+:is(
+  .komodo-button--outline,
+  .dashboard-toolbar button,
+  .flow-toolbar button,
+  .secondary-button,
+  .native-dashboard__pending,
+  .native-dashboard__order,
+  .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add,
+  .virtual-assistant-chat__match-actions button,
+  .mi-button:not(.mi-button--primary):not(.ai-continue):not(.platform-virtual-assistant):not(.db-titlebar__assistant):not(.ins-support):not(.mi-secondary-share),
+  .mi-pending-actionbar button:not(.mi-pending-actionbar__primary),
+  .mi-pending-zero button,
+  .mi-add-button,
+  .mi-suggestion-ignore-dialog footer button:not(.mi-suggestion-ignore-dialog__primary),
+  .mi-dialog-button--secondary,
+  .mi-edit-columns-modal > footer button:first-child,
+  .sd-actions > button:not(.sd-primary):not(.platform-virtual-assistant),
+  .sd-action-menu-wrap > button:not(.sd-primary),
+  .sd-search-results > button,
+  .sd-appslab button,
+  .id-more-actions,
+  .id-coverage-promo > button,
+  .id-contact-card header button,
+  .id-secondary,
+  .splan-approval-banner > button,
+  .service-plan-approval-modal__secondary,
+  .platform-actionbar .platform-actionbar__button:not(.platform-actionbar__button--primary):not(.platform-actionbar__button--link),
+  .ins-view,
+  .ai-small-button,
+  .db-banner__button,
+  .db-report-button,
+  .modal__button--secondary,
+  .add-user-order-modal__cancel,
+  .preferred-delivery-dates-modal__secondary,
+  .delivery-checklist-upload-modal__cancel,
+  .delivery-dates-confirmation-modal__edit,
+  .delivery-dates-pause-modal__cancel,
+  .spc-button--secondary
+):focus-visible {
+  outline: 2px solid var(--komodo-outline-button-focus) !important;
+  outline-offset: 0 !important;
+  box-shadow: inset 0 0 0 1px #fff !important;
+}
+
+:is(
+  .komodo-button--outline,
+  .dashboard-toolbar button,
+  .flow-toolbar button,
+  .secondary-button,
+  .native-dashboard__pending,
+  .native-dashboard__order,
+  .virtual-assistant-chat__assistant-response > .virtual-assistant-chat__account-add,
+  .virtual-assistant-chat__match-actions button,
+  .mi-button:not(.mi-button--primary):not(.ai-continue):not(.platform-virtual-assistant):not(.db-titlebar__assistant):not(.ins-support):not(.mi-secondary-share),
+  .mi-pending-actionbar button:not(.mi-pending-actionbar__primary),
+  .mi-pending-zero button,
+  .mi-add-button,
+  .mi-suggestion-ignore-dialog footer button:not(.mi-suggestion-ignore-dialog__primary),
+  .mi-dialog-button--secondary,
+  .mi-edit-columns-modal > footer button:first-child,
+  .sd-actions > button:not(.sd-primary):not(.platform-virtual-assistant),
+  .sd-action-menu-wrap > button:not(.sd-primary),
+  .sd-search-results > button,
+  .sd-appslab button,
+  .id-more-actions,
+  .id-coverage-promo > button,
+  .id-contact-card header button,
+  .id-secondary,
+  .splan-approval-banner > button,
+  .service-plan-approval-modal__secondary,
+  .platform-actionbar .platform-actionbar__button:not(.platform-actionbar__button--primary):not(.platform-actionbar__button--link),
+  .ins-view,
+  .ai-small-button,
+  .db-banner__button,
+  .db-report-button,
+  .modal__button--secondary,
+  .add-user-order-modal__cancel,
+  .preferred-delivery-dates-modal__secondary,
+  .delivery-checklist-upload-modal__cancel,
+  .delivery-dates-confirmation-modal__edit,
+  .delivery-dates-pause-modal__cancel,
+  .spc-button--secondary
+):disabled {
+  outline-color: var(--komodo-outline-button-disabled-bg) !important;
+  color: var(--komodo-outline-button-disabled-label) !important;
+  background: var(--komodo-outline-button-disabled-bg) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* Komodo filled-secondary button compliance.
+   These are supporting actions with more emphasis than outline buttons. */
+:root {
+  --komodo-secondary-button-bg: #54545c;
+  --komodo-secondary-button-bg-hover: #1b1b1d;
+  --komodo-secondary-button-label: #fff;
+  --komodo-secondary-button-disabled-bg: #e5e5e5;
+  --komodo-secondary-button-disabled-label: #92929e;
+  --komodo-secondary-button-focus: #802eff;
+}
+
+:is(
+  .komodo-button--secondary,
+  .mi-shell .ins-support,
+  .mi-secondary-content .mi-secondary-share,
+  .ai-bulk-review-all,
+  .sd-users-panel > header > button
+) {
+  display: inline-flex !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  outline: 0 !important;
+  padding: 0 24px !important;
+  overflow: hidden;
+  color: var(--komodo-secondary-button-label) !important;
+  background: var(--komodo-secondary-button-bg) !important;
+  box-shadow: none !important;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+:is(
+  .komodo-button--secondary.komodo-button--small,
+  .mi-shell .ins-support
+) {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 16px !important;
+}
+
+.komodo-button--secondary.komodo-button--large,
+[data-komodo-button-variant="secondary"][data-komodo-button-size="large"] {
+  height: 48px !important;
+  min-height: 48px !important;
+}
+
+:is(
+  .komodo-button--secondary,
+  .mi-shell .ins-support,
+  .mi-secondary-content .mi-secondary-share,
+  .ai-bulk-review-all,
+  .sd-users-panel > header > button
+):not(:disabled):hover {
+  background: var(--komodo-secondary-button-bg-hover) !important;
+}
+
+:is(
+  .komodo-button--secondary,
+  .mi-shell .ins-support,
+  .mi-secondary-content .mi-secondary-share,
+  .ai-bulk-review-all,
+  .sd-users-panel > header > button
+):not(:disabled):active {
+  background: var(--komodo-secondary-button-bg-hover) !important;
+  box-shadow: inset 0 4px 4px rgb(0 0 0 / 25%) !important;
+}
+
+:is(
+  .komodo-button--secondary,
+  .mi-shell .ins-support,
+  .mi-secondary-content .mi-secondary-share,
+  .ai-bulk-review-all,
+  .sd-users-panel > header > button
+):focus-visible {
+  outline: 2px solid var(--komodo-secondary-button-focus) !important;
+  outline-offset: 0 !important;
+  box-shadow: inset 0 0 0 1px #fff !important;
+}
+
+:is(
+  .komodo-button--secondary,
+  .mi-shell .ins-support,
+  .mi-secondary-content .mi-secondary-share,
+  .ai-bulk-review-all,
+  .sd-users-panel > header > button
+):disabled {
+  color: var(--komodo-secondary-button-disabled-label) !important;
+  background: var(--komodo-secondary-button-disabled-bg) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
 }
 
 .spc-footer {
@@ -7892,7 +8722,7 @@ checklist-upload-note { display: block; width: 100%; }
 }
 
 .toast--system {
-  --toast-accent: #01891e !important;
+  --toast-accent: #00a824 !important;
   width: fit-content;
 }
 
@@ -7957,6 +8787,12 @@ checklist-upload-note { display: block; width: 100%; }
   background: #00a824;
   -webkit-mask: url("assets/icons/notifications/success/size=24px, style=bold.svg") center / 24px 24px no-repeat;
   mask: url("assets/icons/notifications/success/size=24px, style=bold.svg") center / 24px 24px no-repeat;
+}
+
+/* A check mark denotes success. Keep it out of blue informational toasts so
+   every toast that displays the icon also uses the shared green accent. */
+.toast__icon[hidden] {
+  display: none;
 }
 
 .toast__icon img {
@@ -8271,8 +9107,12 @@ checklist-upload-note { display: block; width: 100%; }
 }
 
 .splan-top.platform-titlebar__deferred .splan-primary {
-  height: 30px;
-  padding: 0 40px;
+  width: auto;
+  min-width: 0;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding-right: 16px !important;
+  padding-left: 16px !important;
 }
 
 [data-platform-titlebar] h1 {
@@ -8630,4 +9470,525 @@ checklist-upload-note { display: block; width: 100%; }
   padding: 0 40px;
 }
 
-.is-platform-titlebar-compact > .sd-hero .sd-actions > .platform-virtual-assistant { min-width: 0; padding: 0 12px !important; }
+.is-platform-titlebar-compact > .sd-hero .sd-actions > .platform-virtual-assistant { min-width: 0; padding: 0 16px !important; }
+
+/* Header actions use the Komodo small size in both source and sticky
+   titlebars. */
+.is-platform-titlebar-compact > [data-platform-titlebar] :is(
+  [data-virtual-assistant],
+  [data-dashboard-virtual-assistant]
+),
+:is(
+  [data-platform-titlebar],
+  .iss-titlebar,
+  .isd-titlebar
+) :is(
+  [data-virtual-assistant],
+  [data-dashboard-virtual-assistant]
+) {
+  height: 32px !important;
+  min-height: 32px !important;
+  min-width: 0;
+  padding-right: 16px !important;
+  padding-left: 16px !important;
+}
+
+.is-platform-titlebar-compact > [data-platform-titlebar] :is(
+  .mi-button--primary,
+  .sd-primary
+)[data-route="request-support"],
+[data-platform-titlebar] :is(
+  .mi-button--primary,
+  .sd-primary
+)[data-route="request-support"] {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding-right: 16px !important;
+  padding-left: 16px !important;
+}
+
+.id-hero .mi-button--primary[data-route="request-support"] {
+  width: 180px;
+}
+
+.is-platform-titlebar-compact > .mi-titlebar .mi-titlebar__actions,
+.is-platform-titlebar-compact > .db-titlebar .db-titlebar__actions {
+  height: 32px;
+}
+
+/* Komodo badge compliance
+   Standard badges: regular 24px / condensed 20px. Count badges: 20px. */
+:root {
+  --komodo-badge-blue-bg: #dfeeff;
+  --komodo-badge-blue-text: #00399c;
+  --komodo-badge-gray-bg: #e5e5e5;
+  --komodo-badge-gray-text: #2b2b30;
+  --komodo-badge-green-bg: #d9fbe2;
+  --komodo-badge-green-text: #005512;
+  --komodo-badge-orange-bg: #ffddc2;
+  --komodo-badge-orange-text: #6c2501;
+  --komodo-badge-red-bg: #fde4e4;
+  --komodo-badge-red-text: #790000;
+  --komodo-count-blue: #0071d0;
+  --komodo-count-green: #01891e;
+  --komodo-count-orange: #f56a00;
+  --komodo-count-red: #e71316;
+}
+
+/* Regular standard badges. */
+:is(
+  .mi-status,
+  .mi-card-badge,
+  .mi-system-quickview__eyebrow > span,
+  .ai-banner__art > span,
+  .db-card--group > header > span:first-child,
+  .id-status,
+  .id-coverage-card > header > span,
+  .sd-ticket-status,
+  .sd-coverage-card > header > span,
+  .sh-status,
+  .pm-status,
+  .iss-status,
+  .isd-coverage dd > span,
+  .isd-coverage__facts > span,
+  .ost-review-status,
+  .splan-status,
+  .db-status,
+  .db-coverage,
+  .ins-badge,
+  .ins-action-card__head > span,
+  .ins-action-card__pause-status,
+  .ins-awaiting,
+  .ins-installation-state,
+  .shell-detail-status:not(.shell-detail-status--plain),
+  .shell-detail-support-table td > span,
+  .ts-state,
+  .delivery-checklist-details-badge
+) {
+  box-sizing: border-box;
+  height: 24px;
+  min-height: 24px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 1px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+:is(
+  .mi-status,
+  .mi-card-badge,
+  .mi-system-quickview__eyebrow > span,
+  .ai-banner__art > span,
+  .db-card--group > header > span:first-child,
+  .id-status,
+  .id-coverage-card > header > span,
+  .sd-ticket-status,
+  .sd-coverage-card > header > span,
+  .sh-status,
+  .pm-status,
+  .iss-status,
+  .isd-coverage dd > span,
+  .isd-coverage__facts > span,
+  .ost-review-status,
+  .splan-status,
+  .db-status,
+  .db-coverage,
+  .ins-badge,
+  .ins-action-card__head > span,
+  .ins-action-card__pause-status,
+  .ins-awaiting,
+  .ins-installation-state,
+  .shell-detail-status:not(.shell-detail-status--plain),
+  .shell-detail-support-table td > span,
+  .ts-state,
+  .delivery-checklist-details-badge
+) > img {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+/* Condensed standard badges. */
+:is(.mi-new-badge, .mi-user-role, .sd-role, .sd-activity-panel td:nth-child(2) > span) {
+  box-sizing: border-box;
+  height: 20px;
+  min-height: 20px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* Numeric count badges. */
+:is(
+  .topbar-sc__badge,
+  .mi-tabs button > span,
+  .sd-tabs > button:not(.sd-favorite) > span,
+  .id-tabs > button:not(.id-favorite) > span,
+  .db-tabs > button > em,
+  .mi-card-count,
+  .db-card--group dd > b
+) {
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  place-items: center;
+  border-radius: 12px;
+  padding: 2px 6px;
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+:is(
+  .topbar-sc__badge,
+  .mi-tabs button > span,
+  .sd-tabs > button:not(.sd-favorite) > span,
+  .id-tabs > button:not(.id-favorite) > span,
+  .db-tabs > button > em
+) {
+  background: var(--komodo-count-red);
+}
+
+/* Komodo standard semantic colors. */
+:is(.id-status--open, .sd-ticket-status--submitted, .sd-ticket-status--open, .sh-status--open, .pm-status--open, .db-status--open, .ins-badge--modified, .mi-user-role--admin, .sd-role--admin, .ts-state--open, .shell-ticket-status--open) {
+  color: var(--komodo-badge-blue-text);
+  background: var(--komodo-badge-blue-bg);
+}
+
+:is(.mi-card-badge, .mi-system-quickview__eyebrow > span, .db-card--group > header > span:first-child, .id-status--closed, .sd-ticket-status--closed, .sh-status--closed, .sd-role--user, .mi-user-role:not(.mi-user-role--admin), .ins-action-card__head > span, .db-status--closed, .ts-state--closed, .shell-ticket-status--closed) {
+  color: var(--komodo-badge-gray-text);
+  background: var(--komodo-badge-gray-bg);
+}
+
+:is(.mi-status--contract, .id-status--contract, .id-status--progress, .sd-ticket-status--progress, .sh-status--progress, .pm-status--contract, .splan-status--ok, .db-status--progress, .db-coverage, .ins-badge--success, .ins-installation-state--complete, .shell-detail-status--complete, .delivery-checklist-details-badge, .ost-review-status, .isd-coverage dd > span, .isd-coverage__facts > span, .sd-coverage-card > header > span, .id-coverage-card > header > span, .ts-state--in-progress, .ts-state--submitted, .shell-ticket-status--progress) {
+  color: var(--komodo-badge-green-text);
+  background: var(--komodo-badge-green-bg);
+}
+
+:is(.mi-status--soon, .id-status--testing, .pm-status--soon, .iss-status--soon, .ins-action-card__pause-status, .ins-installation-state--cancelled, .shell-detail-status--cancelled) {
+  color: var(--komodo-badge-orange-text);
+  background: var(--komodo-badge-orange-bg);
+}
+
+:is(.mi-status--expired, .id-status--expired, .pm-status--expired, .pm-status--neutral, .iss-status--expired, .splan-status--bad, .ins-badge--danger, .ins-awaiting, .shell-detail-status:not(.shell-detail-status--plain):not(.shell-detail-status--scheduled):not(.shell-detail-status--complete):not(.shell-detail-status--cancelled)) {
+  color: var(--komodo-badge-red-text);
+  background: var(--komodo-badge-red-bg);
+}
+
+/* Preserve the product's documented custom-purple meanings while using the
+   Komodo badge anatomy. */
+:is(.mi-new-badge, .sd-activity-panel td:nth-child(2) > span, .ai-banner__art > span, .ins-badge--new, .ins-installation-state--scheduled, .shell-detail-status--scheduled) {
+  color: #2c287a;
+  background: #e8e7ff;
+}
+
+.mi-card-badge {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.topbar-sc__badge {
+  top: -10px;
+  right: -10px;
+}
+
+.ts-titlebar .ts-titlebar__details .ts-state {
+  box-sizing: border-box;
+  height: 24px;
+  min-height: 24px;
+  padding: 1px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+/* Komodo selection-control and link compliance.
+   Checkbox and radio indicators are 20px within a 32px interaction row. */
+:root {
+  --komodo-link: #0071d0;
+  --komodo-link-hover: #005daa;
+  --komodo-control-border: #92929e;
+  --komodo-control-disabled-border: #ccc;
+  --komodo-control-disabled-surface: #e5e5e5;
+  --komodo-control-disabled-mark: #92929e;
+  --komodo-control-error: #e71316;
+}
+
+:root body :is(input[type="checkbox"], input[type="radio"]) {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex: 0 0 20px;
+  border: 1px solid var(--komodo-control-border);
+  margin: 0;
+  opacity: 1;
+  background-color: #fff;
+  background-image: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+:root body input[type="checkbox"] {
+  border-radius: 0;
+}
+
+:root body input[type="checkbox"]:checked {
+  border-color: var(--komodo-link);
+  background-color: var(--komodo-link);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='white' fill-rule='evenodd' clip-rule='evenodd' d='M22 3.71L19.53 2L9.12 17.01L4.32 11.12L2 13.01L9.31 22L11.09 19.44L22 3.71Z'/%3E%3C/svg%3E");
+  background-size: 16px 16px;
+}
+
+:root body input[type="checkbox"]:indeterminate {
+  border-color: var(--komodo-link);
+  background-color: var(--komodo-link);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='white' fill-rule='evenodd' clip-rule='evenodd' d='M22 10.564L21.99 13.5L2 13.436L2.01 10.5L22 10.564Z'/%3E%3C/svg%3E");
+  background-size: 16px 16px;
+}
+
+:root body input[type="radio"] {
+  border-radius: 50%;
+}
+
+:root body input[type="radio"]:checked {
+  border-color: var(--komodo-link);
+  background-color: #fff;
+  background-image: radial-gradient(circle at center, var(--komodo-link) 0 6px, transparent 6.5px);
+}
+
+:root body :is(input[type="checkbox"], input[type="radio"]):hover:not(:disabled) {
+  border-color: var(--komodo-link);
+}
+
+:root body :is(input[type="checkbox"], input[type="radio"]):focus-visible {
+  outline: 2px solid var(--komodo-link);
+  outline-offset: 2px;
+}
+
+:root body :is(input[type="checkbox"], input[type="radio"]):disabled {
+  border-color: var(--komodo-control-disabled-border);
+  opacity: 1;
+  background-color: var(--komodo-control-disabled-surface);
+  background-image: none;
+  cursor: not-allowed;
+}
+
+:root body input[type="checkbox"]:checked:disabled {
+  border-color: var(--komodo-control-disabled-surface);
+  background-color: var(--komodo-control-disabled-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%2392929e' fill-rule='evenodd' clip-rule='evenodd' d='M22 3.71L19.53 2L9.12 17.01L4.32 11.12L2 13.01L9.31 22L11.09 19.44L22 3.71Z'/%3E%3C/svg%3E");
+  background-size: 16px 16px;
+}
+
+:root body input[type="checkbox"]:indeterminate:disabled {
+  border-color: var(--komodo-control-disabled-surface);
+  background-color: var(--komodo-control-disabled-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%2392929e' fill-rule='evenodd' clip-rule='evenodd' d='M22 10.564L21.99 13.5L2 13.436L2.01 10.5L22 10.564Z'/%3E%3C/svg%3E");
+  background-size: 16px 16px;
+}
+
+:root body input[type="radio"]:checked:disabled {
+  border-color: #a5a5ae;
+  background-color: #fff;
+  background-image: radial-gradient(circle at center, #a5a5ae 0 6px, transparent 6.5px);
+}
+
+:root body :is(
+  input[type="checkbox"],
+  input[type="radio"]
+):is([aria-invalid="true"], .is-error, .has-error) {
+  border-color: var(--komodo-control-error);
+}
+
+:root body label:has(> :is(input[type="checkbox"], input[type="radio"])) {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  column-gap: 12px;
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+:root body label:has(> :is(input[type="checkbox"], input[type="radio"]):disabled) {
+  color: #70707a;
+  cursor: not-allowed;
+}
+
+/* Table-filter option labels are stacked rows, not inline checkbox labels. */
+:root body .msf__menu .msf__option {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  flex: 0 0 40px;
+}
+
+:root body .db-ticket-filter__menu {
+  max-height: 360px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Anchors and link-styled controls share the Komodo action-link palette. */
+:root body a:not([aria-disabled="true"]),
+:root body :is(
+  .ai-supported-link,
+  .db-card__text-link,
+  .flow-link,
+  .ins-action-card__activity-link,
+  .mi-link,
+  .mi-select-all-link,
+  .sh-link,
+  .sh-other-link,
+  .ts-link
+) {
+  color: var(--komodo-link) !important;
+}
+
+:root body a:not([aria-disabled="true"]):hover,
+:root body :is(
+  .ai-supported-link,
+  .db-card__text-link,
+  .flow-link,
+  .ins-action-card__activity-link,
+  .mi-link,
+  .mi-select-all-link,
+  .sh-link,
+  .sh-other-link,
+  .ts-link
+):hover {
+  color: var(--komodo-link-hover) !important;
+}
+
+/* Komodo information-button compliance.
+   Information buttons are neutral supporting actions and intentionally use
+   less emphasis than the blue outline-button variant. */
+:root {
+  --komodo-information-button-bg: #fff;
+  --komodo-information-button-border: #92929e;
+  --komodo-information-button-border-hover: #54545c;
+  --komodo-information-button-label: #54545c;
+  --komodo-information-button-disabled-bg: #e5e5e5;
+  --komodo-information-button-disabled-label: #92929e;
+  --komodo-information-button-focus: #802eff;
+}
+
+#app :is(
+  .komodo-button--information,
+  .mi-button--information,
+  [data-komodo-button-variant="information"]
+) {
+  display: inline-flex !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  outline: 1px solid var(--komodo-information-button-border) !important;
+  outline-offset: -1px !important;
+  padding: 0 24px !important;
+  overflow: hidden;
+  color: var(--komodo-information-button-label) !important;
+  background: var(--komodo-information-button-bg) !important;
+  box-shadow: none !important;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 22px !important;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: outline-color 150ms ease, box-shadow 150ms ease;
+}
+
+#app :is(
+  .komodo-button--information.komodo-button--small,
+  .mi-button--information.mi-button--small,
+  .mi-button--information.ins-activity,
+  [data-komodo-button-variant="information"][data-komodo-button-size="small"]
+) {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding-right: 16px !important;
+  padding-left: 16px !important;
+}
+
+#app :is(
+  .komodo-button--information.komodo-button--large,
+  .mi-button--information.mi-button--large,
+  [data-komodo-button-variant="information"][data-komodo-button-size="large"]
+) {
+  height: 48px !important;
+  min-height: 48px !important;
+  padding-right: 24px !important;
+  padding-left: 24px !important;
+}
+
+#app :is(
+  .komodo-button--information,
+  .mi-button--information,
+  [data-komodo-button-variant="information"]
+):not(:disabled):hover {
+  outline-color: var(--komodo-information-button-border-hover) !important;
+  color: var(--komodo-information-button-label) !important;
+  background: var(--komodo-information-button-bg) !important;
+}
+
+#app :is(
+  .komodo-button--information,
+  .mi-button--information,
+  [data-komodo-button-variant="information"]
+):not(:disabled):active {
+  outline-color: var(--komodo-information-button-border-hover) !important;
+  box-shadow: inset 0 2px 5px rgb(34 34 34 / 20%) !important;
+}
+
+#app :is(
+  .komodo-button--information,
+  .mi-button--information,
+  [data-komodo-button-variant="information"]
+):focus-visible {
+  outline: 2px solid var(--komodo-information-button-focus) !important;
+  outline-offset: 0 !important;
+  box-shadow: inset 0 0 0 1px #fff !important;
+}
+
+#app :is(
+  .komodo-button--information,
+  .mi-button--information,
+  [data-komodo-button-variant="information"]
+):disabled {
+  outline: 1px solid var(--komodo-information-button-disabled-bg) !important;
+  outline-offset: -1px !important;
+  color: var(--komodo-information-button-disabled-label) !important;
+  background: var(--komodo-information-button-disabled-bg) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* Order activity is available from the expanded order header only. */
+#app .ins-order:not(.is-expanded) .ins-activity {
+  display: none !important;
+}

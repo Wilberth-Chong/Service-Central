@@ -29,8 +29,22 @@ const miCoverageDialog = document.querySelector("#mi-coverage-dialog");
 const flowsGrid = document.querySelector("[data-flows-grid]");
 const toast = document.querySelector(".toast");
 const CONSUMABLES_SUPPORT_PORTAL_IMAGE = "assets/consumables/support-portal-login.png";
-const DEFAULT_INSTALLATION_USER_EMAIL = "holly.hartman@company.com";
+const LOGGED_IN_USER = Object.freeze({
+  firstName: "My",
+  lastName: "Name",
+  fullName: "My Name",
+  email: "my_name.lastname@company.com",
+  phone: "123 456789",
+});
+const LOGGED_IN_USER_CONTACT = Object.freeze({
+  firstName: LOGGED_IN_USER.firstName,
+  lastName: LOGGED_IN_USER.lastName,
+  email: LOGGED_IN_USER.email,
+  phone: LOGGED_IN_USER.phone,
+});
+const DEFAULT_INSTALLATION_USER_EMAIL = LOGGED_IN_USER.email;
 let toastTimer;
+let miCoverageAlertDismissed = false;
 let preferredDeliveryDatesSubmitted = false;
 let preferredDeliveryDateValues = { earliest: "", latest: "" };
 let deliveryReminderPauseDays = "";
@@ -309,6 +323,7 @@ const ROUTES = {
   "open-support-ticket-review": { title: "Open a support ticket — review and submit", src: "assets/flows/instrument-support-selection.png", width: 1440, height: 1460, kind: "app" },
   notifications: { title: "Notification settings", src: "assets/flows/notifications.png", width: 1440, height: 2200, kind: "app" },
   consumables: { title: "Consumables", src: "assets/flows/consumables.png", width: 1440, height: 2200, kind: "app" },
+  "consumables-support-portal": { title: "Consumables support portal", src: CONSUMABLES_SUPPORT_PORTAL_IMAGE, width: 2446, height: 1610, kind: "external" },
   education: { title: "Browse education", src: "assets/flows/browser-education.png", width: 2878, height: 1826, kind: "external" },
   "korea-education": { title: "Browse education", src: "assets/flows/korea-education.png", width: 1291, height: 1309, kind: "external" },
   "ticket-detail": { title: "Support ticket detail", src: "assets/flows/ticket-detail.png", width: 1456, height: 2069, kind: "app" },
@@ -516,8 +531,8 @@ const DASHBOARD_HOTSPOTS = [
   { label: "Search instruments, groups and tickets", route: "my-instruments", x: 84, y: 329, w: 1272, h: 52 },
   { label: "Order consumables", route: "consumables", x: 88, y: 452, w: 304, h: 128 },
   { label: "Browse education", route: "education", x: 426, y: 452, w: 304, h: 128 },
-  { label: "Request service plan", x: 764, y: 452, w: 304, h: 128 },
-  { label: "Request maintenance or support", route: "request-support", x: 1102, y: 452, w: 304, h: 128 },
+  { label: "Request service plan", route: "request-serviceplan", x: 764, y: 452, w: 304, h: 128 },
+  { label: "Request maintenance or support", route: "request-pm", x: 1102, y: 452, w: 304, h: 128 },
   { label: "Request history", route: "support-history", x: 365, y: 870, w: 235, h: 42 },
   { label: "View all my instruments", route: "my-instruments", x: 360, y: 1846, w: 240, h: 42 },
 ];
@@ -1616,7 +1631,7 @@ function ensureVirtualAssistantChat() {
     selectedView = false;
     promptScenario = 2;
     panel.classList.remove("virtual-assistant-chat--selected");
-    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__welcome"><h2>Hi John, how can I assist you with your <strong>Chromatography and Mass Spectrometry instruments?</strong></h2><p>I can help you find manual(s), explore the manual(s), fix error(s), or walk you through setup and troubleshooting.</p><p>I’m continuously learning and expanding my capabilities, so you’ll see new features and content added over time to better support you.</p><p>To get started, please <strong>select the instrument</strong> you’d like help with using the button below.</p><button class="virtual-assistant-chat__select" type="button" data-virtual-assistant-chat-select-instrument>Select instrument</button></div>`;
+    panel.querySelector("[data-virtual-assistant-chat-body]").innerHTML = `<div class="virtual-assistant-chat__welcome"><h2>Hi ${LOGGED_IN_USER.fullName}, how can I assist you with your <strong>Chromatography and Mass Spectrometry instruments?</strong></h2><p>I can help you find manual(s), explore the manual(s), fix error(s), or walk you through setup and troubleshooting.</p><p>I’m continuously learning and expanding my capabilities, so you’ll see new features and content added over time to better support you.</p><p>To get started, please <strong>select the instrument</strong> you’d like help with using the button below.</p><button class="virtual-assistant-chat__select" type="button" data-virtual-assistant-chat-select-instrument>Select instrument</button></div>`;
     panel.querySelector("[data-virtual-assistant-chat-select-instrument]").addEventListener("click", () => openInstrumentModal("route"));
   };
 
@@ -1951,7 +1966,17 @@ function openVirtualAssistantChat() {
   collapseControl.setAttribute("aria-expanded", "true");
 }
 
+const TABLE_SORT_ICON_SRC = "assets/icons/actions/arrows/Size=16px, Style=Bold.svg";
+
+function standardizeTableSortIcons(scope = document) {
+  scope.querySelectorAll('table thead img[src*="assets/icons/actions/arrows/Size=16px"]').forEach((icon) => {
+    icon.src = TABLE_SORT_ICON_SRC;
+    icon.classList.add("table-sort-icon");
+  });
+}
+
 function wireRouteControls(scope = app) {
+  standardizeTableSortIcons(scope);
   hideMiUsersTooltip();
   ensureFlowToolbarHistoryControls(scope);
   const virtualAssistantButton = '<button class="mi-button platform-virtual-assistant" type="button" data-virtual-assistant><span>Virtual Assistant</span><img src="assets/icons/assistant-icon.svg" alt="" /></button>';
@@ -2014,7 +2039,7 @@ function wireSignIn() {
   app.querySelector("[data-help]").addEventListener("click", () => helpDialog.showModal());
 }
 
-const DASHBOARD_SORT_ICON = '<img src="assets/icons/actions/arrows/Size=16px, Style=Mono.svg" alt="" />';
+const DASHBOARD_SORT_ICON = `<img class="table-sort-icon" src="${TABLE_SORT_ICON_SRC}" alt="" />`;
 const DASHBOARD_SYSTEM_ICON = "assets/icons/science/system/size=24px,%20style=mono.svg";
 const DASHBOARD_VISIT_ICON = "assets/icons/general/scheduled%20service/size=24px,%20style=mono.svg";
 const DASHBOARD_DOWNLOAD_ICON = "assets/icons/actions/download/Size=16px, Style=Mono.svg";
@@ -2024,26 +2049,102 @@ const DASHBOARD_BANNERS = [
     body: "Review and add the suggested instruments to your account.",
     action: "Go to suggestions",
     image: "assets/instruments/add-instruments-suggestion.svg",
+    tab: "suggestions",
+    section: "support",
   },
   {
     title: "6 related system(s) suggested",
     body: "Review the system(s) and add or ignore.",
     action: "Go to suggestions",
-    image: "assets/dashboard/related-systems-suggestion.svg",
+    image: "assets/dashboard/related-systems-suggestion.png",
+    tab: "suggestions",
+    section: "related",
   },
   {
     title: "3 instrument(s) access requests awaiting your approval",
     body: "Review the instrument(s) and approve or deny.",
     action: "Go to pending",
     image: "assets/instruments/add-instruments-suggestion.svg",
+    tab: "pending",
+    section: "awaiting",
   },
   {
     title: "5 instrument(s) shared with you",
     body: "Review and add instruments to your account.",
     action: "Go to pending",
     image: "assets/instruments/add-instruments-suggestion.svg",
+    tab: "pending",
+    section: "shared",
   },
 ];
+
+const DASHBOARD_PROMOTIONS = [
+  {
+    title: 'Save 35% on your next <strong>reversed phase column</strong>',
+    description: "Save now on your next C18, phenyl or other reversed phase column.",
+    terms: "Promo expires 29 Mar 2024. Applicable for online orders on analytical columns.",
+    code: "XXX35",
+    action: "Order consumables",
+    route: "consumables",
+  },
+  {
+    title: 'Save up to 35% on <strong>eLearning</strong> courses',
+    description: "25% off one eLearning course or 35% off two or more courses with code.",
+    terms: "Promo expires 27 Mar 2024. Visit thermofisher.com/IESpromo for terms.",
+    code: "RCMDL2",
+    action: "Browse education",
+    route: "education",
+  },
+  {
+    title: 'Maximize instrument uptime with <strong>preventive care</strong>',
+    description: "Claim your discount today on an on-site PM visit.",
+    terms: "Promo expires 30 Jun 2024. Restrictions may apply.",
+    code: "",
+    action: "Request a PM quote",
+    route: "request-pm",
+  },
+  {
+    title: '<strong>Chemicals</strong> 15% ipsum dolor amet, consectetur adipiscing elit. Vestibulum sodales velit ins',
+    description: "Lorem 10% ipsum dolor amet, consectetur adipiscing elit. Vestibulum sodales velit in sapien egestasc",
+    terms: 'Promo expires 30 Jun 2024. Lorem 10% ipsum dolor amet, consectetur adipiscing elit. Vestibulum sodales velit in sapien egestas commodo. Proin ultrices, est nec lacinia convallis, nisl orci elementum blandit. <span class="db-promo__terms-link">See terms and conditions.</span>',
+    code: "XXXXXXX",
+    action: "Browse chemicals",
+    route: "consumables",
+    scrollTarget: ".cons-chemicals",
+  },
+];
+
+function openDashboardPromotion(promotion) {
+  setRoute(promotion.route);
+  if (!promotion.scrollTarget) return;
+  window.requestAnimationFrame(() => {
+    const target = document.querySelector(promotion.scrollTarget);
+    if (!target) return;
+    const pageScroller = target.closest(".platform-page-body");
+    if (pageScroller) {
+      pageScroller.scrollTo({
+        top: pageScroller.scrollTop + target.getBoundingClientRect().top - pageScroller.getBoundingClientRect().top,
+        left: 0,
+        behavior: "smooth",
+      });
+      return;
+    }
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+  });
+}
+
+function openInstrumentBannerDestination(banner) {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.hash = "#my-instruments";
+  nextUrl.searchParams.set("instruments-tab", banner.tab);
+  nextUrl.searchParams.set("instruments-section", banner.section);
+  window.history.pushState({
+    fromRoute: routeFromHash(),
+    instrumentsTab: banner.tab,
+    instrumentsSection: banner.section,
+  }, "", nextUrl);
+  render();
+}
 
 const DASHBOARD_CARD_ICONS = {
   favorite: "assets/icons/commerce/rating/Size=16px,%20Style=Bold.svg",
@@ -2351,8 +2452,13 @@ function wireDashboard() {
   const tableWrap = app.querySelector("[data-db-ticket-table]");
   const pagination = app.querySelector("[data-db-ticket-pagination]");
   const filter = app.querySelector("[data-db-ticket-filter]");
+  const filterTrigger = filter?.querySelector("[data-db-ticket-filter-trigger]");
+  const filterValue = filter?.querySelector("[data-db-ticket-filter-value]");
+  const filterMenu = filter?.querySelector("[data-db-ticket-filter-menu]");
+  const filterOptions = [...(filterMenu?.querySelectorAll("[data-db-ticket-status]") || [])];
   const ticketCount = app.querySelector("[data-ticket-count]");
   const activeTableMarkup = tableWrap?.innerHTML || "";
+  let selectedTicketStatus = "All status";
   const ticketTables = {
     active: { count: "16 active tickets", markup: activeTableMarkup, showFilter: true, showPagination: true },
     closed: { count: "8 tickets closed within the last 30 days", markup: renderDashboardClosedTicketTable() },
@@ -2371,13 +2477,75 @@ function wireDashboard() {
     const ticket = dashboardTicketDataFromRow(ticketLink.closest("tr"));
     setRoute(summaryRouteForTicket(ticket), ticket);
   });
+  const setFilterOpen = (open) => {
+    if (!filterTrigger || !filterMenu) return;
+    filterTrigger.setAttribute("aria-expanded", String(open));
+    filterTrigger.querySelector("img").src = `assets/icons/directions/chevron ${open ? "up" : "down"}/size=8px, style=bold.svg`;
+    filterMenu.hidden = !open;
+  };
+  const ticketStatusMatches = (row, status) => row.querySelector(".db-status")?.textContent.trim().toLowerCase() === status.toLowerCase();
+  const emptyTicketStateMarkup = () => `<section class="db-ticket-empty" role="status" aria-live="polite"><div><span class="db-ticket-empty__icon"><img src="assets/zero-states/no-results.svg" alt="" /></span><h4>No results found</h4><p>We couldn’t find any items matching your criteria.</p></div></section>`;
+  const applyTicketStatusFilter = () => {
+    if (!tableWrap) return;
+    tableWrap.innerHTML = activeTableMarkup;
+    if (selectedTicketStatus === "All status") {
+      if (ticketCount) ticketCount.textContent = "16 active tickets";
+      if (pagination) pagination.hidden = false;
+      return;
+    }
+    const body = tableWrap.querySelector("tbody");
+    const matchingRows = [...(body?.rows || [])].filter((row) => ticketStatusMatches(row, selectedTicketStatus));
+    body?.replaceChildren(...matchingRows);
+    if (ticketCount) ticketCount.textContent = `${matchingRows.length} active ticket${matchingRows.length === 1 ? "" : "s"}`;
+    if (pagination) pagination.hidden = true;
+    if (!matchingRows.length) tableWrap.insertAdjacentHTML("beforeend", emptyTicketStateMarkup());
+  };
   const showTicketTable = (state) => {
     const table = ticketTables[state] || ticketTables.active;
     if (ticketCount) ticketCount.textContent = table.count;
     if (tableWrap) tableWrap.innerHTML = table.markup;
     if (filter) filter.hidden = !table.showFilter;
     if (pagination) pagination.hidden = !table.showPagination;
+    setFilterOpen(false);
+    if (state === "active") applyTicketStatusFilter();
   };
+  filterOptions.forEach((option) => { option.hidden = option.dataset.dbTicketStatus === selectedTicketStatus; });
+  filterTrigger?.addEventListener("click", () => setFilterOpen(filterTrigger.getAttribute("aria-expanded") !== "true"));
+  filterTrigger?.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    setFilterOpen(true);
+    const availableOptions = filterOptions.filter((option) => !option.hidden);
+    availableOptions[event.key === "ArrowDown" ? 0 : availableOptions.length - 1]?.focus();
+  });
+  filterOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+      selectedTicketStatus = option.dataset.dbTicketStatus;
+      filterValue.textContent = selectedTicketStatus;
+      filterOptions.forEach((candidate) => {
+        candidate.setAttribute("aria-selected", String(candidate === option));
+        candidate.hidden = candidate === option;
+      });
+      setFilterOpen(false);
+      applyTicketStatusFilter();
+      filterTrigger.focus();
+    });
+    option.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      event.preventDefault();
+      const availableOptions = filterOptions.filter((candidate) => !candidate.hidden);
+      const availableIndex = availableOptions.indexOf(option);
+      availableOptions[(availableIndex + (event.key === "ArrowDown" ? 1 : -1) + availableOptions.length) % availableOptions.length].focus();
+    });
+  });
+  filterMenu?.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    setFilterOpen(false);
+    filterTrigger.focus();
+  });
+  app.querySelector(".screen--dashboard")?.addEventListener("click", (event) => {
+    if (!filter?.contains(event.target)) setFilterOpen(false);
+  });
   app.querySelectorAll(".db-tabs [role='tab']").forEach((tab) => {
     tab.addEventListener("click", () => {
       app.querySelectorAll(".db-tabs [role='tab']").forEach((candidate) => {
@@ -2405,6 +2573,41 @@ function wireDashboard() {
   updateBanner();
   app.querySelector("[data-db-banner-prev]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + DASHBOARD_BANNERS.length - 1) % DASHBOARD_BANNERS.length; updateBanner(); });
   app.querySelector("[data-db-banner-next]")?.addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % DASHBOARD_BANNERS.length; updateBanner(); });
+  app.querySelector("[data-db-banner-action]")?.addEventListener("click", () => openInstrumentBannerDestination(DASHBOARD_BANNERS[bannerIndex]));
+  let promotionIndex = 0;
+  const promotion = app.querySelector(".db-promo");
+  const updatePromotion = () => {
+    const item = DASHBOARD_PROMOTIONS[promotionIndex];
+    const title = promotion?.querySelector("[data-db-promo-title]");
+    const description = promotion?.querySelector("[data-db-promo-description]");
+    const terms = promotion?.querySelector("[data-db-promo-terms]");
+    const code = promotion?.querySelector("[data-db-promo-code]");
+    const codeValue = promotion?.querySelector("[data-db-promo-code-value]");
+    const action = promotion?.querySelector("[data-db-promo-action]");
+    if (title) title.innerHTML = item.title;
+    if (description) description.textContent = item.description;
+    if (terms) terms.innerHTML = item.terms;
+    if (code) code.hidden = !item.code;
+    if (codeValue) codeValue.textContent = item.code;
+    if (action) {
+      action.textContent = item.action;
+      action.dataset.dbPromoRoute = item.route;
+    }
+    const hideChoice = promotion?.querySelector("[data-db-promo-hide]");
+    if (hideChoice) hideChoice.checked = false;
+    const status = promotion?.querySelector("[data-db-promo-status]");
+    if (status) status.textContent = `Promotion ${promotionIndex + 1} of ${DASHBOARD_PROMOTIONS.length}`;
+  };
+  promotion?.querySelector("[data-db-promo-prev]")?.addEventListener("click", () => {
+    promotionIndex = (promotionIndex + DASHBOARD_PROMOTIONS.length - 1) % DASHBOARD_PROMOTIONS.length;
+    updatePromotion();
+  });
+  promotion?.querySelector("[data-db-promo-next]")?.addEventListener("click", () => {
+    promotionIndex = (promotionIndex + 1) % DASHBOARD_PROMOTIONS.length;
+    updatePromotion();
+  });
+  promotion?.querySelector("[data-db-promo-action]")?.addEventListener("click", () => openDashboardPromotion(DASHBOARD_PROMOTIONS[promotionIndex]));
+  updatePromotion();
   app.querySelector(".db-promo__close")?.addEventListener("click", (event) => event.currentTarget.closest(".db-promo")?.remove());
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
@@ -2666,7 +2869,7 @@ function wireSpcContactTooltips(scope) {
 
   const sync = (trigger) => {
     const emails = parseSpcContactEmails(trigger.dataset.spcContactEmails);
-    trigger.textContent = formatSpcContactList(emails);
+    trigger.textContent = trigger.dataset.spcContactLabel || formatSpcContactList(emails);
     if (emails.length < 2) {
       trigger.removeAttribute("tabindex");
       trigger.removeAttribute("aria-label");
@@ -2697,19 +2900,6 @@ function wireSpcContactTooltips(scope) {
 
   return Object.freeze({ sync });
 }
-
-const SPC_SELECTION_CONTACT_COMBINATIONS = Object.freeze({
-  "plan-0040111111": [["jon.doe@company.com", "molly.hartman@company.com"]],
-  "plan-0040222222": [
-    ["gerard.campbell@company.com"],
-    ["mary.smith@company.com"],
-    ["thomas.mayer@company.com"],
-    ["veronica.walker@company.com"],
-  ],
-  "plan-0040333333": [["mary.smith@company.com"]],
-  "no-service-plan": [],
-  alpine: [],
-});
 
 const SPC_CONTACT_INSTRUMENTS = Object.freeze([
   { serial: "1009996", nickname: "Detector-2B", child: true },
@@ -2750,7 +2940,7 @@ const SPC_CONTACT_EMAIL_SUGGESTIONS = Object.freeze([
 ]);
 
 function wireEditSpc() {
-  const loggedInUserEmail = "my_name.lastname@company.com";
+  const loggedInUserEmail = LOGGED_IN_USER.email;
   const screen = app.querySelector(".screen--spc");
   const main = app.querySelector(".spc-main");
   const stepper = app.querySelector(".spc-stepper");
@@ -2760,7 +2950,7 @@ function wireEditSpc() {
   const cancelButton = app.querySelector("[data-spc-cancel]");
   const continueButton = app.querySelector("[data-spc-continue]");
   const backButton = app.querySelector("[data-spc-back]");
-  const closeButton = app.querySelector("[data-spc-close]");
+  const actionBar = app.querySelector(".spc-actionbar");
   const contactEmails = [...app.querySelectorAll("[data-spc-contact-email]")];
   const contactReplacementNotice = app.querySelector("[data-spc-contact-replacement-notice]");
   const mixedContactWarning = app.querySelector("[data-spc-mixed-contact-warning]");
@@ -3011,9 +3201,7 @@ function wireEditSpc() {
       continueButton.textContent = step === 3 ? "Confirm" : "Continue";
       if (step !== 2) continueButton.disabled = false;
     }
-    if (closeButton) {
-      closeButton.hidden = true;
-    }
+    if (actionBar) actionBar.hidden = false;
     main?.scrollTo({ top: 0, behavior: "auto" });
   };
 
@@ -3039,9 +3227,7 @@ function wireEditSpc() {
     if (continueButton) {
       continueButton.hidden = true;
     }
-    if (closeButton) {
-      closeButton.hidden = false;
-    }
+    if (actionBar) actionBar.hidden = true;
     main?.scrollTo({ top: 0, behavior: "auto" });
   };
 
@@ -3177,16 +3363,36 @@ function wireEditSpc() {
     });
   };
 
+  const contactCombinationForRow = (row) => parseSpcContactEmails(
+    row?.querySelector("[data-spc-contact-emails]")?.dataset.spcContactEmails || "",
+  );
+
+  const assetKeyForSelectionId = (selectionId = "") => {
+    const match = selectionId.match(/:(instrument|system):(.+)$/);
+    return match ? `${match[1]}:${match[2]}` : "";
+  };
+
+  const selectedServicePlanAssetKeys = () => [...app.querySelectorAll(".spc-table tbody input[type='checkbox']:checked")]
+    .flatMap((checkbox) => {
+      const row = checkbox.closest("tr");
+      const groupId = row?.dataset.spcGroupRow;
+      if (!groupId) return [assetKeyForSelectionId(checkbox.dataset.spcSelectionId)];
+      return [...app.querySelectorAll(`[data-spc-group-child="${groupId}"] input[data-spc-selection-id]`)]
+        .map((assetCheckbox) => assetKeyForSelectionId(assetCheckbox.dataset.spcSelectionId));
+    })
+    .filter((assetKey, index, assetKeys) => assetKey && assetKeys.indexOf(assetKey) === index);
+
   const selectedContactCombinations = () => [...app.querySelectorAll(".spc-table tbody input[type='checkbox']:checked")]
     .flatMap((checkbox) => {
-      const selectionId = checkbox.dataset.spcSelectionId;
-      if (selectionId && Object.hasOwn(SPC_SELECTION_CONTACT_COMBINATIONS, selectionId)) {
-        return SPC_SELECTION_CONTACT_COMBINATIONS[selectionId];
-      }
-      const rowEmails = parseSpcContactEmails(
-        checkbox.closest("tr")?.querySelector("[data-spc-contact-emails]")?.dataset.spcContactEmails || "",
-      );
-      return rowEmails.length ? [rowEmails] : [];
+      const row = checkbox.closest("tr");
+      const groupId = row?.dataset.spcGroupRow;
+      if (!groupId) return [contactCombinationForRow(row)];
+
+      const selectedGroupAssets = [...app.querySelectorAll(`[data-spc-group-child="${groupId}"]`)]
+        .filter((assetRow) => assetRow.querySelector("td:first-child input[type='checkbox']"));
+      return selectedGroupAssets.length
+        ? selectedGroupAssets.map(contactCombinationForRow)
+        : [contactCombinationForRow(row)];
     });
 
   const renderCurrentContactSummary = (emails) => {
@@ -3226,7 +3432,8 @@ function wireEditSpc() {
     const signatures = new Set(combinations.map((emails) => [...emails].sort().join("|")));
     const uniqueEmails = [...new Set(combinations.flat())];
     isMixedContactScenario = signatures.size > 1;
-    const defaults = isMixedContactScenario ? [] : uniqueEmails.length ? uniqueEmails.slice(0, 2) : [loggedInUserEmail];
+    const includesLoggedInUser = uniqueEmails.some((email) => email.toLowerCase() === loggedInUserEmail.toLowerCase());
+    const defaults = includesLoggedInUser ? [loggedInUserEmail] : isMixedContactScenario ? [] : uniqueEmails.length ? uniqueEmails.slice(0, 2) : [loggedInUserEmail];
     contactEmails.forEach((input, index) => { input.value = defaults[index] || ""; });
     validateContactEmails();
     renderContactColumn(selectedContactCells);
@@ -3238,12 +3445,116 @@ function wireEditSpc() {
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
   contactTooltipController = wireSpcContactTooltips(app);
-  app.querySelectorAll("[data-spc-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      app.querySelectorAll("[data-spc-filter]").forEach((filter) => filter.classList.remove("is-selected"));
-      button.classList.add("is-selected");
+  const instrumentTableBody = app.querySelector(".spc-card .spc-table tbody");
+  const instrumentSearch = app.querySelector(".spc-card .spc-search input");
+  const selectAllInstruments = app.querySelector(".spc-card .spc-select-all");
+  let contactFilter = "all";
+
+  const visibleEditSpcAssetCount = () => [...(instrumentTableBody?.querySelectorAll("[data-spc-group-row]") || [])]
+    .filter((row) => !row.hidden)
+    .reduce((count, row) => count + Number(row.dataset.spcGroupCount || 0), 0);
+
+  const updateEditSpcSelectAll = () => {
+    if (!selectAllInstruments) return;
+    const count = visibleEditSpcAssetCount();
+    selectAllInstruments.textContent = `Select all ${count} instrument${count === 1 ? "" : "s"}`;
+    selectAllInstruments.disabled = count === 0;
+  };
+
+  const applyEditSpcFilters = () => {
+    if (!instrumentTableBody) return;
+    const query = instrumentSearch?.value.trim().toLowerCase() || "";
+    instrumentTableBody.querySelectorAll("[data-spc-group-row]").forEach((groupRow) => {
+      const groupId = groupRow.dataset.spcGroupRow;
+      const children = [...instrumentTableBody.querySelectorAll(`[data-spc-group-child="${groupId}"]`)];
+      const stateMatches = contactFilter === "all" || groupRow.dataset.spcContactState === contactFilter;
+      const groupMatches = groupRow.dataset.spcSearchValue.toLowerCase().includes(query);
+      const matchingChildren = children.filter((row) => row.dataset.spcSearchValue.toLowerCase().includes(query));
+      const queryMatches = !query || groupMatches || matchingChildren.length > 0;
+      groupRow.hidden = !stateMatches || !queryMatches;
+      const expanded = groupRow.querySelector("[data-spc-group-toggle]")?.getAttribute("aria-expanded") === "true";
+      children.forEach((row) => {
+        const childMatches = !query || groupMatches || matchingChildren.includes(row);
+        row.hidden = groupRow.hidden || !childMatches || (!query && !expanded);
+      });
+    });
+    updateEditSpcSelectAll();
+  };
+
+  instrumentTableBody?.querySelectorAll("[data-spc-group-toggle]").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const nextExpanded = toggle.getAttribute("aria-expanded") !== "true";
+      toggle.setAttribute("aria-expanded", String(nextExpanded));
+      toggle.setAttribute("aria-label", `${nextExpanded ? "Collapse" : "Expand"} ${toggle.closest("tr")?.querySelector("strong")?.textContent || "group"}`);
+      const icon = toggle.querySelector("img");
+      if (icon) icon.src = `assets/icons/directions/chevron ${nextExpanded ? "down" : "right"}/size=16px, style=mono.svg`;
+      applyEditSpcFilters();
     });
   });
+
+  const selectableGroupAssets = (groupId) => [
+    ...(instrumentTableBody?.querySelectorAll(`[data-spc-group-child="${groupId}"] input[data-spc-selection-id]`) || []),
+  ];
+
+  const syncEditSpcGroupCheckbox = (groupId) => {
+    const groupRow = instrumentTableBody?.querySelector(`[data-spc-group-row="${groupId}"]`);
+    const groupCheckbox = groupRow?.querySelector("td:first-child input[type='checkbox']");
+    if (!groupCheckbox) return;
+    const assetCheckboxes = selectableGroupAssets(groupId);
+    const selectedCount = assetCheckboxes.filter((checkbox) => checkbox.checked).length;
+    groupCheckbox.checked = assetCheckboxes.length > 0 && selectedCount === assetCheckboxes.length;
+    groupCheckbox.indeterminate = selectedCount > 0 && selectedCount < assetCheckboxes.length;
+    groupCheckbox.setAttribute("aria-checked", groupCheckbox.indeterminate ? "mixed" : String(groupCheckbox.checked));
+  };
+
+  instrumentTableBody?.querySelectorAll("[data-spc-group-row]").forEach((groupRow) => {
+    const groupId = groupRow.dataset.spcGroupRow;
+    const groupCheckbox = groupRow.querySelector("td:first-child input[type='checkbox']");
+    const assetCheckboxes = selectableGroupAssets(groupId);
+
+    // A group selected on the Service plan contacts page carries all of its
+    // selectable instruments and systems into this first step.
+    if (groupCheckbox?.checked) {
+      assetCheckboxes.forEach((checkbox) => { checkbox.checked = true; });
+    }
+
+    groupCheckbox?.addEventListener("change", () => {
+      groupCheckbox.indeterminate = false;
+      assetCheckboxes.forEach((checkbox) => { checkbox.checked = groupCheckbox.checked; });
+      syncEditSpcGroupCheckbox(groupId);
+    });
+    assetCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", () => syncEditSpcGroupCheckbox(groupId));
+    });
+    syncEditSpcGroupCheckbox(groupId);
+  });
+
+  instrumentSearch?.addEventListener("input", applyEditSpcFilters);
+  selectAllInstruments?.addEventListener("click", () => {
+    const visibleCheckboxes = [...instrumentTableBody.querySelectorAll("tr:not([hidden]) input[type='checkbox']")];
+    const shouldSelect = visibleCheckboxes.some((checkbox) => !checkbox.checked);
+    visibleCheckboxes.forEach((checkbox) => { checkbox.checked = shouldSelect; });
+    instrumentTableBody.querySelectorAll("[data-spc-group-row]").forEach((groupRow) => {
+      syncEditSpcGroupCheckbox(groupRow.dataset.spcGroupRow);
+    });
+    const count = visibleEditSpcAssetCount();
+    selectAllInstruments.textContent = shouldSelect ? `Clear all ${count} instruments` : `Select all ${count} instruments`;
+  });
+  app.querySelectorAll("[data-spc-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      app.querySelectorAll("[data-spc-filter]").forEach((filter) => {
+        filter.classList.remove("is-selected");
+        filter.setAttribute("aria-pressed", "false");
+      });
+      button.classList.add("is-selected");
+      button.setAttribute("aria-pressed", "true");
+      contactFilter = button.textContent.trim() === "With contact"
+        ? "with"
+        : button.textContent.trim() === "Without contact" ? "without" : "all";
+      applyEditSpcFilters();
+    });
+  });
+  applyEditSpcFilters();
   contactEmails.forEach((input) => input.addEventListener("input", () => {
     renderEmailValidation(input);
     updateContactState();
@@ -3312,6 +3623,17 @@ function wireEditSpc() {
     }
     renderContactEmailList(summaryEmailList, true);
     renderContactColumn(summaryContactCells);
+    const confirmedContactEmails = currentContactEmails();
+    const knownContactEmails = new Set([
+      ...SERVICE_PLAN_CONTACT_CARDS.map((contact) => contact.email.toLowerCase()),
+      ...[...servicePlanContactOverrides.values()].flat().map((email) => email.toLowerCase()),
+    ]);
+    const newlyCreatedContactEmail = confirmedContactEmails.find((email) => !knownContactEmails.has(email.toLowerCase()));
+    if (newlyCreatedContactEmail) mostRecentlyCreatedServicePlanContactEmail = newlyCreatedContactEmail;
+    selectedServicePlanAssetKeys().forEach((assetKey) => {
+      servicePlanContactOverrides.set(assetKey, [...confirmedContactEmails]);
+    });
+    confirmedContactEmails.map(servicePlanContactName).forEach((contactName) => removedServicePlanContacts.delete(contactName));
     if (successMessage) {
       successMessage.textContent = hasContactOutsideLoggedInUser()
         ? "Invitation sent. Waiting for the user to confirm."
@@ -3329,6 +3651,7 @@ function renderEditSpc() {
   mountTopbarSc();
   mountPlatformSidebar("edit-spc");
   mountFooter();
+  renderEditSpcInstrumentTable();
   wireEditSpc();
   observeEditSpcCanvas();
   document.title = "Edit service plan contact — Services Central";
@@ -3580,7 +3903,7 @@ function wireMiUserCountTooltips(scope = app) {
 
 function miSelectionRowMarkup(instrument, context) {
   const search = `${instrument.serial} ${instrument.nickname} ${instrument.model}`;
-  if (context === "share") return `<tr data-mi-selection-row data-search="${search}"><td><input type="checkbox" aria-label="Select ${instrument.serial}" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${instrument.users}</td><td>${instrument.model}</td></tr>`;
+  if (context === "share") return `<tr data-mi-selection-row data-mi-instrument-serial="${instrument.serial}" data-search="${search}"><td><input type="checkbox" aria-label="Select ${instrument.serial}" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${instrument.users}</td><td>${instrument.model}</td></tr>`;
   const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
   return `<tr data-mi-selection-row data-search="${search} ${instrument.coverage}"><td><input type="checkbox" aria-label="Select ${instrument.serial}" /></td><td><img class="mi-dialog-product" src="assets/instruments/${instrument.image}" alt="" /></td><td>${instrument.serial}</td><td>${instrument.nickname}</td><td>${miInstrumentType(instrument)}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td></tr>`;
 }
@@ -3658,6 +3981,30 @@ function openMiDialog(dialog) {
   if (!dialog.open) dialog.showModal();
 }
 
+function openMiShareDialogForInstrument(serial) {
+  wireMiSelectionDialog(miShareDialog, "share");
+  miShareDialog.querySelector("[data-mi-share-access]").onclick = () => {
+    miShareDialog.close();
+    openMiDialog(miAccessDialog);
+  };
+  miShareDialog.querySelector("[data-mi-share-select-all]").onclick = () => {
+    miShareDialog.querySelectorAll("[data-mi-share-rows] input[type='checkbox']").forEach((checkbox) => {
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event("change"));
+    });
+  };
+  const rows = [...miShareDialog.querySelectorAll("[data-mi-share-rows] [data-mi-selection-row]")];
+  let selectedCheckbox = null;
+  rows.forEach((row) => {
+    const checkbox = row.querySelector("input[type='checkbox']");
+    if (!checkbox) return;
+    checkbox.checked = row.dataset.miInstrumentSerial === serial;
+    if (checkbox.checked) selectedCheckbox = checkbox;
+  });
+  selectedCheckbox?.dispatchEvent(new Event("change"));
+  openMiDialog(miShareDialog);
+}
+
 function wireMiDialogDismiss(dialog) {
   dialog.querySelectorAll("[data-mi-dialog-close]").forEach((button) => { button.onclick = () => dialog.close(); });
   dialog.onclick = (event) => {
@@ -3684,7 +4031,8 @@ function wireMiSelectionDialog(dialog, context) {
     event.preventDefault();
     if (confirm.disabled) return;
     dialog.close();
-    showToast(context === "share" ? "Instrument access shared" : "Coverage quote request started");
+    if (context === "share") showToast("Instrument access shared", { variant: "success" });
+    else showToast("Coverage quote request started");
   };
   wireMiDialogDismiss(dialog);
   update();
@@ -3845,7 +4193,7 @@ function wireMiBuilderDialogs() {
     miCreateGroupDialog.close();
     setRoute("my-instruments");
     app.querySelector('[data-mi-tab="groups"]')?.click();
-    showToast("Group created");
+    showToast("Group created", { variant: "success" });
   };
   miCreateGroupDialog.querySelector("[data-mi-group-rows]").onclick = (event) => {
     const toggle = event.target.closest("[data-mi-builder-system-toggle]");
@@ -3979,7 +4327,11 @@ function wireMyInstrumentActions() {
   miShareDialog.querySelector("[data-mi-share-select-all]").onclick = () => {
     miShareDialog.querySelectorAll("[data-mi-share-rows] input[type='checkbox']").forEach((checkbox) => { checkbox.checked = true; checkbox.dispatchEvent(new Event("change")); });
   };
-  miCoverageDialog.querySelector("[data-mi-coverage-dismiss]").onclick = () => { miCoverageDialog.close(); showToast("Coverage alert dismissed"); };
+  miCoverageDialog.querySelector("[data-mi-coverage-dismiss]").onclick = () => {
+    miCoverageAlertDismissed = true;
+    app.querySelector("[data-mi-coverage]")?.setAttribute("hidden", "");
+    miCoverageDialog.close();
+  };
 }
 
 const MI_GROUPS = [
@@ -4010,7 +4362,7 @@ const MI_EUROPE_LE_FAVORITES = new Set([
 function miFavoritesStore() {
   return isEuropeLePrototype() ? MI_EUROPE_LE_FAVORITES : MI_FAVORITES;
 }
-const MI_CURRENT_USER_EMAIL = "my_name.lastname@company.com";
+const MI_CURRENT_USER_EMAIL = LOGGED_IN_USER.email;
 const MI_USER_ROLES = new Map();
 let miFavoritesView = "list";
 let miGroupsView = "list";
@@ -4467,7 +4819,16 @@ function miGroupsPanel() {
   return `<div class="mi-secondary-top">${miTitleMarkup("Groups", visibleGroups.length, "Groups are personal and not shared.", '<button class="mi-button mi-secondary-create" type="button" data-mi-create-group-direct>Create</button>')}<div class="mi-secondary-controls">${miSearchMarkup("Search by group name")}${miViewToggleMarkup(miGroupsView)}</div></div><div data-mi-groups-list ${miGroupsView === "list" ? "" : "hidden"}>${miGroupTable(visibleGroups)}</div><div class="mi-groups-grid-view" data-mi-groups-grid ${miGroupsView === "grid" ? "" : "hidden"}><div class="mi-favorite-group-grid mi-groups-card-grid">${visibleGroups.map(miFavoriteGroupCardMarkup).join("")}</div>${miPaginationMarkup(visibleGroups.length)}</div>`;
 }
 
+function miSecondaryAppliedFiltersMarkup(filters, label) {
+  return `<div class="sh-applied-filters mi-applied-filters mi-secondary-applied-filters" data-mi-secondary-applied-filters aria-label="${label}" hidden>${filters.map(({ key }) => `<div data-mi-secondary-filter="${key}"></div>`).join("")}<button class="sh-clear-filters" type="button" data-mi-secondary-clear-filters hidden>Clear filter(s)</button></div>`;
+}
+
 function miFavoritesInstrumentTable() {
+  const filters = [
+    { key: "groups", label: "Groups" },
+    { key: "model", label: "Catalog no." },
+    { key: "coverage", label: "Coverage" },
+  ];
   const favoriteSystems = miCurrentSystems().filter((system) => miIsFavorite(`system:${system.id}`));
   const favoriteSystemComponents = new Set(favoriteSystems.flatMap((system) => system.components));
   const favoriteInstruments = miCurrentInstruments().filter((instrument) => miIsFavorite(`instrument:${instrument.serial}`) && !favoriteSystemComponents.has(instrument.serial) && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
@@ -4475,18 +4836,18 @@ function miFavoritesInstrumentTable() {
     const components = system.components.map((serial) => miCurrentInstruments().find((instrument) => instrument.serial === serial)).filter((instrument) => instrument && !MI_REMOVED_INSTRUMENTS.has(instrument.serial));
     const key = `favorite-system-${system.id}`;
     const groups = MI_GROUPS.filter((group) => group.members?.includes(`system:${system.id}`)).map((group) => group.name).join(", ") || "—";
-    const parent = `<tr class="mi-system-row" data-mi-secondary-row data-search="System ${system.nickname} ${system.typeCode}"><td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><span class="mi-asset-with-lock"><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />${miLockMarkup(system.locked)}</span></td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>${groups}</td><td>—</td><td>—</td><td>—</td><td>${miMoreButton(`System ${system.nickname}`, "system", system.id)}</td></tr>`;
+    const parent = `<tr class="mi-system-row" data-mi-secondary-row data-search="System ${system.nickname} ${system.typeCode}" data-mi-filter-groups="${groups}" data-mi-filter-model="—" data-mi-filter-coverage="—"><td>${miFavoriteButton(system.nickname, false, `system:${system.id}`)}</td><td><button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${system.nickname}" aria-expanded="true" aria-label="Collapse ${system.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button></td><td><span class="mi-asset-with-lock"><img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />${miLockMarkup(system.locked)}</span></td><td><button class="mi-link" type="button" data-route="system-detail-${system.id}">System</button></td><td>${system.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(miSystemUserCount(system), `system:${system.id}`)}</td><td>${groups}</td><td>—</td><td>—</td><td>—</td><td>${miMoreButton(`System ${system.nickname}`, "system", system.id)}</td></tr>`;
     const children = components.map((instrument, index) => {
       const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
-      return `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell"></td><td>${instrument.group}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td><td>${miMoreButton(instrument.serial, "component", instrument.serial)}</td></tr>`;
+      return `<tr class="mi-child-row ${index === components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}" data-mi-filter-groups="${instrument.group}" data-mi-filter-model="${instrument.model}" data-mi-filter-coverage="${instrument.coverage}"><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell"></td><td>${instrument.group}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td><td>${miMoreButton(instrument.serial, "component", instrument.serial)}</td></tr>`;
     }).join("");
     return parent + children;
   }).join("");
   const instrumentRows = favoriteInstruments.map((instrument) => {
     const coverageClass = instrument.coverage === "Coverage expired" ? "mi-status--expired" : instrument.coverage === "Expiring soon" ? "mi-status--soon" : "";
-    return `<tr data-mi-secondary-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}"><td>${miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`)}</td><td>${miLockMarkup(instrument.locked)}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td><td>${instrument.group}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td><td>${miMoreButton(instrument.serial, "instrument", instrument.serial)}</td></tr>`;
+    return `<tr data-mi-secondary-row data-search="${instrument.serial} ${instrument.nickname} ${instrument.model}" data-mi-filter-groups="${instrument.group}" data-mi-filter-model="${instrument.model}" data-mi-filter-coverage="${instrument.coverage}"><td>${miFavoriteButton(instrument.serial, false, `instrument:${instrument.serial}`)}</td><td>${miLockMarkup(instrument.locked)}</td><td><img class="mi-product" src="assets/instruments/${instrument.image}" alt="" /></td><td><button class="mi-link" type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td class="mi-users-cell">${miUserCountMarkup(instrument.users, `instrument:${instrument.serial}`)}</td><td>${instrument.group}</td><td>${instrument.model}</td><td>${coverageClass ? `<span class="mi-status ${coverageClass}">${instrument.coverage}</span>` : instrument.coverage}</td><td>${instrument.end}</td><td>${miMoreButton(instrument.serial, "instrument", instrument.serial)}</td></tr>`;
   }).join("");
-  return `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-favorites-table"><thead><tr><th>Favorite ${miSortIcon}</th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th><button class="mi-header-select" type="button">Groups <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select platform-table-catalog-filter" type="button"><span class="platform-table-catalog-filter__label" title="Catalog no.">Catalog no.</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Coverage <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Coverage end ${miSortIcon}</th><th>Actions</th></tr></thead><tbody>${systemRows}${instrumentRows}</tbody></table></div>`;
+  return `${miSecondaryAppliedFiltersMarkup(filters, "Favorite instrument filters")}<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-favorites-table" data-mi-secondary-filter-table><thead><tr><th>Favorite ${miSortIcon}</th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th><div data-mi-secondary-filter-trigger="groups"></div></th><th><div data-mi-secondary-filter-trigger="model"></div></th><th><div data-mi-secondary-filter-trigger="coverage"></div></th><th>Coverage end ${miSortIcon}</th><th>Actions</th></tr></thead><tbody>${systemRows}${instrumentRows}</tbody></table></div>`;
 }
 
 function miFavoriteGroupCardMarkup(group) {
@@ -4590,16 +4951,20 @@ function miPendingZeroStateMarkup() {
 }
 
 function miPendingSharedPanel() {
+  const filters = [
+    { key: "type", label: "Type" },
+    { key: "model", label: "Catalog no." },
+  ];
   const rows = MI_PENDING_SHARED_ITEMS.map((item) => {
     const key = `pending-${item.id}`;
     const hierarchy = item.kind === "system" ? `<button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${item.nickname}" aria-expanded="true" aria-label="Collapse ${item.nickname} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>` : "";
     const image = item.kind === "system" ? '<img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />' : `<img class="mi-product" src="assets/instruments/${item.image}" alt="" />`;
-    const parent = `<tr class="${item.kind === "system" ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-pending-item-id="${item.id}" data-search="${item.serial} ${item.nickname} ${item.sharedBy}"><td><input type="checkbox" data-mi-pending-select value="${item.id}" aria-label="Select ${item.nickname}" /></td><td>${hierarchy}</td><td>${image}</td><td>${item.locked ? '<img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" />' : ""}</td><td>${item.serial}</td><td>${item.nickname}</td><td>${item.type}</td><td>${item.model}</td><td>${item.sharedBy}</td><td>${item.expires}</td><td><button class="mi-add-button" type="button" data-mi-pending-row-action="add" data-mi-pending-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-pending-row-action="ignore" data-mi-pending-id="${item.id}" aria-label="Ignore ${item.nickname}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
+    const parent = `<tr class="${item.kind === "system" ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-pending-item-id="${item.id}" data-search="${item.serial} ${item.nickname} ${item.sharedBy}" data-mi-filter-type="${item.type}" data-mi-filter-model="${item.model}"><td><input type="checkbox" data-mi-pending-select value="${item.id}" aria-label="Select ${item.nickname}" /></td><td>${hierarchy}</td><td>${image}</td><td>${item.locked ? '<img class="mi-lock" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="Access controlled" />' : ""}</td><td>${item.serial}</td><td>${item.nickname}</td><td>${item.type}</td><td>${item.model}</td><td>${item.sharedBy}</td><td>${item.expires}</td><td><button class="mi-add-button" type="button" data-mi-pending-row-action="add" data-mi-pending-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-pending-row-action="ignore" data-mi-pending-id="${item.id}" aria-label="Ignore ${item.nickname}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
     if (item.kind !== "system") return parent;
-    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname} ${item.sharedBy}"><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td></td><td>${component.serial}</td><td>${component.nickname}</td><td>${component.type}</td><td>${component.model}</td><td>${item.sharedBy}</td><td>${item.expires}</td><td></td><td></td></tr>`).join("");
+    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname} ${item.sharedBy}" data-mi-filter-type="${component.type}" data-mi-filter-model="${component.model}"><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td></td><td>${component.serial}</td><td>${component.nickname}</td><td>${component.type}</td><td>${component.model}</td><td>${item.sharedBy}</td><td>${item.expires}</td><td></td><td></td></tr>`).join("");
     return parent + children;
   }).join("");
-  const content = MI_PENDING_SHARED_ITEMS.length ? `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-pending-table"><thead><tr><th><input type="checkbox" data-mi-pending-select-all aria-label="Select all shared instruments and systems" /></th><th></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select platform-table-catalog-filter" type="button"><span class="platform-table-catalog-filter__label" title="Catalog no.">Catalog no.</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Shared by ${miSortIcon}</th><th>Sharing expires ${miSortIcon}</th><th>Actions</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${miPendingActionBarMarkup("shared")}` : miPendingZeroStateMarkup();
+  const content = MI_PENDING_SHARED_ITEMS.length ? `${miSecondaryAppliedFiltersMarkup(filters, "Shared instrument filters")}<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-pending-table" data-mi-secondary-filter-table><thead><tr><th><input type="checkbox" data-mi-pending-select-all aria-label="Select all shared instruments and systems" /></th><th></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th><div data-mi-secondary-filter-trigger="type"></div></th><th><div data-mi-secondary-filter-trigger="model"></div></th><th>Shared by ${miSortIcon}</th><th>Sharing expires ${miSortIcon}</th><th>Actions</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${miPendingActionBarMarkup("shared")}` : miPendingZeroStateMarkup();
   return `<div class="mi-secondary-top mi-pending-top">${miTitleMarkup("Shared with me", MI_PENDING_SHARED_ITEMS.length, "Instruments and systems shared with you.", miSegmentedMarkup(miPendingSegments(), "shared"))}${miSearchMarkup("Search by instrument serial number, nickname or user")}</div>${content}`;
 }
 
@@ -4775,16 +5140,17 @@ function miSuggestionCommonRows(items, segment) {
     const isSystem = item.kind === "system";
     const hierarchy = isSystem ? `<button class="mi-row-chevron mi-system-toggle" type="button" data-mi-system-toggle="${key}" data-mi-system-label="${item.nickname || "Suggested system"}" aria-expanded="${item.expanded !== false}" aria-label="${item.expanded === false ? "Expand" : "Collapse"} ${item.nickname || "suggested"} system components"><img src="assets/icons/directions/chevron down/size=16px, style=mono.svg" alt="" /></button>` : "";
     const image = isSystem ? '<img class="mi-system-mark" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" />' : `<img class="mi-product" src="assets/instruments/${item.image}" alt="" />`;
-    const parent = `<tr class="${isSystem ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-suggestion-item-id="${item.id}" data-search="${item.serial} ${item.nickname} ${item.model}"><td><input type="checkbox" data-mi-suggestion-select value="${item.id}" aria-label="Select ${item.nickname || item.serial}" /></td><td>${hierarchy}</td><td>${image}</td><td>${item.serial}</td><td>${miSuggestionNicknameMarkup(item)}</td>${showUsers ? `<td class="mi-users-cell">${miUserCountMarkup(item.users || 2)}</td>` : ""}<td>${item.model}</td><td>${item.type}</td><td><button class="mi-add-button" type="button" data-mi-suggestion-row-action="add" data-mi-suggestion-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-suggestion-row-action="ignore" data-mi-suggestion-id="${item.id}" aria-label="Ignore ${item.nickname || item.serial}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
+    const parent = `<tr class="${isSystem ? "mi-system-row" : ""}" data-mi-secondary-row data-mi-suggestion-item-id="${item.id}" data-search="${item.serial} ${item.nickname} ${item.model}" data-mi-filter-model="${item.model}" data-mi-filter-type="${item.type}"><td><input type="checkbox" data-mi-suggestion-select value="${item.id}" aria-label="Select ${item.nickname || item.serial}" /></td><td>${hierarchy}</td><td>${image}</td><td>${item.serial}</td><td>${miSuggestionNicknameMarkup(item)}</td>${showUsers ? `<td class="mi-users-cell">${miUserCountMarkup(item.users || 2)}</td>` : ""}<td>${item.model}</td><td>${item.type}</td><td><button class="mi-add-button" type="button" data-mi-suggestion-row-action="add" data-mi-suggestion-id="${item.id}">${miAddIcon}My Instruments</button></td><td><button class="mi-icon-action" type="button" data-mi-suggestion-row-action="ignore" data-mi-suggestion-id="${item.id}" aria-label="Ignore ${item.nickname || item.serial}"><img src="assets/icons/actions/bin/size=16px, style=bold.svg" alt="" /></button></td></tr>`;
     if (!isSystem) return parent;
-    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname}"${item.expanded === false ? " hidden" : ""}><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td>${component.serial}</td><td>${component.nickname}</td>${showUsers ? '<td class="mi-users-cell"></td>' : ""}<td>${component.model}</td><td>${component.type}</td><td></td><td></td></tr>`).join("");
+    const children = item.components.map((component, index) => `<tr class="mi-child-row ${index === item.components.length - 1 ? "mi-child-row--last" : ""}" data-mi-system-component="${key}" data-mi-secondary-row data-search="${component.serial} ${component.nickname}" data-mi-filter-model="${component.model}" data-mi-filter-type="${component.type}"${item.expanded === false ? " hidden" : ""}><td></td><td>${miBranchIcon}</td><td><img class="mi-product" src="assets/instruments/${component.image}" alt="" /></td><td>${component.serial}</td><td>${component.nickname}</td>${showUsers ? '<td class="mi-users-cell"></td>' : ""}<td>${component.model}</td><td>${component.type}</td><td></td><td></td></tr>`).join("");
     return parent + children;
   }).join("");
 }
 
 function miSuggestionsSupportPanel() {
   const items = MI_SUGGESTION_SUPPORT_ITEMS;
-  const content = items.length ? `<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-suggestions-table"><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all support history suggestions" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname</th><th><button class="mi-header-select platform-table-catalog-filter" type="button"><span class="platform-table-catalog-filter__label" title="Catalog no.">Catalog no.</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Actions</th><th></th></tr></thead><tbody>${miSuggestionCommonRows(items, "support")}</tbody></table></div>${miPaginationMarkup(miSuggestionDisplayCount(items))}${miSuggestionActionBarMarkup("support")}` : miSuggestionZeroStateMarkup("support");
+  const filters = [{ key: "model", label: "Catalog no." }, { key: "type", label: "Type" }];
+  const content = items.length ? `${miSecondaryAppliedFiltersMarkup(filters, "Support history suggestion filters")}<div class="mi-secondary-table-wrap"><table class="mi-secondary-table mi-suggestions-table" data-mi-secondary-filter-table><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all support history suggestions" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname</th><th><div data-mi-secondary-filter-trigger="model"></div></th><th><div data-mi-secondary-filter-trigger="type"></div></th><th>Actions</th><th></th></tr></thead><tbody>${miSuggestionCommonRows(items, "support")}</tbody></table></div>${miPaginationMarkup(miSuggestionDisplayCount(items))}${miSuggestionActionBarMarkup("support")}` : miSuggestionZeroStateMarkup("support");
   return `<div class="mi-secondary-top mi-suggestions-top">${miTitleMarkup("From support history", miSuggestionDisplayCount(items), "Instruments(s) and/or system(s) below have support history associated with your email address, but are not yet added to your account. &nbsp;Add if relevant to you, or ignore.", miSegmentedMarkup(miSuggestionSegments(), "support"))}${miSearchMarkup("Search by instrument serial number or nickname")}</div>${content}${miSuggestionIgnoreDialogMarkup()}`;
 }
 
@@ -4807,7 +5173,8 @@ function miSuggestionsRelatedPanel() {
 function miSuggestionsInvitesPanel() {
   const items = MI_SUGGESTION_INVITE_ITEMS;
   const count = miSuggestionDisplayCount(items);
-  const content = items.length ? `<button class="mi-select-all-link" type="button" data-mi-select-all-visible>Select all ${count} instruments</button><div class="mi-secondary-table-wrap mi-invites-table-wrap"><table class="mi-secondary-table mi-invites-table"><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all installation invite suggestions" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th><button class="mi-header-select platform-table-catalog-filter" type="button"><span class="platform-table-catalog-filter__label" title="Catalog no.">Catalog no.</span><img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th><button class="mi-header-select" type="button">Type <img src="assets/icons/directions/caret down/Down caret.svg" alt="" /></button></th><th>Actions</th><th></th></tr></thead><tbody>${miSuggestionCommonRows(items, "invites")}</tbody></table></div>${miPaginationMarkup(count)}${miSuggestionActionBarMarkup("invites")}` : miSuggestionZeroStateMarkup("invites");
+  const filters = [{ key: "model", label: "Catalog no." }, { key: "type", label: "Type" }];
+  const content = items.length ? `<button class="mi-select-all-link" type="button" data-mi-select-all-visible>Select all ${count} instruments</button>${miSecondaryAppliedFiltersMarkup(filters, "Installation invite filters")}<div class="mi-secondary-table-wrap mi-invites-table-wrap"><table class="mi-secondary-table mi-invites-table" data-mi-secondary-filter-table><thead><tr><th><input type="checkbox" data-mi-suggestion-select-all aria-label="Select all installation invite suggestions" /></th><th></th><th></th><th>Serial number ${miSortIcon}</th><th>Nickname ${miSortIcon}</th><th class="mi-users-cell">Users ${miSortIcon}</th><th><div data-mi-secondary-filter-trigger="model"></div></th><th><div data-mi-secondary-filter-trigger="type"></div></th><th>Actions</th><th></th></tr></thead><tbody>${miSuggestionCommonRows(items, "invites")}</tbody></table></div>${miPaginationMarkup(count)}${miSuggestionActionBarMarkup("invites")}` : miSuggestionZeroStateMarkup("invites");
   return `<div class="mi-secondary-top mi-suggestions-top mi-invites-top">${miTitleMarkup("From installation invites", count, "The instrument(s) listed below were recently installed, and a member of your organization added you to the installation order while it was open.", miSegmentedMarkup(miSuggestionSegments(), "invites"))}</div>${content}${miSuggestionIgnoreDialogMarkup()}`;
 }
 
@@ -4966,6 +5333,84 @@ function wireMiTableSelection(table) {
   syncSelectAll();
 }
 
+function applyMiSecondaryTableFilters(panel) {
+  const table = panel.querySelector("[data-mi-secondary-filter-table]");
+  if (!table) return;
+  const query = panel.querySelector("[data-mi-secondary-search]")?.value.trim().toLowerCase() || "";
+  const filters = panel.miSecondaryFilters || [];
+  const rowMatches = (row) => {
+    const matchesSearch = !query || (row.dataset.search || "").toLowerCase().includes(query);
+    const matchesFilters = filters.every(({ key, filter }) => {
+      const values = filter.values;
+      return values.length === 0 || values.includes(row.getAttribute(`data-mi-filter-${key}`) || "");
+    });
+    return matchesSearch && matchesFilters;
+  };
+  const collapsedSystems = new Set([...panel.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
+  const childRowsBySystem = new Map();
+  table.querySelectorAll("tbody [data-mi-system-component]").forEach((row) => {
+    const systemKey = row.dataset.miSystemComponent;
+    if (!childRowsBySystem.has(systemKey)) childRowsBySystem.set(systemKey, []);
+    childRowsBySystem.get(systemKey).push(row);
+  });
+  table.querySelectorAll("tbody [data-mi-secondary-row]:not([data-mi-system-component])").forEach((row) => {
+    const systemKey = row.querySelector("[data-mi-system-toggle]")?.dataset.miSystemToggle;
+    const children = systemKey ? childRowsBySystem.get(systemKey) || [] : [];
+    const matchingChildren = children.filter(rowMatches);
+    const ownMatch = rowMatches(row);
+    row.hidden = !(ownMatch || matchingChildren.length > 0);
+    children.forEach((child) => {
+      child.hidden = collapsedSystems.has(systemKey) || !rowMatches(child);
+    });
+  });
+}
+
+function sortMiSecondaryFilterTable(panel, key, direction) {
+  const tbody = panel.querySelector("[data-mi-secondary-filter-table] tbody");
+  if (!tbody) return;
+  const rows = [...tbody.querySelectorAll(":scope > [data-mi-secondary-row]")];
+  const topLevelRows = rows.filter((row) => !row.dataset.miSystemComponent);
+  const blocks = topLevelRows.map((row, index) => {
+    const systemKey = row.querySelector("[data-mi-system-toggle]")?.dataset.miSystemToggle;
+    const children = systemKey ? rows.filter((candidate) => candidate.dataset.miSystemComponent === systemKey) : [];
+    return { row, children, index, value: row.getAttribute(`data-mi-filter-${key}`) || "" };
+  });
+  blocks.sort((left, right) => {
+    const comparison = left.value.localeCompare(right.value, undefined, { numeric: true, sensitivity: "base" });
+    return comparison === 0 ? left.index - right.index : comparison * (direction === "desc" ? -1 : 1);
+  });
+  blocks.forEach(({ row, children }) => tbody.append(row, ...children));
+  applyMiSecondaryTableFilters(panel);
+}
+
+function wireMiSecondaryTableFilters(panel) {
+  const table = panel.querySelector("[data-mi-secondary-filter-table]");
+  const applied = panel.querySelector("[data-mi-secondary-applied-filters]");
+  if (!table || !applied) {
+    panel.miSecondaryFilters = [];
+    return;
+  }
+  const controls = [...table.querySelectorAll("[data-mi-secondary-filter-trigger]")];
+  panel.miSecondaryFilters = controls.map((controlHost) => {
+    const key = controlHost.dataset.miSecondaryFilterTrigger;
+    const root = applied.querySelector(`[data-mi-secondary-filter="${key}"]`);
+    const label = key === "model" ? "Catalog no." : `${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+    const options = [...new Set([...table.querySelectorAll(`[data-mi-filter-${key}]`)].map((row) => row.getAttribute(`data-mi-filter-${key}`)).filter(Boolean))];
+    const filter = new window.MultiSelectFilter(root, { label, options: options.length ? options : ["—"], controlHost, menuStyle: "figma-column" });
+    root.addEventListener("multiselect-filter-change", () => {
+      const hasFilters = panel.miSecondaryFilters.some((candidate) => candidate.filter.values.length > 0);
+      applied.hidden = !hasFilters;
+      applied.querySelector("[data-mi-secondary-clear-filters]").hidden = !hasFilters;
+      applyMiSecondaryTableFilters(panel);
+    });
+    root.addEventListener("multiselect-filter-sort", (event) => sortMiSecondaryFilterTable(panel, key, event.detail.direction));
+    return { key, filter };
+  });
+  applied.querySelector("[data-mi-secondary-clear-filters]")?.addEventListener("click", () => {
+    panel.miSecondaryFilters.forEach(({ filter }) => filter.clear());
+  });
+}
+
 function renderMyInstrumentsTab(tabName, segmentState) {
   syncMiTabCounts();
   const instrumentsPanel = app.querySelector("[data-mi-instruments-panel]");
@@ -4978,6 +5423,7 @@ function renderMyInstrumentsTab(tabName, segmentState) {
   secondaryPanel.innerHTML = panels[tabName](segmentState);
   secondaryPanel.classList.remove("mi-secondary-content--has-actionbar");
   secondaryPanel.setAttribute("aria-labelledby", `mi-${tabName}-tab`);
+  wireMiSecondaryTableFilters(secondaryPanel);
   secondaryPanel.querySelectorAll(".mi-secondary-table").forEach(wireMiTableSelection);
   secondaryPanel.querySelectorAll("[data-mi-system-toggle]").forEach((toggle) => {
     toggle.addEventListener("click", () => {
@@ -4985,16 +5431,12 @@ function renderMyInstrumentsTab(tabName, segmentState) {
       const systemLabel = toggle.dataset.miSystemLabel || "System";
       toggle.setAttribute("aria-expanded", String(!expanded));
       toggle.setAttribute("aria-label", `${expanded ? "Expand" : "Collapse"} ${systemLabel} system components`);
-      secondaryPanel.querySelector("[data-mi-secondary-search]")?.dispatchEvent(new Event("input"));
+      applyMiSecondaryTableFilters(secondaryPanel);
     });
   });
   secondaryPanel.querySelector("[data-mi-secondary-search]")?.addEventListener("input", (event) => {
+    applyMiSecondaryTableFilters(secondaryPanel);
     const query = event.currentTarget.value.trim().toLowerCase();
-    const collapsedSystems = new Set([...secondaryPanel.querySelectorAll('[data-mi-system-toggle][aria-expanded="false"]')].map((toggle) => toggle.dataset.miSystemToggle));
-    secondaryPanel.querySelectorAll("[data-mi-secondary-row]").forEach((row) => {
-      const hiddenBySearch = query !== "" && !row.dataset.search.toLowerCase().includes(query);
-      row.hidden = hiddenBySearch || collapsedSystems.has(row.dataset.miSystemComponent);
-    });
     secondaryPanel.querySelectorAll("[data-mi-grid-card], [data-mi-group-card]").forEach((card) => {
       card.hidden = query !== "" && !card.dataset.search.toLowerCase().includes(query);
     });
@@ -5259,6 +5701,7 @@ function wireMyInstruments() {
 function renderMyInstruments() {
   const template = document.querySelector("#my-instruments-native-template");
   app.replaceChildren(template.content.cloneNode(true));
+  if (miCoverageAlertDismissed) app.querySelector("[data-mi-coverage]")?.setAttribute("hidden", "");
   mountTopbarSc();
   mountPlatformSidebar("my-instruments");
   mountFooter();
@@ -6015,7 +6458,7 @@ function instrumentDetailUsersMarkup(target) {
   ];
   const count = Math.max(1, Math.min(allUsers.length, Number.parseInt(target?.users, 10) || 1));
   const users = allUsers.slice(0, count);
-  return `<section class="sd-panel sd-users-panel id-users-panel"><header><div><h2>Instrument users <span>${count}</span></h2><p>Users who have added this instrument in Services Central.</p></div><button type="button" data-mi-toast="Share users opened">Share</button></header><table><thead><tr><th></th><th>Role ${miSortIcon}</th><th>Current users ${miSortIcon}</th><th>Added date ${miSortIcon}</th><th>Remove</th></tr></thead><tbody>${users.map(([email, date, slug]) => { const role = miRoleForAsset(accessKey, email, target); return `<tr><td>${role === "Admin" ? '<img class="sd-admin-icon" src="assets/icons/general/admin/size=24px, style=mono.svg" alt="Administrator" />' : ""}</td><td>${miRoleBadge(role === "Admin", { accessKey, email, editable: miIsAdmin(target) })}</td><td>${slug ? `<button type="button" data-route="user-detail-${slug}">${email}</button>` : email}</td><td>${date}</td><td><button type="button" data-mi-toast="${email} removed" aria-label="Remove ${email}"><img src="assets/icons/actions/bin/size=16px, style=mono.svg" alt="" /></button></td></tr>`; }).join("")}</tbody></table></section>`;
+  return `<section class="sd-panel sd-users-panel id-users-panel"><header><div><h2>Instrument users <span>${count}</span></h2><p>Users who have added this instrument in Services Central.</p></div><button type="button" data-id-share-instrument="${target.serial}">Share</button></header><table><thead><tr><th></th><th>Role ${miSortIcon}</th><th>Current users ${miSortIcon}</th><th>Added date ${miSortIcon}</th><th>Remove</th></tr></thead><tbody>${users.map(([email, date, slug]) => { const role = miRoleForAsset(accessKey, email, target); return `<tr><td>${role === "Admin" ? '<img class="sd-admin-icon" src="assets/icons/general/admin/size=24px, style=mono.svg" alt="Administrator" />' : ""}</td><td>${miRoleBadge(role === "Admin", { accessKey, email, editable: miIsAdmin(target) })}</td><td>${slug ? `<button type="button" data-route="user-detail-${slug}">${email}</button>` : email}</td><td>${date}</td><td><button type="button" data-mi-toast="${email} removed" aria-label="Remove ${email}"><img src="assets/icons/actions/bin/size=16px, style=mono.svg" alt="" /></button></td></tr>`; }).join("")}</tbody></table></section>`;
 }
 
 function instrumentDetailActivityMarkup(instrument) {
@@ -6058,6 +6501,9 @@ function wireInstrumentDetailTabContent(tab, instrument) {
   if (tab === "users") wireMiRoleSelectors(content, () => {
     content.innerHTML = instrumentDetailUsersMarkup(instrument);
     wireInstrumentDetailTabContent("users", instrument);
+  });
+  content.querySelector("[data-id-share-instrument]")?.addEventListener("click", (event) => {
+    openMiShareDialogForInstrument(event.currentTarget.dataset.idShareInstrument);
   });
   content.querySelectorAll("[data-mi-toast]").forEach((control) => control.addEventListener("click", () => showToast(control.dataset.miToast)));
   wireRouteControls(content);
@@ -6959,12 +7405,19 @@ function wireAddInstruments() {
   bulkInstructionsDialog.querySelectorAll("[data-ai-bulk-instructions-close]").forEach((button) => button.addEventListener("click", () => bulkInstructionsDialog.close()));
 
   let bannerIndex = 0;
-  const updateBannerDots = () => {
+  const updateBanner = () => {
+    const banner = DASHBOARD_BANNERS[bannerIndex];
+    app.querySelector("[data-ai-banner-art]").src = banner.image;
+    app.querySelector("[data-ai-banner-title]").textContent = banner.title;
+    app.querySelector("[data-ai-banner-body]").textContent = banner.body;
+    app.querySelector("[data-ai-banner-action]").textContent = banner.action;
     app.querySelectorAll(".ai-banner__dots span").forEach((dot, index) => dot.classList.toggle("is-active", index === bannerIndex));
-    app.querySelector(".ai-banner__dots").setAttribute("aria-label", `Suggestion ${bannerIndex + 1} of 3`);
+    app.querySelector(".ai-banner__dots").setAttribute("aria-label", `Suggestion ${bannerIndex + 1} of ${DASHBOARD_BANNERS.length}`);
   };
-  app.querySelector("[data-ai-banner-prev]").addEventListener("click", () => { bannerIndex = (bannerIndex + 2) % 3; updateBannerDots(); });
-  app.querySelector("[data-ai-banner-next]").addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % 3; updateBannerDots(); });
+  updateBanner();
+  app.querySelector("[data-ai-banner-prev]").addEventListener("click", () => { bannerIndex = (bannerIndex + DASHBOARD_BANNERS.length - 1) % DASHBOARD_BANNERS.length; updateBanner(); });
+  app.querySelector("[data-ai-banner-next]").addEventListener("click", () => { bannerIndex = (bannerIndex + 1) % DASHBOARD_BANNERS.length; updateBanner(); });
+  app.querySelector("[data-ai-banner-action]").addEventListener("click", () => openInstrumentBannerDestination(DASHBOARD_BANNERS[bannerIndex]));
 
   const supportedDialog = app.querySelector("[data-ai-supported-dialog]");
   app.querySelectorAll("[data-ai-supported]").forEach((button) => button.addEventListener("click", openAiSupportedInstrumentDialog));
@@ -7371,7 +7824,7 @@ function otherRequestRowMarkup(request, expanded) {
     <td title="${request.details}">${request.details}</td>
     <td>${request.instruments === "—" ? "—" : `<button class="sh-other-link" type="button" data-sh-other-instruments="${request.id}" aria-label="View ${request.instruments} instruments for ${request.type}">${request.instruments}</button>`}</td>
     <td>${request.contact}</td><td>${request.created}</td>
-    <td><button class="mi-button sh-other-details" type="button" data-sh-other-details="${request.id}">View details</button></td>
+    <td><button class="mi-button mi-button--small sh-other-details" type="button" data-sh-other-details="${request.id}">View details</button></td>
   </tr>`;
   if (!hasChildren) return parent;
   return parent + request.children.map((child) => otherRequestChildRowMarkup(request, child)).join("");
@@ -7670,21 +8123,21 @@ function renderTicketSummary(route) {
   } : baseTicket;
   const isTechSupport = ticket.isTechSupport === true;
   const titleMeta = `<p class="ts-titlebar__metadata"><span class="ts-ticket-meta__number"><strong>Ticket number:</strong> ${ticket.ticket}</span><span class="ts-ticket-meta__type"><strong>Ticket type:</strong> ${ticket.type}</span></p>`;
-  const ticketContact = ticket.selectedFromHistory ? ticket.contact : "Molly Hartman";
-  const ticketPhone = ticket.selectedFromHistory ? ticket.phone || "---" : "123-456-7890";
-  const ticketEmail = ticket.selectedFromHistory ? ticket.email || "---" : "molly.hartman@thermofisher.com";
+  const ticketContact = ticket.selectedFromHistory ? ticket.contact : LOGGED_IN_USER.fullName;
+  const ticketPhone = ticket.selectedFromHistory ? ticket.phone || "---" : LOGGED_IN_USER.phone;
+  const ticketEmail = ticket.selectedFromHistory ? ticket.email || "---" : LOGGED_IN_USER.email;
   const ticketCreated = ticket.selectedFromHistory ? ticket.created : "26 April 2023";
   const ticketClosed = ticket.state === "Closed" ? ticket.closed : "---";
   const submittedNotice = ticket.submitted
     ? `<img src="assets/icons/notifications/success/size=24px, style=bold.svg" alt="" /><p><strong>Request submitted:</strong> A representative will respond to your request as soon as possible.<br />When processing is complete your ticket will be updated with the appropriate status.</p>`
     : "";
-  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
-  const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>123-456-7890</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl>`;
-  const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
+  const techContent = `<article class="ts-card ts-card--tech"><h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>${ticketPhone}</dd></div><div><dt>Email</dt><dd>${ticketEmail}</dd></div></dl><h2>Support request details</h2><dl class="ts-tech-details"><div><dt>Request subject</dt><dd>${ticket.subject}</dd></div><div><dt>Problem</dt><dd>I urgently need comprehensive technical support to resolve an unknown instrument error that has occurred.</dd></div><div><dt>Error codes</dt><dd>No</dd></div><div><dt>Recent changes to the instrument or environment</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>${ticketEmail}</dd></div></dl></section></article><article class="ts-card ts-instrument ts-instrument--tech"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
+  const contactMarkup = `<h2>Ticket contact information</h2><dl class="ts-contact"><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Phone number</dt><dd>${ticketPhone}</dd></div><div><dt>Email</dt><dd>${ticketEmail}</dd></div></dl>`;
+  const requestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Need support"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticketCreated}</dd></div><div><dt>Closed date</dt><dd>${ticketClosed}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>${ticketEmail}</dd></div></dl></section>`;
   const instrumentMarkup = `<article class="ts-card ts-instrument ts-instrument--standard"><img src="assets/instruments/${ticket.image || "vanquish-detector.png"}" alt="${ticket.catalogName || "Instrument"}" /><dl><div><dt>Serial number</dt><dd class="ts-link">${ticket.serial}</dd></div><div><dt>Catalog no.</dt><dd>${ticket.model}</dd></div><div><dt>Type</dt><dd>${ticket.instrumentType || "HPLC"}</dd></div><div><dt>Catalog name</dt><dd>${ticket.catalogName || "Vanquish™ Variable Wavelength Detector F"}</dd></div><div><dt>Nickname</dt><dd>${ticket.nickname}</dd></div><div><dt>Groups</dt><dd>${ticket.group || "—"}</dd></div><div><dt>Notes</dt><dd>Instrument support record</dd></div><div><dt>Manuals</dt><dd class="ts-link">View operating manual<br />View system operating manual</dd></div></dl></article>`;
   const quoteContent = `<article class="ts-card ts-card--standard ts-card--quote">${contactMarkup}<div class="ts-summary-split"><section>${requestMarkup}</section><section class="ts-quotes"><header><h2>Quote(s)</h2><span>Prices are subject to change</span></header><article class="ts-quote"><img src="assets/icons/general/quote/size=24px, style=mono.svg" alt="" /><div><span><b>Quote:</b> <span class="ts-quote__number">17171847</span></span><span><b>Created:</b> 11 Apr 2023</span><span><b>Total:</b> $10,285</span></div><div class="ts-quote__actions"><button class="mi-button" type="button">View quote</button><button class="mi-button" type="button">Place order</button></div></article></section></div><section class="ts-service ts-service--quote"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 30 Apr 2023</dd></div></dl></section></article>${instrumentMarkup}`;
   const preventiveContent = `<article class="ts-card ts-card--standard ts-card--preventive">${contactMarkup}${requestMarkup}<section class="ts-service ts-service--preventive"><h3>Service details</h3><dl class="ts-service-details"><div><dt>Scheduled start date</dt><dd>Monday, 12 May 2023</dd></div></dl></section></article>${instrumentMarkup}`;
-  const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>molly.hartman@thermofisher.com</dd></div></dl></section>`;
+  const closedRequestMarkup = `<h2>Support request details</h2><dl class="ts-standard-details"><div><dt>Request subject</dt><dd>${ticket.selectedFromHistory ? ticket.subject : "Won’t turn on"}</dd></div><div><dt>Additional details</dt><dd>We disassembled the system to clean it and now it won’t turn on.</dd></div><div><dt>Created date</dt><dd>${ticket.selectedFromHistory ? ticket.created : "26 April 2023"}</dd></div><div><dt>Closed date</dt><dd>${ticket.selectedFromHistory ? ticket.closed : "1 May 2023"}</dd></div></dl><section class="ts-submitted"><h3>Submitted by</h3><dl><div><dt>Name</dt><dd>${ticketContact}</dd></div><div><dt>Email</dt><dd>${ticketEmail}</dd></div></dl></section>`;
   const closedContent = `<article class="ts-card ts-card--standard ts-card--closed">${contactMarkup}${closedRequestMarkup}<section class="ts-service ts-service--closed"><h3>Service details</h3><div class="ts-service--closed__body"><div class="ts-service--closed__details"><dl><div><dt>Arrival date</dt><dd>12 Mar 2023</dd></div><div><dt>Completion date</dt><dd>12 Mar 2023</dd></div><div><dt>Type of service</dt><dd>Preventive maintenance</dd></div></dl><dl class="ts-service-description"><div><dt>Service description</dt><dd>Cras gravida nibh enim, sit amet molestie nisi congue id. Proin rhoncus consectetur arcu, in lobortis magna. Donec purus ipsum, dignissim non maximus nec, rhoncus accumsan erat. Proin consectetur tincidunt mi eget cursus. Sed facilisis at risus imperdiet.</dd></div></dl></div><article class="ts-service-report"><div><strong>View service report</strong><p>Available here until dd mmm yyyy.<br />After this date, contact support.</p></div><button type="button" aria-label="Download service report"><img src="assets/icons/actions/download/Size=24px, Style=Mono, Color=Blue.svg" alt="" /></button></article></div></section></article>${instrumentMarkup}`;
   const defaultContent = ticket.summaryKind === "quote" ? quoteContent : ticket.summaryKind === "preventive" ? preventiveContent : closedContent;
   const scheduledStartDate = ticket.summaryKind === "quote" || ticket.summaryKind === "preventive" ? ticket.created : "—";
@@ -8047,12 +8500,12 @@ function renderOpenSupportTicketDetails() {
 function wireOpenSupportTicketContact() {
   const fields = [...app.querySelectorAll("[data-ost-contact-field]")];
   const continueButton = app.querySelector('[data-actionbar-action="primary"]');
-  const contactDefaults = { firstName: "Molly", lastName: "Hartman" };
+  const contactDefaults = LOGGED_IN_USER_CONTACT;
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isFieldValid = (field) => {
     const value = field.value.trim();
     if (!value) return false;
-    if (field.dataset.ostContactField === "phone") return /^\d+$/.test(value);
+    if (field.dataset.ostContactField === "phone") return /^[0-9 ]+$/.test(value);
     if (field.dataset.ostContactField === "email") return emailPattern.test(value);
     return true;
   };
@@ -8061,9 +8514,13 @@ function wireOpenSupportTicketContact() {
     continueButton.disabled = !fields.every(isFieldValid);
   };
   fields.forEach((field) => {
+    if (field.dataset.ostContactField === "phone") {
+      field.inputMode = "tel";
+      field.pattern = "[0-9 ]*";
+    }
     field.value = openSupportTicketDraft.contact[field.dataset.ostContactField] || contactDefaults[field.dataset.ostContactField] || "";
     field.addEventListener("input", () => {
-      if (field.dataset.ostContactField === "phone") field.value = field.value.replace(/\D/g, "");
+      if (field.dataset.ostContactField === "phone") field.value = field.value.replace(/[^0-9 ]/g, "");
       update();
     });
   });
@@ -8623,10 +9080,7 @@ function renderRequestPmDetails() {
 
 function wireRequestPmContact() {
   const defaultPmContact = {
-    firstName: "Molly",
-    lastName: "Hartman",
-    phone: "555-555-5555",
-    email: "molly.hartman@thermofisher.com",
+    ...LOGGED_IN_USER_CONTACT,
     country: "USA",
     state: "California",
     city: "Carlsbad",
@@ -9022,7 +9476,7 @@ function renderRequestServicePlanDetails() {
 }
 
 function wireServicePlanContact() {
-  const defaults = { firstName: "Molly", lastName: "Hartman", phone: "123-456-7890", email: "molly.hartman@thermofisher.com", company: "Thermo Fisher", serviceAddress: "123 Blueberry Lane", country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
+  const defaults = { ...LOGGED_IN_USER_CONTACT, company: "Thermo Fisher", serviceAddress: "123 Blueberry Lane", country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
   const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
   const primary = app.querySelector('[data-actionbar-action="primary"]');
   const country = fields.find((field) => field.dataset.qualificationContactField === "country");
@@ -9456,10 +9910,7 @@ function renderRequestQualificationDetails() {
 
 function wireRequestQualificationContact() {
   const defaultQualificationContact = {
-    firstName: "Molly",
-    lastName: "Hartman",
-    phone: "555-555-5555",
-    email: "molly.hartman@thermofisher.com",
+    ...LOGGED_IN_USER_CONTACT,
     country: "USA",
     state: "California",
     city: "Carlsbad",
@@ -9874,7 +10325,7 @@ class KomodoSingleSelect {
 }
 
 function wireCalibrationContact() {
-  const defaults = { firstName: "Molly", lastName: "Hartman", phone: "555-555-5555", email: "molly.hartman@thermofisher.com", country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
+  const defaults = { ...LOGGED_IN_USER_CONTACT, country: "USA", state: "California", city: "Carlsbad", postalCode: "93047" };
   const fields = [...app.querySelectorAll("[data-qualification-contact-field]")];
   const primary = app.querySelector('[data-actionbar-action="primary"]');
   const country = fields.find((field) => field.dataset.qualificationContactField === "country");
@@ -10027,6 +10478,338 @@ function renderRequestInstallation() {
   document.title = "Installation support — Services Central";
 }
 
+const SERVICE_PLAN_CONTACT_CARDS = Object.freeze([
+  { name: "Gerard Campbell", email: "gerard.campbell@company.com" },
+  { name: "Jon Doe", email: "jon.doe@company.com" },
+  { name: "Mary Smith", email: "mary.smith@company.com" },
+  { name: "Molly Hartman", email: "molly.hartman@company.com" },
+  { name: "Thomas Mayer", email: "thomas.mayer@company.com" },
+]);
+const removedServicePlanContacts = new Set();
+const servicePlanContactOverrides = new Map();
+let servicePlanEditPreselection = new Set();
+let mostRecentlyCreatedServicePlanContactEmail = "";
+
+const SERVICE_PLAN_CONTACT_PLANS = Object.freeze([
+  { number: "0040111111", contact: "Gerard Campbell", items: [
+    { serial: "TSQ-Z-12347", contact: "Gerard Campbell" },
+    { serial: "TSQ-Z-12348", contact: "Molly Hartman" },
+    { serial: "TSQ-Z-12349", contact: "Jon Doe" },
+  ] },
+  { number: "0040222222", contact: "Jon Doe", items: ["SN98355W", "SN98356W", "SN98358W", "SN98359W"] },
+  { number: "0040333333", contact: "Mary Smith", items: ["SN98360W", "SN98361W", "SN98362W"] },
+  { number: "0040444444", contact: "Molly Hartman", items: [
+    { systemId: "borealis-lab", nickname: "Borealis Lab", components: ["SN98355W", "SN98356W"] },
+    "1009996",
+    "1009999",
+  ] },
+  { number: "0040555555", contact: "Thomas Mayer", items: [
+    { systemId: "cobalt-array", nickname: "Cobalt Array", components: ["SN98358W", "SN98359W", "SN98360W"] },
+  ] },
+]);
+
+const SERVICE_PLAN_WITHOUT_CONTACT_PLANS = Object.freeze([
+  { number: "0040666666", items: [
+    { serial: "NC-44021", nickname: "Orbitrap Lab 1", image: "q-exactive.png", coverage: "Under contract" },
+    { serial: "NC-44022", nickname: "Orbitrap Lab 2", image: "q-exactive.png", coverage: "Under contract" },
+    { serial: "NC-44023", nickname: "Quantitation Suite", image: "tsq.png", coverage: "Coverage expired" },
+  ] },
+  { number: "0040777777", items: [
+    { systemId: "alpine-reserve", nickname: "Alpine Reserve", components: ["NC-55021", "NC-55022"] },
+    { serial: "NC-55023", nickname: "Detector Reserve", image: "vanquish-detector.png", coverage: "Under contract" },
+    { serial: "NC-55024", nickname: "Pump Reserve", image: "vanquish-pump.png", coverage: "Under contract" },
+  ] },
+  { number: "0040888888", items: [
+    { serial: "NC-66021", nickname: "Clinical MS 1", image: "tsq.png", coverage: "Under contract" },
+    { serial: "NC-66022", nickname: "Clinical MS 2", image: "tsq.png", coverage: "Under contract" },
+    { serial: "NC-66023", nickname: "Research MS 1", image: "q-exactive.png", coverage: "Under contract" },
+    { serial: "NC-66024", nickname: "Research MS 2", image: "q-exactive.png", coverage: "Coverage expired" },
+  ] },
+]);
+
+const SERVICE_PLAN_NO_PLAN_ITEMS = Object.freeze([
+  {
+    systemId: "alpine",
+    nickname: "Alpine",
+    components: ["1009996", "1009999", "1009998", "1009997", "TSQ-Z-12346"],
+  },
+  { serial: "TSQ-Z-12347" },
+]);
+const SERVICE_PLAN_NO_PLAN = Object.freeze({
+  number: "no-service-plan",
+  label: "Instruments with no service plan",
+  items: SERVICE_PLAN_NO_PLAN_ITEMS,
+});
+
+function servicePlanContactEmail(contactName) {
+  return SERVICE_PLAN_CONTACT_CARDS.find((contact) => contact.name === contactName)?.email || "";
+}
+
+function servicePlanContactName(email) {
+  const knownContact = SERVICE_PLAN_CONTACT_CARDS.find((contact) => contact.email.toLowerCase() === email.toLowerCase());
+  if (knownContact) return knownContact.name;
+  if (email.toLowerCase() === LOGGED_IN_USER.email.toLowerCase()) return LOGGED_IN_USER.fullName;
+  return email.split("@")[0].split(/[._-]+/).filter(Boolean).map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`).join(" ");
+}
+
+function servicePlanAssetKey(item) {
+  if (typeof item === "string") return `instrument:${item}`;
+  return item.systemId ? `system:${item.systemId}` : `instrument:${item.serial}`;
+}
+
+function servicePlanItemContactNames(item, plan) {
+  const overrideEmails = servicePlanContactOverrides.get(servicePlanAssetKey(item));
+  if (overrideEmails) return overrideEmails.map(servicePlanContactName);
+  const contactName = typeof item === "string" ? plan.contact : item.contact || plan.contact;
+  return contactName && !removedServicePlanContacts.has(contactName) ? [contactName] : [];
+}
+
+function servicePlanItemContactEmails(item, plan) {
+  const overrideEmails = servicePlanContactOverrides.get(servicePlanAssetKey(item));
+  if (overrideEmails) return [...overrideEmails];
+  return servicePlanItemContactNames(item, plan).map(servicePlanContactEmail).filter(Boolean);
+}
+
+function servicePlanSelectionGroupId(planNumber, withoutContact = false) {
+  return `plan-${planNumber}-${withoutContact ? "without" : "with"}-contact`;
+}
+
+function editSpcContactCell(contactEmails) {
+  const emails = Array.isArray(contactEmails) ? contactEmails : contactEmails ? [contactEmails] : [];
+  return emails.length
+    ? `<td class="spc-contact-cell" data-spc-contact-emails="${emails.join("|")}">${formatSpcContactList(emails)}</td>`
+    : '<td class="spc-contact-cell">—</td>';
+}
+
+function editSpcInstrumentRowMarkup(item, groupId, contactEmails = [], { child = false, last = false } = {}) {
+  const source = typeof item === "string" ? { serial: item } : item;
+  const instrument = MY_INSTRUMENTS.find((candidate) => candidate.serial === source.serial) || source;
+  const coverage = instrument.coverage || "Under contract";
+  const coverageClass = coverage === "Coverage expired" ? "spc-pill--bad" : "spc-pill--ok";
+  const classes = ["spc-row", child ? "spc-row--child" : "", last ? "spc-row--last-child" : ""].filter(Boolean).join(" ");
+  return `<tr class="${classes}" data-spc-group-child="${groupId}" data-spc-search-value="${instrument.serial} ${instrument.nickname || "—"} ${contactEmails.join(" ")}" hidden>
+    <td>${child ? "" : `<input type="checkbox" aria-label="Select ${instrument.serial}" data-spc-selection-id="${groupId}:instrument:${instrument.serial}" />`}</td>
+    <td></td>
+    <td><span class="spc-pill ${coverageClass}">${coverage}</span></td>
+    <td>${child ? '<img class="spc-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" />' : `<img class="spc-instrument-image" src="assets/instruments/${instrument.image || "tsq.png"}" alt="" />`}</td>
+    <td>${child ? `<img class="spc-instrument-image" src="assets/instruments/${instrument.image || "tsq.png"}" alt="" />` : instrument.locked ? '<img class="spc-lock-icon" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="" />' : ""}</td>
+    <td>${instrument.serial}</td>
+    <td>${instrument.nickname || "—"}</td>
+    ${editSpcContactCell(contactEmails)}
+  </tr>`;
+}
+
+function editSpcGroupMarkup({ id, label, items, withContact, plan }) {
+  const contactEmails = plan && withContact
+    ? [...new Set(items.flatMap((item) => servicePlanItemContactEmails(item, plan)))]
+    : [];
+  const initiallyExpanded = id.includes("no-service-plan");
+  const itemRows = [];
+  items.forEach((item, itemIndex) => {
+    const lastItem = itemIndex === items.length - 1;
+    if (typeof item === "string" || item.serial) {
+      const itemContactEmails = withContact && plan ? servicePlanItemContactEmails(item, plan) : [];
+      itemRows.push(editSpcInstrumentRowMarkup(item, id, itemContactEmails, { last: lastItem }));
+      return;
+    }
+    const itemContactEmails = withContact && plan ? servicePlanItemContactEmails(item, plan) : [];
+    itemRows.push(`<tr class="spc-row" data-spc-group-child="${id}" data-spc-search-value="System ${item.nickname} ${itemContactEmails.join(" ")}"${initiallyExpanded ? "" : " hidden"}>
+      <td><input type="checkbox" aria-label="Select ${item.nickname} system" data-spc-selection-id="${id}:system:${item.systemId}" /></td>
+      <td></td><td>—</td><td><img class="spc-system-icon" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td></td>
+      <td>System</td><td>${item.nickname}</td>${editSpcContactCell(itemContactEmails)}
+    </tr>`);
+    item.components.forEach((serial, componentIndex) => {
+      itemRows.push(editSpcInstrumentRowMarkup(serial, id, itemContactEmails, {
+        child: true,
+        last: lastItem && componentIndex === item.components.length - 1,
+      }).replace(" hidden>", initiallyExpanded ? ">" : " hidden>"));
+    });
+  });
+  if (initiallyExpanded) {
+    for (let index = 0; index < itemRows.length; index += 1) itemRows[index] = itemRows[index].replace(" hidden>", ">");
+  }
+  const state = withContact ? "with" : "without";
+  const groupContact = contactEmails.join("|");
+  const groupContactLabel = contactEmails.length > 1 ? "Multiple" : contactEmails[0] || "";
+  return `<tr class="spc-row spc-row--group" data-spc-group-row="${id}" data-spc-contact-state="${state}" data-spc-group-count="${items.length}" data-spc-search-value="${label} ${contactEmails.join(" ")}">
+    <td><input type="checkbox" aria-label="Select ${label}" data-spc-selection-id="${id}" /></td>
+    <td><button class="spc-group-toggle" type="button" data-spc-group-toggle="${id}" aria-expanded="${initiallyExpanded}" aria-label="${initiallyExpanded ? "Collapse" : "Expand"} ${label}"><img class="spc-chevron-icon" src="assets/icons/directions/chevron ${initiallyExpanded ? "down" : "right"}/size=16px, style=mono.svg" alt="" /></button></td>
+    <td colspan="5"><strong>${label}</strong></td>
+    ${groupContact ? `<td class="spc-contact-cell" data-spc-contact-emails="${groupContact}"${contactEmails.length > 1 ? ' data-spc-contact-label="Multiple"' : ""}>${groupContactLabel}</td>` : '<td class="spc-contact-cell">—</td>'}
+  </tr>${itemRows.join("")}`;
+}
+
+function renderEditSpcInstrumentTable() {
+  const tbody = app.querySelector(".spc-card .spc-table tbody");
+  if (!tbody) return;
+  const groups = [];
+  servicePlanPlansByContactState(true).forEach((plan) => groups.push(editSpcGroupMarkup({
+    id: servicePlanSelectionGroupId(plan.number),
+    label: plan.label || `Essential Service Plan - ${plan.number}`,
+    items: plan.items,
+    withContact: true,
+    plan,
+  })));
+  servicePlanPlansByContactState(false).forEach((plan) => groups.push(editSpcGroupMarkup({
+    id: servicePlanSelectionGroupId(plan.number, true),
+    label: plan.label || `Essential Service Plan - ${plan.number}`,
+    items: plan.items,
+    withContact: false,
+    plan,
+  })));
+  tbody.innerHTML = groups.join("");
+  tbody.querySelectorAll("[data-spc-selection-id]").forEach((checkbox) => {
+    checkbox.checked = servicePlanEditPreselection.has(checkbox.dataset.spcSelectionId);
+  });
+  const groupsWithSelectedInstruments = new Set(
+    [...tbody.querySelectorAll("[data-spc-group-child] [data-spc-selection-id]:checked")]
+      .map((checkbox) => checkbox.closest("[data-spc-group-child]")?.dataset.spcGroupChild)
+      .filter(Boolean),
+  );
+  groupsWithSelectedInstruments.forEach((groupId) => {
+    const toggle = tbody.querySelector(`[data-spc-group-toggle="${groupId}"]`);
+    if (!toggle) return;
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-label", `Collapse ${toggle.closest("tr")?.querySelector("strong")?.textContent || "group"}`);
+    const icon = toggle.querySelector("img");
+    if (icon) icon.src = "assets/icons/directions/chevron down/size=16px, style=mono.svg";
+    tbody.querySelectorAll(`[data-spc-group-child="${groupId}"]`).forEach((row) => { row.hidden = false; });
+  });
+}
+
+function servicePlanContactCardMarkup(contact) {
+  const countLabel = `${contact.instrumentCount} instrument${contact.instrumentCount === 1 ? "" : "s"}`;
+  return `<article class="splan-card" data-splan-contact-card="${contact.email}"><div class="splan-card__person"><img src="assets/icons/general/coverage contact/size=32px, style=mono.svg" alt="" /><div><button type="button" data-route="contact-page">${contact.name}</button><span>${contact.email}</span></div></div><p>Service plan contact for ${countLabel}</p><footer><button type="button" data-route="edit-spc" data-splan-edit-contact="${contact.email}"><img class="splan-card__edit-icon" src="assets/icons/actions/edit/size=16px,%20style=mono.svg" alt="" />Edit</button><span class="splan-contact-action"><button type="button" data-splan-contact-menu="${contact.email}" aria-label="More options for ${contact.name}" aria-expanded="false"><img src="assets/icons/actions/more%20horizontal/size=24px,%20style=bold.svg" alt="" /></button><span class="splan-contact-action__popover" role="menu" hidden><button type="button" role="menuitem" data-splan-remove-contact="${contact.email}">Remove service plan contact</button></span></span></footer></article>`;
+}
+
+function servicePlanItemContact(item, plan) {
+  return servicePlanItemContactNames(item, plan).join(", ");
+}
+
+function allServicePlanPlans() {
+  return [...SERVICE_PLAN_CONTACT_PLANS, ...SERVICE_PLAN_WITHOUT_CONTACT_PLANS, SERVICE_PLAN_NO_PLAN];
+}
+
+function servicePlanContactInstrumentCount(contactName) {
+  return allServicePlanPlans().reduce((total, plan) => total + plan.items.reduce((planTotal, item) => {
+    if (!servicePlanItemContactNames(item, plan).includes(contactName)) return planTotal;
+    return planTotal + 1;
+  }, 0), 0);
+}
+
+function servicePlanContactInstrument(serial, plan, { child = false, last = false, contact = plan.contact, withoutContact = false, instrumentOverride } = {}) {
+  const instrument = {
+    serial,
+    nickname: "—",
+    image: "tsq.png",
+    coverage: "Under contract",
+    ...(MY_INSTRUMENTS.find((candidate) => candidate.serial === serial) || {}),
+    ...(instrumentOverride || {}),
+  };
+  const rowClasses = [child ? "splan-row--child" : "", last ? "splan-row--last" : ""].filter(Boolean).join(" ");
+  const coverageClass = instrument.coverage === "Coverage expired" ? "splan-status--bad" : "splan-status--ok";
+  const coverage = instrument.coverage === "Coverage expired" ? "Coverage expired" : "Under contract";
+  const selectionId = `${servicePlanSelectionGroupId(plan.number, withoutContact)}:instrument:${instrument.serial}`;
+  const finalCell = withoutContact
+    ? (child ? "" : `<button type="button" data-route="edit-spc" data-splan-edit-selection="${selectionId}">Edit contact</button>`)
+    : contact;
+  return `<tr${rowClasses ? ` class="${rowClasses}"` : ""} data-splan-plan-child="${plan.number}" data-splan-search="${instrument.serial} ${instrument.nickname}" hidden><td>${child ? "" : `<input type="checkbox" aria-label="Select ${instrument.serial}" data-splan-check data-splan-selection-id="${selectionId}" />`}</td><td></td><td><span class="splan-status ${coverageClass}">${coverage}</span></td><td>${child ? '<img class="splan-branch-icon" src="assets/icons/general/arrow/size=16px.svg" alt="" />' : `<img class="splan-instrument-icon" src="assets/instruments/${instrument.image}" alt="" />`}</td><td>${child ? `<img src="assets/instruments/${instrument.image}" alt="" />` : instrument.locked ? '<span class="splan-lock-target"><img class="splan-lock-icon" src="assets/icons/actions/lock closed/size=16px, style=mono.svg" alt="" /></span>' : ""}</td><td><button type="button" data-route="${miInstrumentDetailRoute(instrument.serial)}">${instrument.serial}</button></td><td>${instrument.nickname}</td><td>${finalCell}</td></tr>`;
+}
+
+function servicePlanContactLabel(plan) {
+  const contacts = new Set(plan.items.flatMap((item) => servicePlanItemContactNames(item, plan)));
+  return contacts.size > 1 ? "Multiple" : [...contacts][0] || "—";
+}
+
+function servicePlanContactPlanMarkup(plan, { withoutContact = false } = {}) {
+  const planLabel = plan.label || `Essential Service Plan - ${plan.number}`;
+  const initiallyExpanded = plan.number === SERVICE_PLAN_NO_PLAN.number;
+  const rows = [];
+  plan.items.forEach((item, itemIndex) => {
+    const isLastItem = itemIndex === plan.items.length - 1;
+    if (typeof item === "string" || item.serial) {
+      const serial = typeof item === "string" ? item : item.serial;
+      rows.push(servicePlanContactInstrument(serial, plan, { last: isLastItem, contact: servicePlanItemContact(item, plan), withoutContact, instrumentOverride: typeof item === "string" ? undefined : item }));
+      return;
+    }
+    const selectionId = `${servicePlanSelectionGroupId(plan.number, withoutContact)}:system:${item.systemId}`;
+    const systemFinalCell = withoutContact
+      ? `<button type="button" data-route="edit-spc" data-splan-edit-selection="${selectionId}">Edit contact</button>`
+      : servicePlanItemContact(item, plan);
+    rows.push(`<tr class="splan-row--system" data-splan-plan-child="${plan.number}" data-splan-search="System ${item.nickname}" hidden><td><input type="checkbox" aria-label="Select ${item.nickname} system" data-splan-check data-splan-selection-id="${selectionId}" /></td><td></td><td>—</td><td><img class="splan-system-icon" src="assets/icons/science/system/size=24px, style=mono.svg" alt="" /></td><td></td><td><button type="button" data-route="system-detail-${item.systemId}">System</button></td><td>${item.nickname}</td><td>${systemFinalCell}</td></tr>`);
+    item.components.forEach((serial, componentIndex) => {
+      rows.push(servicePlanContactInstrument(serial, plan, { child: true, last: isLastItem && componentIndex === item.components.length - 1, contact: servicePlanItemContact(item, plan), withoutContact }));
+    });
+  });
+  const groupSelectionId = servicePlanSelectionGroupId(plan.number, withoutContact);
+  const finalCell = withoutContact
+    ? `<button type="button" data-route="edit-spc" data-splan-edit-selection="${groupSelectionId}">Edit contact</button>`
+    : servicePlanContactLabel(plan);
+  const renderedRows = initiallyExpanded
+    ? rows.map((row) => row.replace(" hidden>", ">"))
+    : rows;
+  return `<tr class="splan-row--group"><td><input type="checkbox" aria-label="Select ${planLabel}" data-splan-check data-splan-plan-check="${plan.number}" data-splan-selection-id="${groupSelectionId}" /></td><td><button class="splan-plan-toggle" type="button" data-splan-plan-toggle="${plan.number}" data-splan-plan-label="${planLabel}" aria-expanded="${initiallyExpanded}" aria-label="${initiallyExpanded ? "Collapse" : "Expand"} ${planLabel}"><img src="assets/icons/directions/chevron ${initiallyExpanded ? "down" : "right"}/size=16px, style=mono.svg" alt="" /></button></td><td colspan="5"><strong>${planLabel}</strong></td><td class="splan-final-cell">${finalCell}</td></tr>${renderedRows.join("")}`;
+}
+
+function servicePlanPlanInstrumentCount(plan) {
+  return plan.items.length;
+}
+
+function servicePlanPlansByContactState(withContact) {
+  return allServicePlanPlans().map((plan) => ({
+    ...plan,
+    items: plan.items.filter((item) => (servicePlanItemContactNames(item, plan).length > 0) === withContact),
+  })).filter((plan) => plan.items.length);
+}
+
+function renderServicePlanContactData() {
+  const contactGrid = app.querySelector(".splan-contact-grid");
+  const planRows = app.querySelector("[data-splan-contact-plan-rows]") || app.querySelector(".splan-table--contacts tbody");
+  const contactGroup = planRows?.closest("[data-splan-group]");
+  const withoutContactGroup = app.querySelectorAll("[data-splan-group]")[1];
+  const withoutContactRows = withoutContactGroup?.querySelector(".splan-table tbody");
+  if (!contactGrid || !planRows || !contactGroup || !withoutContactGroup || !withoutContactRows) return;
+  const plansWithContact = servicePlanPlansByContactState(true);
+  const removedContactPlans = servicePlanPlansByContactState(false);
+  const instrumentCount = plansWithContact.reduce((count, plan) => count + servicePlanPlanInstrumentCount(plan), 0);
+  const removedInstrumentCount = removedContactPlans.reduce((count, plan) => count + servicePlanPlanInstrumentCount(plan), 0);
+  const overriddenContactRecords = [...new Set([...servicePlanContactOverrides.values()].flat())]
+    .filter((email) => !SERVICE_PLAN_CONTACT_CARDS.some((contact) => contact.email.toLowerCase() === email.toLowerCase()))
+    .map((email) => ({ name: servicePlanContactName(email), email }));
+  const activeContacts = [...SERVICE_PLAN_CONTACT_CARDS, ...overriddenContactRecords]
+    .filter((contact) => !removedServicePlanContacts.has(contact.name) && servicePlanContactInstrumentCount(contact.name) > 0);
+  const newlyCreatedContactIndex = activeContacts.findIndex(
+    (contact) => contact.email.toLowerCase() === mostRecentlyCreatedServicePlanContactEmail.toLowerCase(),
+  );
+  if (newlyCreatedContactIndex > 0) {
+    activeContacts.unshift(activeContacts.splice(newlyCreatedContactIndex, 1)[0]);
+  }
+  const contactCards = activeContacts.map((contact) => servicePlanContactCardMarkup({
+    ...contact,
+    instrumentCount: servicePlanContactInstrumentCount(contact.name),
+  })).join("");
+  contactGrid.innerHTML = activeContacts.length > 4
+    ? `<button class="splan-contact-carousel__control" type="button" data-splan-contact-prev aria-label="Show previous service plan contacts"><img src="assets/icons/directions/chevron%20left/size=24px,%20style=bold.svg" alt="" /></button><div class="splan-contact-carousel__viewport"><div class="splan-contact-carousel__track" data-splan-contact-track>${contactCards}</div></div><button class="splan-contact-carousel__control" type="button" data-splan-contact-next aria-label="Show next service plan contacts"><img src="assets/icons/directions/chevron%20right/size=24px,%20style=bold.svg" alt="" /></button>`
+    : contactCards;
+  planRows.innerHTML = plansWithContact.map((plan) => servicePlanContactPlanMarkup(plan)).join("");
+  const withoutContactCount = removedInstrumentCount;
+  const renderedWithoutPlans = removedContactPlans;
+  withoutContactRows.innerHTML = renderedWithoutPlans.map((plan) => servicePlanContactPlanMarkup(plan, { withoutContact: true })).join("");
+  withoutContactGroup.dataset.splanEmpty = String(withoutContactCount === 0);
+  withoutContactGroup.hidden = withoutContactCount === 0;
+  contactGroup.querySelector(".splan-group__toggle strong").textContent = `${instrumentCount} out of ${instrumentCount + withoutContactCount} instruments with a service plan contact`;
+  const selectAll = contactGroup.querySelector("[data-splan-select-all]");
+  selectAll.textContent = `Select all ${instrumentCount} instruments`;
+  selectAll.dataset.splanSelectTotal = String(instrumentCount);
+  const withoutContactTitle = withoutContactGroup?.querySelector(".splan-group__toggle strong");
+  if (withoutContactTitle) withoutContactTitle.textContent = `${withoutContactCount} out of ${instrumentCount + withoutContactCount} instruments without a service plan contact`;
+  const withoutSelectAll = withoutContactGroup.querySelector("[data-splan-select-all]");
+  withoutSelectAll.textContent = `Select all ${withoutContactCount} instruments`;
+  withoutSelectAll.dataset.splanSelectTotal = String(withoutContactCount);
+  const visibleContactGroups = [contactGroup, withoutContactGroup].filter((group) => !group.hidden);
+  if (visibleContactGroups.length === 1) setServicePlanGroupExpanded(visibleContactGroups[0], true);
+}
+
 function setServicePlanGroupExpanded(group, expanded) {
   const toggle = group.querySelector("[data-splan-toggle]");
   toggle.setAttribute("aria-expanded", String(expanded));
@@ -10046,8 +10829,12 @@ function filterServicePlanContacts(query) {
     const title = group.querySelector(".splan-group__toggle strong");
     const selectAll = group.querySelector("[data-splan-select-all]");
     if (!normalizedQuery) {
-      rows.forEach((row) => { row.hidden = false; });
-      group.hidden = false;
+      rows.forEach((row) => {
+        const planNumber = row.dataset.splanPlanChild;
+        const planToggle = planNumber ? tbody.querySelector(`[data-splan-plan-toggle="${planNumber}"]`) : null;
+        row.hidden = Boolean(planToggle && planToggle.getAttribute("aria-expanded") !== "true");
+      });
+      group.hidden = group.dataset.splanEmpty === "true";
       title.textContent = title.dataset.splanOriginalText;
       selectAll.textContent = selectAll.dataset.splanOriginalText;
       selectAll.dataset.splanSelectTotal = selectAll.dataset.splanOriginalTotal;
@@ -10095,6 +10882,30 @@ function filterServicePlanContacts(query) {
   noResults.hidden = totalMatches !== 0;
 }
 
+function openServicePlanContactRemovalDialog(email) {
+  const contact = SERVICE_PLAN_CONTACT_CARDS.find((candidate) => candidate.email === email);
+  if (!contact) return;
+  const dialog = window.PlatformModal.create({
+    id: `splan-remove-contact-${email.replace(/[^a-z0-9]/gi, "-")}`,
+    className: "splan-remove-contact-dialog",
+    title: "Remove service plan contact",
+    content: "<p>These instrument(s) will not have any service plan contact if you take this action. If you want to change the contact, click Cancel and use the Edit action instead.</p>",
+    actions: [
+      { label: "Cancel", variant: "secondary", action: "cancel", closes: true },
+      { label: "Confirm", variant: "primary", action: "confirm" },
+    ],
+  });
+  dialog.addEventListener("modal:action", (event) => {
+    if (event.detail.action !== "confirm") return;
+    removedServicePlanContacts.add(contact.name);
+    window.PlatformModal.close(dialog);
+    renderServicePlanContacts();
+  });
+  dialog.addEventListener("close", () => dialog.remove(), { once: true });
+  document.body.append(dialog);
+  window.PlatformModal.open(dialog);
+}
+
 function wireServicePlanContacts() {
   app.querySelector("[data-go-back]").addEventListener("click", () => setRoute("dashboard"));
   app.querySelectorAll("[data-splan-group]").forEach((group) => {
@@ -10107,11 +10918,93 @@ function wireServicePlanContacts() {
   });
   const search = app.querySelector("[data-splan-search]");
   search?.addEventListener("input", () => filterServicePlanContacts(search.value));
+  const closeContactMenus = (except) => {
+    app.querySelectorAll("[data-splan-contact-menu]").forEach((trigger) => {
+      if (trigger === except) return;
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.closest(".splan-contact-action")?.querySelector(".splan-contact-action__popover")?.setAttribute("hidden", "");
+    });
+  };
+  app.querySelectorAll("[data-splan-contact-menu]").forEach((trigger) => {
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const open = trigger.getAttribute("aria-expanded") === "true";
+      closeContactMenus(trigger);
+      trigger.setAttribute("aria-expanded", String(!open));
+      trigger.closest(".splan-contact-action")?.querySelector(".splan-contact-action__popover")?.toggleAttribute("hidden", open);
+    });
+  });
+  app.querySelectorAll("[data-splan-remove-contact]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeContactMenus();
+      openServicePlanContactRemovalDialog(button.dataset.splanRemoveContact);
+    });
+  });
+  app.querySelector(".screen--service-plan-contacts")?.addEventListener("click", () => closeContactMenus());
+  app.querySelector(".screen--service-plan-contacts")?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeContactMenus();
+  });
+  const contactTrack = app.querySelector("[data-splan-contact-track]");
+  const contactViewport = contactTrack?.closest(".splan-contact-carousel__viewport");
+  let contactCarouselAnimating = false;
+  const contactCarouselStep = () => (contactTrack?.querySelector(".splan-card")?.getBoundingClientRect().width || 0) + 32;
+  const finishContactCarouselMove = (callback) => {
+    const onTransitionEnd = (event) => {
+      if (event.propertyName !== "transform") return;
+      contactTrack.removeEventListener("transitionend", onTransitionEnd);
+      callback();
+      contactCarouselAnimating = false;
+    };
+    contactTrack.addEventListener("transitionend", onTransitionEnd);
+  };
+  const moveContactCarousel = (direction) => {
+    if (!contactTrack || !contactViewport || contactCarouselAnimating || contactTrack.children.length <= 4) return;
+    contactCarouselAnimating = true;
+    const step = contactCarouselStep();
+    if (direction === "next") {
+      finishContactCarouselMove(() => {
+        contactTrack.append(contactTrack.firstElementChild);
+        contactTrack.style.transition = "none";
+        contactTrack.style.transform = "translateX(0)";
+        void contactTrack.offsetWidth;
+        contactTrack.style.transition = "";
+      });
+      contactTrack.style.transform = `translateX(-${step}px)`;
+      return;
+    }
+    contactTrack.style.transition = "none";
+    contactTrack.prepend(contactTrack.lastElementChild);
+    contactTrack.style.transform = `translateX(-${step}px)`;
+    void contactTrack.offsetWidth;
+    contactTrack.style.transition = "";
+    finishContactCarouselMove(() => {
+      contactTrack.style.transform = "translateX(0)";
+    });
+    contactTrack.style.transform = "translateX(0)";
+  };
+  app.querySelector("[data-splan-contact-prev]")?.addEventListener("click", () => moveContactCarousel("previous"));
+  app.querySelector("[data-splan-contact-next]")?.addEventListener("click", () => moveContactCarousel("next"));
   app.querySelectorAll("[data-splan-toggle]").forEach((toggle) => {
     toggle.addEventListener("click", () => {
       const group = toggle.closest("[data-splan-group]");
       const expanded = toggle.getAttribute("aria-expanded") !== "true";
       setServicePlanGroupExpanded(group, expanded);
+    });
+  });
+  app.querySelectorAll("[data-splan-plan-toggle]").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      const nextExpanded = !expanded;
+      toggle.setAttribute("aria-expanded", String(nextExpanded));
+      toggle.setAttribute("aria-label", `${nextExpanded ? "Collapse" : "Expand"} ${toggle.dataset.splanPlanLabel || `Essential Service Plan ${toggle.dataset.splanPlanToggle}`}`);
+      toggle.querySelector("img").src = `assets/icons/directions/chevron ${nextExpanded ? "down" : "right"}/size=16px, style=mono.svg`;
+      toggle.closest("tbody")?.querySelectorAll(`[data-splan-plan-child="${toggle.dataset.splanPlanToggle}"]`).forEach((row) => { row.hidden = !nextExpanded; });
+    });
+  });
+  app.querySelectorAll("[data-splan-plan-check]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      checkbox.closest("tbody")?.querySelectorAll(`[data-splan-plan-child="${checkbox.dataset.splanPlanCheck}"] [data-splan-check]`).forEach((childCheckbox) => { childCheckbox.checked = checkbox.checked; });
     });
   });
   app.querySelectorAll("[data-splan-select-all]").forEach((button) => {
@@ -10133,6 +11026,30 @@ function wireServicePlanContacts() {
   app.querySelectorAll("[data-splan-action]").forEach((button) => {
     button.addEventListener("click", () => showToast(`${button.dataset.splanAction} selected`));
   });
+  app.querySelectorAll('[data-route="edit-spc"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      const contactEmail = button.dataset.splanEditContact;
+      if (contactEmail) {
+        servicePlanEditPreselection = new Set(allServicePlanPlans().flatMap((plan) => plan.items
+          .filter((item) => servicePlanItemContactEmails(item, plan).some((email) => email.toLowerCase() === contactEmail.toLowerCase()))
+          .map((item) => {
+            const groupId = servicePlanSelectionGroupId(plan.number);
+            return `${groupId}:${item.systemId ? "system" : "instrument"}:${item.systemId || (typeof item === "string" ? item : item.serial)}`;
+          })));
+        return;
+      }
+      const directSelection = button.dataset.splanEditSelection;
+      if (directSelection) {
+        servicePlanEditPreselection = new Set([directSelection]);
+        return;
+      }
+      servicePlanEditPreselection = new Set(
+        [...app.querySelectorAll("[data-splan-check]:checked")]
+          .map((checkbox) => checkbox.dataset.splanSelectionId)
+          .filter(Boolean),
+      );
+    }, { capture: true });
+  });
   window.PlatformSidebar?.wire(app);
   wireRouteControls();
 }
@@ -10144,6 +11061,7 @@ function applyServicePlanApprovalState() {
   contactGrid.querySelectorAll(".splan-card").forEach((card, index) => {
     if (index > 0) card.remove();
   });
+  contactGrid.querySelectorAll(".splan-contact-carousel__control").forEach((control) => control.remove());
   const banner = document.createElement("section");
   banner.className = "splan-approval-banner";
   banner.setAttribute("aria-labelledby", "splan-approval-banner-title");
@@ -10211,6 +11129,7 @@ function renderServicePlanContacts() {
   mountTopbarSc();
   mountPlatformSidebar("service-plan-contacts");
   mountFooter();
+  renderServicePlanContactData();
   if (shouldShowAccountEmptyState()) applyServicePlanContactsZeroState();
   else if (new URL(window.location.href).searchParams.get("contacts") === "empty") applyServicePlanContactsZeroState({ contactsAvailable: true });
   else if (servicePlanApprovalPending) applyServicePlanApprovalState();
@@ -10289,7 +11208,7 @@ function createConsumablesSupportPortalDialog() {
   dialog.addEventListener("modal:action", (event) => {
     if (event.detail.action !== "launch-consumables-support-portal") return;
     window.PlatformModal.close(dialog);
-    window.open(CONSUMABLES_SUPPORT_PORTAL_IMAGE, "_blank", "noopener,noreferrer");
+    setRoute("consumables-support-portal");
   });
 
   return dialog;
@@ -10507,7 +11426,7 @@ function createWhiteGloveOrder({ number, orderedDate }) {
         <button class="ins-order-toggle" type="button" data-wg-toggle aria-expanded="false" aria-controls="white-glove-details-${number}"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> ${number}</span></button>
         <span class="wg-premium" data-white-glove-tooltip tabindex="0" aria-label="White Glove order"><img src="assets/icons/general/premium/size=24px, style=bold.svg" alt="" /></span>
         <span class="ins-badge ins-badge--success" data-wg-order-status hidden><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span>
-        <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="${number}">Activity log</button>
+        <button class="mi-button mi-button--information ins-activity" type="button" data-open-installation-activity data-order-number="${number}">Activity log</button>
       </header>
       <div class="wg-order-summary" data-wg-expanded hidden>
         <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Ordered date</strong><span>${orderedDate}</span></div></div>
@@ -10795,7 +11714,7 @@ function renderProgressStandardOrder(expanded) {
       <button class="ins-order-toggle" type="button" data-progress-order-toggle aria-expanded="${expanded}" aria-controls="installation-progress-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> 7659430547 (Partially available)</span></button>
       <span class="ins-badge ${progressComplete ? "ins-badge--success" : "ins-badge--danger"}" data-progress-order-status>${progressComplete ? '<img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress' : '<img src="assets/icons/notifications/alert/size=16px, style=bold.svg" alt="" />Action(s) required'}</span>
       <span class="ins-badge ins-badge--modified" data-progress-order-modified><img src="assets/icons/notifications/info/size=16px, style=bold.svg" alt="" />Order modified</span>
-      <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="7659430547">Activity log</button>
+      <button class="mi-button mi-button--information ins-activity" type="button" data-open-installation-activity data-order-number="7659430547">Activity log</button>
     </header>
     <div class="ins-expanded-summary" data-progress-expanded ${expanded ? "" : "hidden"}>
       <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Order date</strong><span>26 Jun 2025</span></div></div>
@@ -10899,7 +11818,7 @@ function createNoChecklistOrder(expanded = false) {
     <header class="ins-order-head">
       <button class="ins-order-toggle" type="button" data-no-checklist-toggle aria-expanded="${expanded}" aria-controls="no-checklist-order-details"><img class="ins-chevron" src="assets/icons/directions/chevron right/size=24px, style=mono.svg" alt="" /><span><strong>Order no.</strong> ${NO_CHECKLIST_ORDER_NUMBER} (Not available)</span></button>
       <span class="ins-badge ins-badge--success" data-no-checklist-order-status><img src="assets/icons/actions/checkmark/size=16px, style=bold.svg" alt="" />In progress</span>
-      <button class="mi-button ins-activity" type="button" data-open-installation-activity data-order-number="${NO_CHECKLIST_ORDER_NUMBER}">Activity log</button>
+      <button class="mi-button mi-button--information ins-activity" type="button" data-open-installation-activity data-order-number="${NO_CHECKLIST_ORDER_NUMBER}">Activity log</button>
     </header>
     <div class="ins-expanded-summary" data-no-checklist-expanded ${expanded ? "" : "hidden"}>
       <div class="ins-summary-box"><img src="assets/icons/features/calendar/size=16px, style=bold.svg" alt="" /><div><strong>Order date</strong><span>30 Jun 2025</span></div></div>
@@ -11062,6 +11981,10 @@ function renderInstallationSupport() {
   const submittedCards = app.querySelector("[data-isup-submitted-cards]");
   const fields = [...app.querySelectorAll("[data-isup-required]")];
   const contactFields = [...app.querySelectorAll("[data-isup-contact-required]")];
+  contactFields.forEach((field) => {
+    const key = field.dataset.isupContactField;
+    if (LOGGED_IN_USER_CONTACT[key]) field.value = LOGGED_IN_USER_CONTACT[key];
+  });
   const details = app.querySelector("[data-isup-details]");
   const count = app.querySelector("[data-isup-count]");
   const cancelButton = actionBar.querySelector('[data-actionbar-action="cancel"]');
@@ -11489,7 +12412,7 @@ miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListene
     miEditColumnsDialog.querySelectorAll("[data-sh-edit-column]:checked").forEach((checkbox) => supportHistoryVisibleColumns.add(checkbox.dataset.shEditColumn));
     applySupportHistoryColumnVisibility();
     delete miEditColumnsDialog.dataset.editColumnsContext;
-    showToast("Column preferences updated");
+    showToast("Column preferences updated", { variant: "success" });
     return;
   }
   miVisibleColumns.clear();
@@ -11498,7 +12421,7 @@ miEditColumnsDialog.querySelector("[data-mi-edit-columns-form]").addEventListene
     if (MI_OPTIONAL_COLUMNS.includes(checkbox.dataset.miColumn)) miVisibleColumns.add(checkbox.dataset.miColumn);
   });
   applyMiColumnVisibility();
-  showToast("Column preferences updated");
+  showToast("Column preferences updated", { variant: "success" });
 });
 miEditColumnsDialog.addEventListener("click", (event) => {
   if (event.target === miEditColumnsDialog) {
@@ -11819,5 +12742,6 @@ servicesHelpDialog.addEventListener("click", (event) => {
 });
 window.addEventListener("popstate", render);
 window.addEventListener("hashchange", render);
+standardizeTableSortIcons(document);
 ensurePrototypeFlowContext();
 render();
